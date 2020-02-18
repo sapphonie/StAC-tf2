@@ -1,0 +1,18 @@
+"Updater"
+{
+    "Information"
+    {
+        "Version"
+        {
+            "Latest"    "1.1.6"
+        }
+
+        "Notes" "Changes in 1.1.6:"
+        "Notes" "- added autoupdater"
+    }
+
+    "Files"
+    {
+        "Plugin"    "Path_SM/plugins/tf2stopexploits.smx"
+    }
+}
