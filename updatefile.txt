@@ -4,15 +4,15 @@
     {
         "Version"
         {
-            "Latest"    "2.0.3"
+            "Latest"    "2.1.0"
         }
 
-        "Notes" "Changes in 2.0.3:"
-        "Notes" "- removed net checking settings 4 now"
+        "Notes" "Changes in 2.1.0:"
+        "Notes" "- added netprop checking, changed branding"
     }
 
     "Files"
     {
-        "Plugin"    "Path_SM/plugins/tf2stopexploits.smx"
+        "Plugin"    "Path_SM/plugins/stac.smx"
     }
 }
