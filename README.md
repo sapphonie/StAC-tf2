@@ -1,31 +1,34 @@
 ```
 ////////////////////////////////////////////////////////////////////////////////////
 //                                                                                //
-//  THIS IS NOT A COMPLICATED ANTICHEAT PLUGIN.                                   //
-//  PEOPLE SMARTER THAN ME HAVE WRITTEN THOSE.                                    //
+//                               STEPHAC (StAC)                                   //
 //                                                                                //
-//  SEE HERE: -> https://github.com/Silenci0/SMAC                                 //
-//  OR HERE:  -> https://forums.alliedmods.net/showthread.php?t=321480            //
+//    SEE HERE FOR PROBABLY BETTER AC PLUGINS:                                    //
+//    LilAC:  -> https://forums.alliedmods.net/showthread.php?t=321480            //
+//    SMAC:   -> https://github.com/Silenci0/SMAC                                 //
 //                                                                                //
-//  If someone is using an actual cheat, like nullcore or lithium or lmaobox,     //
-//  this plugin will likely do nothing at all. This is merely to prevent          //
-//  otherwise vanilla players from cheating with easily exploitable methods.      //
+//    This plugin currently prevents:                                             //
+//     -> interp abuse                                           -kick            //
+//     -> clients using turn binds                               -kick            //
+//     -> cmdrate pingmasking if cvar has nonnumerical chars)    -kick            //
+//     -> othermodels abuse (lol)                                -ban             //
+//     -> (hopefully) fov abuse > 90                             -ban             //
+//     -> (hopefully) third person cheats on clients             -ban             //
 //                                                                                //
+//    Currently notifies to server console of:                                    //
+//     -> cmdrate pingmasking (if cmdrate is > 60)                                //
 //                                                                                //
-//  Currently prevents:                                                           //
-//   -> interp abuse               (checks cl_interp above .1, instakick)         //
-//   -> (hopefully) box shadows    (checks a series of convars, instakick)        //
-//   -> clients using turn binds   (WARNS CLIENT, then kicks after 3 violations)  //
-//   -> client ping >= 200         (WARNS CLIENT, then kicks after 3 violations)  //
-//   -> client packet loss >= 30%  (WARNS CLIENT, then kicks after 3 violations)  //
+//    This plugin also currently reseeds the hl2 random seed at each map start to //
+//    attempt to prevent possible nospread exploits by guessing server seed.      //
+//    This is currently untested but there is no harm by doing it.                //
 //                                                                                //
-//  Currently notifies to console of:                                             //
-//   -> cmdrate pingmasking (if cmdrate is > 60 or has nonnumerical chars)        //
-//                                                                                //
-//  Todo (may not be possible):                                                   //
-//   -> fix spy decloak exploit / other soundscript exploits                      //
-//   -> fix other sv pure stuff (flat / invisible textures)                       //
-//   -> fix sniper scope removal exploit                                          //
+//    Todo (may not be possible):                                                 //
+//     -> break/ban for esp/wallhack shit                                         //
+//              (not thru painting but possibly with checking m_bGlowEnabled)     //
+//     -> fix spy decloak exploit / other soundscript exploits                    //
+//              (in the works)                                                    //
+//     -> fix other sv pure stuff (flat / invisible textures)                     //
+//     -> fix sniper scope removal exploit                                        //
 //                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////
 ```
