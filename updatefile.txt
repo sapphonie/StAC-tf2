@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "2.1.0"
+            "Latest"    "2.1.1"
         }
 
-        "Notes" "Changes in 2.1.0:"
-        "Notes" "- added netprop checking, changed branding"
+        "Notes" "Changes in 2.1.1:"
+        "Notes" "- added nolerp check, added sourcebans support"
     }
 
     "Files"
