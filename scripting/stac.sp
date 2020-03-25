@@ -13,7 +13,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "2.1.2"
+#define PLUGIN_VERSION  "2.1.3"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -321,6 +321,13 @@ public Action OnPlayerRunCmd
         // silent aim works by aimbotting for 1 frame and then snapping your viewangle back to what it was
         // we can just look for these snaps and log them as detections!
         if  (
+                // client needs to be on a team and alive [might not be nececcary, just in case]
+                IsPlayerAlive(Cl) &&
+                (
+                    TF2_GetClientTeam(Cl) == TFTeam_Red ||
+                    TF2_GetClientTeam(Cl) == TFTeam_Blue
+                )
+                &&
                 (
                     angCur[Cl][0] == angPrev2[Cl][0] &&
                     angCur[Cl][1] == angPrev2[Cl][1]
@@ -497,6 +504,22 @@ public ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const c
         LogMessage("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
         PrintToConsoleAllAdmins("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
     }
+}
+
+// ban on invalid characters (newlines etc)
+public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArgs)
+{
+    if (StrContains(sArgs, "\n", false) != -1)
+    {
+        int userid = GetClientUserId(Cl);
+        char KickMsg[256];
+        Format(KickMsg, sizeof(KickMsg), "Player %N attempted to print a newline, indicating usage of an external cheat program. Banned from server", Cl);
+        BanUser(userid, KickMsg);
+        PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N attempted to " ... COLOR_MEDIUMPURPLE ... "print a newline" ... COLOR_WHITE ...", indicating usage of an external cheat program! " ... COLOR_PALEGREEN ... "BANNED from server.", Cl);
+        LogMessage("[StAC] Player %N attempted to print a newline. Banned from server.", Cl);
+        return Plugin_Stop;
+    }
+    return Plugin_Continue;
 }
 
 public BanUser(userid, char[] KickMsg)
