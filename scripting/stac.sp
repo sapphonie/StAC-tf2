@@ -1,37 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////////
-//                                                                                //
-//                             STEPH'S AC (StAC)                                  //
-//                                                                                //
-//    SEE HERE FOR PROBABLY BETTER AC PLUGINS:                                    //
-//    LilAC:  -> https://forums.alliedmods.net/showthread.php?t=321480            //
-//    SMAC:   -> https://github.com/Silenci0/SMAC                                 //
-//                                                                                //
-//    This plugin currently prevents:                                             //
-//     -> interp abuse                                           -kick            //
-//     -> clients using turn binds                               -kick            //
-//     -> cmdrate pingmasking if cvar has nonnumerical chars)    -kick            //
-//     -> othermodels abuse (lol)                                -ban             //
-//     -> (hopefully) fov abuse > 90                             -ban             //
-//     -> (hopefully) third person cheats on clients             -ban             //
-//                                                                                //
-//    Currently notifies to server console of:                                    //
-//     -> cmdrate pingmasking (if cmdrate is > 60)                                //
-//                                                                                //
-//    This plugin also currently reseeds the hl2 random seed at each map start to //
-//    attempt to prevent possible nospread exploits by guessing server seed.      //
-//    This is currently untested but there is no harm by doing it.                //
-//                                                                                //
-//    Todo (may not be possible):                                                 //
-//     -> break/ban for esp/wallhack shit                                         //
-//              (not thru painting but possibly with checking m_bGlowEnabled)     //
-//     -> fix spy decloak exploit / other soundscript exploits                    //
-//              (in the works)                                                    //
-//     -> fix other sv pure stuff (flat / invisible textures)                     //
-//     -> fix sniper scope removal exploit                                        //
-//     -> fix changing world visiblity                                            //
-//                                                                                //
-////////////////////////////////////////////////////////////////////////////////////
-
+// see the readme for more info:
+// https://github.com/stephanieLGBT/StAC-tf2/blob/master/README.md
+// i love my girlfriends
 #pragma semicolon 1
 
 #include <sourcemod>
@@ -44,14 +13,14 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "2.1.1"
+#define PLUGIN_VERSION  "2.1.2"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
 {
     name             =  "Steph's AntiCheat (StAC)",
     author           =  "stephanie",
-    description      =  "Anticheat plugin [tf2 only] (orig. forked from IntegriTF2)",
+    description      =  "Anticheat plugin [tf2 only] written by Stephanie. Originally forked from IntegriTF2",
     version          =   PLUGIN_VERSION,
     url              =  "https://steph.anie.dev/"
 }
@@ -60,6 +29,8 @@ Handle g_hQueryTimer[MAXPLAYERS+1];
 Handle g_hTriggerTimedStuffTimer;
 int turnTimes[MAXPLAYERS+1];
 int fovDesired[MAXPLAYERS+1];
+int fakeAngDetects[MAXPLAYERS+1];
+int pSilentDetects[MAXPLAYERS+1];
 int minUpdateRate;
 int maxUpdateRate;
 int optUpdateRate;
@@ -68,6 +39,9 @@ float tps;
 float maxAllowedTurnSecs = 1.0;
 float minRandCheckVal = 60.0;
 float maxRandCheckVal = 300.0;
+float angCur[MAXPLAYERS+1][2];
+float angPrev1[MAXPLAYERS+1][2];
+float angPrev2[MAXPLAYERS+1][2];
 
 bool isHumiliation;
 bool SOURCEBANS;
@@ -90,6 +64,30 @@ public OnPluginStart()
     CreateTimer(2.0, checkSourceBans);
     // check EVERYONE's cvars on plugin reload
     CreateTimer(5.0, checkEveryone);
+    // attempt at forcibly disabling othermodels
+    //  CreateConVar
+    //  (
+    //      "r_drawothermodels",
+    //      "1.0",
+    //      "controls if rglupdater uses the beta branch on github",
+    //      // notify clients of cvar change
+    //      FCVAR_NOTIFY & FCVAR_REPLICATED,
+    //      true,
+    //      1.0,
+    //      true,
+    //      1.0
+    //  );
+    //  for (int Cl = 0; Cl < MaxClients + 1; Cl++)
+    //  {
+    //      if (IsValidClient(Cl))
+    //      {
+    //          ClientCommand(Cl, "r_drawothermodels 1");
+    //          FakeClientCommandEx(Cl, "r_drawothermodels 1");
+    //          ClientCommand(Cl, "mat_fullbright 0");
+    //          FakeClientCommandEx(Cl, "mat_fullbright 0");
+    //          SendConVarValue(Cl, FindConVar("r_drawothermodels"), "1");
+    //      }
+    //  }
 }
 
 public Action checkSourceBans(Handle timer)
@@ -187,15 +185,13 @@ public Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
 public Action timer_TriggerTimedStuff(Handle timer)
 {
     ActuallySetRandomSeed();
+}
 
-}// set stuff for updaterate checking here.
+// set stuff for updaterate checking here.
 DoUpdateRateMath()
 {
-    // there is NO REASON to have updaterate below default (20) or above 100 on a default server.
-    // the reason we use the tickinterv equation is that some servers run at higher tickrates. default tickrate is 66.7 * 1.5 + 1 = 101.05 ...
-    // ... which is basically where we want to draw the line as things start getting fucked up past there.
-    // .. although technically things get fucked up at anything higher than sv_maxupdaterate...
-    // .. too many tf2 cfgs have it set at 100 and it would annoy way too many ppl.
+    // there is NO REASON to have updaterate below default (20) or above 128 on a default server.
+    // many tf2 cfgs have it set at 100 or 128 and it would annoy way too many ppl to set it to 66
     tps           = Pow(tickinterv, -1.0);
     optUpdateRate = RoundToFloor(tps);
     if (DEBUG)
@@ -203,8 +199,6 @@ DoUpdateRateMath()
         LogMessage("tickinterv %f tps %f optUpdateRate %i", tickinterv, tps, optUpdateRate);
     }
 }
-
-
 
 public OnMapStart()
 {
@@ -291,22 +285,91 @@ public Action OnPlayerRunCmd
         int mouse[2]
     )
 {
-    if (buttons & IN_LEFT || buttons & IN_RIGHT)
+    if (IsValidClient(Cl))
     {
-        turnTimes[Cl]++;
-        float turnSec = turnTimes[Cl] * tickinterv;
-        LogMessage("[StAC] Detected turn bind on player [%L] for [%f] seconds", Cl, turnSec);
-        if (turnSec < maxAllowedTurnSecs)
+        // turn bind test
+        if (buttons & IN_LEFT || buttons & IN_RIGHT)
         {
-            PrintColoredChat(Cl, COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Turn binds and spin binds are not allowed on this server. If you continue to use them you will be autokicked!");
-            PrintColoredChatToAdmins(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Client %N used a turn bind!", Cl);
-            CPrintToSTV(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Client %N used a turn bind!", Cl);
+            turnTimes[Cl]++;
+            float turnSec = turnTimes[Cl] * tickinterv;
+            LogMessage("[StAC] Detected turn bind on player [%L] for [%f] seconds", Cl, turnSec);
+            if (turnSec < maxAllowedTurnSecs)
+            {
+                PrintColoredChat(Cl, COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Turn binds and spin binds are not allowed on this server. If you  continue to use them you will be autokicked!");
+                PrintColoredChatToAdmins(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Client %N used a turn bind!", Cl);
+                CPrintToSTV(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Client %N used a turn bind!", Cl);
+            }
+            else if (turnSec >= maxAllowedTurnSecs)
+            {
+                KickClient(Cl, "Usage of turn binds or spin binds is not allowed. Autokicked");
+                LogMessage("[StAC] Player %N was using turn binds! Kicked from server.", Cl);
+                PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using turn binds! " ... COLOR_PALEGREEN ... "Kicked from server.", Cl);
+            }
         }
-        else if (turnSec >= maxAllowedTurnSecs)
+        // psilent / norecoil test
+        // thanks to nosoop from the sm discord for some help with this
+        angPrev2[Cl][0] = angPrev1[Cl][0];
+        angPrev2[Cl][1] = angPrev1[Cl][1];
+        angPrev1[Cl][0] = angCur[Cl][0];
+        angPrev1[Cl][1] = angCur[Cl][1];
+        angCur[Cl][0]   = angles[0];
+        angCur[Cl][1]   = angles[1];
+        // example snap:
+        // L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: curang angles: x 5.120096 y 9.763162
+        // L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: prev1  angles: x 1.635611 y 12.876886
+        // L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: prev2  angles: x 5.120096 y 9.763162
+        // silent aim works by aimbotting for 1 frame and then snapping your viewangle back to what it was
+        // we can just look for these snaps and log them as detections!
+        if  (
+                (
+                    angCur[Cl][0] == angPrev2[Cl][0] &&
+                    angCur[Cl][1] == angPrev2[Cl][1]
+                )
+                &&
+                (
+                    angPrev1[Cl][0] != angCur[Cl][0]   &&
+                    angPrev1[Cl][1] != angCur[Cl][0]   &&
+                    angPrev1[Cl][0] != angPrev2[Cl][0] &&
+                    angPrev1[Cl][1] != angPrev2[Cl][1]
+                )
+                &&
+                // make sure we dont get any fake detections on startup
+                (
+                    angCur[Cl][0]   != 0.000000 ||
+                    angCur[Cl][1]   != 0.000000 ||
+                    angPrev1[Cl][0] != 0.000000 ||
+                    angPrev1[Cl][1] != 0.000000 ||
+                    angPrev2[Cl][0] != 0.000000 ||
+                    angPrev2[Cl][1] != 0.000000
+                )
+            )
         {
-            KickClient(Cl, "Usage of turn binds or spin binds is not allowed. Autokicked");
-            LogMessage("[StAC] Player %N was using turn binds! Kicked from server.", Cl);
-            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using turn binds! " ... COLOR_PALEGREEN ... "Kicked from server.", Cl);
+            pSilentDetects[Cl]++;
+            PrintColoredChatToAdmins(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N is probably using " ... COLOR_MEDIUMPURPLE ... "pSilentAim" ... COLOR_WHITE ..." or " ... COLOR_MEDIUMPURPLE     ... "NoRecoil"  ... COLOR_WHITE ... ". Detections so far: " ... COLOR_PALEGREEN ... "%i", Cl, pSilentDetects[Cl]);
+            LogMessage("[StAC] pSilent detection: curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
+            LogMessage("[StAC] pSilent detection: prev1  angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
+            LogMessage("[StAC] pSilent detection: prev2  angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
+            LogMessage("[StAC] Player %N is probably using pSilent or NoRecoil! Detections so far: %i.", Cl, pSilentDetects[Cl]);
+        }
+        // eye angles test
+        // a typical "angle clamper" will look something like this
+        // (stolen from unknowncheats)
+        // if (pCmd->viewangles.x > 89.0f)
+        //     pCmd->viewangles.x = 89.0f;
+        // if (pCmd->viewangles.x < -89.0f)
+        //     pCmd->viewangles.x = -89.0f;
+        // if (pCmd->viewangles.y > 180.0f)
+        //     pCmd->viewangles.y = 180.0f;
+        // if (pCmd->viewangles.y < -180.0f)
+        //     pCmd->viewangles.y = -180.0f;
+        if  (
+                (angles[0] < -89.0  || angles[0] > 89.0)  || // x angles are clamped between -89.0 and 89.0
+                (angles[1] > 180.0  || angles[1] < -180.0)   // y angles are clamped between -180.0 and 180.0
+            )
+        {
+            fakeAngDetects[Cl]++;
+            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N has " ... COLOR_MEDIUMPURPLE ... "invalid eye angles" ... COLOR_WHITE ..."! Current angles: " ... COLOR_MEDIUMPURPLE     ... "%i %i %i"  ... COLOR_WHITE ... ". Detections so far: " ... COLOR_PALEGREEN ... "%i", Cl, RoundToNearest(angles[0]), RoundToNearest(angles[1]), RoundToNearest(angles[2]), fakeAngDetects[Cl]);
+            CPrintToSTV(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N has " ... COLOR_MEDIUMPURPLE ... "invalid eye angles" ... COLOR_WHITE ..."! Current angles: " ... COLOR_MEDIUMPURPLE     ... "%i %i %i"  ... COLOR_WHITE ... ". Detections so far: " ... COLOR_PALEGREEN ... "%i", Cl, RoundToNearest(angles[0]), RoundToNearest(angles[1]), RoundToNearest(angles[2]), fakeAngDetects[Cl]);
         }
     }
 }
@@ -335,7 +398,15 @@ public ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const c
         {
             KickClient(Cl, "CVar %s = %s, outside reasonable bounds. Change it to .1 at most", cvarName, cvarValue);
             LogMessage("[StAC] Player %N was using CVar %s = %s, indicating interp explotation. Kicked from server.", Cl, cvarName, cvarValue);
-            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating interp explotation." ... COLOR_PALEGREEN ... "Kicked from server.", Cl, cvarName, cvarValue);
+            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating interp explotation. " ... COLOR_PALEGREEN ... "Kicked from server.", Cl, cvarName, cvarValue);
+        }
+    }
+    if (StrEqual(cvarName, "mat_fullbright"))
+    {
+        // cl_interp needs to be at or BELOW tf2's default settings
+        if (StringToInt(cvarValue) != 0)
+        {
+            PrintToChatAll("detected");
         }
     }
     // cl_cmdrate
@@ -352,21 +423,21 @@ public ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const c
         {
             KickClient(Cl, "CVar %s = %s, indicating pingmasking. Remove any non numeric characters", cvarName, cvarValue);
             LogMessage("[StAC] Player %N is using CVar %s = %s, ping-masking! Kicked from server", Cl, cvarName, cvarValue);
-            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating ping masking." ... COLOR_PALEGREEN ... "Kicked from server.", Cl, cvarName, cvarValue);
+            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating ping masking. " ... COLOR_PALEGREEN ... "Kicked from server.", Cl, cvarName, cvarValue);
         }
     }
     // there exists an exploit involving updaterate and lerp which allows you to have literally whatever interp you want. the "m_fLerpTime" netprop DOES NOT CHANGE so we have to check the actual cvar.
     else if (StrEqual(cvarName, "cl_updaterate"))
     {
         // don't bother checking if tickrate isnt default
-        if (tps < 70 && (StringToFloat(cvarValue) < 20.0 || StringToFloat(cvarValue) > 100))
+        if (tps < 70 && (StringToFloat(cvarValue) < 20.0 || StringToFloat(cvarValue) > 128.0))
         {
             KickClient(Cl, "CVar %s = %s, indicating possible lerp exploitation. Change it to between %i and %i. Recommended value: %i", cvarName, cvarValue, minUpdateRate, maxUpdateRate, optUpdateRate);
             LogMessage("[StAC] Player %N is using CVar %s = %s, indicating lerp exploitation! Kicked from server", Cl, cvarName, cvarValue);
-            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating lerp exploitation." ... COLOR_PALEGREEN ... "Kicked from server.", Cl, cvarName, cvarValue);
+            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating lerp exploitation. " ... COLOR_PALEGREEN ... "Kicked from server.", Cl, cvarName, cvarValue);
         }
     }
-    // cl_interpolate (hidden cvar! should never not be 1.0)
+    // cl_interpolate (hidden cvar! should NEVER not be 1.0)
     else if (StrEqual(cvarName, "cl_interpolate"))
     {
         if (StringToFloat(cvarValue) != 1.0)
@@ -428,7 +499,6 @@ public ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const c
     }
 }
 
-
 public BanUser(userid, char[] KickMsg)
 {
     int Cl = GetClientOfUserId(userid);
@@ -466,6 +536,7 @@ NetPropCheck(int userid)
         }
         // check netprops!!!
         // fov - client has to be alive, on a team, and have an above normal fov
+        int iFov = GetEntProp(Cl, Prop_Send, "m_iFOV", 1);
         if  (
                 IsPlayerAlive(Cl) &&
                 (
@@ -474,12 +545,12 @@ NetPropCheck(int userid)
                 )
                 &&
                 (
-                    GetEntProp(Cl, Prop_Send, "m_iFOV", 1) != 0
+                    iFov != 0
                 )
                 &&
                 (
-                    GetEntProp(Cl, Prop_Send, "m_iFOV", 1) > 90 ||
-                    GetEntProp(Cl, Prop_Send, "m_iFOV", 1) < 20
+                    iFov > 90 ||
+                    iFov < 20
                 )
             )
         {
@@ -497,15 +568,22 @@ NetPropCheck(int userid)
             LogMessage("[StAC] Player %N Netprop 'm_nForceTauntCam' was != 0, indicating cheating with THIRD PERSON! BANNED from server!", Cl);
         }
         // lerp check (UNTESTED)
-        // float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime");
-        // if ( lerp > 0.1)
-        // {
-        //     LogMessage("[StAC] Player %N Netprop 'm_fLerpTime' is %f, outside reasonable bounds!", Cl, lerp);
-        // }
-        // else if (lerp < 0.015151 || lerp > .5)
-        // {
-        //     LogMessage("[StAC] Player %N Netprop 'm_fLerpTime' is impossible value (%f) without cheating!", Cl, lerp);
-        // }
+        float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime");
+        if (lerp > 0.1)
+        {
+            KickClient(Cl, "[StAC] Your interp was %f ms, outside reasonable bounds! Kicked from server", lerp * 1000);
+            LogMessage("[StAC] Player %N Netprop 'm_fLerpTime' was %f, outside reasonable bounds!", Cl, lerp);
+            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N's " ... COLOR_MEDIUMPURPLE ... "interp" ... COLOR_WHITE ..." was " ... COLOR_MEDIUMPURPLE ... "%f"  ... COLOR_WHITE ... ", indicating interp explotation. " ... COLOR_PALEGREEN ... "Kicked from server.", Cl, lerp * 1000);
+        }
+        else if (lerp < 0.015151 || lerp > 0.5)
+        {
+            char KickMsg[256];
+            Format(KickMsg, sizeof(KickMsg), "[StAC] Player %N's interp was %f ms, impossible value without cheating! Banned from server.", Cl, lerp * 1000);
+            BanUser(userid, KickMsg);
+            LogMessage("[StAC] Player %N Netprop 'm_fLerpTime' is impossible value (%f) without cheating!", Cl, lerp);
+            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N's " ... COLOR_MEDIUMPURPLE ... "interp" ... COLOR_WHITE ..." was " ... COLOR_MEDIUMPURPLE ... "%f"  ... COLOR_WHITE ... ", indicating interp explotation through external cheating. " ... COLOR_PALEGREEN ... "Banned from server.", Cl, lerp * 1000);
+
+        }
         // third person "check" 2 (fixes some other methods of activating tp on clients, can't ban but it sort of works)
         ClientCommand(Cl, "firstperson");
         if (DEBUG)
@@ -531,6 +609,19 @@ public Event_RoundWin(Handle event, const char[] name, bool dontBroadcast)
     ActuallySetRandomSeed();
 }
 
+//char propSendsToCheck[][] =
+//{
+//    "m_nForceTauntCam",
+//    "m_iDefaultFOV",
+//    "m_iFOV",
+//    "m_iFOVStart"
+//};
+//
+//char propDatasToCheck[][] =
+//{
+//    "m_fLerpTime"
+//};
+
 char cvarsToCheck[][] =
 {
     "cl_interp",
@@ -539,9 +630,8 @@ char cvarsToCheck[][] =
     "cl_interpolate",
     "r_drawothermodels",
     "fov_desired",
-    "cam_idealyaw"
-    // will get added if i manage to fix the othermodels thing
-    // "mat_fullbright"
+    "cam_idealyaw",
+    "mat_fullbright"
 };
 
 QueryEverything(int userid)

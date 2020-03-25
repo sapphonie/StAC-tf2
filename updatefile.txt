@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "2.1.1"
+            "Latest"    "2.1.2"
         }
 
-        "Notes" "Changes in 2.1.1:"
-        "Notes" "- added nolerp check, added sourcebans support"
+        "Notes" "Changes in 2.1.2:"
+        "Notes" "- added silentaim/badangles checking :o"
     }
 
     "Files"
