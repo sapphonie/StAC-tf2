@@ -13,7 +13,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "2.1.3"
+#define PLUGIN_VERSION  "2.2.0"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -31,12 +31,10 @@ int turnTimes[MAXPLAYERS+1];
 int fovDesired[MAXPLAYERS+1];
 int fakeAngDetects[MAXPLAYERS+1];
 int pSilentDetects[MAXPLAYERS+1];
-int minUpdateRate;
-int maxUpdateRate;
-int optUpdateRate;
 float tickinterv;
 float tps;
 float maxAllowedTurnSecs = 1.0;
+int maxPsilentDetections = 15;
 float minRandCheckVal = 60.0;
 float maxRandCheckVal = 300.0;
 float angCur[MAXPLAYERS+1][2];
@@ -50,6 +48,7 @@ bool DEBUG = true;
 public OnPluginStart()
 {
     RegAdminCmd("sm_forcecheckall", ForceCheckAll, ADMFLAG_ROOT, "Force check all client convars (ALL CLIENTS) for anticheat stuff");
+    RegAdminCmd("sm_showdetections", ShowDetections, ADMFLAG_ROOT, "Show all current detections on all connected clients");
 //  RegAdminCmd("sm_forcecheck", ForceCheck, ADMFLAG_ROOT, "Force check all client convars (SINGLE CLIENT) for anticheat stuff");
     // get tick interval - some modded tf2 servers run at >66.7 tick!
     tickinterv = GetTickInterval();
@@ -58,36 +57,14 @@ public OnPluginStart()
     HookEvent("teamplay_round_win", Event_RoundWin);
     // reset random server seed
     ActuallySetRandomSeed();
-    // todo: Create ConVars for adjusting settings
+    //  grab round start events for calculating tps
     HookEvent("teamplay_round_start", eRoundStart);
     // check sourcebans capibility
     CreateTimer(2.0, checkSourceBans);
     // check EVERYONE's cvars on plugin reload
     CreateTimer(5.0, checkEveryone);
-    // attempt at forcibly disabling othermodels
-    //  CreateConVar
-    //  (
-    //      "r_drawothermodels",
-    //      "1.0",
-    //      "controls if rglupdater uses the beta branch on github",
-    //      // notify clients of cvar change
-    //      FCVAR_NOTIFY & FCVAR_REPLICATED,
-    //      true,
-    //      1.0,
-    //      true,
-    //      1.0
-    //  );
-    //  for (int Cl = 0; Cl < MaxClients + 1; Cl++)
-    //  {
-    //      if (IsValidClient(Cl))
-    //      {
-    //          ClientCommand(Cl, "r_drawothermodels 1");
-    //          FakeClientCommandEx(Cl, "r_drawothermodels 1");
-    //          ClientCommand(Cl, "mat_fullbright 0");
-    //          FakeClientCommandEx(Cl, "mat_fullbright 0");
-    //          SendConVarValue(Cl, FindConVar("r_drawothermodels"), "1");
-    //      }
-    //  }
+    // todo: Create ConVars for adjusting settings
+    LogMessage("[StAC] Plugin loaded");
 }
 
 public Action checkSourceBans(Handle timer)
@@ -115,10 +92,39 @@ public Action checkEveryone(Handle timer)
     ForceCheckAll(0, 0);
 }
 
+public Action ShowDetections(int client, int args)
+{
+    LogMessage("[StAC] == CURRENT DETECTIONS == ");
+    for (int Cl = 0; Cl < MaxClients + 1; Cl++)
+    {
+        if (IsValidClient(Cl))
+        {
+            if (turnTimes[Cl] >= 1|| pSilentDetects[Cl] >= 1 || fakeAngDetects[Cl] >= 1)
+            {
+                LogMessage("Detections for %L", Cl);
+                if (turnTimes[Cl] >= 1)
+                {
+                    LogMessage("- %i turnTimes for %N", turnTimes[Cl], Cl);
+                }
+                if (pSilentDetects[Cl] >= 1)
+                {
+                    LogMessage("- %i pSilentDetects for %N", pSilentDetects[Cl], Cl);
+                }
+                if (fakeAngDetects[Cl] >= 1)
+                {
+                    LogMessage("- %i fakeAngDetects for %N", fakeAngDetects[Cl], Cl);
+                }
+            }
+        }
+    }
+    LogMessage("[StAC] == END DETECTIONS == ");
+}
+
 public OnPluginEnd()
 {
     NukeTimers();
     OnMapEnd();
+    LogMessage("[StAC] Plugin unloaded");
 }
 
 // reseed random server seed to help prevent certain nospread stuff from working (probably)
@@ -179,7 +185,7 @@ ResetTimers()
 
 public Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
 {
-    DoUpdateRateMath();
+    DoTPSMath();
 }
 
 public Action timer_TriggerTimedStuff(Handle timer)
@@ -187,30 +193,28 @@ public Action timer_TriggerTimedStuff(Handle timer)
     ActuallySetRandomSeed();
 }
 
-// set stuff for updaterate checking here.
-DoUpdateRateMath()
+// set stuff for tps based checking here.
+DoTPSMath()
 {
-    // there is NO REASON to have updaterate below default (20) or above 128 on a default server.
-    // many tf2 cfgs have it set at 100 or 128 and it would annoy way too many ppl to set it to 66
+    tickinterv    = GetTickInterval();
     tps           = Pow(tickinterv, -1.0);
-    optUpdateRate = RoundToFloor(tps);
     if (DEBUG)
     {
-        LogMessage("tickinterv %f tps %f optUpdateRate %i", tickinterv, tps, optUpdateRate);
+        LogMessage("tickinterv %f tps %f", tickinterv, tps);
     }
 }
 
 public OnMapStart()
 {
     ActuallySetRandomSeed();
+    DoTPSMath();
     ResetTimers();
-    DoUpdateRateMath();
 }
 
 public OnMapEnd()
 {
     ActuallySetRandomSeed();
-    DoUpdateRateMath();
+    DoTPSMath();
     NukeTimers();
 }
 
@@ -238,10 +242,12 @@ public OnClientPostAdminCheck(Cl)
         // {
         //     PrintColoredChatAll(Cl, COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... "Player %N is likely using a proxy!", Cl);
         // }
-
-        //  clear all old values for id based stuff
-        turnTimes[Cl]              = 0;
-        g_hQueryTimer[Cl]          = null;
+        // clear all old values for id based stuff
+        turnTimes[Cl]      = 0;
+        pSilentDetects[Cl] = 0;
+        fakeAngDetects[Cl] = 0;
+        // clear timer
+        g_hQueryTimer[Cl]  = null;
         // query convars on player connect
         LogMessage("[StAC] %N joined. Checking cvars", Cl);
         g_hQueryTimer[Cl] = CreateTimer(GetRandomFloat(minRandCheckVal, maxRandCheckVal), Timer_CheckClientConVars, userid);
@@ -250,6 +256,10 @@ public OnClientPostAdminCheck(Cl)
 
 public OnClientDisconnect_Post(Cl)
 {
+    // clear all old values for id based stuff
+    turnTimes[Cl]      = 0;
+    pSilentDetects[Cl] = 0;
+    fakeAngDetects[Cl] = 0;
     if (g_hQueryTimer[Cl] != null)
     {
         KillTimer(g_hQueryTimer[Cl]);
@@ -287,6 +297,8 @@ public Action OnPlayerRunCmd
 {
     if (IsValidClient(Cl))
     {
+        // we need this later for decrimenting psilent and fakeang detections after 20 minutes!
+        int userid = GetClientUserId(Cl);
         // turn bind test
         if (buttons & IN_LEFT || buttons & IN_RIGHT)
         {
@@ -320,19 +332,21 @@ public Action OnPlayerRunCmd
         // L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: prev2  angles: x 5.120096 y 9.763162
         // silent aim works by aimbotting for 1 frame and then snapping your viewangle back to what it was
         // we can just look for these snaps and log them as detections!
+        // note that this won't detect some snaps when a player is moving their strafe keys and mouse @ the same time while they are aimlocking.
+        // i'll *try* to work mouse movement into this function at SOME point but it works reasonably well for right now.
         if  (
-                // client needs to be on a team and alive [might not be nececcary, just in case]
-                IsPlayerAlive(Cl) &&
+                // client needs to be on a team and alive otherwise why bother checking them lol
                 (
-                    TF2_GetClientTeam(Cl) == TFTeam_Red ||
-                    TF2_GetClientTeam(Cl) == TFTeam_Blue
+                    IsClientPlaying(Cl)
                 )
                 &&
+                // so the current and 2nd previous angles match...
                 (
                     angCur[Cl][0] == angPrev2[Cl][0] &&
                     angCur[Cl][1] == angPrev2[Cl][1]
                 )
                 &&
+                // BUT the 1st previous (in between) angle doesnt?
                 (
                     angPrev1[Cl][0] != angCur[Cl][0]   &&
                     angPrev1[Cl][1] != angCur[Cl][0]   &&
@@ -340,23 +354,68 @@ public Action OnPlayerRunCmd
                     angPrev1[Cl][1] != angPrev2[Cl][1]
                 )
                 &&
-                // make sure we dont get any fake detections on startup
+                // lets make sure theres a difference of at least 0.5 degrees on either axis to avoid most fake detections
+                // examples of fake detections we want to avoid:
+                // 03/25/2020 - 18:18:11: [stac.smx] [StAC] pSilent detection on [redacted]: curang angles: x 14.871331 y 154.979812
+                // 03/25/2020 - 18:18:11: [stac.smx] [StAC] pSilent detection on [redacted]: prev1  angles: x 14.901910 y 155.010391
+                // 03/25/2020 - 18:18:11: [stac.smx] [StAC] pSilent detection on [redacted]: prev2  angles: x 14.871331 y 154.979812
+                // and
+                // 03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: curang angles: x 21.516006 y -140.723709
+                // 03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: prev1  angles: x 21.560007 y -140.943710
+                // 03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: prev2  angles: x 21.516006 y -140.723709
                 (
-                    angCur[Cl][0]   != 0.000000 ||
-                    angCur[Cl][1]   != 0.000000 ||
-                    angPrev1[Cl][0] != 0.000000 ||
-                    angPrev1[Cl][1] != 0.000000 ||
-                    angPrev2[Cl][0] != 0.000000 ||
+                    FloatAbs(angCur[Cl][0] - angPrev1[Cl][0]) > 0.5 ||
+                    FloatAbs(angCur[Cl][1] - angPrev1[Cl][1]) > 0.5
+                )
+                &&
+                // and make sure we dont get any fake detections on startup (might not really be neccecary)
+                // also ignores weird angle resets in mge
+                (
+                    angCur[Cl][0]   != 0.000000 &&
+                    angCur[Cl][1]   != 0.000000 &&
+                    angPrev1[Cl][0] != 0.000000 &&
+                    angPrev1[Cl][1] != 0.000000 &&
+                    angPrev2[Cl][0] != 0.000000 &&
                     angPrev2[Cl][1] != 0.000000
                 )
             )
         {
             pSilentDetects[Cl]++;
-            PrintColoredChatToAdmins(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N is probably using " ... COLOR_MEDIUMPURPLE ... "pSilentAim" ... COLOR_WHITE ..." or " ... COLOR_MEDIUMPURPLE     ... "NoRecoil"  ... COLOR_WHITE ... ". Detections so far: " ... COLOR_PALEGREEN ... "%i", Cl, pSilentDetects[Cl]);
-            LogMessage("[StAC] pSilent detection: curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
-            LogMessage("[StAC] pSilent detection: prev1  angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
-            LogMessage("[StAC] pSilent detection: prev2  angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
-            LogMessage("[StAC] Player %N is probably using pSilent or NoRecoil! Detections so far: %i.", Cl, pSilentDetects[Cl]);
+            // decrement the detection after 20 mins
+            CreateTimer(1200.0, Timer_decr_pSilent, userid);
+            // print a bunch of bullshit
+            // print to admins only up to the 19th snap
+            // i know this is ugly. ill mess with it later.
+            if (pSilentDetects[Cl] <= (maxPsilentDetections - 1))
+            {
+                PrintColoredChatToAdmins(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N is possibly using " ... COLOR_MEDIUMPURPLE ... "pSilentAim" ... COLOR_WHITE ..." or " ... COLOR_MEDIUMPURPLE     ... "NoRecoil"  ... COLOR_WHITE ... ". Detections so far: " ... COLOR_PALEGREEN ... "%i", Cl, pSilentDetects[Cl]);
+                PrintColoredChatToAdmins("[StAC] pSilent detection on %N: curang angles: x %f y %f", Cl, angCur[Cl][0], angCur[Cl][1]);
+                PrintColoredChatToAdmins("[StAC] pSilent detection on %N: prev1  angles: x %f y %f", Cl, angPrev1[Cl][0], angPrev1[Cl][1]);
+                PrintColoredChatToAdmins("[StAC] pSilent detection on %N: prev2  angles: x %f y %f", Cl, angPrev2[Cl][0], angPrev2[Cl][1]);
+                CPrintToSTV(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N is possibly using " ... COLOR_MEDIUMPURPLE ... "pSilentAim" ... COLOR_WHITE ..." or " ... COLOR_MEDIUMPURPLE     ... "NoRecoil"  ... COLOR_WHITE ... ". Detections so far: " ... COLOR_PALEGREEN ... "%i", Cl, pSilentDetects[Cl]);
+                CPrintToSTV("[StAC] pSilent detection on %N: curang angles: x %f y %f", Cl, angCur[Cl][0], angCur[Cl][1]);
+                CPrintToSTV("[StAC] pSilent detection on %N: prev1  angles: x %f y %f", Cl, angPrev1[Cl][0], angPrev1[Cl][1]);
+                CPrintToSTV("[StAC] pSilent detection on %N: prev2  angles: x %f y %f", Cl, angPrev2[Cl][0], angPrev2[Cl][1]);
+                LogMessage("[StAC] Player %N is possibly using pSilent or NoRecoil! Detections so far: %i.", Cl, pSilentDetects[Cl]);
+                LogMessage("[StAC] pSilent detection on %N: curang angles: x %f y %f", Cl, angCur[Cl][0], angCur[Cl][1]);
+                LogMessage("[StAC] pSilent detection on %N: prev1  angles: x %f y %f", Cl, angPrev1[Cl][0], angPrev1[Cl][1]);
+                LogMessage("[StAC] pSilent detection on %N: prev2  angles: x %f y %f", Cl, angPrev2[Cl][0], angPrev2[Cl][1]);
+            }
+            else if (pSilentDetects[Cl] >= maxPsilentDetections)
+            // BAN USER
+            {
+                char KickMsg[256];
+                Format(KickMsg, sizeof(KickMsg), "Player %N was using pSilentAim or NoRecoil. Total detections: %i. Banned from server", Cl, pSilentDetects[Cl]);
+                BanUser(userid, KickMsg);
+                PrintColoredChatAll("[StAC] pSilent detection on %N: curang angles: x %f y %f", Cl, angCur[Cl][0], angCur[Cl][1]);
+                PrintColoredChatAll("[StAC] pSilent detection on %N: prev1  angles: x %f y %f", Cl, angPrev1[Cl][0], angPrev1[Cl][1]);
+                PrintColoredChatAll("[StAC] pSilent detection on %N: prev2  angles: x %f y %f", Cl, angPrev2[Cl][0], angPrev2[Cl][1]);
+                PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using " ... COLOR_MEDIUMPURPLE ... "pSilentAim" ... COLOR_WHITE ..." or " ... COLOR_MEDIUMPURPLE ... "NoRecoil"  ... COLOR_WHITE ... ". Total detections: " ... COLOR_MEDIUMPURPLE ... "%i" ... COLOR_WHITE ... ". " ... COLOR_PALEGREEN ... "BANNED from server", Cl, pSilentDetects[Cl]);
+                LogMessage("[StAC] Player %N was banned for using pSilent or NoRecoil! Total detections: %i.", Cl, pSilentDetects[Cl]);
+                LogMessage("[StAC] pSilent detection on %N: curang angles: x %f y %f", Cl, angCur[Cl][0], angCur[Cl][1]);
+                LogMessage("[StAC] pSilent detection on %N: prev1  angles: x %f y %f", Cl, angPrev1[Cl][0], angPrev1[Cl][1]);
+                LogMessage("[StAC] pSilent detection on %N: prev2  angles: x %f y %f", Cl, angPrev2[Cl][0], angPrev2[Cl][1]);
+            }
         }
         // eye angles test
         // a typical "angle clamper" will look something like this
@@ -370,13 +429,48 @@ public Action OnPlayerRunCmd
         // if (pCmd->viewangles.y < -180.0f)
         //     pCmd->viewangles.y = -180.0f;
         if  (
-                (angles[0] < -89.0  || angles[0] > 89.0)  || // x angles are clamped between -89.0 and 89.0
-                (angles[1] > 180.0  || angles[1] < -180.0)   // y angles are clamped between -180.0 and 180.0
+                // we want to ignore spectator's fakeangs here
+                (
+                    IsClientPlaying(Cl)
+                )
+                &&
+                (angles[0] < -89.0 || angles[0] > 89.0)  || // x angles are clamped between -89.0 and 89.0
+                (angles[1] > 180.0 || angles[1] < -180.0)   // y angles are clamped between -180.0 and 180.0
             )
         {
             fakeAngDetects[Cl]++;
-            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N has " ... COLOR_MEDIUMPURPLE ... "invalid eye angles" ... COLOR_WHITE ..."! Current angles: " ... COLOR_MEDIUMPURPLE     ... "%i %i %i"  ... COLOR_WHITE ... ". Detections so far: " ... COLOR_PALEGREEN ... "%i", Cl, RoundToNearest(angles[0]), RoundToNearest(angles[1]), RoundToNearest(angles[2]), fakeAngDetects[Cl]);
+            // idea stolen from lilac! have this detection expire in 20 minutes
+            CreateTimer(1200.0, Timer_decrFakeAngs, userid);
+            PrintColoredChatToAdmins(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N has " ... COLOR_MEDIUMPURPLE ... "invalid eye angles" ... COLOR_WHITE ..."! Current angles: " ... COLOR_MEDIUMPURPLE     ... "%i %i %i"  ... COLOR_WHITE ... ". Detections so far: " ... COLOR_PALEGREEN ... "%i", Cl, RoundToNearest(angles[0]), RoundToNearest(angles[1]), RoundToNearest(angles[2]), fakeAngDetects[Cl]);
             CPrintToSTV(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N has " ... COLOR_MEDIUMPURPLE ... "invalid eye angles" ... COLOR_WHITE ..."! Current angles: " ... COLOR_MEDIUMPURPLE     ... "%i %i %i"  ... COLOR_WHITE ... ". Detections so far: " ... COLOR_PALEGREEN ... "%i", Cl, RoundToNearest(angles[0]), RoundToNearest(angles[1]), RoundToNearest(angles[2]), fakeAngDetects[Cl]);
+            LogMessage("[StAC] Player %N has invalid eye angles! Current angles: %i %i %i. Detections so far: %i", Cl, RoundToNearest(angles[0]), RoundToNearest(angles[1]), RoundToNearest(angles[2]), fakeAngDetects[Cl]);
+        }
+    }
+}
+
+
+public Action Timer_decr_pSilent(Handle timer, any userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    if (IsValidClient(Cl))
+    {
+        if (fakeAngDetects[Cl] > 0)
+        {
+            pSilentDetects[Cl]--;
+        }
+    }
+}
+
+public Action Timer_decrFakeAngs(Handle timer, any userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    if (IsValidClient(Cl))
+    {
+        if (fakeAngDetects[Cl] > 0)
+        {
+            fakeAngDetects[Cl]--;
         }
     }
 }
@@ -408,12 +502,17 @@ public ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const c
             PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating interp explotation. " ... COLOR_PALEGREEN ... "Kicked from server.", Cl, cvarName, cvarValue);
         }
     }
+    // mat_fullbright
     if (StrEqual(cvarName, "mat_fullbright"))
     {
-        // cl_interp needs to be at or BELOW tf2's default settings
+        // can only ever be 0 unless you're cheating or on a map with uncompiled lighting
         if (StringToInt(cvarValue) != 0)
         {
-            PrintToChatAll("detected");
+            char KickMsg[256];
+            Format(KickMsg, sizeof(KickMsg), "CVar %s was %s, indicating FULLBRIGHT! Banned from server", cvarName, cvarValue);
+            BanUser(userid, KickMsg);
+            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating FULLBRIGHT!" ... COLOR_PALEGREEN ... "BANNED from server.", Cl, cvarName, cvarValue);
+            LogMessage("[StAC] Player %N is using CVar %s = %s, indicating FULLBRIGHT! BANNED from server!", Cl, cvarName, cvarValue);
         }
     }
     // cl_cmdrate
@@ -437,11 +536,14 @@ public ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const c
     else if (StrEqual(cvarName, "cl_updaterate"))
     {
         // don't bother checking if tickrate isnt default
-        if (tps < 70 && (StringToFloat(cvarValue) < 20.0 || StringToFloat(cvarValue) > 128.0))
+        if (tps < 70.0 && tps > 60.0)
         {
-            KickClient(Cl, "CVar %s = %s, indicating possible lerp exploitation. Change it to between %i and %i. Recommended value: %i", cvarName, cvarValue, minUpdateRate, maxUpdateRate, optUpdateRate);
-            LogMessage("[StAC] Player %N is using CVar %s = %s, indicating lerp exploitation! Kicked from server", Cl, cvarName, cvarValue);
-            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating lerp exploitation. " ... COLOR_PALEGREEN ... "Kicked from server.", Cl, cvarName, cvarValue);
+            if ((StringToFloat(cvarValue) < 20.0 || StringToFloat(cvarValue) > 128.0))
+            {
+                KickClient(Cl, "CVar %s = %s, indicating possible lerp exploitation. Change it to between 20 and 128. Recommended value: 66", cvarName, cvarValue);
+                LogMessage("[StAC] Player %N is using CVar %s = %s, indicating lerp exploitation! Kicked from server", Cl, cvarName, cvarValue);
+                PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating lerp exploitation. " ... COLOR_PALEGREEN ... "Kicked from server.", Cl, cvarName, cvarValue);
+            }
         }
     }
     // cl_interpolate (hidden cvar! should NEVER not be 1.0)
@@ -561,10 +663,8 @@ NetPropCheck(int userid)
         // fov - client has to be alive, on a team, and have an above normal fov
         int iFov = GetEntProp(Cl, Prop_Send, "m_iFOV", 1);
         if  (
-                IsPlayerAlive(Cl) &&
                 (
-                    TF2_GetClientTeam(Cl) == TFTeam_Red ||
-                    TF2_GetClientTeam(Cl) == TFTeam_Blue
+                    IsClientPlaying(Cl)
                 )
                 &&
                 (
@@ -590,23 +690,27 @@ NetPropCheck(int userid)
             PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using Netprop " ... COLOR_MEDIUMPURPLE ... "m_nForceTauntCam" ...    COLOR_WHITE ..." != " ... COLOR_MEDIUMPURPLE ... "0"  ... COLOR_WHITE ... ", cheating with THIRD PERSON!" ... COLOR_PALEGREEN ... "BANNED from server.", Cl);
             LogMessage("[StAC] Player %N Netprop 'm_nForceTauntCam' was != 0, indicating cheating with THIRD PERSON! BANNED from server!", Cl);
         }
-        // lerp check (UNTESTED)
-        float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime");
-        if (lerp > 0.1)
-        {
-            KickClient(Cl, "[StAC] Your interp was %f ms, outside reasonable bounds! Kicked from server", lerp * 1000);
-            LogMessage("[StAC] Player %N Netprop 'm_fLerpTime' was %f, outside reasonable bounds!", Cl, lerp);
-            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N's " ... COLOR_MEDIUMPURPLE ... "interp" ... COLOR_WHITE ..." was " ... COLOR_MEDIUMPURPLE ... "%f"  ... COLOR_WHITE ... ", indicating interp explotation. " ... COLOR_PALEGREEN ... "Kicked from server.", Cl, lerp * 1000);
-        }
-        else if (lerp < 0.015151 || lerp > 0.5)
-        {
-            char KickMsg[256];
-            Format(KickMsg, sizeof(KickMsg), "[StAC] Player %N's interp was %f ms, impossible value without cheating! Banned from server.", Cl, lerp * 1000);
-            BanUser(userid, KickMsg);
-            LogMessage("[StAC] Player %N Netprop 'm_fLerpTime' is impossible value (%f) without cheating!", Cl, lerp);
-            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N's " ... COLOR_MEDIUMPURPLE ... "interp" ... COLOR_WHITE ..." was " ... COLOR_MEDIUMPURPLE ... "%f"  ... COLOR_WHITE ... ", indicating interp explotation through external cheating. " ... COLOR_PALEGREEN ... "Banned from server.", Cl, lerp * 1000);
-
-        }
+        // lerp check (BROKEN RN)
+        // don't bother on non default tick servers until i get around to Doing Math to make it work on other tickrates
+        //if (tps < 70.0 && tps > 60.0)
+        //{
+        //    float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime");
+        //    if (lerp > 0.1)
+        //    {
+        //        KickClient(Cl, "[StAC] Your interp was %f ms, outside reasonable bounds! Kicked from server", lerp * 1000);
+        //        LogMessage("[StAC] Player %N Netprop 'm_fLerpTime' was %f, outside reasonable bounds!", Cl, lerp);
+        //        PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N's " ... COLOR_MEDIUMPURPLE ... "interp" ... COLOR_WHITE ..." was " ... COLOR_MEDIUMPURPLE ... "%f"  ... COLOR_WHITE ... ", indicating interp explotation. " ... COLOR_PALEGREEN ... "Kicked from server.", Cl, lerp * 1000);
+        //    }
+        //    else if (lerp < 0.015151 || lerp > 0.5)
+        //    {
+        //        char KickMsg[256];
+        //        Format(KickMsg, sizeof(KickMsg), "[StAC] Player %N's interp was %f ms, impossible value without cheating! Banned from server.", Cl, lerp * 1000);
+        //        BanUser(userid, KickMsg);
+        //        LogMessage("[StAC] Player %N Netprop 'm_fLerpTime' is impossible value (%f) without cheating!", Cl, lerp);
+        //        PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N's " ... COLOR_MEDIUMPURPLE ... "interp" ... COLOR_WHITE ..." was " ...   COLOR_MEDIUMPURPLE ... "%f"  ... COLOR_WHITE ... ", indicating interp explotation through external cheating. " //... COLOR_PALEGREEN ... "Banned from server.", Cl, lerp * 1000);
+        //
+        //    }
+        //}
         // third person "check" 2 (fixes some other methods of activating tp on clients, can't ban but it sort of works)
         ClientCommand(Cl, "firstperson");
         if (DEBUG)
@@ -752,6 +856,26 @@ stock bool IsValidClient(client)
         return false;
     }
     return IsClientInGame(client);
+}
+
+// is client on a team and not dead
+stock bool IsClientPlaying(client)
+{
+    TFTeam team = TF2_GetClientTeam(client);
+    if  (
+            (
+                IsPlayerAlive(client)
+            )
+            &&
+            (
+                team == TFTeam_Red ||
+                team == TFTeam_Blue
+            )
+        )
+    {
+        return true;
+    }
+    return false;
 }
 
 // print colored chat to all server/sourcemod admins

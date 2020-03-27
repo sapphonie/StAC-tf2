@@ -4,11 +4,13 @@
     {
         "Version"
         {
-            "Latest"    "2.1.3"
+            "Latest"    "2.2.0"
         }
 
-        "Notes" "Changes in 2.1.3:"
-        "Notes" "- fixed badangles checking and added newline-in-chat autobanning"
+        "Notes" "Changes in 2.2.0:"
+        "Notes" "- fixed lerp autobanning on high tick"
+	"Notes" "tightened up psilent detection"
+	"Notes" "set detections to automatically decrement after 20 mins"
     }
 
     "Files"
