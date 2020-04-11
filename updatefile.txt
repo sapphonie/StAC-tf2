@@ -4,13 +4,12 @@
     {
         "Version"
         {
-            "Latest"    "2.2.0"
+            "Latest"    "2.2.2"
         }
 
-        "Notes" "Changes in 2.2.0:"
-        "Notes" "- fixed lerp autobanning on high tick"
-	"Notes" "tightened up psilent detection"
-	"Notes" "set detections to automatically decrement after 20 mins"
+        "Notes" "Changes in 2.2.2:"
+        "Notes" "- refactored OnPlayerCmd detections"
+        "Notes" "- fixed false positives on players taunting/teleporting/immediately respawning"
     }
 
     "Files"
