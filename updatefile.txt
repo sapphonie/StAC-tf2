@@ -4,12 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "2.2.2"
+            "Latest"    "2.2.3"
         }
 
-        "Notes" "Changes in 2.2.2:"
-        "Notes" "- refactored OnPlayerCmd detections"
-        "Notes" "- fixed false positives on players taunting/teleporting/immediately respawning"
+        "Notes" "Changes in 2.2.3:"
+        "Notes" "- minimized amount of time not checking players angles with taunting/teleing/spawning"
     }
 
     "Files"

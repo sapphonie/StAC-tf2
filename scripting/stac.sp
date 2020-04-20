@@ -13,7 +13,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "2.2.2"
+#define PLUGIN_VERSION  "2.2.3"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -60,6 +60,12 @@ public OnPluginStart()
     if (!StrEqual(gamefolder, "tf", false))
     {
         SetFailState("[StAC] This plugin is only supported for TF2! Aborting!");
+    }
+
+    // updater
+    if (LibraryExists("updater"))
+    {
+        Updater_AddPlugin(UPDATE_URL);
     }
 
     // get rid of any possible exploits by using teleporters and fov
@@ -314,7 +320,7 @@ public OnClientPostAdminCheck(Cl)
         // clear per client values
         ClearClBasedVars(userid);
         // clear timer
-        g_hQueryTimer[Cl]  = null;
+        g_hQueryTimer[Cl] = null;
         // query convars on player connect
         LogMessage("[StAC] %N joined. Checking cvars", Cl);
         g_hQueryTimer[Cl] = CreateTimer(GetRandomFloat(minRandCheckVal, maxRandCheckVal), Timer_CheckClientConVars, userid);
@@ -459,17 +465,17 @@ public Action OnPlayerRunCmd
                 if
                 (
                     (
-                        tickdTime - 0.5 > timeSinceSpawn[Cl]
+                        tickdTime - 0.1 > timeSinceSpawn[Cl]
                     )
                     &&
                     // and 0.5 seconds after taunting
                     (
-                        tickdTime - 0.5 > timeSinceTaunt[Cl]
+                        tickdTime - 0.1 > timeSinceTaunt[Cl]
                     )
                     &&
                     // and 0.5 seconds after teleporting
                     (
-                       tickdTime - 0.5 > timeSinceTeled[Cl]
+                       tickdTime - 0.1 > timeSinceTeled[Cl]
                     )
                 )
                 {
