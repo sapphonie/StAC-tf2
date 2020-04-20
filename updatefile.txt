@@ -4,11 +4,12 @@
     {
         "Version"
         {
-            "Latest"    "2.2.3"
+            "Latest"    "2.2.4"
         }
 
-        "Notes" "Changes in 2.2.3:"
-        "Notes" "- minimized amount of time not checking players angles with taunting/teleing/spawning"
+        "Notes" "Changes in 2.2.3/2.2.4:"
+        "Notes" "- minimized amount of time not checking players angles after taunting/teleing/spawning"
+        "Notes" "- removed cam_idealyaw check"
     }
 
     "Files"

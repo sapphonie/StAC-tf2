@@ -13,7 +13,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "2.2.3"
+#define PLUGIN_VERSION  "2.2.4"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -788,19 +788,6 @@ public ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const c
             PrintColoredChatToAdmins(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N has an FOV below 90! FOV: %f", Cl, StringToFloat(cvarValue));
         }
     }
-    // cam_idealyaw
-    // yet another third person check!
-    else if (StrEqual(cvarName, "cam_idealyaw"))
-    {
-        if (StringToFloat(cvarValue) != 0.0)
-        {
-            char KickMsg[256];
-            Format(KickMsg, sizeof(KickMsg), "CVar %s was %s, indicating cheating with THIRD PERSON! Banned from server", cvarName, cvarValue);
-            BanUser(userid, KickMsg);
-            PrintColoredChatAll(COLOR_HOTPINK ... "[StAC]" ... COLOR_WHITE ... " Player %N was using CVar " ... COLOR_MEDIUMPURPLE ... "%s" ... COLOR_WHITE ..." = " ... COLOR_MEDIUMPURPLE ... "%s"  ... COLOR_WHITE ... ", indicating cheating with THIRD PERSON!" ... COLOR_PALEGREEN ... "BANNED from server.", Cl, cvarName, cvarValue);
-            LogMessage("[StAC] Player %N was using CVar %s = %s, indicating cheating with THIRD PERSON! BANNED from server!", Cl, cvarName, cvarValue);
-        }
-    }
 //    else if (StrEqual(cvarName, "sensitivity"))
 //    {
 //        sensFor[Cl] = StringToFloat(cvarValue);
@@ -971,7 +958,6 @@ char cvarsToCheck[][] =
     "cl_interpolate",
     "r_drawothermodels",
     "fov_desired",
-    "cam_idealyaw",
     "mat_fullbright",
     "sensitivity",
     "cat"
