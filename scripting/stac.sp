@@ -14,7 +14,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.0.0"
+#define PLUGIN_VERSION  "3.0.1"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -233,8 +233,8 @@ initCvars()
     AutoExecConfig_CreateConVar
     (
         "stac_min_interp_ms",
-        "15",
-        "[StAC] minimum interp milliseconds that a client is allowed to have before getting autokicked. set this to -1 to disable having a min interp\n(recommended 15)",
+        "10",
+        "[StAC] minimum interp milliseconds that a client is allowed to have before getting autokicked. set this to -1 to disable having a min interp\n(recommended 10)",
         FCVAR_NONE,
         true,
         -1.0,
