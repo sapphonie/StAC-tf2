@@ -1,6 +1,6 @@
 // see the readme for more info:
 // https://github.com/stephanieLGBT/StAC-tf2/blob/master/README.md
-// i love my girlfriends
+// i love my partners
 #pragma semicolon 1
 
 #include <sourcemod>
@@ -14,7 +14,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.0.1"
+#define PLUGIN_VERSION  "3.0.2"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -47,6 +47,7 @@ float angCur[MAXPLAYERS+1][2];
 float angPrev1[MAXPLAYERS+1][2];
 float angPrev2[MAXPLAYERS+1][2];
 // STORED VARS FOR INDIVIDUAL CLIENTS
+bool playerTaunting[MAXPLAYERS+1];
 float interpFor[MAXPLAYERS+1]      = -1.0;
 float interpRatioFor[MAXPLAYERS+1] = -1.0;
 float updaterateFor[MAXPLAYERS+1]  = -1.0;
@@ -93,10 +94,7 @@ int MaxInterpRatio = -2;
 
 public OnPluginStart()
 {
-    // lifted from lilac
-    char gamefolder[32];
-    GetGameFolderName(gamefolder, sizeof(gamefolder));
-    if (!StrEqual(gamefolder, "tf", false))
+    if (GetEngineVersion() != Engine_TF2)
     {
         SetFailState("[StAC] This plugin is only supported for TF2! Aborting!");
     }
@@ -557,6 +555,17 @@ public Action ePlayerTeled(Handle event, char[] name, bool dontBroadcast)
     }
 }
 
+public TF2_OnConditionAdded(int Cl, TFCond condition)
+{
+    if (IsValidClient(Cl))
+    {
+        if (condition == TFCond_Taunting)
+        {
+            playerTaunting[Cl] = true;
+        }
+    }
+}
+
 public TF2_OnConditionRemoved(int Cl, TFCond condition)
 {
     if (IsValidClient(Cl))
@@ -564,6 +573,7 @@ public TF2_OnConditionRemoved(int Cl, TFCond condition)
         if (condition == TFCond_Taunting)
         {
             timeSinceTaunt[Cl] = GetEngineTime();
+            playerTaunting[Cl] = false;
         }
     }
 }
@@ -701,12 +711,13 @@ public Action OnPlayerRunCmd
     // grab current time to compare to time since last spawn/taunt/tele
     float engineTime = GetEngineTime();
     if  (
-            // make sure client is real, not a bot, on a team, AND didnt spawn, taunt, or teleport in the last .1 seconds
+            // make sure client is real, not a bot, on a team, AND didnt spawn, taunt, or teleport in the last .1 seconds AND isnt taunting
             IsValidClient(Cl)
              && IsClientPlaying(Cl)
              && engineTime - 0.1 > timeSinceSpawn[Cl]
              && engineTime - 0.1 > timeSinceTaunt[Cl]
              && engineTime - 0.1 > timeSinceTeled[Cl]
+             && !playerTaunting[Cl]
         )
     {
         // we need this later for decrimenting psilent and fakeang detections after 20 minutes!
