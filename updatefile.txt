@@ -4,12 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "2.2.4"
+            "Latest"    "3.0.1"
         }
 
-        "Notes" "Changes in 2.2.3/2.2.4:"
-        "Notes" "- minimized amount of time not checking players angles after taunting/teleing/spawning"
-        "Notes" "- removed cam_idealyaw check"
+        "Notes" "Changes in 3.0.1:"
+        "Notes" "- added cvars, cleaned up lots of stuff! edit /tf/cfg/sourcemod/stac.cfg after updating to configure stac!"
     }
 
     "Files"
