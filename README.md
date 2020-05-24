@@ -8,7 +8,7 @@ I can not make guarantees on the stability or performance of this plugin as of y
 - interp/lerp abuse (some detection methods only available on default tickrate servers)
 *(kick if outside of values you set with `stac_min_interp_ms` and `stac_max_interp_ms`)*
 - clients using turn binds (can severely fuck up hitboxes)
-*(kick if `stac_max_allowed_turn_secs` is set to a value other than -1)*
+*(kick if `stac_max_allowed_turn_secs` is set to a value <= 0)*
 - cmdrate pingmasking if cvar has nonnumerical chars)
 *(kick)*
 - newlines in chat messages
@@ -26,7 +26,7 @@ I can not make guarantees on the stability or performance of this plugin as of y
 - pSilentAim / NoRecoil cheats
 *(logs detections to admins / STV, bans on `stac_max_psilent_detections` detections, defaults to 15)*
 - fake eye angle violations
-*(logs detections to admins / STV, bans on `stac_max_fakeang_detections` detections, defaults to 2000)*
+*(logs detections to admins / STV, bans on `stac_max_fakeang_detections` detections, defaults to 10)*
 
 ### Attempted nospread fix
 This plugin currently reseeds the hl2 random seed at each map / tournament start and every 15 minutes to attempt to prevent possible nospread exploits by cheats guessing the server seed. This appears to work at least on NCC but I have not bothered to test it with other cheats.
