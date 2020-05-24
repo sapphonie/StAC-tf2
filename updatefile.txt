@@ -4,14 +4,15 @@
     {
         "Version"
         {
-            "Latest"    "3.1.0"
+            "Latest"    "3.1.1"
         }
 
-        "Notes" "Changes in 3.1.0"
+        "Notes" "Changes in 3.1.0/3.1.1"
         "Notes" "- added translations"
         "Notes" "- fixed fakeang detections again"
         "Notes" "- reenabled autoban for fakeangs"
         "Notes" "- refactored lots of code, cleaned up lots of various other things"
+        "Notes" "- fixed accidentally printing to chat too often if client is already queued for a ban"
     }
 
     "Files"

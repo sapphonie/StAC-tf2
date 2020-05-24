@@ -14,7 +14,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.1.0"
+#define PLUGIN_VERSION  "3.1.1"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -735,13 +735,14 @@ public Action OnPlayerRunCmd
     // grab current time to compare to time since last spawn/taunt/tele
     float engineTime = GetEngineTime();
     if  (
-            // make sure client is real, not a bot, on a team, AND didnt spawn, taunt, or teleport in the last .1 seconds AND isnt taunting
+            // make sure client is real, not a bot, on a team, AND didnt spawn, taunt, or teleport in the last .1 seconds AND isnt taunting AND isn't already queued to be banned
             IsValidClient(Cl)
              && IsClientPlaying(Cl)
              && !playerTaunting[Cl]
              && engineTime - 0.1 > timeSinceSpawn[Cl]
              && engineTime - 0.1 > timeSinceTaunt[Cl]
              && engineTime - 0.1 > timeSinceTeled[Cl]
+             && !userBanQueued[Cl]
         )
     {
         // we need this later for decrimenting psilent and fakeang detections after 20 minutes!
@@ -1001,8 +1002,8 @@ char cvarsToCheck[][] =
 
 public ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
 {
-    // don't bother checking bots
-    if (!IsValidClient(Cl))
+    // don't bother checking bots or users who already queued to be banned
+    if (!IsValidClient(Cl) || userBanQueued[Cl])
     {
         return;
     }
