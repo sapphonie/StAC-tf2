@@ -2,7 +2,7 @@
 # STEPH'S ANTICHEAT <span color=#FF69B4>[StAC]</span>
 
 ### Disclaimers
-I can not make guarantees on the stability or performance of this plugin as of yet as it is still in beta. Use with caution!
+False positives are always a possibility! Feel free to submit a bug report if you can reproduce a way to trigger false positives.
 
 ### This plugin currently prevents:
 - interp/lerp abuse (some detection methods only available on default tickrate servers)
