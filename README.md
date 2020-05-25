@@ -33,11 +33,11 @@ This plugin currently reseeds the hl2 random seed at each map / tournament start
 
 ### Installation & Configuration
 1) download latest version from [here](https://github.com/stephanieLGBT/StAC-tf2/raw/master/plugins/stac.smx) to your `/tf/addons/sourcemod/plugins` folder
-1.5) download latest translation file from [here](https://github.com/stephanieLGBT/StAC-tf2/raw/master/translations/stac.phrases.txt) to your `/tf/addons/sourcemod/translations` folder
-2) restart your server
-3) wait 30 seconds
-4) edit `/tf/cfg/sourcemod/stac.cfg` to your liking. the recommended values are the default but feel free to change any of them to your liking. I personally use stricter values on my own servers.
-5) restart your server again
+2) download latest translation file from [here](https://github.com/stephanieLGBT/StAC-tf2/raw/master/translations/stac.phrases.txt) to your `/tf/addons/sourcemod/translations` folder
+3) restart your server
+4) wait 30 seconds
+5) edit `/tf/cfg/sourcemod/stac.cfg` to your liking. the recommended values are the default but feel free to change any of them to your liking. I personally use stricter values on my own servers.
+6) restart your server again
 
 You should be good to go!
 
