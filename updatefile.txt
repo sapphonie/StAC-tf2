@@ -4,15 +4,16 @@
     {
         "Version"
         {
-            "Latest"    "3.1.1"
+            "Latest"    "3.1.2"
         }
 
-        "Notes" "Changes in 3.1.0/3.1.1"
+        "Notes" "Changes in 3.1.0/3.1.2"
         "Notes" "- added translations"
         "Notes" "- fixed fakeang detections again"
         "Notes" "- reenabled autoban for fakeangs"
         "Notes" "- refactored lots of code, cleaned up lots of various other things"
         "Notes" "- fixed accidentally printing to chat too often if client is already queued for a ban"
+        "Notes" "- added stac_kick_for_pingmasking, defaults to 0"
     }
 
     "Files"
