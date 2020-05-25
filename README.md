@@ -4,21 +4,21 @@
 ### Disclaimers
 False positives are always a possibility! Feel free to submit a bug report if you can reproduce a way to trigger false positives.
 
-### This plugin currently prevents:
+### This plugin can currently prevent:
 - interp/lerp abuse (some detection methods only available on default tickrate servers)
 *(kick if outside of values you set with `stac_min_interp_ms` and `stac_max_interp_ms`)*
 - clients using turn binds (can severely fuck up hitboxes)
 *(kick if `stac_max_allowed_turn_secs` is set to a value <= 0)*
 - cmdrate pingmasking if cvar has nonnumerical chars)
-*(kick)*
+*(kick if `stac_kick_for_pingmasking` is set to 1, default 0)*
 - newlines in chat messages
 *(ban)*
 - NoLerp cheats
 *(ban)*
 - fov abuse > 90
-*(fixes most cases / can ban on blatant netprop/cvar changing)*
+*(fixes most cases / can ban on blatant cvar changing)*
 - SOME third person cheats on clients
-*(fixes some cases / can ban on blatant netprop/cvar changing)*
+*(fixes some cases / can ban on blatant cvar changing)*
 - blatant othermodels abuse (will not catch most)
 *(only bans blatant cvar changing)*
 - blatant fullbright abuse (will not catch most)

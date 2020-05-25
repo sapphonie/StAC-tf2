@@ -14,7 +14,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.1.1"
+#define PLUGIN_VERSION  "3.1.2"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -62,6 +62,7 @@ ConVar stac_enabled;
 ConVar stac_verbose_info;
 ConVar stac_autoban_enabled;
 ConVar stac_max_allowed_turn_secs;
+ConVar stac_kick_for_pingmasking;
 ConVar stac_max_psilent_detections;
 ConVar stac_max_fakeang_detections;
 ConVar stac_min_interp_ms;
@@ -70,8 +71,10 @@ ConVar stac_min_randomcheck_secs;
 ConVar stac_max_randomcheck_secs;
 
 // VARIOUS DETECTION BOUNDS & CVAR VALUES
-bool autoban = true;
+bool DEBUG                  = false;
+bool autoban                = true;
 float maxAllowedTurnSecs    = -1.0;
+bool kickForPingMasking     = false;
 int maxPsilentDetections    = 15;
 int maxFakeAngDetections    = 10;
 int min_interp_ms           = -1;
@@ -80,8 +83,6 @@ int max_interp_ms           = 101;
 float minRandCheckVal       = 60.0;
 float maxRandCheckVal       = 300.0;
 
-// DEBUG BOOL
-bool DEBUG = true;
 
 // STORED VALUES FOR "sv_client_min/max_interp_ratio" (defaults to -2 for sanity checking)
 int MinInterpRatio          = -2;
@@ -219,6 +220,28 @@ initCvars()
         _
     );
     HookConVarChange(stac_max_allowed_turn_secs, stacVarChanged);
+    // pingmasking
+    if (kickForPingMasking)
+    {
+        buffer = "1";
+    }
+    else if (!kickForPingMasking)
+    {
+        buffer = "0";
+    }
+    stac_kick_for_pingmasking =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_kick_for_pingmasking",
+        buffer,
+        "[StAC] kick clients for masking their ping with nonnumerical characters in their cl_cmdrate cvar\n(defaults to 0)",
+        FCVAR_NONE,
+        true,
+        0.0,
+        true,
+        1.0
+    );
+    HookConVarChange(stac_kick_for_pingmasking, stacVarChanged);
     // psilent detections
     IntToString(maxPsilentDetections, buffer, sizeof(buffer));
     stac_max_psilent_detections =
@@ -241,7 +264,7 @@ initCvars()
     (
         "stac_max_fakeang_detections",
         buffer,
-        "[StAC] maximum fake angle / wrong angle detecions before banning a client. fake -1 to disable\n(recommended 10)",
+        "[StAC] maximum fake angle / wrong angle detecions before banning a client. -1 to disable\n(recommended 10)",
         FCVAR_NONE,
         true,
         -1.0,
@@ -357,6 +380,18 @@ stacVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
         else
         {
             maxAllowedTurnSecs = StringToFloat(newValue);
+        }
+    }
+    // either or
+    else if (convar == stac_kick_for_pingmasking)
+    {
+        if (StringToInt(newValue) != 1)
+        {
+            kickForPingMasking = false;
+        }
+        else if (StringToInt(newValue) == 1)
+        {
+            kickForPingMasking = true;
         }
     }
     // clamp to -1 if 0
@@ -1092,6 +1127,10 @@ public ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const c
     // cl_cmdrate
     else if (StrEqual(cvarName, "cl_cmdrate"))
     {
+        if (!kickForPingMasking)
+        {
+            return;
+        }
         if (!cvarValue[0])
         {
             LogMessage("[StAC] Null string returned as cvar result when querying cvar %s on %N", cvarName, Cl);
