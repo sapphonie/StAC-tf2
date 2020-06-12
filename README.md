@@ -27,6 +27,10 @@ False positives are always a possibility! Feel free to submit a bug report if yo
 *(logs detections to admins / STV, bans on `stac_max_psilent_detections` detections, defaults to 15)*
 - fake eye angle violations
 *(logs detections to admins / STV, bans on `stac_max_fakeang_detections` detections, defaults to 10)*
+- certain fake item schema violations (cheat that can unequip people's hats)
+*(ban)*
+- illegal characters in name
+*(ban)*
 
 ### Attempted nospread fix
 This plugin currently reseeds the hl2 random seed at each map / tournament start and every 15 minutes to attempt to prevent possible nospread exploits by cheats guessing the server seed. This appears to work at least on NCC but I have not bothered to test it with other cheats.
