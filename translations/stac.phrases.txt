@@ -162,7 +162,7 @@
         "#format"   "{1:N}"
         "en"        "[StAC] Player {1} was banned for having illegal characters in their name"
     }
-    // newline prints
+    // bad item schema
     "badItemSchemaBanAllChat"
     {
         "#format"   "{1:N}"

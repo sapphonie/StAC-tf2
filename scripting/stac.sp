@@ -9,12 +9,11 @@
 #include <sdktools>
 #include <tf2_stocks>
 #include <autoexecconfig>
-#include <memory>
 #undef REQUIRE_PLUGIN
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.1.3"
+#define PLUGIN_VERSION  "3.1.4"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -817,7 +816,7 @@ public Action OnPlayerRunCmd
                 // have this detection expire in 20 minutes
                 CreateTimer(1200.0, Timer_decr_pSilent, userid);
                 // print a bunch of bullshit
-                PrintToImportant("{hotpink}[StAC]{white} pSilentDetectst / NoRecoil detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i", aDiffReal, Cl,  pSilentDetects[Cl]);
+                PrintToImportant("{hotpink}[StAC]{white} pSilent / NoRecoil detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i", aDiffReal, Cl,  pSilentDetects[Cl]);
                 PrintToImportant("|----- curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
                 PrintToImportant("|----- prev 1 angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
                 PrintToImportant("|----- prev 2 angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
@@ -1255,55 +1254,56 @@ NetPropCheck(int userid)
         //}
         if (IsClientPlaying(Cl))
         {
-            // fix broken equip slots (BLESS YOU NOSOOP)
+            // fix broken equip slots
             // cathook is cringe
-            int slot1wearable = GetPlayerWearable(Cl, 0);
-            int slot2wearable = GetPlayerWearable(Cl, 1);
-            int slot3wearable = GetPlayerWearable(Cl, 2);
-            if  (slot1wearable == -1 || slot2wearable == -1 || slot3wearable == -1)
-            {
-                return;
-            }
-            int slot1itemdef  = GetEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex");
-            int slot2itemdef  = GetEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex");
-            int slot3itemdef  = GetEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex");
+            int slot1wearable = TF2_GetWearable(Cl, 0);
+            int slot2wearable = TF2_GetWearable(Cl, 1);
+            int slot3wearable = TF2_GetWearable(Cl, 2);
+            int maxEnts       = GetMaxEntities();
+            // only check if player has 3 valid hats on
             if  (
-                    // frontline field recorder
-                    (
-                        slot1itemdef    == 302
-                        || slot2itemdef == 302
-                        || slot3itemdef == 302
-                    )
-                    // gibus
+                    0 < slot1wearable <= maxEnts
                     &&
-                    (
-                        slot1itemdef    == 940
-                        || slot2itemdef == 940
-                        || slot3itemdef == 940
-                    )
+                    0 < slot2wearable <= maxEnts
                     &&
-                    // skull topper
-                    (
-                        slot1itemdef    == 941
-                        || slot2itemdef == 941
-                        || slot3itemdef == 941
-                    )
+                    0 < slot3wearable <= maxEnts
                 )
             {
-                char reason[256];
-                Format(reason, sizeof(reason), "%t", "badItemSchemaBanMsg", Cl);
-                BanUser(userid, reason);
-                CPrintToChatAll("%t", "badItemSchemaBanAllChat", Cl);
-                LogMessage("%t", "badItemSchemaBanMsg", Cl);
+                int slot1itemdef = GetEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex");
+                int slot2itemdef = GetEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex");
+                int slot3itemdef = GetEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex");
+                if  (
+                        // frontline field recorder
+                        (
+                            slot1itemdef    == 302
+                            || slot2itemdef == 302
+                            || slot3itemdef == 302
+                        )
+                        // gibus
+                        &&
+                        (
+                            slot1itemdef    == 940
+                            || slot2itemdef == 940
+                            || slot3itemdef == 940
+                        )
+                        &&
+                        // skull topper
+                        (
+                            slot1itemdef    == 941
+                            || slot2itemdef == 941
+                            || slot3itemdef == 941
+                        )
+                    )
+                {
+                    char reason[256];
+                    Format(reason, sizeof(reason), "%t", "badItemSchemaBanMsg", Cl);
+                    BanUser(userid, reason);
+                    CPrintToChatAll("%t", "badItemSchemaBanAllChat", Cl);
+                    LogMessage("%t", "badItemSchemaBanMsg", Cl);
+                }
             }
         }
     }
-}
-
-// god fucking bless you nosoop (REQUIRES MEMORY INC)
-int GetPlayerWearable(int client, int index) {
-    Address pData = DereferencePointer(GetEntityAddress(client) + view_as<Address>(0xDD4));
-    return LoadEntityHandleFromAddress(pData + view_as<Address>(0x04 * index));
 }
 
 // these 3 functions are a god damn mess
@@ -1559,4 +1559,14 @@ stock any Math_Clamp(any value, any min, any max)
     value = Math_Max(value, max);
 
     return value;
+}
+
+// get entindx of player wearable
+stock int TF2_GetWearable(int client, int wearableidx)
+{
+	// 3540 linux
+	// 3520 windows
+	int offset = FindSendPropInfo("CTFPlayer", "m_flMaxspeed") - 20;
+	Address m_hMyWearables = view_as< Address >(LoadFromAddress(GetEntityAddress(client) + view_as< Address >(offset), NumberType_Int32));
+	return LoadFromAddress(m_hMyWearables + view_as< Address >(4 * wearableidx), NumberType_Int32) & 0xFFF;
 }
