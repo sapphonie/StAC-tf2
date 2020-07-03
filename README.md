@@ -32,6 +32,9 @@ False positives are always a possibility! Feel free to submit a bug report if yo
 - illegal characters in name
 *(ban)*
 
+### Backtrack Fix by shavit
+This repo includes the latest version of shavit's Backtrack Patch, available [here](https://forums.alliedmods.net/showthread.php?t=304877). It is enabled by default, but to disable it, edit `/tf/cfg/sourcemod/plugin.backtrack_fix.cfg`.
+
 ### Attempted nospread fix
 This plugin currently reseeds the hl2 random seed at each map / tournament start and every 15 minutes to attempt to prevent possible nospread exploits by cheats guessing the server seed. This appears to work at least on NCC but I have not bothered to test it with other cheats.
 

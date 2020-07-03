@@ -4,16 +4,17 @@
     {
         "Version"
         {
-            "Latest"    "3.1.4"
+            "Latest"    "3.1.5"
         }
 
-        "Notes" "Changes in 3.1.4"
-        "Notes" "- fixed hat checking, cleaned up typos"
+        "Notes" "Changes in 3.1.5"
+        "Notes" "- vers bump to trigger downloading backtrack patch"
     }
 
     "Files"
     {
         "Plugin"    "Path_SM/plugins/stac.smx"
+        "Plugin"    "Path_SM/plugins/backtrack_fix.smx"
         "Plugin"    "Path_SM/translations/stac.phrases.txt"
     }
 }
