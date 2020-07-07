@@ -13,7 +13,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.1.5"
+#define PLUGIN_VERSION  "3.1.6"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -69,6 +69,7 @@ ConVar stac_max_interp_ms;
 ConVar stac_min_randomcheck_secs;
 ConVar stac_max_randomcheck_secs;
 
+
 // VARIOUS DETECTION BOUNDS & CVAR VALUES
 bool DEBUG                  = false;
 bool autoban                = true;
@@ -87,6 +88,9 @@ int minInterpRatio          = -2;
 int maxInterpRatio          = -2;
 // STORED VALUE FOR IF MAP HAS COMPILED LIGHTING (assume true)
 bool compiledVRAD           = true;
+
+// REGEX
+Regex pingmaskRegex;
 
 // STUFF FOR FUTURE AIMSNAP TEST
 // float sensFor[MAXPLAYERS+1] = -1.0;
@@ -128,11 +132,13 @@ public OnPluginStart()
     CreateTimer(2.0, checkSourceBans);
     // check EVERYONE's cvars on plugin reload
     CreateTimer(3.0, checkEveryone);
+    // pingmasking regex setup
+    pingmaskRegex = new Regex("^\\d*\\.?\\d*$");
     // hook interp ratio cvars
     minInterpRatio = GetConVarInt(FindConVar("sv_client_min_interp_ratio"));
     maxInterpRatio = GetConVarInt(FindConVar("sv_client_max_interp_ratio"));
     compiledVRAD   = !GetConVarBool(FindConVar("mat_fullbright"));
-    if  (GetConVarBool(FindConVar("sv_cheats")))
+    if (GetConVarBool(FindConVar("sv_cheats")))
     {
         LogMessage("[StAC] sv_cheats set to 1 - unloading plugin!!!");
         ServerCommand("sm plugins unload stac");
@@ -183,7 +189,7 @@ initCvars()
     (
         "stac_verbose_info",
         buffer,
-        "[StAC] enable/disable  showing verbose info about players' cvars and other similar info in admin console\n(recommended 0 unless you want spam in console)",
+        "[StAC] enable/disable showing verbose info about players' cvars and other similar info in admin console\n(recommended 0 unless you want spam in console)",
         FCVAR_NONE,
         true,
         0.0,
@@ -497,7 +503,7 @@ public OnPluginEnd()
 {
     NukeTimers();
     OnMapEnd();
-    LogMessage("[StAC] Plugin unloaded");
+    LogMessage("[StAC] Plugin vers. ---- %s ---- unloaded", PLUGIN_VERSION);
 }
 
 // reseed random server seed to help prevent certain nospread stuff from working (probably)
@@ -617,8 +623,8 @@ public Action timer_TriggerTimedStuff(Handle timer)
 // set stuff for tps based checking here.
 DoTPSMath()
 {
-    tickinterv    = GetTickInterval();
-    tps           = Pow(tickinterv, -1.0);
+    tickinterv = GetTickInterval();
+    tps        = Pow(tickinterv, -1.0);
     if (DEBUG)
     {
         LogMessage("tickinterv %f tps %f", tickinterv, tps);
@@ -727,14 +733,26 @@ public Action OnPlayerRunCmd
     // grab current time to compare to time since last spawn/taunt/tele
     float engineTime = GetEngineTime();
     if  (
-            // make sure client is real, not a bot, on a team, AND didnt spawn, taunt, or teleport in the last .1 seconds AND isnt taunting AND isn't already queued to be banned
+            // make sure client is real & not a bot,
             IsValidClient(Cl)
+            // ...on a team & alive,
              && IsClientPlaying(Cl)
+            // ...isn't taunting,
              && !playerTaunting[Cl]
-             && engineTime - 0.1 > timeSinceSpawn[Cl]
-             && engineTime - 0.1 > timeSinceTaunt[Cl]
-             && engineTime - 0.1 > timeSinceTeled[Cl]
+            // ...didn't recently spawn,
+             && engineTime - 0.25 > timeSinceSpawn[Cl]
+            // ...didn't recently taunt,
+             && engineTime - 0.25 > timeSinceTaunt[Cl]
+            // ...didn't recently teleport,
+             && engineTime - 0.25 > timeSinceTeled[Cl]
+            // ...isn't already queued to be banned,
              && !userBanQueued[Cl]
+            // ...doesn't have 5% or more packet loss,
+             && GetClientAvgLoss (Cl, NetFlow_Both) < 0.05
+            // ...doesn't have 51% or more packet choke,
+             && GetClientAvgChoke(Cl, NetFlow_Both) < 0.51
+            // ...and isn't timing out.
+             && !IsClientTimingOut(Cl)
         )
     {
         // we need this later for decrimenting psilent and fakeang detections after 20 minutes!
@@ -750,7 +768,7 @@ public Action OnPlayerRunCmd
         angCur[Cl][1]   = angles[1];
         /*
             SILENT AIM DETECTION
-            silent aim works by aimbotting for 1 frame and then snapping your viewangle back to what it was
+            silent aim works (in this context) by aimbotting for 1 frame and then snapping your viewangle back to what it was
             example snap:
                 L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: curang angles: x 5.120096 y 9.763162
                 L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: prev1  angles: x 1.635611 y 12.876886
@@ -820,6 +838,10 @@ public Action OnPlayerRunCmd
                 PrintToImportant("|----- curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
                 PrintToImportant("|----- prev 1 angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
                 PrintToImportant("|----- prev 2 angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
+                LogMessage("[StAC] pSilent / NoRecoil detection of %.2f° on %N.\nDetections so far: %i", aDiffReal, Cl,  pSilentDetects[Cl]);
+                LogMessage("|----- curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
+                LogMessage("|----- prev 1 angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
+                LogMessage("|----- prev 2 angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
                 // BAN USER if they trigger too many detections
                 if (pSilentDetects[Cl] >= maxPsilentDetections && maxPsilentDetections != -1)
                 {
@@ -863,21 +885,19 @@ public Action OnPlayerRunCmd
                 )
             )
         {
-            // check if we hit a player here
-            //if (ClDidHitPlayer(Cl))
-            //// maybe use TR_DidHit ? i dont know
-            //{
+             check if we hit a player here
+            if (ClDidHitPlayer(Cl))
+            // maybe use TR_DidHit ? i dont know
+            {
                 aimSnapDetects[Cl]++;
                 PrintToChatAll("aimSnapDetects = %i", aimSnapDetects[Cl]);
                 CPrintToChatAll("[StAC] snap %f d on %N: curang angles: x %f y %f", (FloatAbs(angCur[Cl][0] - angPrev1[Cl][0])), Cl, angCur[Cl][0], angCur[Cl][1]);
                 CPrintToChatAll("[StAC] snap      on %N: prev1  angles: x %f y %f", Cl, angPrev1[Cl][0], angPrev1[Cl][1]);
                 CPrintToChatAll("[StAC] snap      on %N: prev2  angles: x %f y %f", Cl, angPrev2[Cl][0], angPrev2[Cl][1]);
                 CPrintToChatAll("[StAC] mouse movement at time of snap: mouse x %i, y %i",   IntAbs(mouse[0]), IntAbs(mouse[1]));
-            //}
+            }
         }
-
 */
-
         /*
             EYE ANGLES TEST
             if clients are outside of allowed angles in tf2, which are
@@ -900,7 +920,7 @@ public Action OnPlayerRunCmd
         {
             fakeAngDetects[Cl]++;
             PrintToImportant("{hotpink}[StAC]{white} Player %N has {mediumpurple}invalid eye angles{white}!\nCurrent angles: {mediumpurple}%.2f %.2f %.2f{white}.\nDetections so far: {palegreen}%i", Cl, angles[0], angles[1], angles[2], fakeAngDetects[Cl]);
-            LogMessage("[StAC] Player %N has invalid eye angles! Current angles: %.2f %.2f %.2f Detections so far: %i", Cl, angles[0], angles[1], angles[2], fakeAngDetects[Cl]);
+            LogMessage("[StAC] Player %N has invalid eye angles!\nCurrent angles: %.2f %.2f %.2f.\nDetections so far: %i", Cl, angles[0], angles[1], angles[2], fakeAngDetects[Cl]);
             if (fakeAngDetects[Cl] >= maxFakeAngDetections && maxFakeAngDetections != -1)
             {
                 char reason[256];
@@ -920,6 +940,7 @@ public Action OnPlayerRunCmd
                 turnTimes[Cl]++;
                 float turnSec = turnTimes[Cl] * tickinterv;
                 PrintToImportant("%t", "turnbindAdminMsg", Cl, turnSec);
+                // not worth logging to console tbqh
                 if (turnSec < maxAllowedTurnSecs)
                 {
                     CPrintToChat(Cl, "%t", "turnbindWarnPlayer");
@@ -1066,7 +1087,7 @@ public ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const c
             PrintToImportant("{hotpink}[StAC]{white} Null string returned as cvar result when querying cvar %s on %N", cvarName, Cl);
         }
         // cl_cmdrate needs to not have any non numerical chars (xcept the . sign if its a float) in it because otherwise player ping gets messed up on the scoreboard
-        else if (SimpleRegexMatch(cvarValue, "^\\d*\\.?\\d*$") <= 0)
+        else if (MatchRegex(pingmaskRegex, cvarValue) <= 0)
         {
             KickClient(Cl, "%t", "pingmaskingKickMsg", cvarValue);
             LogMessage("%t", "pingmaskingLogMsg", Cl, cvarValue);
@@ -1237,72 +1258,6 @@ NetPropCheck(int userid)
             LogMessage("[StAC] Executed firstperson command on Player %N", Cl);
             PrintToConsoleAllAdmins("[StAC] Executed firstperson command on Player %N", Cl);
         }
-        // lerp check (again). this time we check the netprop. Just in case.
-        //if (tps < 70.0 && tps > 60.0)
-        //{
-        //    float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
-        //    if  (
-        //            lerp < min_interp_ms && min_interp_ms != -1
-        //             ||
-        //            lerp > max_interp_ms && max_interp_ms != -1
-        //        )
-        //    {
-        //        KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
-        //        LogMessage("%t", "interpLogMsg",  Cl, lerp);
-        //        CPrintToChatAll("%t", "interpAllChat", Cl, lerp);
-        //    }
-        //}
-        if (IsClientPlaying(Cl))
-        {
-            // fix broken equip slots
-            // cathook is cringe
-            int slot1wearable = TF2_GetWearable(Cl, 0);
-            int slot2wearable = TF2_GetWearable(Cl, 1);
-            int slot3wearable = TF2_GetWearable(Cl, 2);
-            int maxEnts       = GetMaxEntities();
-            // only check if player has 3 valid hats on
-            if  (
-                    0 < slot1wearable <= maxEnts
-                    &&
-                    0 < slot2wearable <= maxEnts
-                    &&
-                    0 < slot3wearable <= maxEnts
-                )
-            {
-                int slot1itemdef = GetEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex");
-                int slot2itemdef = GetEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex");
-                int slot3itemdef = GetEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex");
-                if  (
-                        // frontline field recorder
-                        (
-                            slot1itemdef    == 302
-                            || slot2itemdef == 302
-                            || slot3itemdef == 302
-                        )
-                        // gibus
-                        &&
-                        (
-                            slot1itemdef    == 940
-                            || slot2itemdef == 940
-                            || slot3itemdef == 940
-                        )
-                        &&
-                        // skull topper
-                        (
-                            slot1itemdef    == 941
-                            || slot2itemdef == 941
-                            || slot3itemdef == 941
-                        )
-                    )
-                {
-                    char reason[256];
-                    Format(reason, sizeof(reason), "%t", "badItemSchemaBanMsg", Cl);
-                    BanUser(userid, reason);
-                    CPrintToChatAll("%t", "badItemSchemaBanAllChat", Cl);
-                    LogMessage("%t", "badItemSchemaBanMsg", Cl);
-                }
-            }
-        }
     }
 }
 
@@ -1330,7 +1285,7 @@ QueryCvars(int userid, int i)
             DataPack pack;
             QueryClientConVar(Cl, cvarsToCheck[i], ConVarQueryFinished:ConVarCheck);
             i++;
-            CreateDataTimer(1.0, timerqC, pack);
+            CreateDataTimer(2.5, timerqC, pack);
             WritePackCell(pack, userid);
             WritePackCell(pack, i);
         }
@@ -1370,7 +1325,7 @@ public Action Timer_CheckClientConVars(Handle timer, any userid)
         }
         // query the client!
         QueryEverything(userid);
-        // check randomly (every 1 - 5 minutes) for violating clients, then recheck with a new random value
+        // check randomly using values of stac_min_randomcheck_secs & stac_max_randomcheck_secs for violating clients, then recheck with a new random value
         g_hQueryTimer[Cl] = CreateTimer(GetRandomFloat(minRandCheckVal, maxRandCheckVal), Timer_CheckClientConVars, userid);
     }
 }
@@ -1378,7 +1333,10 @@ public Action Timer_CheckClientConVars(Handle timer, any userid)
 // expensive!
 QueryEverythingAllClients()
 {
-    LogMessage("[StAC] Querying all clients");
+    if (DEBUG)
+    {
+        LogMessage("[StAC] Querying all clients");
+    }
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
         if (IsValidClient(Cl))
@@ -1475,6 +1433,9 @@ stock PrintToImportant(const char[] format, any ...)
     VFormat(buffer, sizeof(buffer), format, 2);
     PrintColoredChatToAdmins("%s", buffer);
     CPrintToSTV("%s", buffer);
+    //Regex stripColors = new Regex("\\{.*\\}", PCRE_CASELESS | PCRE_MULTILINE | PCRE_UNGREEDY);
+    //GetRegexSubString(stripColors, 0, buffer, sizeof(buffer));
+    //LogMessage("%s", buffer);
 }
 
 // adapted & deuglified from f2stocks
@@ -1559,14 +1520,4 @@ stock any Math_Clamp(any value, any min, any max)
     value = Math_Max(value, max);
 
     return value;
-}
-
-// get entindx of player wearable
-stock int TF2_GetWearable(int client, int wearableidx)
-{
-	// 3540 linux
-	// 3520 windows
-	int offset = FindSendPropInfo("CTFPlayer", "m_flMaxspeed") - 20;
-	Address m_hMyWearables = view_as< Address >(LoadFromAddress(GetEntityAddress(client) + view_as< Address >(offset), NumberType_Int32));
-	return LoadFromAddress(m_hMyWearables + view_as< Address >(4 * wearableidx), NumberType_Int32) & 0xFFF;
 }

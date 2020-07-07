@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "3.1.5"
+            "Latest"    "3.1.6"
         }
 
-        "Notes" "Changes in 3.1.5"
-        "Notes" "- vers bump to trigger downloading backtrack patch"
+        "Notes" "Changes in 3.1.6"
+        "Notes" "- remove item schema check (fixed by valve), optimize some small things, fix psilent detections on laggy players"
     }
 
     "Files"

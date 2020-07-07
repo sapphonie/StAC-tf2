@@ -162,17 +162,6 @@
         "#format"   "{1:N}"
         "en"        "[StAC] Player {1} was banned for having illegal characters in their name"
     }
-    // bad item schema
-    "badItemSchemaBanAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was using an {mediumpurple}invalid item schema{white}! {palegreen}BANNED from server."
-    }
-    "badItemSchemaBanMsg"
-    {
-        "#format"   "{1:N}"
-        "en"        "[StAC] Player {1} was banned for using an invalid item schema"
-    }
     /*
         __   _      __
        / /__(_)____/ /__   ____ ___  _________ ______
