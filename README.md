@@ -1,6 +1,10 @@
 
 # STEPH'S ANTICHEAT <span color=#FF69B4>[StAC]</span>
 
+
+## An AntiCheat Plugin for Team Fortress 2
+
+
 ### Disclaimers
 False positives are always a possibility! Feel free to submit a bug report if you can reproduce a way to trigger false positives.
 
