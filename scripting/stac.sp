@@ -13,7 +13,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.2.1"
+#define PLUGIN_VERSION  "3.2.2"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -922,33 +922,33 @@ public Action OnPlayerRunCmd
                 if ((flags & FL_ONGROUND))
                 {
                     bhopDetects[Cl]++;
-
-                    // print all (2nd and up) bhops to admins regardless of multiplier
-                    if (bhopDetects[Cl] >= 2)
+                    // print to player if halfway to getting punished
+                    if (bhopDetects[Cl] >= RoundToNearest(((bhopmult * maxBhopDetections) / 2.0)))
                     {
+                        // print to admin if halfway to getting banned
                         PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i", Cl, bhopDetects[Cl]);
-                        // print to player if halfway to getting punished
-                        if (bhopDetects[Cl] >= RoundToNearest(((bhopmult * maxBhopDetections) / 2.0)) && waitEnabled)
+                        // only print to player if wait is enabled
+                        if (waitEnabled)
                         {
                             CPrintToChat(Cl, "%t", "bhopWarnPlayer");
                         }
-                        // punish on multiplier * bhopdetects
-                        if ((bhopDetects[Cl] >= bhopmult * maxBhopDetections) && maxBhopDetections != -1)
+                    }
+                    // punish on multiplier * bhopdetects
+                    if ((bhopDetects[Cl] >= bhopmult * maxBhopDetections) && maxBhopDetections != -1)
+                    {
+                        if (waitEnabled)
                         {
-                            if (waitEnabled)
-                            {
-                                KickClient(Cl, "%t", "bhopKickMsg");
-                                LogMessage("%t", "bhopLogMsg", Cl);
-                                CPrintToChatAll("%t", "bhopAllChat", Cl);
-                            }
-                            else if (!waitEnabled)
-                            {
-                                char reason[256];
-                                Format(reason, sizeof(reason), "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
-                                BanUser(userid, reason);
-                                CPrintToChatAll("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
-                                LogMessage( "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
-                            }
+                            KickClient(Cl, "%t", "bhopKickMsg");
+                            LogMessage("%t", "bhopLogMsg", Cl);
+                            CPrintToChatAll("%t", "bhopAllChat", Cl);
+                        }
+                        else if (!waitEnabled)
+                        {
+                            char reason[256];
+                            Format(reason, sizeof(reason), "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
+                            BanUser(userid, reason);
+                            CPrintToChatAll("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
+                            LogMessage( "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
                         }
                     }
                 }
