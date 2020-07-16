@@ -13,7 +13,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.1.6"
+#define PLUGIN_VERSION  "3.2.0"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -31,11 +31,13 @@ Handle g_hTriggerTimedStuffTimer;
 // TPS INFO
 float tickinterv;
 float tps;
+int bhopmult;
 // DETECTIONS PER CLIENT
 int turnTimes           [MAXPLAYERS+1];
 int fovDesired          [MAXPLAYERS+1];
 int fakeAngDetects      [MAXPLAYERS+1];
 int pSilentDetects      [MAXPLAYERS+1];
+int bhopDetects         [MAXPLAYERS+1] = -1; // set to -1 to ignore single jumps
 //int aimSnapDetects    [MAXPLAYERS+1];
 // TIME SINCE LAST ACTION PER CLIENT
 float timeSinceSpawn    [MAXPLAYERS+1];
@@ -63,6 +65,7 @@ ConVar stac_autoban_enabled;
 ConVar stac_max_allowed_turn_secs;
 ConVar stac_kick_for_pingmasking;
 ConVar stac_max_psilent_detections;
+ConVar stac_max_bhop_detections;
 ConVar stac_max_fakeang_detections;
 ConVar stac_min_interp_ms;
 ConVar stac_max_interp_ms;
@@ -77,6 +80,7 @@ float maxAllowedTurnSecs    = -1.0;
 bool kickForPingMasking     = false;
 int maxPsilentDetections    = 15;
 int maxFakeAngDetections    = 10;
+int maxBhopDetections       = 5;
 int min_interp_ms           = -1;
 int max_interp_ms           = 101;
 // RANDOM CVARS CHECK MIN/MAX BOUNDS (in seconds)
@@ -88,7 +92,8 @@ int minInterpRatio          = -2;
 int maxInterpRatio          = -2;
 // STORED VALUE FOR IF MAP HAS COMPILED LIGHTING (assume true)
 bool compiledVRAD           = true;
-
+// STORED VALUE FOR SERVER'S WAIT CVAR (assume true to not accidentally ban ppl)
+bool waitEnabled            = true;
 // REGEX
 Regex pingmaskRegex;
 
@@ -138,6 +143,7 @@ public OnPluginStart()
     minInterpRatio = GetConVarInt(FindConVar("sv_client_min_interp_ratio"));
     maxInterpRatio = GetConVarInt(FindConVar("sv_client_max_interp_ratio"));
     compiledVRAD   = !GetConVarBool(FindConVar("mat_fullbright"));
+    waitEnabled    = GetConVarBool(FindConVar("sv_allow_wait_command"));
     if (GetConVarBool(FindConVar("sv_cheats")))
     {
         LogMessage("[StAC] sv_cheats set to 1 - unloading plugin!!!");
@@ -146,6 +152,7 @@ public OnPluginStart()
     HookConVarChange(FindConVar("sv_client_min_interp_ratio"), GenericCvarChanged);
     HookConVarChange(FindConVar("sv_client_max_interp_ratio"), GenericCvarChanged);
     HookConVarChange(FindConVar("mat_fullbright"), GenericCvarChanged);
+    HookConVarChange(FindConVar("sv_allow_wait_command"), GenericCvarChanged);
     // hook sv_cheats so we can instantly unload if cheats get turned on
     HookConVarChange(FindConVar("sv_cheats"), GenericCvarChanged);
     // Create ConVars for adjusting settings
@@ -211,7 +218,7 @@ initCvars()
     (
         "stac_autoban_enabled",
         buffer,
-        "[StAC] enable/disable autobanning for anything at all\n(recommended 1 - THIS IS A DEBUG CVAR FOR TESTING THINGS - 0 IS FOR DEBUGGING ONLY and ban messages will still get printed to chat!\nset detection cvars to -1 to sanely disable banning instead!!)",
+        "[StAC] enable/disable auto banning for anything at all\n(recommended 1) - DEBUG CVAR DO NOT SET TO 0 IN PRODUCTION",
         FCVAR_NONE,
         true,
         0.0,
@@ -270,7 +277,20 @@ initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_psilent_detections, stacVarChanged);
+    IntToString(maxBhopDetections, buffer, sizeof(buffer));
+    stac_max_bhop_detections =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_max_bhop_detections",
+        buffer,
+        "[StAC] maximum bhop detecions before kicking (on wait enabled servers) or banning (on wait disabled servers) a client. -1 to disable any action\n(recommended 5 or higher)",
+        FCVAR_NONE,
+        true,
+        -1.0,
+        false,
+        _
+    );
+    HookConVarChange(stac_max_bhop_detections, stacVarChanged);
     // fakeang detections
     IntToString(maxFakeAngDetections, buffer, sizeof(buffer));
     stac_max_fakeang_detections =
@@ -386,6 +406,12 @@ setStacVars()
     {
         maxPsilentDetections = -1;
     }
+    // psilent var - clamp to -1 if 0
+    maxBhopDetections = GetConVarInt(stac_max_bhop_detections);
+    if (maxBhopDetections == 0)
+    {
+        maxBhopDetections = -1;
+    }
     // fakeang var - clamp to -1 if 0
     maxFakeAngDetections = GetConVarInt(stac_max_fakeang_detections);
     if (maxFakeAngDetections == 0)
@@ -429,6 +455,18 @@ GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
         else
         {
             compiledVRAD = true;
+        }
+    }
+    // if wait is enabled we don't ban for bhop because scripting, we kick instead
+    else if (convar == FindConVar("sv_allow_wait_command"))
+    {
+        if (StringToInt(newValue) != 0)
+        {
+            waitEnabled = true;
+        }
+        else
+        {
+            waitEnabled = false;
         }
     }
     // IMMEDIATELY unload if we enable sv cheats
@@ -625,9 +663,13 @@ DoTPSMath()
 {
     tickinterv = GetTickInterval();
     tps        = Pow(tickinterv, -1.0);
+    // we have to adjust bhop stuff for tickrate -
+    // you can bhop easier on higher tick
+    // 66 = default, 133 = * 2, 200 = * 3
+    bhopmult = RoundFloat(tps / (200/3));
     if (DEBUG)
     {
-        LogMessage("tickinterv %f tps %f", tickinterv, tps);
+        LogMessage("tickinterv %f, tps %f, bhopmult %i", tickinterv, tps, bhopmult);
     }
 }
 
@@ -730,230 +772,245 @@ public Action OnPlayerRunCmd
         int mouse[2]
     )
 {
-    // grab current time to compare to time since last spawn/taunt/tele
-    float engineTime = GetEngineTime();
-    if  (
-            // make sure client is real & not a bot,
-            IsValidClient(Cl)
-            // ...on a team & alive,
-             && IsClientPlaying(Cl)
-            // ...isn't taunting,
-             && !playerTaunting[Cl]
-            // ...didn't recently spawn,
-             && engineTime - 0.25 > timeSinceSpawn[Cl]
-            // ...didn't recently taunt,
-             && engineTime - 0.25 > timeSinceTaunt[Cl]
-            // ...didn't recently teleport,
-             && engineTime - 0.25 > timeSinceTeled[Cl]
-            // ...isn't already queued to be banned,
-             && !userBanQueued[Cl]
-            // ...doesn't have 5% or more packet loss,
-             && GetClientAvgLoss (Cl, NetFlow_Both) < 0.05
-            // ...doesn't have 51% or more packet choke,
-             && GetClientAvgChoke(Cl, NetFlow_Both) < 0.51
-            // ...and isn't timing out.
-             && !IsClientTimingOut(Cl)
-        )
+    // make sure client is real & not a bot.
+    if (IsValidClient(Cl))
     {
-        // we need this later for decrimenting psilent and fakeang detections after 20 minutes!
-        int userid = GetClientUserId(Cl);
-
-        // grab angles (probably expensive but who cares)
-        // thanks to nosoop from the sm discord for some help with this
-        angPrev2[Cl][0] = angPrev1[Cl][0];
-        angPrev2[Cl][1] = angPrev1[Cl][1];
-        angPrev1[Cl][0] = angCur[Cl][0];
-        angPrev1[Cl][1] = angCur[Cl][1];
-        angCur[Cl][0]   = angles[0];
-        angCur[Cl][1]   = angles[1];
-        /*
-            SILENT AIM DETECTION
-            silent aim works (in this context) by aimbotting for 1 frame and then snapping your viewangle back to what it was
-            example snap:
-                L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: curang angles: x 5.120096 y 9.763162
-                L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: prev1  angles: x 1.635611 y 12.876886
-                L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: prev2  angles: x 5.120096 y 9.763162
-            we can just look for these snaps and log them as detections!
-            note that this won't detect some snaps when a player is moving their strafe keys and mouse @ the same time while they are aimlocking.
-            i'll *try* to work mouse movement into this function at SOME point but it works reasonably well for right now.
-        */
-        if
-        (
-            // so the current and 2nd previous angles match...
-            (
-                angCur[Cl][0] == angPrev2[Cl][0]
-                 &&
-                angCur[Cl][1] == angPrev2[Cl][1]
-            )
-            &&
-            // BUT the 1st previous (in between) angle doesnt?
-            (
-                angPrev1[Cl][0]     != angCur[Cl][0]
-                 && angPrev1[Cl][1] != angCur[Cl][1]
-                 && angPrev1[Cl][0] != angPrev2[Cl][0]
-                 && angPrev1[Cl][1] != angPrev2[Cl][1]
-            )
-            &&
-            // make sure we dont get any fake detections on startup (might not really be needed? but just in case)
-            // this also ignores weird angle resets in mge / dm
-            (
-                angCur[Cl][0]       != 0.000000
-                 && angCur[Cl][1]   != 0.000000
-                 && angPrev1[Cl][0] != 0.000000
-                 && angPrev1[Cl][1] != 0.000000
-                 && angPrev2[Cl][0] != 0.000000
-                 && angPrev2[Cl][1] != 0.000000
-            )
-        )
-        /*
-            ok - lets make sure there's a difference of at least 1 degree on either axis to avoid most fake detections
-            these are probably caused by packets arriving out of order but i'm not a fucking network engineer (yet) so idk
-            examples of fake detections we want to avoid:
-                03/25/2020 - 18:18:11: [stac.smx] [StAC] pSilent detection on [redacted]: curang angles: x 14.871331 y 154.979812
-                03/25/2020 - 18:18:11: [stac.smx] [StAC] pSilent detection on [redacted]: prev1  angles: x 14.901910 y 155.010391
-                03/25/2020 - 18:18:11: [stac.smx] [StAC] pSilent detection on [redacted]: prev2  angles: x 14.871331 y 154.979812
-            and
-                03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: curang angles: x 21.516006 y -140.723709
-                03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: prev1  angles: x 21.560007 y -140.943710
-                03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: prev2  angles: x 21.516006 y -140.723709
-            doing this might make it harder to detect legitcheaters but like. legitcheating in a 12 yr old dead game OMEGALUL who fucking cares
-        */
+        // grab current time to compare to time since last spawn/taunt/tele
+        float engineTime = GetEngineTime();
+        // from ssac - block null cmds
+        if (cmdnum <= 0)
         {
-            // actual angle calculation here
-            float aDiffReal = CalcAngDeg(angCur[Cl], angPrev1[Cl]);
+            return Plugin_Handled;
+        }
 
-            // refactored from smac - make sure we don't fuck up angles near the x/y axes!
-            if (aDiffReal > 180.0)
+        if  (
+                // make sure client is on a team & alive,
+                IsClientPlaying(Cl)
+                // ...isn't taunting,
+                 && !playerTaunting[Cl]
+                // ...didn't recently spawn,
+                 && engineTime - 0.25 > timeSinceSpawn[Cl]
+                // ...didn't recently taunt,
+                 && engineTime - 0.25 > timeSinceTaunt[Cl]
+                // ...didn't recently teleport,
+                 && engineTime - 0.25 > timeSinceTeled[Cl]
+                // ...isn't already queued to be banned,
+                 && !userBanQueued[Cl]
+                // ...doesn't have 5% or more packet loss,
+                 && GetClientAvgLoss (Cl, NetFlow_Both) < 0.05
+                // ...doesn't have 51% or more packet choke,
+                 && GetClientAvgChoke(Cl, NetFlow_Both) < 0.51
+                // ...and isn't timing out.
+                 && !IsClientTimingOut(Cl)
+            )
+        {
+            // we need this later for decrimenting psilent and fakeang detections after 20 minutes!
+            int userid = GetClientUserId(Cl);
+
+            // grab angles (probably expensive but who cares)
+            // thanks to nosoop from the sm discord for some help with this
+            angPrev2[Cl][0] = angPrev1[Cl][0];
+            angPrev2[Cl][1] = angPrev1[Cl][1];
+            angPrev1[Cl][0] = angCur[Cl][0];
+            angPrev1[Cl][1] = angCur[Cl][1];
+            angCur[Cl][0]   = angles[0];
+            angCur[Cl][1]   = angles[1];
+            /*
+                SILENT AIM DETECTION
+                silent aim works (in this context) by aimbotting for 1 frame and then snapping your viewangle back to what it was
+                example snap:
+                    L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: curang angles: x 5.120096 y 9.763162
+                    L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: prev1  angles: x 1.635611 y 12.876886
+                    L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: prev2  angles: x 5.120096 y 9.763162
+                we can just look for these snaps and log them as detections!
+                note that this won't detect some snaps when a player is moving their strafe keys and mouse @ the same time while they are aimlocking.
+                i'll *try* to work mouse movement into this function at SOME point but it works reasonably well for right now.
+            */
+            if
+            (
+                // so the current and 2nd previous angles match...
+                (
+                    angCur[Cl][0] == angPrev2[Cl][0]
+                     &&
+                    angCur[Cl][1] == angPrev2[Cl][1]
+                )
+                &&
+                // BUT the 1st previous (in between) angle doesnt?
+                (
+                    angPrev1[Cl][0]     != angCur[Cl][0]
+                     && angPrev1[Cl][1] != angCur[Cl][1]
+                     && angPrev1[Cl][0] != angPrev2[Cl][0]
+                     && angPrev1[Cl][1] != angPrev2[Cl][1]
+                )
+                &&
+                // make sure we dont get any fake detections on startup (might not really be needed? but just in case)
+                // this also ignores weird angle resets in mge / dm
+                (
+                    angCur[Cl][0]       != 0.000000
+                     && angCur[Cl][1]   != 0.000000
+                     && angPrev1[Cl][0] != 0.000000
+                     && angPrev1[Cl][1] != 0.000000
+                     && angPrev2[Cl][0] != 0.000000
+                     && angPrev2[Cl][1] != 0.000000
+                )
+            )
+            /*
+                ok - lets make sure there's a difference of at least 1 degree on either axis to avoid most fake detections
+                these are probably caused by packets arriving out of order but i'm not a fucking network engineer (yet) so idk
+                examples of fake detections we want to avoid:
+                    03/25/2020 - 18:18:11: [stac.smx] [StAC] pSilent detection on [redacted]: curang angles: x 14.871331 y 154.979812
+                    03/25/2020 - 18:18:11: [stac.smx] [StAC] pSilent detection on [redacted]: prev1  angles: x 14.901910 y 155.010391
+                    03/25/2020 - 18:18:11: [stac.smx] [StAC] pSilent detection on [redacted]: prev2  angles: x 14.871331 y 154.979812
+                and
+                    03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: curang angles: x 21.516006 y -140.723709
+                    03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: prev1  angles: x 21.560007 y -140.943710
+                    03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: prev2  angles: x 21.516006 y -140.723709
+                doing this might make it harder to detect legitcheaters but like. legitcheating in a 12 yr old dead game OMEGALUL who fucking cares
+            */
             {
-                aDiffReal = FloatAbs(aDiffReal - 360.0);
+                // actual angle calculation here
+                float aDiffReal = CalcAngDeg(angCur[Cl], angPrev1[Cl]);
+
+                // refactored from smac - make sure we don't fuck up angles near the x/y axes!
+                if (aDiffReal > 180.0)
+                {
+                    aDiffReal = FloatAbs(aDiffReal - 360.0);
+                }
+                // needs to be more than a degree
+                if (aDiffReal >= 1.0)
+                {
+                    pSilentDetects[Cl]++;
+                    // have this detection expire in 20 minutes
+                    CreateTimer(1200.0, Timer_decr_pSilent, userid);
+                    // print a bunch of bullshit
+                    PrintToImportant("{hotpink}[StAC]{white} pSilent / NoRecoil detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i", aDiffReal, Cl,  pSilentDetects[Cl]);
+                    PrintToImportant("|----- curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
+                    PrintToImportant("|----- prev 1 angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
+                    PrintToImportant("|----- prev 2 angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
+                    LogMessage("[StAC] pSilent / NoRecoil detection of %.2f° on %N.\nDetections so far: %i", aDiffReal, Cl,  pSilentDetects[Cl]);
+                    LogMessage("|----- curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
+                    LogMessage("|----- prev 1 angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
+                    LogMessage("|----- prev 2 angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
+                    // BAN USER if they trigger too many detections
+                    if (pSilentDetects[Cl] >= maxPsilentDetections && maxPsilentDetections != -1)
+                    {
+                        char reason[256];
+                        Format(reason, sizeof(reason), "%t", "pSilentBanMsg", Cl, pSilentDetects[Cl]);
+                        BanUser(userid, reason);
+                        CPrintToChatAll("%t", "pSilentBanAllChat", Cl, pSilentDetects[Cl]);
+                        LogMessage("%t", "pSilentBanMsg", Cl, pSilentDetects[Cl]);
+                    }
+                }
             }
-            // needs to be more than a degree
-            if (aDiffReal >= 1.0)
+            /*
+                BHOP DETECTION - using lilac and ssac as reference, this one's better tho
+            */
+            static int buttonsPrev[MAXPLAYERS+1];
+            int flags = GetEntityFlags(Cl);
+            // player hasnt pressed jump and is on the ground - reset count
+            if (!(buttons & IN_JUMP) && (flags & FL_ONGROUND))
             {
-                pSilentDetects[Cl]++;
-                // have this detection expire in 20 minutes
-                CreateTimer(1200.0, Timer_decr_pSilent, userid);
-                // print a bunch of bullshit
-                PrintToImportant("{hotpink}[StAC]{white} pSilent / NoRecoil detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i", aDiffReal, Cl,  pSilentDetects[Cl]);
-                PrintToImportant("|----- curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
-                PrintToImportant("|----- prev 1 angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
-                PrintToImportant("|----- prev 2 angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
-                LogMessage("[StAC] pSilent / NoRecoil detection of %.2f° on %N.\nDetections so far: %i", aDiffReal, Cl,  pSilentDetects[Cl]);
-                LogMessage("|----- curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
-                LogMessage("|----- prev 1 angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
-                LogMessage("|----- prev 2 angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
-                // BAN USER if they trigger too many detections
-                if (pSilentDetects[Cl] >= maxPsilentDetections && maxPsilentDetections != -1)
+                // set to -1 to ignore single jumps
+                bhopDetects[Cl] = -1;
+            }
+            // player pressed jump and last input WASN'T a jump
+            if ((buttons & IN_JUMP) && !(buttonsPrev[Cl] & IN_JUMP))
+            {
+                // player touched ground (but we know they immediately jumped ^)
+                if ((flags & FL_ONGROUND))
+                {
+                    bhopDetects[Cl]++;
+
+                    // print all bhops to admins regardless of multiplier
+                    if (bhopDetects[Cl] >= 1)
+                    {
+                        PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i", Cl, bhopDetects[Cl]);
+                        // print to player if halfway to getting punished
+                        if (bhopDetects[Cl] >= RoundToNearest(((bhopmult * maxBhopDetections) / 2.0)) && waitEnabled)
+                        {
+                            CPrintToChat(Cl, "%t", "bhopWarnPlayer");
+                        }
+                        // punish on multiplier * bhopdetects
+                        if ((bhopDetects[Cl] >= bhopmult * maxBhopDetections) && maxBhopDetections != -1)
+                        {
+                            if (waitEnabled)
+                            {
+                                KickClient(Cl, "%t", "bhopKickMsg");
+                                LogMessage("%t", "bhopLogMsg", Cl);
+                                CPrintToChatAll("%t", "bhopAllChat", Cl);
+                            }
+                            else if (!waitEnabled)
+                            {
+                                char reason[256];
+                                Format(reason, sizeof(reason), "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
+                                BanUser(userid, reason);
+                                CPrintToChatAll("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
+                                LogMessage( "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
+                            }
+                        }
+                    }
+                }
+            }
+            buttonsPrev[Cl] = buttons;
+
+            /*
+                EYE ANGLES TEST
+                if clients are outside of allowed angles in tf2, which are
+                  +/- 89.0 x (up / down)
+                  +/- 180 y (left / right, but we don't check this atm because there's things that naturally fuck up y angles)
+                  +/- 50 z (roll / tilt)
+                while they are not in spec & on a map camera, we should log it.
+                we would fix it but cheaters can just ignore server-enforced viewangle changes so there's no point
+
+                these bounds were lifted from lilac. Thanks lilac
+            */
+            if  (
+                    (
+                         angles[0]    < -89.01
+                         || angles[0] > 89.01
+                         || angles[2] < -50.01
+                         || angles[2] > 50.01
+                    )
+                )
+            {
+                fakeAngDetects[Cl]++;
+                PrintToImportant("{hotpink}[StAC]{white} Player %N has {mediumpurple}invalid eye angles{white}!\nCurrent angles: {mediumpurple}%.2f %.2f %.2f{white}.\nDetections so far: {palegreen}%i", Cl, angles[0], angles[1], angles[2], fakeAngDetects[Cl]);
+                LogMessage("[StAC] Player %N has invalid eye angles!\nCurrent angles: %.2f %.2f %.2f.\nDetections so far: %i", Cl, angles[0], angles[1], angles[2], fakeAngDetects[Cl]);
+                if (fakeAngDetects[Cl] >= maxFakeAngDetections && maxFakeAngDetections != -1)
                 {
                     char reason[256];
-                    Format(reason, sizeof(reason), "%t", "pSilentBanMsg", Cl, pSilentDetects[Cl]);
+                    Format(reason, sizeof(reason), "%t", "fakeangBanMsg", Cl, fakeAngDetects[Cl]);
                     BanUser(userid, reason);
-                    CPrintToChatAll("%t", "pSilentBanAllChat", Cl, pSilentDetects[Cl]);
-                    LogMessage("%t", "pSilentBanMsg", Cl, pSilentDetects[Cl]);
+                    CPrintToChatAll("%t", "fakeangBanAllChat", Cl, fakeAngDetects[Cl]);
+                    LogMessage( "%t", "fakeangBanMsg", Cl, fakeAngDetects[Cl]);
                 }
             }
-        }
-        /*
-            BASIC AIMSNAP TEST (not currently hooked up)
-        */
-        /*
-        PrintToServer("raw : x %f y %f", angCur[Cl][0], angCur[Cl][1]);
-        if  (
-                // ignore stupidly high sens players
-                // technically can be spoofed but also it would be annoying for the cheater
-                (
-                    // def "max sens" is 4
-                    sensFor[Cl] < maxSensToCheck
-                     &&
-                    sensFor[Cl] != -1.0
-                )
-                &&
-                (
-                    // hopefully detect snaps of over 10.0 degrees
-                    FloatAbs(FloatAbs(angCur[Cl][0]) - FloatAbs(angPrev1[Cl][0])) > 10.0 ||
-                    FloatAbs(FloatAbs(angCur[Cl][1]) - FloatAbs(angPrev1[Cl][1])) > 10.0
-                )
-                &&
-                // ignore angle resets
-                (
-                    angCur[Cl][0]   != 0.000000 &&
-                    angCur[Cl][1]   != 0.000000 &&
-                    angPrev1[Cl][0] != 0.000000 &&
-                    angPrev1[Cl][1] != 0.000000 &&
-                    angPrev2[Cl][0] != 0.000000 &&
-                    angPrev2[Cl][1] != 0.000000
-                )
-            )
-        {
-             check if we hit a player here
-            if (ClDidHitPlayer(Cl))
-            // maybe use TR_DidHit ? i dont know
+            /*
+                TURN BIND TEST
+            */
+            if (buttons & IN_LEFT || buttons & IN_RIGHT)
             {
-                aimSnapDetects[Cl]++;
-                PrintToChatAll("aimSnapDetects = %i", aimSnapDetects[Cl]);
-                CPrintToChatAll("[StAC] snap %f d on %N: curang angles: x %f y %f", (FloatAbs(angCur[Cl][0] - angPrev1[Cl][0])), Cl, angCur[Cl][0], angCur[Cl][1]);
-                CPrintToChatAll("[StAC] snap      on %N: prev1  angles: x %f y %f", Cl, angPrev1[Cl][0], angPrev1[Cl][1]);
-                CPrintToChatAll("[StAC] snap      on %N: prev2  angles: x %f y %f", Cl, angPrev2[Cl][0], angPrev2[Cl][1]);
-                CPrintToChatAll("[StAC] mouse movement at time of snap: mouse x %i, y %i",   IntAbs(mouse[0]), IntAbs(mouse[1]));
-            }
-        }
-*/
-        /*
-            EYE ANGLES TEST
-            if clients are outside of allowed angles in tf2, which are
-              +/- 89.0 x (up / down)
-              +/- 180 y (left / right, but we don't check this atm because there's things that naturally fuck up y angles)
-              +/- 50 z (roll / tilt)
-            while they are not in spec & on a map camera, we should log it.
-            we would fix it but cheaters can just ignore server-enforced viewangle changes so there's no point
-
-            these bounds were lifted from lilac. Thanks lilac
-        */
-        if  (
-                (
-                     angles[0]    < -89.01
-                     || angles[0] > 89.01
-                     || angles[2] < -50.01
-                     || angles[2] > 50.01
-                )
-            )
-        {
-            fakeAngDetects[Cl]++;
-            PrintToImportant("{hotpink}[StAC]{white} Player %N has {mediumpurple}invalid eye angles{white}!\nCurrent angles: {mediumpurple}%.2f %.2f %.2f{white}.\nDetections so far: {palegreen}%i", Cl, angles[0], angles[1], angles[2], fakeAngDetects[Cl]);
-            LogMessage("[StAC] Player %N has invalid eye angles!\nCurrent angles: %.2f %.2f %.2f.\nDetections so far: %i", Cl, angles[0], angles[1], angles[2], fakeAngDetects[Cl]);
-            if (fakeAngDetects[Cl] >= maxFakeAngDetections && maxFakeAngDetections != -1)
-            {
-                char reason[256];
-                Format(reason, sizeof(reason), "%t", "fakeangBanMsg", Cl, fakeAngDetects[Cl]);
-                BanUser(userid, reason);
-                CPrintToChatAll("%t", "fakeangBanAllChat", Cl, fakeAngDetects[Cl]);
-                LogMessage( "%t", "fakeangBanMsg", Cl, fakeAngDetects[Cl]);
-            }
-        }
-        /*
-            TURN BIND TEST
-        */
-        if (buttons & IN_LEFT || buttons & IN_RIGHT)
-        {
-            if (maxAllowedTurnSecs != -1.0)
-            {
-                turnTimes[Cl]++;
-                float turnSec = turnTimes[Cl] * tickinterv;
-                PrintToImportant("%t", "turnbindAdminMsg", Cl, turnSec);
-                // not worth logging to console tbqh
-                if (turnSec < maxAllowedTurnSecs)
+                if (maxAllowedTurnSecs != -1.0)
                 {
-                    CPrintToChat(Cl, "%t", "turnbindWarnPlayer");
-                }
-                else if (turnSec >= maxAllowedTurnSecs)
-                {
-                    KickClient(Cl, "%t", "turnbindKickMsg");
-                    LogMessage("%t", "turnbindLogMsg", Cl);
-                    CPrintToChatAll("%t", "turnbindAllChat", Cl);
+                    turnTimes[Cl]++;
+                    float turnSec = turnTimes[Cl] * tickinterv;
+                    PrintToImportant("%t", "turnbindAdminMsg", Cl, turnSec);
+                    // not worth logging to console tbqh
+                    if (turnSec < maxAllowedTurnSecs)
+                    {
+                        CPrintToChat(Cl, "%t", "turnbindWarnPlayer");
+                    }
+                    else if (turnSec >= maxAllowedTurnSecs)
+                    {
+                        KickClient(Cl, "%t", "turnbindKickMsg");
+                        LogMessage("%t", "turnbindLogMsg", Cl);
+                        CPrintToChatAll("%t", "turnbindAllChat", Cl);
+                    }
                 }
             }
         }
     }
+    return Plugin_Continue;
 }
 
 public Action Timer_decr_pSilent(Handle timer, any userid)
