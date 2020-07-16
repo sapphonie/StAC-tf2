@@ -277,6 +277,8 @@ initCvars()
         false,
         _
     );
+    HookConVarChange(stac_max_psilent_detections, stacVarChanged);
+    // bhop detections
     IntToString(maxBhopDetections, buffer, sizeof(buffer));
     stac_max_bhop_detections =
     AutoExecConfig_CreateConVar
