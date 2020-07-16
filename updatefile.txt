@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "3.1.6"
+            "Latest"    "3.2.0"
         }
 
-        "Notes" "Changes in 3.1.6"
-        "Notes" "- remove item schema check (fixed by valve), optimize some small things, fix psilent detections on laggy players"
+        "Notes" "Changes in 3.2.0"
+        "Notes" "- added bhop checking to stac"
     }
 
     "Files"
