@@ -1,8 +1,8 @@
 
 # STEPH'S ANTICHEAT <span color=#FF69B4>[StAC]</span>
 
-### Disclaimers
-False positives are always a possibility! Feel free to submit a bug report if you can reproduce a way to trigger false positives.
+## An Anti Cheat SourceMod Plugin for Team Fortress 2
+
 
 ### This plugin can currently prevent:
 - interp/lerp abuse (some detection methods only available on default tickrate servers)
@@ -50,6 +50,9 @@ You should be good to go!
 
 ### Sourcebans
 This plugin is compatible with both SourceBans and the default TF2 ban handler, and auto detects which it should use.
+
+### Disclaimers
+False positives are always a possibility! Feel free to submit a bug report if you can reproduce a way to trigger false positives.
 
 ### Todo (may not be possible):
 - add basic snap detection outside of psilent snaps (in the works!)
