@@ -13,7 +13,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.2.0"
+#define PLUGIN_VERSION  "3.2.1"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -80,7 +80,7 @@ float maxAllowedTurnSecs    = -1.0;
 bool kickForPingMasking     = false;
 int maxPsilentDetections    = 15;
 int maxFakeAngDetections    = 10;
-int maxBhopDetections       = 5;
+int maxBhopDetections       = 10;
 int min_interp_ms           = -1;
 int max_interp_ms           = 101;
 // RANDOM CVARS CHECK MIN/MAX BOUNDS (in seconds)
@@ -285,7 +285,7 @@ initCvars()
     (
         "stac_max_bhop_detections",
         buffer,
-        "[StAC] maximum bhop detecions before kicking (on wait enabled servers) or banning (on wait disabled servers) a client. -1 to disable any action\n(recommended 5 or higher)",
+        "[StAC] maximum bhop detecions before kicking (on wait enabled servers) or banning (on wait disabled servers) a client. -1 to disable any action\n(recommended 10 or higher)",
         FCVAR_NONE,
         true,
         -1.0,
@@ -923,8 +923,8 @@ public Action OnPlayerRunCmd
                 {
                     bhopDetects[Cl]++;
 
-                    // print all bhops to admins regardless of multiplier
-                    if (bhopDetects[Cl] >= 1)
+                    // print all (2nd and up) bhops to admins regardless of multiplier
+                    if (bhopDetects[Cl] >= 2)
                     {
                         PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i", Cl, bhopDetects[Cl]);
                         // print to player if halfway to getting punished
