@@ -26,7 +26,7 @@
 - pSilentAim / NoRecoil cheats
 *(logs detections to admins / STV, bans on `stac_max_psilent_detections` detections, defaults to 15)*
 - bhop cheats and scripts
-*(logs detections to admins / STV, bans on `stac_max_bhop_detections` detections, unless `sv_allow_wait_command` is 1, in which case it kicks. defaults to 10)*
+*(logs detections to admins / STV, bans on `stac_max_bhop_detections` detections or 5 detections on the same map of (`stac_max_bhop_detections` / 2) bhops in a row, unless `sv_allow_wait_command` is 1, in which case it kicks. defaults to 20)*
 - fake eye angle violations
 *(logs detections to admins / STV, bans on `stac_max_fakeang_detections` detections, defaults to 10)*
 - certain fake item schema violations (cheat that can unequip people's hats)
