@@ -1,4 +1,3 @@
-
 # STEPH'S ANTICHEAT <span color=#FF69B4>[StAC]</span>
 
 ## An Anti Cheat SourceMod Plugin for Team Fortress 2
@@ -26,7 +25,9 @@
 - pSilentAim / NoRecoil cheats
 *(logs detections to admins / STV, bans on `stac_max_psilent_detections` detections, defaults to 15)*
 - bhop cheats and scripts
-*(logs detections to admins / STV, bans on `stac_max_bhop_detections` detections or 5 detections on the same map of (`stac_max_bhop_detections` / 2) bhops in a row, unless `sv_allow_wait_command` is 1, in which case it kicks. defaults to 20)*
+*(logs detections to admins / STV, bans on `stac_max_bhop_detections` detections + 2 (defaults to 10)*
+
+Note: After a client does `stac_max_bhop_detections` tick perfect bhops (default 10), they will get "antibhopped". This will set their gravity to 8x and their velocity to 0. Cheating clients will get banned if they hold down their spacebar and successfully do 2 extra tick perfect bhops with 8x gravity, something that is functionally impossible for a human.
 - fake eye angle violations
 *(logs detections to admins / STV, bans on `stac_max_fakeang_detections` detections, defaults to 10)*
 - certain fake item schema violations (cheat that can unequip people's hats)
@@ -69,5 +70,4 @@ False positives are always a possibility! Feel free to submit a bug report if yo
 LilAC: https://forums.alliedmods.net/showthread.php?t=321480
 
 SMAC: https://github.com/Silenci0/SMAC
-
 
