@@ -35,26 +35,6 @@
                      /_/
 
     */
-    // NON BAN MSGS
-    "bhopWarnPlayer"
-    {
-        "en"        "{hotpink}[StAC]{white} Bhop scripts are not allowed on this server. If you continue to use them you will be autokicked!"
-    }
-    "bhopKickMsg"
-    {
-        "en"        "[StAC] Usage of bhop scripts is not allowed. Kicked from server"
-    }
-    "bhopAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was using a bhop script. {palegreen}Kicked from server."
-    }
-    "bhopLogMsg"
-    {
-        "#format"   "{1:N}"
-        "en"        "[StAC] Player {1} was using a bhop script. Kicked from server."
-    }
-    // NONCONSECUTIVE STRING MESSAGES (BAN MESSAGES)
     "bhopBanAllChat"
     {
         "#format"   "{1:N},{2:i}"
@@ -65,18 +45,6 @@
         "#format"   "{1:N},{2:i}"
         "en"        "[StAC] Player {1} was banned for bhop cheats. Total consecutive bhops: {2}"
     }
-    // CONSECUTIVE STRING MESSAGES (BAN MESSAGES)
-    "bhopBanAllChatConsecutive"
-    {
-        "#format"   "{1:N},{2:i},{3:i}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}bhopping{white} using a {mediumpurple}cheat program{white}. Total strings of {yellow}{2}{white} consecutive bhops or more: {mediumpurple}{3}{white}. {palegreen}BANNED from server!"
-    }
-    "bhopBanMsgConsecutive"
-    {
-        "#format"   "{1:N},{2:i},{3:i}"
-        "en"        "[StAC] Player {1} was banned for bhop cheats. Total strings of {2} consecutive bhops or more: {3}"
-    }
-
     /*
         ____        __
        / __/____ _ / /__ ___   ____ _ ____   ____ _ _____

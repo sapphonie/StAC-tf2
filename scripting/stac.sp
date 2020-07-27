@@ -13,7 +13,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.2.8"
+#define PLUGIN_VERSION  "3.2.9"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -51,6 +51,8 @@ float angPrev1              [MAXPLAYERS+1]   [2];
 float angPrev2              [MAXPLAYERS+1]   [2];
 // STORED BUTTONS PER CLIENT
 int buttonsPrev[MAXPLAYERS+1];
+// STORED GRAVITY STATE PER CLIENT
+bool highGrav[MAXPLAYERS+1];
 // STORED VARS FOR INDIVIDUAL CLIENTS
 bool playerTaunting         [MAXPLAYERS+1];
 float interpFor             [MAXPLAYERS+1] = -1.0;
@@ -58,6 +60,7 @@ float interpRatioFor        [MAXPLAYERS+1] = -1.0;
 float updaterateFor         [MAXPLAYERS+1] = -1.0;
 float REALinterpFor         [MAXPLAYERS+1] = -1.0;
 bool userBanQueued          [MAXPLAYERS+1];
+
 
 // SOURCEBANS BOOL
 bool SOURCEBANS;
@@ -84,9 +87,8 @@ float maxAllowedTurnSecs    = -1.0;
 bool kickForPingMasking     = false;
 int maxPsilentDetections    = 15;
 int maxFakeAngDetections    = 10;
-int maxBhopDetections       = 20;
-// there's no reason to assign a cvar for this
-int maxConsecBhopDetections = 5;
+int maxBhopDetections       = 10;
+// this gets set later
 int maxBhopDetectionsScaled;
 int min_interp_ms           = -1;
 int max_interp_ms           = 101;
@@ -99,8 +101,6 @@ int minInterpRatio          = -2;
 int maxInterpRatio          = -2;
 // STORED VALUE FOR IF MAP HAS COMPILED LIGHTING (assume true)
 bool compiledVRAD           = true;
-// STORED VALUE FOR SERVER'S WAIT CVAR (assume true to not accidentally ban ppl)
-bool waitEnabled            = true;
 // REGEX
 Regex pingmaskRegex;
 
@@ -146,7 +146,6 @@ public OnPluginStart()
     minInterpRatio = GetConVarInt(FindConVar("sv_client_min_interp_ratio"));
     maxInterpRatio = GetConVarInt(FindConVar("sv_client_max_interp_ratio"));
     compiledVRAD   = !GetConVarBool(FindConVar("mat_fullbright"));
-    waitEnabled    = GetConVarBool(FindConVar("sv_allow_wait_command"));
     if (GetConVarBool(FindConVar("sv_cheats")))
     {
         LogMessage("[StAC] sv_cheats set to 1 - unloading plugin!!!");
@@ -288,7 +287,7 @@ initCvars()
     (
         "stac_max_bhop_detections",
         buffer,
-        "[StAC] maximum bhop detecions before kicking (on wait enabled servers) or banning (on wait disabled servers) a client. -1 to disable any action\n(recommended 10 or higher)",
+        "[StAC] maximum consecutive bhop detecions on a client before they get \"antibhopped\". client will get banned on this value + 2, so for default cvar settings, client will get banned on 12 tick perfect bhops.\nctrl + f for \"antibhop\" in stac.sp for more detailed info.\n-1 to disable any action\n(recommended 10 or higher)",
         FCVAR_NONE,
         true,
         -1.0,
@@ -439,6 +438,9 @@ setStacVars()
     minRandCheckVal = GetConVarFloat(stac_min_randomcheck_secs);
     // max check sec var
     maxRandCheckVal = GetConVarFloat(stac_max_randomcheck_secs);
+
+    // this is for bhop detection only
+    DoTPSMath();
 }
 
 GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
@@ -460,18 +462,6 @@ GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
         else
         {
             compiledVRAD = true;
-        }
-    }
-    // if wait is enabled we don't ban for bhop because scripting, we kick instead
-    else if (convar == FindConVar("sv_allow_wait_command"))
-    {
-        if (StringToInt(newValue) != 0)
-        {
-            waitEnabled = true;
-        }
-        else
-        {
-            waitEnabled = false;
         }
     }
     // IMMEDIATELY unload if we enable sv cheats
@@ -521,20 +511,25 @@ public Action ShowDetections(int callingCl, int args)
                     turnTimes[Cl] >= 1
                      || pSilentDetects[Cl] >= 1
                      || fakeAngDetects[Cl] >= 1
+                     || bhopConsecDetects[Cl] >= 1
                 )
             {
                 ReplyToCommand(callingCl, "Detections for %L", Cl);
                 if (turnTimes[Cl] >= 1)
                 {
-                    ReplyToCommand(callingCl, "- %i turnTimes (frames) for %N", turnTimes[Cl], Cl);
+                    ReplyToCommand(callingCl, "- %i turn bind frames for %N", turnTimes[Cl], Cl);
                 }
                 if (pSilentDetects[Cl] >= 1)
                 {
-                    ReplyToCommand(callingCl, "- %i pSilentDetects for %N", pSilentDetects[Cl], Cl);
+                    ReplyToCommand(callingCl, "- %i psilent / norecoil detections for %N", pSilentDetects[Cl], Cl);
                 }
                 if (fakeAngDetects[Cl] >= 1)
                 {
-                    ReplyToCommand(callingCl, "- %i fakeAngDetects for %N", fakeAngDetects[Cl], Cl);
+                    ReplyToCommand(callingCl, "- %i fake angle detections for %N", fakeAngDetects[Cl], Cl);
+                }
+                if (bhopConsecDetects[Cl] >= 1)
+                {
+                    ReplyToCommand(callingCl, "- %i consecutive bhop strings for %N", bhopConsecDetects[Cl], Cl);
                 }
             }
         }
@@ -747,6 +742,11 @@ ClearClBasedVars(userid)
     updaterateFor[Cl]           = -1.0;
     REALinterpFor[Cl]           = -1.0;
     userBanQueued[Cl]           = false;
+    if (highGrav[Cl])
+    {
+        SetEntityGravity(Cl, 1.0);
+        highGrav[Cl] = false;
+    }
 }
 
 public OnClientPostAdminCheck(Cl)
@@ -944,84 +944,68 @@ public Action OnPlayerRunCmd
             if (bhopmult >= 1.0 && bhopmult <= 2.0)
             {
                 int flags = GetEntityFlags(Cl);
-                int maxBhops_div2 = RoundToNearest((maxBhopDetectionsScaled / 2.0));
 
-                // player hasnt pressed jump and is on the ground - reset count
-                if (!(buttons & IN_JUMP) && (flags & FL_ONGROUND))
+                // reset their gravity if it's high!
+                if (highGrav[Cl])
+                {
+                    SetEntityGravity(Cl, 1.0);
+                    highGrav[Cl] = false;
+                }
+
+                if  (
+                        !(buttons & IN_JUMP)  // player didn't press jump
+                         &&
+                        (flags & FL_ONGROUND) // player is on the ground
+                    )
+                // RESET COUNT!
                 {
                     // set to -1 to ignore single jumps, we ONLY want to count bhops
                     bhopDetects[Cl] = -1;
-                    // count consecutive strings of bhops- a "consecutive string" is a consecutive bhop of HALF the value of maxBhopDetectionsScaled =  maxBhopDetections
+                    // count consecutive strings of bhops- a "consecutive string" is maxBhopDetectionsScaled or more
                     // bhopmult is for higher tickrate servers
-                    // we ban on 1/4th the value of (maxBhopDetections * bhopmult) strings of bhops
-                    // aka for 20 max consecutive bhops, we would ban for 5 consecutive strings of 10 bhops
-                    // the 10 bhops need to be consecutive but the strings do not
                     if (isConsecStringOfBhops[Cl])
                     {
                         bhopConsecDetects[Cl]++;
                         isConsecStringOfBhops[Cl] = false;
                         // print to admins if we get a consec detection
-                        PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped consecutively {yellow}%i{mediumpurple} or more times{white}!\nDetections so far: {palegreen}%i", Cl, maxBhops_div2, bhopConsecDetects[Cl]);
-                        LogMessage("[StAC] Player %N bhopped consecutively %i or more times! Detections so far: %i", Cl, maxBhops_div2, bhopConsecDetects[Cl]);
-                        if (bhopConsecDetects[Cl] >= maxConsecBhopDetections)
-                        {
-                            if (waitEnabled)
-                            {
-                                KickClient(Cl, "%t", "bhopKickMsg");
-                                LogMessage("%t", "bhopLogMsg", Cl);
-                                CPrintToChatAll("%t", "bhopAllChat", Cl);
-                            }
-                            else if (!waitEnabled)
-                            {
-                                char reason[256];
-                                Format(reason, sizeof(reason), "%t", "bhopBanMsgConsecutive", Cl, maxBhops_div2, bhopConsecDetects[Cl]);
-                                PrintToChatAll("%s", reason);
-                                BanUser(userid, reason);
-                                CPrintToChatAll("%t", "bhopBanAllChatConsecutive", Cl, maxBhops_div2, bhopConsecDetects[Cl]);
-                                LogMessage( "%t", "bhopBanMsgConsecutive", Cl, maxBhops_div2, bhopConsecDetects[Cl]);
-                            }
-                        }
+                        // i don't want to ban legits who are REALLY fucking good at real bhopping, so I removed the consec ban code for now
+                        PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped consecutively {yellow}%i{mediumpurple} or more times{white}!\nDetections so far: {palegreen}%i", Cl, maxBhopDetectionsScaled, bhopConsecDetects[Cl]);
+                        LogMessage("[StAC] Player %N bhopped consecutively %i or more times! Detections so far: %i", Cl, maxBhopDetectionsScaled, bhopConsecDetects[Cl]);
                     }
                 }
-                // player pressed jump and last input WASN'T a jump
-                else if ((buttons & IN_JUMP) && !(buttonsPrev[Cl] & IN_JUMP))
+                // if a client didn't trigger the reset conditions above, they bhopped
+                else if (
+                            !(buttonsPrev[Cl] & IN_JUMP) // last input didn't have a jump - include to prevent legits holding spacebar from triggering detections
+                             && (buttons & IN_JUMP)      // player pressed jump
+                             && (flags & FL_ONGROUND)    // they were on the ground when they pressed space
+                        )
                 {
-                    // player touched ground (but we know they immediately jumped ^)
-                    // count actual consecutive bhops
-                    if (flags & FL_ONGROUND)
+                    bhopDetects[Cl]++;
+                    // print to player if halfway to getting punished
+                    if (bhopDetects[Cl] >= maxBhopDetectionsScaled)
                     {
-                        bhopDetects[Cl]++;
-                        // print to player if halfway to getting punished
-                        if (bhopDetects[Cl] >= maxBhops_div2)
-                        {
-                            isConsecStringOfBhops[Cl] = true;
-                            // print to admin if halfway to getting banned
-                            PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , Cl, bhopDetects[Cl]);
-                            LogMessage("[StAC] Player %N bhopped! Consecutive detections so far: %i" , Cl, bhopDetects[Cl]);
-                            // only print to player if wait is enabled
-                            if (waitEnabled)
-                            {
-                                CPrintToChat(Cl, "%t", "bhopWarnPlayer");
-                            }
-                        }
-                        // punish on multiplier * bhopdetects
-                        if ((bhopDetects[Cl] >= maxBhopDetectionsScaled && maxBhopDetections != -1))
-                        {
-                            if (waitEnabled)
-                            {
-                                KickClient(Cl, "%t", "bhopKickMsg");
-                                LogMessage("%t", "bhopLogMsg", Cl);
-                                CPrintToChatAll("%t", "bhopAllChat", Cl);
-                            }
-                            else if (!waitEnabled)
-                            {
-                                char reason[256];
-                                Format(reason, sizeof(reason), "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
-                                BanUser(userid, reason);
-                                CPrintToChatAll("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
-                                LogMessage( "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
-                            }
-                        }
+                        isConsecStringOfBhops[Cl] = true;
+                        // print to admin if halfway to getting banned
+                        PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , Cl, bhopDetects[Cl]);
+                        LogMessage("[StAC] Player %N bhopped! Consecutive detections so far: %i" , Cl, bhopDetects[Cl]);
+
+                        /* ANTIBHOP */
+
+                        // zero the player's velocity and set their gravity to 8x.
+                        // if idiot cheaters keep holding their spacebar for an extra second and do 2 tick perfect bhops WHILE at 8x gravity...
+                        // ...we will catch them autohopping and ban them!
+                        TeleportEntity(Cl, NULL_VECTOR, NULL_VECTOR, view_as<float>({0.0, 0.0, 0.0})); // sourcepawn is disgusting btw
+                        SetEntityGravity(Cl, 8.0);
+                        highGrav[Cl] = true;
+                    }
+                    // punish on maxBhopDetectionsScaled + 2 (for the extra TWO tick perfect bhops at 8x grav with no warning - no human can do this!)
+                    if ((bhopDetects[Cl] >= (maxBhopDetectionsScaled + 2) && maxBhopDetections != -1))
+                    {
+                        char reason[256];
+                        Format(reason, sizeof(reason), "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
+                        BanUser(userid, reason);
+                        CPrintToChatAll("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
+                        LogMessage( "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
                     }
                 }
                 buttonsPrev[Cl] = buttons;
@@ -1563,9 +1547,6 @@ stock PrintToImportant(const char[] format, any ...)
     VFormat(buffer, sizeof(buffer), format, 2);
     PrintColoredChatToAdmins("%s", buffer);
     CPrintToSTV("%s", buffer);
-    //Regex stripColors = new Regex("\\{.*\\}", PCRE_CASELESS | PCRE_MULTILINE | PCRE_UNGREEDY);
-    //GetRegexSubString(stripColors, 0, buffer, sizeof(buffer));
-    //LogMessage("%s", buffer);
 }
 
 // adapted & deuglified from f2stocks
@@ -1618,11 +1599,6 @@ stock CPrintToSTV(const char[] format, any:...)
 // float max
 stock float fMax(float a, float b) {
     return a > b ? a : b;
-}
-// abs
-stock int IntAbs(int val)
-{
-   return (val < 0) ? -val : val;
 }
 
 // stolen from smlib
