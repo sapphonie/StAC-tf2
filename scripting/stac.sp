@@ -48,13 +48,13 @@ float timeSinceSpawn        [MAXPLAYERS+1];
 float timeSinceTaunt        [MAXPLAYERS+1];
 float timeSinceTeled        [MAXPLAYERS+1];
 // STORED ANGLES PER CLIENT
-float angles0                [MAXPLAYERS+1]   [2];
-float angles1              [MAXPLAYERS+1]   [2];
-float angles2              [MAXPLAYERS+1]   [2];
+float angles0               [MAXPLAYERS+1]   [2];
+float angles1               [MAXPLAYERS+1]   [2];
+float angles2               [MAXPLAYERS+1]   [2];
 // STORED cmdnum PER CLIENT
 int cmdnum0                 [MAXPLAYERS+1];
-int cmdnum1               [MAXPLAYERS+1];
-int cmdnum2               [MAXPLAYERS+1];
+int cmdnum1                 [MAXPLAYERS+1];
+int cmdnum2                 [MAXPLAYERS+1];
 // STORED BUTTONS PER CLIENT
 int buttonsPrev             [MAXPLAYERS+1];
 // STORED GRAVITY STATE PER CLIENT
@@ -896,14 +896,13 @@ public Action OnPlayerRunCmd
             cmdnum1[Cl] = cmdnum0[Cl];
             cmdnum0[Cl] = cmdnum;
 
-
             /*
                 SILENT AIM DETECTION
-                silent aim works (in this context) by aimbotting for 1 frame and then snapping your viewangle back to what it was
+                silent aim (in this context) works by aimbotting for 1 tick and then snapping your viewangle back to what it was
                 example snap:
-                    L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: curang angles: x 5.120096 y 9.763162
-                    L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: prev1  angles: x 1.635611 y 12.876886
-                    L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: prev2  angles: x 5.120096 y 9.763162
+                    L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: angles0  angles: x 5.120096 y 9.763162
+                    L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: angles1  angles: x 1.635611 y 12.876886
+                    L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: angles2  angles: x 5.120096 y 9.763162
                 we can just look for these snaps and log them as detections!
                 note that this won't detect some snaps when a player is moving their strafe keys and mouse @ the same time while they are aimlocking.
                 i'll *try* to work mouse movement into this function at SOME point but it works reasonably well for right now.
@@ -912,14 +911,13 @@ public Action OnPlayerRunCmd
             (
                 // so the current and 2nd previous angles match...
                 (
-                    angles0[Cl][0] == angles2[Cl][0]
-                     &&
-                    angles0[Cl][1] == angles2[Cl][1]
+                       angles0[Cl][0] == angles2[Cl][0]
+                    && angles0[Cl][1] == angles2[Cl][1]
                 )
                 &&
                 // BUT the 1st previous (in between) angle doesnt?
                 (
-                    angles1[Cl][0]     != angles0[Cl][0]
+                        angles1[Cl][0] != angles0[Cl][0]
                      && angles1[Cl][1] != angles0[Cl][1]
                      && angles1[Cl][0] != angles2[Cl][0]
                      && angles1[Cl][1] != angles2[Cl][1]
@@ -928,28 +926,30 @@ public Action OnPlayerRunCmd
                 // make sure we dont get any fake detections on startup (might not really be needed? but just in case)
                 // this also ignores weird angle resets in mge / dm
                 (
-                    angles0[Cl][0]       != 0.000000
-                     && angles0[Cl][1]   != 0.000000
+                        angles0[Cl][0] != 0.000000
+                     && angles0[Cl][1] != 0.000000
                      && angles1[Cl][0] != 0.000000
                      && angles1[Cl][1] != 0.000000
                      && angles2[Cl][0] != 0.000000
                      && angles2[Cl][1] != 0.000000
                 )
                 &&
-                // make sure ticks are sequential
+                // make sure ticks are sequential, hopefully avoid laggy players
                 // example real detection:
-                //      [StAC] pSilent / NoRecoil detection of 3.38° on <user>.
-                //      Detections so far: 34
-                //      User Net Info: 0.00% loss, 49.92% choke, 309.49 ms ping
-                //      User tick Info: curtick 63832, prev1tick: 63831, prev2tick: 63830
-                //      User cmdnum Info: curcmdnum 27573, prev1cmdnum: 27572, prev2cmdnum: 27571
-                //      |----- curang angles: x 8.065973 y -156.428726
-                //      |----- prev 1 angles: x 7.402854 y -159.749511
-                //      |----- prev 2 angles: x 8.065973 y -156.428726
+                /*
+                [StAC] pSilent / NoRecoil detection of 5.20° on <user>.
+                Detections so far: 15
+                User Net Info: 0.00% loss, 24.10% choke, 66.22 ms ping
+                 cmdnum0: 61167
+                 cmdnum1: 61166
+                 cmdnum2: 61165
+                 angles0: x 8.82 y 127.68
+                 angles1: x 5.38 y 131.60
+                 angles2: x 8.82 y 127.68
+                */
                 (
-                    cmdnum0[Cl] - 1 == cmdnum1[Cl]
-                    &&
-                    cmdnum1[Cl] - 1 == cmdnum2[Cl]
+                       cmdnum0[Cl] - 1 == cmdnum1[Cl]
+                    && cmdnum1[Cl] - 1 == cmdnum2[Cl]
                 )
             )
             /*
@@ -986,6 +986,10 @@ public Action OnPlayerRunCmd
                     PrintToImportant("{white}User Net Info: {palegreen}%.2f{white}%% loss, {palegreen}%.2f{white}%% choke, {palegreen}%.2f{white} ms ping", loss, choke, ping);
                     PrintToImportant(" cmdnum0: %i\n cmdnum1: %i\n cmdnum2: %i", cmdnum0[Cl], cmdnum1[Cl], cmdnum2[Cl]);
                     PrintToImportant(" angles0: x %.2f y %.2f\n angles1: x %.2f y %.2f\n angles2: x %.2f y %.2f", angles0[Cl][0], angles0[Cl][1], angles1[Cl][0], angles1[Cl][1], angles2[Cl][0], angles2[Cl][1]);
+                    LogMessage("\n[StAC] pSilent / NoRecoil detection of %.2f° on %N.\nDetections so far: %i", aDiffReal, Cl,  pSilentDetects[Cl]);
+                    LogMessage("\nUser Net Info: %.2f%% loss, %.2f%% choke, %.2f ms ping", loss, choke, ping);
+                    LogMessage("\nCmdnum info:\n cmdnum0: %i\n cmdnum1: %i\n cmdnum2: %i", cmdnum0[Cl], cmdnum1[Cl], cmdnum2[Cl]);
+                    LogMessage("\nAngles info:\n angles0: x %.2f y %.2f\n angles1: x %.2f y %.2f\n angles2: x %.2f y %.2f", angles0[Cl][0], angles0[Cl][1], angles1[Cl][0], angles1[Cl][1], angles2[Cl][0], angles2[Cl][1]);
                     // BAN USER if they trigger too many detections
                     if (pSilentDetects[Cl] >= maxPsilentDetections && maxPsilentDetections != -1)
                     {
