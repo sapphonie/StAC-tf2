@@ -14,7 +14,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.2.10"
+#define PLUGIN_VERSION  "3.2.12"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -108,7 +108,7 @@ bool compiledVRAD           = true;
 Regex pingmaskRegex;
 
 // demoname for currently recording demo if extant
-char demoname[64];
+char demoname[128];
 
 public void OnPluginStart()
 {
@@ -967,7 +967,7 @@ public Action OnPlayerRunCmd
                     // BAN USER if they trigger too many detections
                     if (pSilentDetects[Cl] >= maxPsilentDetections && maxPsilentDetections != -1)
                     {
-                        char reason[256];
+                        char reason[128];
                         Format(reason, sizeof(reason), "%t", "pSilentBanMsg", pSilentDetects[Cl]);
                         BanUser(userid, reason);
                         MC_PrintToChatAll("%t", "pSilentBanAllChat", Cl, pSilentDetects[Cl]);
@@ -1039,7 +1039,7 @@ public Action OnPlayerRunCmd
                     // punish on maxBhopDetectionsScaled + 2 (for the extra TWO tick perfect bhops at 8x grav with no warning - no human can do this!)
                     if ((bhopDetects[Cl] >= (maxBhopDetectionsScaled + 2) && maxBhopDetections != -1))
                     {
-                        char reason[256];
+                        char reason[128];
                         Format(reason, sizeof(reason), "%t", "bhopBanMsg", bhopDetects[Cl]);
                         BanUser(userid, reason);
                         MC_PrintToChatAll("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
@@ -1073,7 +1073,7 @@ public Action OnPlayerRunCmd
                 LogMessage("[StAC] Player %N has invalid eye angles!\nCurrent angles: %.2f %.2f %.2f.\nDetections so far: %i", Cl, angles[0], angles[1], angles[2], fakeAngDetects[Cl]);
                 if (fakeAngDetects[Cl] >= maxFakeAngDetections && maxFakeAngDetections != -1)
                 {
-                    char reason[256];
+                    char reason[128];
                     Format(reason, sizeof(reason), "%t", "fakeangBanMsg", fakeAngDetects[Cl]);
                     BanUser(userid, reason);
                     MC_PrintToChatAll("%t", "fakeangBanAllChat", Cl, fakeAngDetects[Cl]);
@@ -1160,7 +1160,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     {
         if (StringToInt(cvarValue) != 1)
         {
-            char reason[256];
+            char reason[128];
             Format(reason, sizeof(reason), "%t", "nolerpBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "nolerpBanAllChat", Cl);
@@ -1172,7 +1172,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     {
         if (StringToInt(cvarValue) != 1)
         {
-            char reason[256];
+            char reason[128];
             Format(reason, sizeof(reason), "%t", "othermodelsBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "othermodelsBanAllChat", Cl);
@@ -1186,7 +1186,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         fovDesired[Cl] = StringToInt(cvarValue);
         if (StringToInt(cvarValue) > 90)
         {
-            char reason[256];
+            char reason[128];
             Format(reason, sizeof(reason), "%t", "fovBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "fovBanAllChat", Cl);
@@ -1199,7 +1199,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         // can only ever be 0 unless you're cheating or on a map with uncompiled lighting so check for both of these
         if (StringToInt(cvarValue) != 0 && compiledVRAD)
         {
-            char reason[256];
+            char reason[128];
             Format(reason, sizeof(reason), "%t", "fullbrightBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "fullbrightBanAllChat", Cl);
@@ -1211,7 +1211,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     {
         if (StringToInt(cvarValue) != 0)
         {
-            char reason[256];
+            char reason[128];
             Format(reason, sizeof(reason), "%t", "tpBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "tpBanAllChat", Cl);
@@ -1323,7 +1323,7 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         )
     {
         int userid = GetClientUserId(Cl);
-        char reason[256];
+        char reason[128];
         Format(reason, sizeof(reason), "%t", "newlineBanMsg");
         BanUser(userid, reason);
         MC_PrintToChatAll("%t", "newlineBanAllChat", Cl);
@@ -1366,14 +1366,12 @@ public void BanUser(int userid, char[] reason)
             // make sure demoname is initialized!
             if (demoname[0] != '\0')
             {
-                LogMessage("demoname in sb");
                 char tvStatus[512];
                 ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
-                LogMessage("tvStatusOut: %s", tvStatus);
                 if (StrContains(tvStatus, "Recording to", false) != -1)
                 {
                     Format(demoname, sizeof(demoname), ". Demo file: %s.dem", demoname);
-                    StrCat(reason, 128, demoname);
+                    StrCat(reason, 256, demoname);
                     LogMessage("Reason: %s", reason);
                 }
                 else
@@ -1383,7 +1381,7 @@ public void BanUser(int userid, char[] reason)
             }
             else
             {
-                LogMessage("[StAC] Null string returned for demoname. Aborting!");
+                LogMessage("[StAC] Null string returned for demoname. No STV info will be printed to SourceBans!");
             }
         }
 
@@ -1419,7 +1417,7 @@ void NameCheck(int userid)
              || StrContains(curName, "\r", false)           != -1
             )
         {
-            char reason[256];
+            char reason[128];
             Format(reason, sizeof(reason), "%t", "illegalNameBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "illegalNameBanAllChat", Cl);
@@ -1455,50 +1453,54 @@ void NetPropCheck(int userid)
             // fix broken equip slots. Note: this was patched by valve but you can still equip invalid items...
             // ...just without the annoying unequipping other people's items part
             // cathook is cringe
-            int slot1wearable = TF2_GetWearable(Cl, 0);
-            int slot2wearable = TF2_GetWearable(Cl, 1);
-            int slot3wearable = TF2_GetWearable(Cl, 2);
-            int maxEnts       = GetMaxEntities();
             // only check if player has 3 valid hats on
-            if  (
-                    0 < slot1wearable <= maxEnts
-                    &&
-                    0 < slot2wearable <= maxEnts
-                    &&
-                    0 < slot3wearable <= maxEnts
-                )
+            if (TF2_GetNumWearables(Cl) == 3)
             {
-                int slot1itemdef = GetEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex");
-                int slot2itemdef = GetEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex");
-                int slot3itemdef = GetEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex");
+                int slot1wearable = TF2_GetWearable(Cl, 0);
+                int slot2wearable = TF2_GetWearable(Cl, 1);
+                int slot3wearable = TF2_GetWearable(Cl, 2);
+                // check that the ents are valid and have the correct entprops
                 if  (
-                        // frontline field recorder
-                        (
-                            slot1itemdef    == 302
-                            || slot2itemdef == 302
-                            || slot3itemdef == 302
-                        )
-                        // gibus
-                        &&
-                        (
-                            slot1itemdef    == 940
-                            || slot2itemdef == 940
-                            || slot3itemdef == 940
-                        )
-                        &&
-                        // skull topper
-                        (
-                            slot1itemdef    == 941
-                            || slot2itemdef == 941
-                            || slot3itemdef == 941
-                        )
+                        IsValidEntity(slot1wearable)
+                        && IsValidEntity(slot2wearable)
+                        && IsValidEntity(slot3wearable)
+                        && HasEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex")
+                        && HasEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex")
+                        && HasEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex")
                     )
                 {
-                    char reason[256];
-                    Format(reason, sizeof(reason), "%t", "badItemSchemaBanMsg");
-                    BanUser(userid, reason);
-                    MC_PrintToChatAll("%t", "badItemSchemaBanAllChat", Cl);
-                    LogMessage("%t", "badItemSchemaBanMsg", Cl);
+                    int slot1itemdef = GetEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex");
+                    int slot2itemdef = GetEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex");
+                    int slot3itemdef = GetEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex");
+                    if  (
+                            // frontline field recorder
+                            (
+                                slot1itemdef    == 302
+                                || slot2itemdef == 302
+                                || slot3itemdef == 302
+                            )
+                            // gibus
+                            &&
+                            (
+                                slot1itemdef    == 940
+                                || slot2itemdef == 940
+                                || slot3itemdef == 940
+                            )
+                            &&
+                            // skull topper
+                            (
+                                slot1itemdef    == 941
+                                || slot2itemdef == 941
+                                || slot3itemdef == 941
+                            )
+                        )
+                    {
+                        char reason[128];
+                        Format(reason, sizeof(reason), "%t", "badItemSchemaBanMsg");
+                        BanUser(userid, reason);
+                        MC_PrintToChatAll("%t", "badItemSchemaBanAllChat", Cl);
+                        LogMessage("%t", "badItemSchemaBanMsg", Cl);
+                    }
                 }
             }
         }
@@ -1604,7 +1606,7 @@ stock float CalcAngDeg(const float array1[2], const float array2[2])
     return SquareRoot(arDiff[0] * arDiff[0] + arDiff[1] * arDiff[1]);
 }
 
-// cleaned up IsValidClient Stock
+// IsValidClient Stock
 stock bool IsValidClient(int client)
 {
     return ((0 < client <= MaxClients) && IsClientInGame(client) && !IsFakeClient(client));
@@ -1696,7 +1698,6 @@ stock int FindSTV()
                 )
             {
                 CachedSTV = client;
-                LogMessage("Found STV: %i", GetClientUserId(CachedSTV));
                 break;
             }
         }
@@ -1754,9 +1755,17 @@ stock any Math_Clamp(any value, any min, any max)
 // https://github.com/Scags/The-Dump/blob/master/scripting/tfwearables.sp#L33-L40
 stock int TF2_GetWearable(int client, int wearableidx)
 {
-    // 3540 linux
-    // 3520 windows
-    int offset = FindSendPropInfo("CTFPlayer", "m_flMaxspeed") - 20;
-    Address m_hMyWearables = view_as< Address >(LoadFromAddress(GetEntityAddress(client) + view_as< Address >(offset), NumberType_Int32));
-    return LoadFromAddress(m_hMyWearables + view_as< Address >(4 * wearableidx), NumberType_Int32) & 0xFFF;
+	// 3540 linux
+	// 3520 windows
+	int offset = FindSendPropInfo("CTFPlayer", "m_flMaxspeed") - 20;
+	Address m_hMyWearables = view_as< Address >(LoadFromAddress(GetEntityAddress(client) + view_as< Address >(offset), NumberType_Int32));
+	return LoadFromAddress(m_hMyWearables + view_as< Address >(4 * wearableidx), NumberType_Int32) & 0xFFF;
+}
+
+stock int TF2_GetNumWearables(int client)
+{
+	// 3552 linux
+	// 3532 windows
+	int offset = FindSendPropInfo("CTFPlayer", "m_flMaxspeed") - 20 + 12;
+	return GetEntData(client, offset);
 }
