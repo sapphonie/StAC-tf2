@@ -1,5 +1,6 @@
 // see the readme for more info:
 // https://github.com/stephanieLGBT/StAC-tf2/blob/master/README.md
+// written by steph, chloe, and liza
 // i love my partners
 #pragma semicolon 1
 #pragma newdecls required
@@ -14,7 +15,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.2.12"
+#define PLUGIN_VERSION  "3.2.13"
 #define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -47,9 +48,13 @@ float timeSinceSpawn        [MAXPLAYERS+1];
 float timeSinceTaunt        [MAXPLAYERS+1];
 float timeSinceTeled        [MAXPLAYERS+1];
 // STORED ANGLES PER CLIENT
-float angCur                [MAXPLAYERS+1]   [2];
-float angPrev1              [MAXPLAYERS+1]   [2];
-float angPrev2              [MAXPLAYERS+1]   [2];
+float angles0                [MAXPLAYERS+1]   [2];
+float angles1              [MAXPLAYERS+1]   [2];
+float angles2              [MAXPLAYERS+1]   [2];
+// STORED cmdnum PER CLIENT
+int cmdnum0                 [MAXPLAYERS+1];
+int cmdnum1               [MAXPLAYERS+1];
+int cmdnum2               [MAXPLAYERS+1];
 // STORED BUTTONS PER CLIENT
 int buttonsPrev             [MAXPLAYERS+1];
 // STORED GRAVITY STATE PER CLIENT
@@ -867,9 +872,9 @@ public Action OnPlayerRunCmd
                 // ...isn't already queued to be banned,
                  && !userBanQueued[Cl]
                 // ...doesn't have 5% or more packet loss,
-                 && loss < 5.0
-                // ...doesn't have 51% or more packet choke,
-                 && choke < 51.0
+                // && loss < 5.0
+                //// ...doesn't have 51% or more packet choke,
+                // && choke < 51.0
                 // ...and isn't timing out.
                  && !IsClientTimingOut(Cl)
             )
@@ -879,12 +884,19 @@ public Action OnPlayerRunCmd
 
             // grab angles (probably expensive but who cares)
             // thanks to nosoop from the sm discord for some help with this
-            angPrev2[Cl][0] = angPrev1[Cl][0];
-            angPrev2[Cl][1] = angPrev1[Cl][1];
-            angPrev1[Cl][0] = angCur[Cl][0];
-            angPrev1[Cl][1] = angCur[Cl][1];
-            angCur[Cl][0]   = angles[0];
-            angCur[Cl][1]   = angles[1];
+            angles2[Cl][0] = angles1[Cl][0];
+            angles2[Cl][1] = angles1[Cl][1];
+            angles1[Cl][0] = angles0[Cl][0];
+            angles1[Cl][1] = angles0[Cl][1];
+            angles0[Cl][0] = angles[0];
+            angles0[Cl][1] = angles[1];
+
+            // grab cmdnum
+            cmdnum2[Cl] = cmdnum1[Cl];
+            cmdnum1[Cl] = cmdnum0[Cl];
+            cmdnum0[Cl] = cmdnum;
+
+
             /*
                 SILENT AIM DETECTION
                 silent aim works (in this context) by aimbotting for 1 frame and then snapping your viewangle back to what it was
@@ -900,28 +912,44 @@ public Action OnPlayerRunCmd
             (
                 // so the current and 2nd previous angles match...
                 (
-                    angCur[Cl][0] == angPrev2[Cl][0]
+                    angles0[Cl][0] == angles2[Cl][0]
                      &&
-                    angCur[Cl][1] == angPrev2[Cl][1]
+                    angles0[Cl][1] == angles2[Cl][1]
                 )
                 &&
                 // BUT the 1st previous (in between) angle doesnt?
                 (
-                    angPrev1[Cl][0]     != angCur[Cl][0]
-                     && angPrev1[Cl][1] != angCur[Cl][1]
-                     && angPrev1[Cl][0] != angPrev2[Cl][0]
-                     && angPrev1[Cl][1] != angPrev2[Cl][1]
+                    angles1[Cl][0]     != angles0[Cl][0]
+                     && angles1[Cl][1] != angles0[Cl][1]
+                     && angles1[Cl][0] != angles2[Cl][0]
+                     && angles1[Cl][1] != angles2[Cl][1]
                 )
                 &&
                 // make sure we dont get any fake detections on startup (might not really be needed? but just in case)
                 // this also ignores weird angle resets in mge / dm
                 (
-                    angCur[Cl][0]       != 0.000000
-                     && angCur[Cl][1]   != 0.000000
-                     && angPrev1[Cl][0] != 0.000000
-                     && angPrev1[Cl][1] != 0.000000
-                     && angPrev2[Cl][0] != 0.000000
-                     && angPrev2[Cl][1] != 0.000000
+                    angles0[Cl][0]       != 0.000000
+                     && angles0[Cl][1]   != 0.000000
+                     && angles1[Cl][0] != 0.000000
+                     && angles1[Cl][1] != 0.000000
+                     && angles2[Cl][0] != 0.000000
+                     && angles2[Cl][1] != 0.000000
+                )
+                &&
+                // make sure ticks are sequential
+                // example real detection:
+                //      [StAC] pSilent / NoRecoil detection of 3.38° on <user>.
+                //      Detections so far: 34
+                //      User Net Info: 0.00% loss, 49.92% choke, 309.49 ms ping
+                //      User tick Info: curtick 63832, prev1tick: 63831, prev2tick: 63830
+                //      User cmdnum Info: curcmdnum 27573, prev1cmdnum: 27572, prev2cmdnum: 27571
+                //      |----- curang angles: x 8.065973 y -156.428726
+                //      |----- prev 1 angles: x 7.402854 y -159.749511
+                //      |----- prev 2 angles: x 8.065973 y -156.428726
+                (
+                    cmdnum0[Cl] - 1 == cmdnum1[Cl]
+                    &&
+                    cmdnum1[Cl] - 1 == cmdnum2[Cl]
                 )
             )
             /*
@@ -939,7 +967,7 @@ public Action OnPlayerRunCmd
             */
             {
                 // actual angle calculation here
-                float aDiffReal = CalcAngDeg(angCur[Cl], angPrev1[Cl]);
+                float aDiffReal = CalcAngDeg(angles0[Cl], angles1[Cl]);
 
                 // refactored from smac - make sure we don't fuck up angles near the x/y axes!
                 if (aDiffReal > 180.0)
@@ -956,14 +984,8 @@ public Action OnPlayerRunCmd
                     // print a bunch of bullshit
                     PrintToImportant("{hotpink}[StAC]{white} pSilent / NoRecoil detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i", aDiffReal, Cl,  pSilentDetects[Cl]);
                     PrintToImportant("{white}User Net Info: {palegreen}%.2f{white}%% loss, {palegreen}%.2f{white}%% choke, {palegreen}%.2f{white} ms ping", loss, choke, ping);
-                    PrintToImportant("|----- curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
-                    PrintToImportant("|----- prev 1 angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
-                    PrintToImportant("|----- prev 2 angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
-                    LogMessage("[StAC] User Net Info: %f% loss, %f% choke, %f ms ping", loss, choke, ping);
-                    LogMessage("[StAC] pSilent / NoRecoil detection of %.2f° on %N.\nDetections so far: %i", aDiffReal, Cl,  pSilentDetects[Cl]);
-                    LogMessage("|----- curang angles: x %f y %f", angCur[Cl][0], angCur[Cl][1]);
-                    LogMessage("|----- prev 1 angles: x %f y %f", angPrev1[Cl][0], angPrev1[Cl][1]);
-                    LogMessage("|----- prev 2 angles: x %f y %f", angPrev2[Cl][0], angPrev2[Cl][1]);
+                    PrintToImportant(" cmdnum0: %i\n cmdnum1: %i\n cmdnum2: %i", cmdnum0[Cl], cmdnum1[Cl], cmdnum2[Cl]);
+                    PrintToImportant(" angles0: x %.2f y %.2f\n angles1: x %.2f y %.2f\n angles2: x %.2f y %.2f", angles0[Cl][0], angles0[Cl][1], angles1[Cl][0], angles1[Cl][1], angles2[Cl][0], angles2[Cl][1]);
                     // BAN USER if they trigger too many detections
                     if (pSilentDetects[Cl] >= maxPsilentDetections && maxPsilentDetections != -1)
                     {
@@ -975,6 +997,7 @@ public Action OnPlayerRunCmd
                     }
                 }
             }
+
             /*
                 BHOP DETECTION - using lilac and ssac as reference, this one's better tho
             */
@@ -1309,7 +1332,6 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     if (DEBUG)
     {
         LogMessage("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
-        PrintToConsoleAllAdmins("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
     }
 }
 
@@ -1446,7 +1468,6 @@ void NetPropCheck(int userid)
         if (DEBUG)
         {
             LogMessage("[StAC] Executed firstperson command on Player %N", Cl);
-            PrintToConsoleAllAdmins("[StAC] Executed firstperson command on Player %N", Cl);
         }
         if (IsClientPlaying(Cl))
         {
@@ -1644,22 +1665,6 @@ stock void PrintColoredChatToAdmins(const char[] format, any ...)
             SetGlobalTransTarget(i);
             VFormat(buffer, sizeof(buffer), format, 2);
             MC_PrintToChat(i, "%s", buffer);
-        }
-    }
-}
-
-// print to all server/sourcemod admin's consoles
-stock void PrintToConsoleAllAdmins(const char[] format, any ...)
-{
-    char buffer[254];
-
-    for (int i = 1; i <= MaxClients; i++)
-    {
-        if (IsClientInGame(i) && CheckCommandAccess(i, "sm_ban", ADMFLAG_ROOT))
-        {
-            SetGlobalTransTarget(i);
-            VFormat(buffer, sizeof(buffer), format, 2);
-            PrintToConsole(i, "%s", buffer);
         }
     }
 }
