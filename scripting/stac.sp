@@ -15,8 +15,8 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.2.13"
-#define UPDATE_URL      "https://raw.githubusercontent.com/stephanieLGBT/StAC-tf2/master/updatefile.txt"
+#define PLUGIN_VERSION  "3.3.0b"
+#define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
 {
@@ -61,10 +61,6 @@ int buttonsPrev             [MAXPLAYERS+1];
 bool highGrav               [MAXPLAYERS+1];
 // STORED VARS FOR INDIVIDUAL CLIENTS
 bool playerTaunting         [MAXPLAYERS+1];
-float interpFor             [MAXPLAYERS+1] = -1.0;
-float interpRatioFor        [MAXPLAYERS+1] = -1.0;
-float updaterateFor         [MAXPLAYERS+1] = -1.0;
-float REALinterpFor         [MAXPLAYERS+1] = -1.0;
 bool userBanQueued          [MAXPLAYERS+1];
 
 // NATIVE BOOLS
@@ -85,7 +81,6 @@ ConVar stac_min_randomcheck_secs;
 ConVar stac_max_randomcheck_secs;
 ConVar stac_include_demoname_in_sb;
 
-
 // VARIOUS DETECTION BOUNDS & CVAR VALUES
 bool DEBUG                  = false;
 bool autoban                = true;
@@ -104,9 +99,6 @@ float maxRandCheckVal       = 300.0;
 // put demoname in sourcebans?
 bool demonameinSB           = true;
 
-// STORED VALUES FOR "sv_client_min/max_interp_ratio" (defaults to -2 for sanity checking)
-int minInterpRatio          = -2;
-int maxInterpRatio          = -2;
 // STORED VALUE FOR IF MAP HAS COMPILED LIGHTING (assume true)
 bool compiledVRAD           = true;
 // REGEX
@@ -153,9 +145,7 @@ public void OnPluginStart()
     CreateTimer(3.0, checkEveryone);
     // pingmasking regex setup
     pingmaskRegex = new Regex("^\\d*\\.?\\d*$");
-    // hook interp ratio cvars
-    minInterpRatio = GetConVarInt(FindConVar("sv_client_min_interp_ratio"));
-    maxInterpRatio = GetConVarInt(FindConVar("sv_client_max_interp_ratio"));
+    // hook mat fullbright and sv cheats
     compiledVRAD   = !GetConVarBool(FindConVar("mat_fullbright"));
     if (GetConVarBool(FindConVar("sv_cheats")))
     {
@@ -164,10 +154,7 @@ public void OnPluginStart()
     }
     // hook currently recording demo name if extant
     AddCommandListener(tvRecordListener, "tv_record");
-    HookConVarChange(FindConVar("sv_client_min_interp_ratio"), GenericCvarChanged);
-    HookConVarChange(FindConVar("sv_client_max_interp_ratio"), GenericCvarChanged);
     HookConVarChange(FindConVar("mat_fullbright"), GenericCvarChanged);
-    HookConVarChange(FindConVar("sv_allow_wait_command"), GenericCvarChanged);
     // hook sv_cheats so we can instantly unload if cheats get turned on
     HookConVarChange(FindConVar("sv_cheats"), GenericCvarChanged);
     // Create ConVars for adjusting settings
@@ -481,15 +468,7 @@ void setStacVars()
 
 void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    if (convar == FindConVar("sv_client_min_interp_ratio"))
-    {
-        minInterpRatio = StringToInt(newValue);
-    }
-    else if (convar == FindConVar("sv_client_min_interp_ratio"))
-    {
-        maxInterpRatio = StringToInt(newValue);
-    }
-    else if (convar == FindConVar("mat_fullbright"))
+    if (convar == FindConVar("mat_fullbright"))
     {
         if (StringToInt(newValue) != 0)
         {
@@ -694,7 +673,6 @@ public Action timer_TriggerTimedStuff(Handle timer)
     ActuallySetRandomSeed();
 }
 
-
 void DoTPSMath()
 {
     tickinterv = GetTickInterval();
@@ -771,15 +749,14 @@ void ClearClBasedVars(int userid)
     timeSinceSpawn[Cl]          = 0.0;
     timeSinceTaunt[Cl]          = 0.0;
     timeSinceTeled[Cl]          = 0.0;
-    interpFor[Cl]               = -1.0;
-    interpRatioFor[Cl]          = -1.0;
-    updaterateFor[Cl]           = -1.0;
-    REALinterpFor[Cl]           = -1.0;
     userBanQueued[Cl]           = false;
     if (highGrav[Cl])
     {
-        SetEntityGravity(Cl, 1.0);
         highGrav[Cl] = false;
+        if (IsValidEntity(Cl))
+        {
+            SetEntityGravity(Cl, 1.0);
+        }
     }
 }
 
@@ -997,7 +974,7 @@ public Action OnPlayerRunCmd
                         Format(reason, sizeof(reason), "%t", "pSilentBanMsg", pSilentDetects[Cl]);
                         BanUser(userid, reason);
                         MC_PrintToChatAll("%t", "pSilentBanAllChat", Cl, pSilentDetects[Cl]);
-                        LogMessage("%t", "pSilentBanMsg", Cl, pSilentDetects[Cl]);
+                        LogMessage("%t", "pSilentBanMsg", pSilentDetects[Cl]);
                     }
                 }
             }
@@ -1070,7 +1047,7 @@ public Action OnPlayerRunCmd
                         Format(reason, sizeof(reason), "%t", "bhopBanMsg", bhopDetects[Cl]);
                         BanUser(userid, reason);
                         MC_PrintToChatAll("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
-                        LogMessage( "%t", "bhopBanMsg", Cl, bhopDetects[Cl]);
+                        LogMessage("%t", "bhopBanMsg", bhopDetects[Cl]);
                     }
                 }
                 buttonsPrev[Cl] = buttons;
@@ -1104,7 +1081,7 @@ public Action OnPlayerRunCmd
                     Format(reason, sizeof(reason), "%t", "fakeangBanMsg", fakeAngDetects[Cl]);
                     BanUser(userid, reason);
                     MC_PrintToChatAll("%t", "fakeangBanAllChat", Cl, fakeAngDetects[Cl]);
-                    LogMessage( "%t", "fakeangBanMsg", Cl, fakeAngDetects[Cl]);
+                    LogMessage("%t", "fakeangBanMsg", fakeAngDetects[Cl]);
                 }
             }
             /*
@@ -1159,10 +1136,7 @@ char cvarsToCheck[][] =
     "mat_fullbright",
     "cl_thirdperson",
     // network cvars
-    "cl_interp",
     "cl_cmdrate",
-    "cl_interp_ratio",
-    "cl_updaterate",
 };
 
 public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
@@ -1191,7 +1165,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             Format(reason, sizeof(reason), "%t", "nolerpBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "nolerpBanAllChat", Cl);
-            LogMessage("%t", "nolerpBanMsg", Cl);
+            LogMessage("%t", "nolerpBanMsg");
         }
     }
     // r_drawothermodels (if u get banned by this you are a clown)
@@ -1203,7 +1177,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             Format(reason, sizeof(reason), "%t", "othermodelsBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "othermodelsBanAllChat", Cl);
-            LogMessage("%t", "othermodelsBanMsg", Cl);
+            LogMessage("%t", "othermodelsBanMsg");
         }
     }
     // fov check #1 (if u get banned by this you are a clown)
@@ -1217,7 +1191,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             Format(reason, sizeof(reason), "%t", "fovBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "fovBanAllChat", Cl);
-            LogMessage("%t", "fovBanMsg", Cl);
+            LogMessage("%t", "fovBanMsg");
         }
     }
     // mat_fullbright
@@ -1230,7 +1204,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             Format(reason, sizeof(reason), "%t", "fullbrightBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "fullbrightBanAllChat", Cl);
-            LogMessage("%t", "fullbrightBanMsg", Cl);
+            LogMessage("%t", "fullbrightBanMsg");
         }
     }
     // thirdperson (hidden cvar)
@@ -1242,17 +1216,12 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             Format(reason, sizeof(reason), "%t", "tpBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "tpBanAllChat", Cl);
-            LogMessage("%t", "tpBanMsg", Cl);
+            LogMessage("%t", "tpBanMsg");
         }
     }
     /*
         NETWORK CVARS
     */
-    // cl_interp
-    else if (StrEqual(cvarName, "cl_interp"))
-    {
-        interpFor[Cl] = StringToFloat(cvarValue);
-    }
     // cl_cmdrate
     else if (StrEqual(cvarName, "cl_cmdrate"))
     {
@@ -1273,66 +1242,6 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             MC_PrintToChatAll("%t", "pingmaskingAllChat", Cl, cvarValue);
         }
     }
-    // cl_interp_ratio
-    else if (StrEqual(cvarName, "cl_interp_ratio"))
-    {
-        // we have to clamp interp ratio to make sure we're getting the "real" client interp
-        // https://github.com/TheAlePower/TeamFortress2/blob/1b81dded673d49adebf4d0958e52236ecc28a956/tf2_src/game/server/gameinterface.cpp#L2845
-        interpRatioFor[Cl] = StringToFloat(cvarValue);
-        if (interpRatioFor[Cl] == 0.0)
-        {
-            interpRatioFor[Cl] = 1.0;
-        }
-        if (minInterpRatio && maxInterpRatio && float(minInterpRatio) != -1)
-        {
-            interpRatioFor[Cl] = Math_Clamp(interpRatioFor[Cl], float(minInterpRatio), float(maxInterpRatio));
-        }
-        else
-        {
-            if (interpRatioFor[Cl] == 0.0)
-            {
-                interpRatioFor[Cl] = 1.0;
-            }
-        }
-    }
-    // cl_updaterate
-    else if (StrEqual(cvarName, "cl_updaterate"))
-    {
-        updaterateFor[Cl] = StringToFloat(cvarValue);
-        // calculate real lerp here
-        REALinterpFor[Cl] = (fMax(interpFor[Cl], interpRatioFor[Cl] / updaterateFor[Cl])) * 1000;
-        if (DEBUG)
-        {
-            LogMessage("%f ms interp on %N", REALinterpFor[Cl], Cl);
-        }
-        // don't bother actually doing anything about lerp if tickrate isnt default
-        if (tps < 70.0 && tps > 60.0)
-        {
-            if  (
-                    REALinterpFor[Cl] < min_interp_ms && min_interp_ms != -1
-                     ||
-                    REALinterpFor[Cl] > max_interp_ms && max_interp_ms != -1
-                )
-            {
-                KickClient(Cl, "%t", "interpKickMsg", REALinterpFor[Cl], min_interp_ms, max_interp_ms);
-                LogMessage("%t", "interpLogMsg",  Cl, REALinterpFor[Cl]);
-                MC_PrintToChatAll("%t", "interpAllChat", Cl, REALinterpFor[Cl]);
-            }
-        }
-    }
-    /*  will be used later for aimsnap checking
-        else if (StrEqual(cvarName, "sensitivity"))
-    {
-        sensFor[Cl] = StringToFloat(cvarValue);
-        //PrintToChatAll("Client %N's sens is %f", Cl, sensFor[Cl]);
-        // min bounds is actually .000100 so
-        if (StringToFloat(cvarValue) < 0.000100)
-        // do somethin about it!
-        {
-        //
-        }
-    }
-    */
     if (DEBUG)
     {
         LogMessage("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
@@ -1353,7 +1262,7 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         Format(reason, sizeof(reason), "%t", "newlineBanMsg");
         BanUser(userid, reason);
         MC_PrintToChatAll("%t", "newlineBanAllChat", Cl);
-        LogMessage("%t", "newlineBanMsg", Cl);
+        LogMessage("%t", "newlineBanMsg");
         return Plugin_Stop;
     }
     return Plugin_Continue;
@@ -1365,6 +1274,9 @@ Action tvRecordListener(int client, const char[] command, int argc)
     {
         if (SOURCEBANS)
         {
+            // null out old info
+            demoname = "";
+            demoname[0] = '\0';
             // get the recording name
             GetCmdArg(1, demoname, sizeof(demoname));
             // strip dem extension if it exists because i don't want double extensions. we'll add it later
@@ -1403,6 +1315,9 @@ public void BanUser(int userid, char[] reason)
                 else
                 {
                     LogMessage("[StAC] No STV demo is being recorded! No STV info will be printed to SourceBans!");
+                    // null out old info (just in case)
+                    demoname = "";
+                    demoname[0] = '\0';
                 }
             }
             else
@@ -1447,7 +1362,7 @@ void NameCheck(int userid)
             Format(reason, sizeof(reason), "%t", "illegalNameBanMsg");
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "illegalNameBanAllChat", Cl);
-            LogMessage("%t", "illegalNameBanMsg", Cl);
+            LogMessage("%t", "illegalNameBanMsg");
         }
     }
 }
@@ -1475,6 +1390,26 @@ void NetPropCheck(int userid)
         }
         if (IsClientPlaying(Cl))
         {
+            // lerp check (again). this time we check the netprop. Just in case.
+            // don't check if not default tickrate
+            if (tps < 70.0 && tps > 60.0)
+            {
+                float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
+                if (DEBUG)
+                {
+                    LogMessage("%f ms interp on %N", lerp, Cl);
+                }
+                if  (
+                        lerp < min_interp_ms && min_interp_ms != -1
+                         ||
+                        lerp > max_interp_ms && max_interp_ms != -1
+                    )
+                {
+                    KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
+                    LogMessage("%t", "interpLogMsg",  Cl, lerp);
+                    MC_PrintToChatAll("%t", "interpAllChat", Cl, lerp);
+                }
+            }
             // fix broken equip slots. Note: this was patched by valve but you can still equip invalid items...
             // ...just without the annoying unequipping other people's items part
             // cathook is cringe
@@ -1524,7 +1459,7 @@ void NetPropCheck(int userid)
                         Format(reason, sizeof(reason), "%t", "badItemSchemaBanMsg");
                         BanUser(userid, reason);
                         MC_PrintToChatAll("%t", "badItemSchemaBanAllChat", Cl);
-                        LogMessage("%t", "badItemSchemaBanMsg", Cl);
+                        LogMessage("%t", "badItemSchemaBanMsg");
                     }
                 }
             }
