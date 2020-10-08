@@ -15,7 +15,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.3.0b"
+#define PLUGIN_VERSION  "3.3.0.1b"
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -1388,30 +1388,30 @@ void NetPropCheck(int userid)
         {
             LogMessage("[StAC] Executed firstperson command on Player %N", Cl);
         }
+        // lerp check (again). this time we check the netprop. Just in case.
+        // don't check if not default tickrate
+        if (tps < 70.0 && tps > 60.0)
+        {
+            float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
+            if (DEBUG)
+            {
+                LogMessage("%f ms interp on %N", lerp, Cl);
+            }
+            if  (
+                    lerp < min_interp_ms && min_interp_ms != -1
+                     ||
+                    lerp > max_interp_ms && max_interp_ms != -1
+                )
+            {
+                KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
+                LogMessage("%t", "interpLogMsg",  Cl, lerp);
+                MC_PrintToChatAll("%t", "interpAllChat", Cl, lerp);
+            }
+        }
         if (IsClientPlaying(Cl))
         {
-            // lerp check (again). this time we check the netprop. Just in case.
-            // don't check if not default tickrate
-            if (tps < 70.0 && tps > 60.0)
-            {
-                float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
-                if (DEBUG)
-                {
-                    LogMessage("%f ms interp on %N", lerp, Cl);
-                }
-                if  (
-                        lerp < min_interp_ms && min_interp_ms != -1
-                         ||
-                        lerp > max_interp_ms && max_interp_ms != -1
-                    )
-                {
-                    KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
-                    LogMessage("%t", "interpLogMsg",  Cl, lerp);
-                    MC_PrintToChatAll("%t", "interpAllChat", Cl, lerp);
-                }
-            }
             // fix broken equip slots. Note: this was patched by valve but you can still equip invalid items...
-            // ...just without the annoying unequipping other people's items part
+            // ...just without the annoying unequipping other people's items part.
             // cathook is cringe
             // only check if player has 3 valid hats on
             if (TF2_GetNumWearables(Cl) == 3)
@@ -1468,7 +1468,6 @@ void NetPropCheck(int userid)
 }
 
 // these 3 functions are a god damn mess
-
 void QueryEverything(int userid)
 {
     int Cl = GetClientOfUserId(userid);
@@ -1571,7 +1570,6 @@ stock bool IsValidClient(int client)
 {
     return ((0 < client <= MaxClients) && IsClientInGame(client) && !IsFakeClient(client));
 }
-
 
 // is client on a team and not dead
 stock bool IsClientPlaying(int client)
