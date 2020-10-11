@@ -21,7 +21,7 @@
 public Plugin myinfo =
 {
     name             =  "Steph's AntiCheat (StAC)",
-    author           =  "stephanie",
+    author           =  "steph&nie",
     description      =  "Anticheat plugin [tf2 only] written by Stephanie. Originally forked from IntegriTF2 by Miggy (RIP)",
     version          =   PLUGIN_VERSION,
     url              =  "https://steph.anie.dev/"
@@ -523,10 +523,10 @@ public Action ShowDetections(int callingCl, int args)
         if (IsValidClient(Cl))
         {
             if  (
-                    turnTimes[Cl] >= 1
-                     || pSilentDetects[Cl] >= 1
-                     || fakeAngDetects[Cl] >= 1
-                     || bhopConsecDetects[Cl] >= 1
+                        turnTimes[Cl]           >= 1
+                     || pSilentDetects[Cl]      >= 1
+                     || fakeAngDetects[Cl]      >= 1
+                     || bhopConsecDetects[Cl]   >= 1
                 )
             {
                 ReplyToCommand(callingCl, "Detections for %L", Cl);
@@ -708,7 +708,7 @@ void DoTPSMath()
 
     if (DEBUG)
     {
-        LogMessage("tickinterv %f, tps %f, bhopmult %f, maxBhopDetectionsScaled %i", tickinterv, tps, bhopmult, maxBhopDetectionsScaled);
+        LogMessage("tickinterv %.2f, tps %.2f, bhopmult %.2f, maxBhopDetectionsScaled %i", tickinterv, tps, bhopmult, maxBhopDetectionsScaled);
     }
 }
 
@@ -849,9 +849,9 @@ public Action OnPlayerRunCmd
                 // ...isn't already queued to be banned,
                  && !userBanQueued[Cl]
                 // ...doesn't have 5% or more packet loss,
-                // && loss < 5.0
+                 && loss < 5.0
                 //// ...doesn't have 51% or more packet choke,
-                // && choke < 51.0
+                 && choke < 51.0
                 // ...and isn't timing out.
                  && !IsClientTimingOut(Cl)
             )
@@ -889,7 +889,7 @@ public Action OnPlayerRunCmd
                 // so the current and 2nd previous angles match...
                 (
                        angles0[Cl][0] == angles2[Cl][0]
-                    && angles0[Cl][1] == angles2[Cl][1]
+                     && angles0[Cl][1] == angles2[Cl][1]
                 )
                 &&
                 // BUT the 1st previous (in between) angle doesnt?
@@ -1065,7 +1065,7 @@ public Action OnPlayerRunCmd
             */
             if  (
                     (
-                         angles[0]    < -89.01
+                            angles[0] < -89.01
                          || angles[0] > 89.01
                          || angles[2] < -50.01
                          || angles[2] > 50.01
@@ -1087,7 +1087,11 @@ public Action OnPlayerRunCmd
             /*
                 TURN BIND TEST
             */
-            if (buttons & IN_LEFT || buttons & IN_RIGHT)
+            if  (
+                    buttons & IN_LEFT
+                     ||
+                    buttons & IN_RIGHT
+                )
             {
                 if (maxAllowedTurnSecs != -1.0)
                 {
@@ -1349,13 +1353,13 @@ void NameCheck(int userid)
             // might look into kicking for combining chars but who honestly cares
             // apparently other cheats use these:
             // thanks pazer
-            StrContains(curName, "\xE2\x80\x8F", false)     != -1
-             || StrContains(curName, "\xE2\x80\x8E", false) != -1
-            // cathook uses this
-             || StrContains(curName, "\x1B", false)         != -1
-            // just in case
-             || StrContains(curName, "\n", false)           != -1
-             || StrContains(curName, "\r", false)           != -1
+                    StrContains(curName, "\xE2\x80\x8F", false) != -1
+                 || StrContains(curName, "\xE2\x80\x8E", false) != -1
+                 // cathook uses this
+                 || StrContains(curName, "\x1B", false)         != -1
+                 // just in case
+                 || StrContains(curName, "\n", false)           != -1
+                 || StrContains(curName, "\r", false)           != -1
             )
         {
             char reason[128];
@@ -1395,7 +1399,7 @@ void NetPropCheck(int userid)
             float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
             if (DEBUG)
             {
-                LogMessage("%f ms interp on %N", lerp, Cl);
+                LogMessage("%.2f ms interp on %N", lerp, Cl);
             }
             if  (
                     lerp < min_interp_ms && min_interp_ms != -1
@@ -1421,12 +1425,12 @@ void NetPropCheck(int userid)
                 int slot3wearable = TF2_GetWearable(Cl, 2);
                 // check that the ents are valid and have the correct entprops
                 if  (
-                        IsValidEntity(slot1wearable)
-                        && IsValidEntity(slot2wearable)
-                        && IsValidEntity(slot3wearable)
-                        && HasEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex")
-                        && HasEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex")
-                        && HasEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex")
+                            IsValidEntity(slot1wearable)
+                         && IsValidEntity(slot2wearable)
+                         && IsValidEntity(slot3wearable)
+                         && HasEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex")
+                         && HasEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex")
+                         && HasEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex")
                     )
                 {
                     int slot1itemdef = GetEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex");
@@ -1435,23 +1439,23 @@ void NetPropCheck(int userid)
                     if  (
                             // frontline field recorder
                             (
-                                slot1itemdef    == 302
-                                || slot2itemdef == 302
-                                || slot3itemdef == 302
+                                    slot1itemdef == 302
+                                 || slot2itemdef == 302
+                                 || slot3itemdef == 302
                             )
                             // gibus
                             &&
                             (
-                                slot1itemdef    == 940
-                                || slot2itemdef == 940
-                                || slot3itemdef == 940
+                                    slot1itemdef == 940
+                                 || slot2itemdef == 940
+                                 || slot3itemdef == 940
                             )
                             &&
                             // skull topper
                             (
-                                slot1itemdef    == 941
-                                || slot2itemdef == 941
-                                || slot3itemdef == 941
+                                    slot1itemdef == 941
+                                 || slot2itemdef == 941
+                                 || slot3itemdef == 941
                             )
                         )
                     {
@@ -1622,7 +1626,7 @@ stock int FindSTV()
 {
     if  (!
             (
-                CachedSTV >= 1
+                    CachedSTV >= 1
                  && CachedSTV <= MaxClients
                  && IsClientConnected(CachedSTV)
                  && IsClientInGame(CachedSTV)
@@ -1634,7 +1638,7 @@ stock int FindSTV()
         for (int client = 1; client <= MaxClients; client++)
         {
             if  (
-                    IsClientConnected(client)
+                        IsClientConnected(client)
                      && IsClientInGame(client)
                      && IsClientSourceTV(client)
                 )
