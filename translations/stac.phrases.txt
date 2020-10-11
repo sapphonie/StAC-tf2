@@ -23,8 +23,8 @@
     // msg that gets written to sourcebans
     "pSilentBanMsg"
     {
-        "#format"   "{1:N},{2:i}"
-        "en"        "[StAC] Player {1} was banned for using pSilentAim or NoRecoil. Total detections: {2}"
+        "#format"   "{1:i}"
+        "en"        "[StAC] Banned for pSilent after {1} detections"
     }
     /*
         __    __
@@ -42,8 +42,8 @@
     }
     "bhopBanMsg"
     {
-        "#format"   "{1:N},{2:i}"
-        "en"        "[StAC] Player {1} was banned for bhop cheats. Total consecutive bhops: {2}"
+        "#format"   "{1:i}"
+        "en"        "[StAC] Banned for bhop cheats after {1} consec bhops"
     }
     /*
         ____        __
@@ -61,8 +61,8 @@
     }
     "fakeangBanMsg"
     {
-        "#format"   "{1:N},{2:i}"
-        "en"        "[StAC] Player {1} was banned for having too many fake angle detections. Total detections: {2}"
+        "#format"   "{1:i}"
+        "en"        "[StAC] Banned for {1} fake angle detections"
     }
     /*
        __                      __    _           __
@@ -112,8 +112,7 @@
     }
     "nolerpBanMsg"
     {
-        "#format"   "{1:N}"
-        "en"        "[StAC] Player {1} was banned for using NoLerp"
+        "en"        "[StAC] Banned for NoLerp"
     }
     // othermodels
     "othermodelsBanAllChat"
@@ -123,8 +122,7 @@
     }
     "othermodelsBanMsg"
     {
-        "#format"   "{1:N}"
-        "en"        "[StAC] Player {1} was banned for wallhacking"
+        "en"        "[StAC] Banned for wallhacking"
     }
     // fov
     "fovBanAllChat"
@@ -134,8 +132,7 @@
     }
     "fovBanMsg"
     {
-        "#format"   "{1:N}"
-        "en"        "[StAC] Player {1} was banned for fov cheating"
+        "en"        "[StAC] Banned for fov cheating"
     }
     // fullbright
     "fullbrightAllChat"
@@ -145,8 +142,7 @@
     }
     "fullbrightBanMsg"
     {
-        "#format"   "{1:N}"
-        "en"        "[StAC] Player {1} was banned for fullbright cheating"
+        "en"        "[StAC] Banned for fullbright cheating"
     }
     // thirdperson
     "tpBanAllChat"
@@ -156,8 +152,7 @@
     }
     "tpBanMsg"
     {
-        "#format"   "{1:N}"
-        "en"        "[StAC] Player {1} was banned for cheating with thirdperson"
+        "en"        "[StAC] Banned for thirdperson cheats"
     }
     // newline prints
     "newlineBanAllChat"
@@ -167,8 +162,7 @@
     }
     "newlineBanMsg"
     {
-        "#format"   "{1:N}"
-        "en"        "[StAC] Player {1} was banned for attempting to print a newline character"
+        "en"        "[StAC] Banned for newline chars in chat"
     }
     // illegal chars in name
     "illegalNameBanAllChat"
@@ -178,8 +172,17 @@
     }
     "illegalNameBanMsg"
     {
+        "en"        "[StAC] Banned for illegal chars in their name"
+    }
+    // bad item schema
+    "badItemSchemaBanAllChat"
+    {
         "#format"   "{1:N}"
-        "en"        "[StAC] Player {1} was banned for having illegal characters in their name"
+        "en"        "{hotpink}[StAC]{white} Player {1} was using an {mediumpurple}invalid item schema{white}! {palegreen}BANNED from server."
+    }
+    "badItemSchemaBanMsg"
+    {
+        "en"        "[StAC] Banned for using an invalid item schema"
     }
     /*
         __   _      __
