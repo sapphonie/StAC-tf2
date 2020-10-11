@@ -4,12 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "3.2.9"
+            "Latest"    "3.3.0"
         }
 
-        "Notes" "Changes in 3.2.9"
-        "Notes" "- fixed bhop detection to be significantly more robust"
-        "Notes" "- YOU WILL NEED TO EDIT /tf/cfg/sourcemod/stac.cfg & UPDATE stac_max_bhop_detections to 10"
+        "Notes" "Changes in 3.3.0"
+        "Notes" "- Read updates here: https://github.com/sapphonie/StAC-tf2/pull/3"
     }
 
     "Files"
