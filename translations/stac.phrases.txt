@@ -7,6 +7,27 @@
     */
 
     /*
+
+            ____  __      _                _
+           / __ \/ /___ _(_)___     ____ _(_)___ ___  _________  ____ _____  _____
+          / /_/ / / __ `/ / __ \   / __ `/ / __ `__ \/ ___/ __ \/ __ `/ __ \/ ___/
+         / ____/ / /_/ / / / / /  / /_/ / / / / / / (__  ) / / / /_/ / /_/ (__  )
+        /_/   /_/\__,_/_/_/ /_/   \__,_/_/_/ /_/ /_/____/_/ /_/\__,_/ .___/____/
+                                                                   /_/
+
+    */
+    "AimsnapBanAllChat"
+    {
+        "#format"   "{1:N},{2:i}"
+        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}aimbotting{white}. Total aimsnap detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+    }
+    // msg that gets written to sourcebans
+    "AimsnapBanMsg"
+    {
+        "#format"   "{1:i}"
+        "en"        "[StAC] Banned for aimsnapping after {1} detections"
+    }
+    /*
               _____ _ __           __
         ____ / ___/(_) /__  ____  / /_
        / __ \\__ \/ / / _ \/ __ \/ __/
@@ -114,46 +135,6 @@
     {
         "en"        "[StAC] Banned for NoLerp"
     }
-    // othermodels
-    "othermodelsBanAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}wallhacking{white}! {palegreen}BANNED from server."
-    }
-    "othermodelsBanMsg"
-    {
-        "en"        "[StAC] Banned for wallhacking"
-    }
-    // fov
-    "fovBanAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}fov cheating{white}! {palegreen}BANNED from server."
-    }
-    "fovBanMsg"
-    {
-        "en"        "[StAC] Banned for fov cheating"
-    }
-    // fullbright
-    "fullbrightAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}fullbright cheating{white}! {palegreen}BANNED from server."
-    }
-    "fullbrightBanMsg"
-    {
-        "en"        "[StAC] Banned for fullbright cheating"
-    }
-    // thirdperson
-    "tpBanAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}cheating with 3rd person{white}! {palegreen}BANNED from server."
-    }
-    "tpBanMsg"
-    {
-        "en"        "[StAC] Banned for thirdperson cheats"
-    }
     // newline prints
     "newlineBanAllChat"
     {
@@ -183,6 +164,17 @@
     "badItemSchemaBanMsg"
     {
         "en"        "[StAC] Banned for using an invalid item schema"
+    }
+    // illegal ping netprop
+    "illegalPingPropBanAllChat"
+    {
+        "#format"   "{1:N}"
+        "en"        "{hotpink}[StAC]{white} Player {1} was using a cheat program to {mediumpurple}fake their ping{white}! {palegreen}BANNED from server."
+    }
+    "illegalPingPropBanMsg"
+    {
+        "#format"   "{1:i}"
+        "en"        "[StAC] Banned for illegal ping value ({1}) on scoreboard."
     }
     /*
         __   _      __
