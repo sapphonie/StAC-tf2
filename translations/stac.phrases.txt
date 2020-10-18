@@ -135,6 +135,16 @@
     {
         "en"        "[StAC] Banned for NoLerp"
     }
+    // fov
+    "fovBanAllChat"
+    {
+        "#format"   "{1:N}"
+        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}fov cheating{white}! {palegreen}BANNED from server."
+    }
+    "fovBanMsg"
+    {
+        "en"        "[StAC] Banned for fov cheating"
+    }
     // newline prints
     "newlineBanAllChat"
     {

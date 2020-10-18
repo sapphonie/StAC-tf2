@@ -15,7 +15,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.4.0b"
+#define PLUGIN_VERSION  "3.4.1b"
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -1272,6 +1272,8 @@ char cvarsToCheck[][] =
     // "sensitivity"
     // possible cheat vars
     "cl_interpolate",
+    // this is a useless check but we leave it here to set fov randomly to annoy cheaters
+    "fov_desired",
     // network cvars
     "cl_cmdrate",
 };
@@ -1310,6 +1312,20 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             {
                 StacLog("[StAC] [Detection] Player %L is using NoLerp!", Cl);
             }
+        }
+    }
+    // fov check #1 (if u get banned by this you are a clown)
+    else if (StrEqual(cvarName, "fov_desired"))
+    {
+        // save fov to var to reset later with netpropcheck
+        fovDesired[Cl] = StringToInt(cvarValue);
+        if (StringToInt(cvarValue) > 90)
+        {
+            char reason[128];
+            Format(reason, sizeof(reason), "%t", "fovBanMsg");
+            BanUser(userid, reason);
+            MC_PrintToChatAll("%t", "fovBanAllChat", Cl);
+            LogMessage("%t", "fovBanMsg");
         }
     }
     /*
