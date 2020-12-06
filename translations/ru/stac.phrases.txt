@@ -2,6 +2,25 @@
 {
 
     /*
+
+            ____  __      _                _
+           / __ \/ /___ _(_)___     ____ _(_)___ ___  _________  ____ _____  _____
+          / /_/ / / __ `/ / __ \   / __ `/ / __ `__ \/ ___/ __ \/ __ `/ __ \/ ___/
+         / ____/ / /_/ / / / / /  / /_/ / / / / / / (__  ) / / / /_/ / /_/ (__  )
+        /_/   /_/\__,_/_/_/ /_/   \__,_/_/_/ /_/ /_/____/_/ /_/\__,_/ .___/____/
+                                                                   /_/
+
+    */
+    "AimsnapBanAllChat"
+    {
+        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}aimbotting{white}. Всего aimsnap обнаружено: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН на сервере!"
+    }
+    // msg that gets written to sourcebans
+    "AimsnapBanMsg"
+    {
+        "ru"        "[StAC] Забанен за aimsnapping после {1} обнаружений"
+    }
+    /*
               _____ _ __           __
         ____ / ___/(_) /__  ____  / /_
        / __ \\__ \/ / / _ \/ __ \/ __/
@@ -99,15 +118,6 @@
     {
         "ru"        "[StAC] Забанен за NoLerp"
     }
-    // othermodels
-    "othermodelsBanAllChat"
-    {
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}wallhacking{white}! {palegreen}ЗАБАНЕН на сервере."
-    }
-    "othermodelsBanMsg"
-    {
-        "ru"        "[StAC] Забанен за wallhacking"
-    }
     // fov
     "fovBanAllChat"
     {
@@ -116,24 +126,6 @@
     "fovBanMsg"
     {
         "ru"        "[StAC] Забанен за читы поля зрения"
-    }
-    // fullbright
-    "fullbrightAllChat"
-    {
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}читы fullbright{white}! {palegreen}ЗАБАНЕН на сервере."
-    }
-    "fullbrightBanMsg"
-    {
-        "ru"        "[StAC] Забанен за читы fullbright"
-    }
-    // thirdperson
-    "tpBanAllChat"
-    {
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}читы с третьим лицом{white}! {palegreen}ЗАБАНЕН на сервере."
-    }
-    "tpBanMsg"
-    {
-        "ru"        "[StAC] Забанен за читы с третьим лицом"
     }
     // newline prints
     "newlineBanAllChat"
@@ -161,6 +153,15 @@
     "badItemSchemaBanMsg"
     {
         "ru"        "[StAC] Забанен за использование недопустимой схемы предметов"
+	}
+    // illegal ping netprop
+    "illegalPingPropBanAllChat"
+    {
+        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал чит-программу, чтобы {mediumpurple}подделать свой пинг{white}! {palegreen}ЗАБАНЕН на сервере."
+    }
+    "illegalPingPropBanMsg"
+    {
+        "ru"        "[StAC] Забанен за недопустимое значение пинга ({1}) в таблице очков."
     }
     /*
         __   _      __
