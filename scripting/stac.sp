@@ -16,7 +16,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.5.7b"
+#define PLUGIN_VERSION  "3.5.8b"
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -65,7 +65,7 @@ bool userBanQueued          [MAXPLAYERS+1];
 // STORED SENS PER CLIENT
 float sensFor               [MAXPLAYERS+1];
 // get last 6 ticks
-float engineTime[6][MAXPLAYERS+1];
+float engineTime            [6] [MAXPLAYERS+1];
 
 //float maxEngineTimeFor[MAXPLAYERS+1];
 //
@@ -586,7 +586,6 @@ void RunOptimizeCvars()
     // dont error out on server start
     if (FindConVar("backtrack_behavior") != INVALID_HANDLE)
     {
-        LogMessage("works");
         // fix backtracking
         SetConVarInt(FindConVar("backtrack_behavior"), 1);
     }
@@ -656,10 +655,6 @@ public Action ShowDetections(int callingCl, int args)
                 {
                     ReplyToCommand(callingCl, "- %i consecutive bhop strings for %N", bhopConsecDetects[Cl], Cl);
                 }
-            }
-            else
-            {
-                ReplyToCommand(callingCl, "No detectionss! :)");
             }
         }
     }
@@ -806,19 +801,20 @@ public void TF2_OnConditionAdded(int Cl, TFCond condition)
         {
             playerTaunting[Cl] = true;
         }
-        else if (
-                   condition == TFCond_HalloweenKart
-                || condition == TFCond_HalloweenKartDash
-                || condition == TFCond_HalloweenThriller
-                || condition == TFCond_HalloweenBombHead
-                || condition == TFCond_HalloweenGiant
-                || condition == TFCond_HalloweenTiny
-                || condition == TFCond_HalloweenInHell
-                || condition == TFCond_HalloweenGhostMode
-                || condition == TFCond_HalloweenKartNoTurn
-                || condition == TFCond_HalloweenKartCage
-                || condition == TFCond_SwimmingCurse
-            )
+        else if
+        (
+               condition == TFCond_HalloweenKart
+            || condition == TFCond_HalloweenKartDash
+            || condition == TFCond_HalloweenThriller
+            || condition == TFCond_HalloweenBombHead
+            || condition == TFCond_HalloweenGiant
+            || condition == TFCond_HalloweenTiny
+            || condition == TFCond_HalloweenInHell
+            || condition == TFCond_HalloweenGhostMode
+            || condition == TFCond_HalloweenKartNoTurn
+            || condition == TFCond_HalloweenKartCage
+            || condition == TFCond_SwimmingCurse
+        )
         {
             playerInBadCond[Cl]++;
         }
@@ -834,19 +830,20 @@ public void TF2_OnConditionRemoved(int Cl, TFCond condition)
             timeSinceTaunt[Cl] = GetEngineTime();
             playerTaunting[Cl] = false;
         }
-        else if (
-                   condition == TFCond_HalloweenKart
-                || condition == TFCond_HalloweenKartDash
-                || condition == TFCond_HalloweenThriller
-                || condition == TFCond_HalloweenBombHead
-                || condition == TFCond_HalloweenGiant
-                || condition == TFCond_HalloweenTiny
-                || condition == TFCond_HalloweenInHell
-                || condition == TFCond_HalloweenGhostMode
-                || condition == TFCond_HalloweenKartNoTurn
-                || condition == TFCond_HalloweenKartCage
-                || condition == TFCond_SwimmingCurse
-            )
+        else if
+        (
+               condition == TFCond_HalloweenKart
+            || condition == TFCond_HalloweenKartDash
+            || condition == TFCond_HalloweenThriller
+            || condition == TFCond_HalloweenBombHead
+            || condition == TFCond_HalloweenGiant
+            || condition == TFCond_HalloweenTiny
+            || condition == TFCond_HalloweenInHell
+            || condition == TFCond_HalloweenGhostMode
+            || condition == TFCond_HalloweenKartNoTurn
+            || condition == TFCond_HalloweenKartCage
+            || condition == TFCond_SwimmingCurse
+        )
         {
             if (playerInBadCond[Cl] > 0)
             {
@@ -1003,30 +1000,30 @@ public Action ForceCheckAll(int client, int args)
     - TURN BINDS
 */
 public Action OnPlayerRunCmd
-    (
-        // check
-        int Cl,
-        // check
-        int& buttons,
-        // don't check
-        int& impulse,
-        // not yet
-        float vel[3],
-        // check
-        float angles[3],
-        // not yet
-        int& weapon,
-        // ^
-        int& subtype,
-        // check
-        int& cmdnum,
-        // check
-        int& tickcount,
-        // nope
-        int& seed,
-        // check
-        int mouse[2]
-    )
+(
+    // check
+    int Cl,
+    // check
+    int& buttons,
+    // don't check
+    int& impulse,
+    // not yet
+    float vel[3],
+    // check
+    float angles[3],
+    // not yet
+    int& weapon,
+    // ^
+    int& subtype,
+    // check
+    int& cmdnum,
+    // check
+    int& tickcount,
+    // nope
+    int& seed,
+    // check
+    int mouse[2]
+)
 {
     // make sure client is real & not a bot.
     if (IsValidClient(Cl))
@@ -1336,11 +1333,11 @@ public Action OnPlayerRunCmd
                             int wx = abs(RoundFloat(mouse[0] * ( 1 / sensFor[Cl])));
                             int wy = abs(RoundFloat(mouse[1] * ( 1 / sensFor[Cl])));
                             if
-                            (   // stupidly small amts of mouse movement on both axes
+                            (   // literally no mouse movement on both axes
                                 (
-                                    wx <= 5
+                                    wx == 0
                                     &&
-                                    wy <= 5
+                                    wy == 0
                                 )
                                 ||
                                 // stupidly big amts of mouse movement on either axis
@@ -1642,11 +1639,12 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
 // ban on invalid characters (newlines, carriage returns, etc)
 public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArgs)
 {
-    if  (
-            StrContains(sArgs, "\n", false) != -1
-            ||
-            StrContains(sArgs, "\r", false) != -1
-        )
+    if
+    (
+        StrContains(sArgs, "\n", false) != -1
+        ||
+        StrContains(sArgs, "\r", false) != -1
+    )
     {
         if (banForMiscCheats)
         {
@@ -1738,19 +1736,20 @@ void NameCheck(int userid)
         char curName[64];
         GetClientName(Cl, curName, sizeof(curName));
         // ban for invalid characters in names
-        if (
+        if
+        (
             // nullcore uses \xE0\xB9\x8A for namestealing but you can put it in your steam name so we cant check for it
             // might look into kicking for combining chars but who honestly cares
             // apparently other cheats use these:
             // thanks pazer
-                   StrContains(curName, "\xE2\x80\x8F", false) != -1
-                || StrContains(curName, "\xE2\x80\x8E", false) != -1
-                // cathook uses this
-                || StrContains(curName, "\x1B", false)         != -1
-                // just in case
-                || StrContains(curName, "\n", false)           != -1
-                || StrContains(curName, "\r", false)           != -1
-            )
+               StrContains(curName, "\xE2\x80\x8F", false) != -1
+            || StrContains(curName, "\xE2\x80\x8E", false) != -1
+            // cathook uses this
+            || StrContains(curName, "\x1B", false)         != -1
+            // just in case
+            || StrContains(curName, "\n", false)           != -1
+            || StrContains(curName, "\r", false)           != -1
+        )
         {
             if (banForMiscCheats)
             {
@@ -1779,11 +1778,14 @@ void NetPropCheck(int userid)
 
         // set real fov from client here - overrides cheat values (mostly works with ncc, untested on others)
         // we don't want to touch fov if a client is zoomed in while sniping or if they're in a bumper car or some other dumb halloween bullshit
-        if  (
-                !TF2_IsPlayerInCondition(Cl, TFCond_Zoomed)
-                &&
-                playerInBadCond[Cl] == 0
-            )
+        // we also don't want to check fov if they're dead or if cvars aren't optimized, because fov gets raised temporarily above 90 by teleporters if it isn't explicitly disabled by stac
+        if
+        (
+               !TF2_IsPlayerInCondition(Cl, TFCond_Zoomed)
+            && IsClientPlaying(Cl)
+            && playerInBadCond[Cl] == 0
+            && optimizeCvars
+        )
         {
             // double check fov just in case
             if (GetEntProp(Cl, Prop_Send, "m_iFOV") > 90)
@@ -1811,11 +1813,12 @@ void NetPropCheck(int userid)
             {
                 StacLog("%.2f ms interp on %N", lerp, Cl);
             }
-            if  (
-                    lerp < min_interp_ms && min_interp_ms != -1
-                    ||
-                    lerp > max_interp_ms && max_interp_ms != -1
-                )
+            if
+            (
+                lerp < min_interp_ms && min_interp_ms != -1
+                ||
+                lerp > max_interp_ms && max_interp_ms != -1
+            )
             {
                 KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
                 StacLog("%t", "interpLogMsg",  Cl, lerp);
@@ -1828,46 +1831,48 @@ void NetPropCheck(int userid)
             // ...just without the annoying unequipping other people's items part.
             // cathook is cringe
             // only check if player has 3 valid hats on
-            if (TF2_GetNumWearables(Cl) == 3)
+            if (TF2_GetNumWearables(Cl) >= 3)
             {
                 int slot1wearable = TF2_GetWearable(Cl, 0);
                 int slot2wearable = TF2_GetWearable(Cl, 1);
                 int slot3wearable = TF2_GetWearable(Cl, 2);
                 // check that the ents are valid and have the correct entprops
-                if  (
-                           IsValidEntity(slot1wearable)
-                        && IsValidEntity(slot2wearable)
-                        && IsValidEntity(slot3wearable)
-                        && HasEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex")
-                        && HasEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex")
-                        && HasEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex")
-                    )
+                if
+                (
+                       IsValidEntity(slot1wearable)
+                    && IsValidEntity(slot2wearable)
+                    && IsValidEntity(slot3wearable)
+                    && HasEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex")
+                    && HasEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex")
+                    && HasEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex")
+                )
                 {
                     int slot1itemdef = GetEntProp(slot1wearable, Prop_Send, "m_iItemDefinitionIndex");
                     int slot2itemdef = GetEntProp(slot2wearable, Prop_Send, "m_iItemDefinitionIndex");
                     int slot3itemdef = GetEntProp(slot3wearable, Prop_Send, "m_iItemDefinitionIndex");
-                    if  (
-                            // frontline field recorder
-                            (
-                                   slot1itemdef == 302
-                                || slot2itemdef == 302
-                                || slot3itemdef == 302
-                            )
-                            // gibus
-                            &&
-                            (
-                                   slot1itemdef == 940
-                                || slot2itemdef == 940
-                                || slot3itemdef == 940
-                            )
-                            &&
-                            // skull topper
-                            (
-                                   slot1itemdef == 941
-                                || slot2itemdef == 941
-                                || slot3itemdef == 941
-                            )
+                    if
+                    (
+                        // frontline field recorder
+                        (
+                               slot1itemdef == 302
+                            || slot2itemdef == 302
+                            || slot3itemdef == 302
                         )
+                        // gibus
+                        &&
+                        (
+                               slot1itemdef == 940
+                            || slot2itemdef == 940
+                            || slot3itemdef == 940
+                        )
+                        &&
+                        // skull topper
+                        (
+                               slot1itemdef == 941
+                            || slot2itemdef == 941
+                            || slot3itemdef == 941
+                        )
+                    )
                     {
                         if (banForMiscCheats)
                         {
@@ -1895,7 +1900,7 @@ void QueryEverything(int userid)
     if (IsValidClient(Cl))
     {
         // check cvars!
-        int i = 0;
+        int i;
         QueryCvars(userid, i);
     }
 }
@@ -2024,7 +2029,7 @@ CloseStacLog()
 }
 
 // log to StAC log file
-stock void StacLog(const char[] format, any ...)
+void StacLog(const char[] format, any ...)
 {
     char buffer[254];
     VFormat(buffer, sizeof(buffer), format, 2);
@@ -2040,7 +2045,7 @@ stock void StacLog(const char[] format, any ...)
 }
 
 // i hope youre proud of me, 9th grade geometry teacher
-stock float CalcAngDeg(const float array1[2], const float array2[2])
+float CalcAngDeg(const float array1[2], const float array2[2])
 {
     float arDiff[2];
     arDiff[0] = array1[0] - array2[0];
@@ -2049,71 +2054,72 @@ stock float CalcAngDeg(const float array1[2], const float array2[2])
 }
 
 // IsValidClient Stock
-stock bool IsValidClient(int client)
+bool IsValidClient(int client)
 {
     return ((0 < client <= MaxClients) && IsClientInGame(client) && !IsFakeClient(client));
 }
 
 // is client on a team and not dead
-stock bool IsClientPlaying(int client)
+bool IsClientPlaying(int client)
 {
     TFTeam team = TF2_GetClientTeam(client);
-    if  (
-            IsPlayerAlive(client)
+    if
+    (
+        IsPlayerAlive(client)
+        &&
+        (
+            team != TFTeam_Unassigned
             &&
-            (
-                team != TFTeam_Unassigned
-                &&
-                team != TFTeam_Spectator
-            )
+            team != TFTeam_Spectator
         )
+    )
     {
         return true;
     }
     return false;
 }
 
-stock bool AreAnglesUnlaggyAndValid(int Cl)
+bool AreAnglesUnlaggyAndValid(int Cl)
 {
     if
+    (
         (
-            (
-                // OK lets make sure we dont get any fake detections on startup
-                // this also ignores weird angle resets in mge / dm
-                   clangles[0][Cl][0] != 0.00
-                && clangles[0][Cl][1] != 0.00
-                && clangles[1][Cl][0] != 0.00
-                && clangles[1][Cl][1] != 0.00
-                && clangles[2][Cl][0] != 0.00
-                && clangles[2][Cl][1] != 0.00
-            )
-            &&
-            // make sure ticks are sequential, hopefully avoid laggy players
-            // example real detection:
-            /*
-                [StAC] pSilent / NoRecoil detection of 5.20° on <user>.
-                Detections so far: 15
-                User Net Info: 0.00% loss, 24.10% choke, 66.22 ms ping
-                 clcmdnum[0]: 61167
-                 clcmdnum[1]: 61166
-                 clcmdnum[2]: 61165
-                 angles0: x 8.82 y 127.68
-                 angles1: x 5.38 y 131.60
-                 angles2: x 8.82 y 127.68
-            */
-            (
-                   clcmdnum[0][Cl] - 1 == clcmdnum[1][Cl]
-                && clcmdnum[1][Cl] - 1 == clcmdnum[2][Cl]
-            )
+            // OK lets make sure we dont get any fake detections on startup
+            // this also ignores weird angle resets in mge / dm
+               clangles[0][Cl][0] != 0.00
+            && clangles[0][Cl][1] != 0.00
+            && clangles[1][Cl][0] != 0.00
+            && clangles[1][Cl][1] != 0.00
+            && clangles[2][Cl][0] != 0.00
+            && clangles[2][Cl][1] != 0.00
         )
-        {
-            return true;
-        }
+        &&
+        // make sure ticks are sequential, hopefully avoid laggy players
+        // example real detection:
+        /*
+            [StAC] pSilent / NoRecoil detection of 5.20° on <user>.
+            Detections so far: 15
+            User Net Info: 0.00% loss, 24.10% choke, 66.22 ms ping
+             clcmdnum[0]: 61167
+             clcmdnum[1]: 61166
+             clcmdnum[2]: 61165
+             angles0: x 8.82 y 127.68
+             angles1: x 5.38 y 131.60
+             angles2: x 8.82 y 127.68
+        */
+        (
+               clcmdnum[0][Cl] - 1 == clcmdnum[1][Cl]
+            && clcmdnum[1][Cl] - 1 == clcmdnum[2][Cl]
+        )
+    )
+    {
+        return true;
+    }
     return false;
 }
 
 // print colored chat to all server/sourcemod admins
-stock void PrintColoredChatToAdmins(const char[] format, any ...)
+void PrintColoredChatToAdmins(const char[] format, any ...)
 {
     char buffer[254];
 
@@ -2129,7 +2135,7 @@ stock void PrintColoredChatToAdmins(const char[] format, any ...)
 }
 
 // print to important ppl on server
-stock void PrintToImportant(const char[] format, any ...)
+void PrintToImportant(const char[] format, any ...)
 {
     char buffer[254];
     VFormat(buffer, sizeof(buffer), format, 2);
@@ -2140,26 +2146,28 @@ stock void PrintToImportant(const char[] format, any ...)
 // adapted & deuglified from f2stocks
 // Finds STV Bot to use for CPrintToSTV
 int CachedSTV;
-stock int FindSTV()
+int FindSTV()
 {
-    if  (!
-            (
-                   CachedSTV >= 1
-                && CachedSTV <= MaxClients
-                && IsClientConnected(CachedSTV)
-                && IsClientInGame(CachedSTV)
-                && IsClientSourceTV(CachedSTV)
-            )
+    if
+    (
+        !(
+               CachedSTV >= 1
+            && CachedSTV <= MaxClients
+            && IsClientConnected(CachedSTV)
+            && IsClientInGame(CachedSTV)
+            && IsClientSourceTV(CachedSTV)
         )
+    )
     {
         CachedSTV = -1;
         for (int client = 1; client <= MaxClients; client++)
         {
-            if  (
-                       IsClientConnected(client)
-                    && IsClientInGame(client)
-                    && IsClientSourceTV(client)
-                )
+            if
+            (
+                   IsClientConnected(client)
+                && IsClientInGame(client)
+                && IsClientSourceTV(client)
+            )
             {
                 CachedSTV = client;
                 break;
@@ -2171,7 +2179,7 @@ stock int FindSTV()
 
 // adapted & deuglified from f2stocks
 // print to stv (now with color)
-stock void CPrintToSTV(const char[] format, any ...)
+void CPrintToSTV(const char[] format, any ...)
 {
     int stv = FindSTV();
     if (stv <= 0)
@@ -2185,7 +2193,7 @@ stock void CPrintToSTV(const char[] format, any ...)
 
 // get entindx of player wearable, thanks scags
 // https://github.com/Scags/The-Dump/blob/master/scripting/tfwearables.sp#L33-L40
-stock int TF2_GetWearable(int client, int wearableidx)
+int TF2_GetWearable(int client, int wearableidx)
 {
     // 3540 linux
     // 3520 windows
@@ -2194,7 +2202,7 @@ stock int TF2_GetWearable(int client, int wearableidx)
     return LoadFromAddress(m_hMyWearables + view_as< Address >(4 * wearableidx), NumberType_Int32) & 0xFFF;
 }
 
-stock int TF2_GetNumWearables(int client)
+int TF2_GetNumWearables(int client)
 {
     // 3552 linux
     // 3532 windows
@@ -2202,7 +2210,7 @@ stock int TF2_GetNumWearables(int client)
     return GetEntData(client, offset);
 }
 
-stock abs(x)
+any abs(x)
 {
    return x > 0 ? x : -x;
 }
