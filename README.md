@@ -34,7 +34,7 @@ Note: After a client does `stac_max_bhop_detections` tick perfect bhops (default
 *(ban)*
 
 ### Backtrack Fix by J_Tanz
-This repo includes the latest version of J_Tanzanite's (author of another popular anticheat, [LilAC](https://github.com/J-Tanzanite/Little-Anti-Cheat) Backtrack Patch, available [here](https://github.com/J-Tanzanite/Backtrack-Patch). It is enabled by default, but to disable it, set `stac_optimize_cvars` to `0` and `jay_backtrack_enable` to `0`.
+This repo includes the latest version of J_Tanzanite's (author of another popular anticheat, [LilAC](https://github.com/J-Tanzanite/Little-Anti-Cheat)) Backtrack Patch, available [here](https://github.com/J-Tanzanite/Backtrack-Patch). It is enabled by default, but to disable it, set `stac_optimize_cvars` to `0` and `jay_backtrack_enable` to `0`.
 
 ### Attempted nospread fix
 This plugin currently reseeds the hl2 random seed at each map / tournament start and every 15 minutes to attempt to prevent possible nospread exploits by cheats guessing the server seed. This appears to work at least on NCC but I have not bothered to test it with other cheats.
