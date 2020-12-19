@@ -4,17 +4,17 @@
     {
         "Version"
         {
-            "Latest"    "3.3.0"
+            "Latest"    "3.6.1"
         }
 
-        "Notes" "Changes in 3.3.0"
-        "Notes" "- Read updates here: https://github.com/sapphonie/StAC-tf2/pull/3"
+        "Notes" "Changes in 3.6.1"
+        "Notes" "- Added J_Tanz's backtrack fix, replacing shavit's - remove shavit's from your plugins folder!"
     }
 
     "Files"
     {
         "Plugin"    "Path_SM/plugins/stac.smx"
-        "Plugin"    "Path_SM/plugins/backtrack_fix.smx"
+        "Plugin"    "Path_SM/plugins/jay_backtrack_patch.smx"
         "Plugin"    "Path_SM/translations/stac.phrases.txt"
     }
 }
