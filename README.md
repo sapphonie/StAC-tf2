@@ -6,7 +6,7 @@
 - pSilentAim / NoRecoil cheats
 *(logs detections to admins / STV / file, bans on `stac_max_psilent_detections` detections, defaults to 15)*
 - plain aimsnap/aimbot cheats
-*(logs detections to admins / STV / file, bans on `stac_max_aimsnap_detections` detections, defaults to 25)*
+*(logs detections to admins / STV / file, bans on `stac_max_aimsnap_detections` detections, defaults to 999 - DOES NOT AUTOBAN YET!)*
 - bhop cheats and scripts
 *(logs detections to admins / STV, bans on `stac_max_bhop_detections` detections + 2 (defaults to 10)*
 
