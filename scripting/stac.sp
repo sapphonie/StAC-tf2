@@ -16,7 +16,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.6.0"
+#define PLUGIN_VERSION  "3.6.1"
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -584,10 +584,11 @@ void RunOptimizeCvars()
     // limit fakelag abuse
     SetConVarFloat(FindConVar("sv_maxunlag"), 0.2);
     // dont error out on server start
-    if (FindConVar("backtrack_behavior") != INVALID_HANDLE)
+    if (FindConVar("jay_backtrack_enable") != INVALID_HANDLE)
     {
         // fix backtracking
-        SetConVarInt(FindConVar("backtrack_behavior"), 1);
+        SetConVarInt(FindConVar("jay_backtrack_enable"), 1);
+        SetConVarInt(FindConVar("jay_backtrack_tolerance"), 0);
     }
     // get rid of any possible exploits by using teleporters and fov
     SetConVarInt(FindConVar("tf_teleporter_fov_start"), 90);
