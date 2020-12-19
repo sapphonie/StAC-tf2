@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "3.3.0"
+            "Latest"    "3.6.0"
         }
 
-        "Notes" "Changes in 3.3.0"
-        "Notes" "- Read updates here: https://github.com/sapphonie/StAC-tf2/pull/3"
+        "Notes" "Changes in 3.6.0"
+        "Notes" "- Read updates here: https://github.com/sapphonie/StAC-tf2/pull/6"
     }
 
     "Files"
