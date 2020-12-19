@@ -101,7 +101,7 @@ bool kickForPingMasking     = false;
 bool banForMiscCheats       = true;
 bool optimizeCvars          = true;
 int maxAimsnapDetections    = 999;
-int maxPsilentDetections    = 15;
+int maxPsilentDetections    = 10;
 int maxFakeAngDetections    = 10;
 int maxBhopDetections       = 10;
 // this gets set later
@@ -1276,7 +1276,7 @@ public Action OnPlayerRunCmd
                             {
                                 pSilentDetects[Cl]++;
                                 // have this detection expire in 20 minutes
-                                CreateTimer(1200.0, Timer_decr_pSilent, userid);
+                                CreateTimer(600.0, Timer_decr_pSilent, userid);
                                 // first detection is LIKELY bullshit
                                 if (pSilentDetects[Cl] > 0)
                                 {
@@ -1333,24 +1333,24 @@ public Action OnPlayerRunCmd
                             int wx = abs(RoundFloat(mouse[0] * ( 1 / sensFor[Cl])));
                             int wy = abs(RoundFloat(mouse[1] * ( 1 / sensFor[Cl])));
                             if
-                            (   // literally no mouse movement on both axes
-                                (
-                                    wx == 0
-                                    &&
-                                    wy == 0
-                                )
-                                ||
+                            (   // literally no mouse movement on both axes - buggy, don't enable
+                                //(
+                                //    wx == 0
+                                //    &&
+                                //    wy == 0
+                                //)
+                                //||
                                 // stupidly big amts of mouse movement on either axis
-                                (
+                                //(
                                     wx >= 5000
                                     ||
                                     wy >= 5000
-                                )
+                                //)
                             )
                             {
                                 aimsnapDetects[Cl]++;
-                                // have this detection expire in 20 minutes
-                                CreateTimer(1200.0, Timer_decr_aimsnaps, userid);
+                                // have this detection expire in 10 minutes
+                                CreateTimer(600.0, Timer_decr_aimsnaps, userid);
                                 if (aimsnapDetects[Cl] > 0)
                                 {
                                     PrintToImportant("{hotpink}[StAC]{white} Aimsnap detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i{white}.", aDiffReal, Cl,  aimsnapDetects[Cl]);

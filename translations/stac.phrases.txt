@@ -175,17 +175,6 @@
     {
         "en"        "[StAC] Banned for using an invalid item schema"
     }
-    // illegal ping netprop
-    "illegalPingPropBanAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was using a cheat program to {mediumpurple}fake their ping{white}! {palegreen}BANNED from server."
-    }
-    "illegalPingPropBanMsg"
-    {
-        "#format"   "{1:i}"
-        "en"        "[StAC] Banned for illegal ping value ({1}) on scoreboard."
-    }
     /*
         __   _      __
        / /__(_)____/ /__   ____ ___  _________ ______
