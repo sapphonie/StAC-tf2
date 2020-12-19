@@ -688,7 +688,7 @@ public Action PrintMaxMouse(int callingCl, int args)
 
 public Action PrintMaxTicks(int callingCl, int args)
 {
-    ReplyToCommand(callingCl, "[StAC] == CURRENT MOUSE MOVEMENT == ");
+    ReplyToCommand(callingCl, "[StAC] == CURRENT MAX TICKS == ");
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
         if (IsValidClient(Cl))
@@ -696,7 +696,7 @@ public Action PrintMaxTicks(int callingCl, int args)
             ReplyToCommand(callingCl, "maxTick: %f | client %N", maxEngineTimeFor[Cl], Cl);
         }
     }
-    ReplyToCommand(callingCl, "[StAC] == END MOUSE MOVEMENT REPORT == ");
+    ReplyToCommand(callingCl, "[StAC] == END MAX TICKS REPORT == ");
 }
 */
 
@@ -1103,7 +1103,7 @@ public Action OnPlayerRunCmd
             fuzzyClangles[0][0] = RoundFloat(clangles[0][Cl][0] * 10.0) / 10.0;
             fuzzyClangles[0][1] = RoundFloat(clangles[0][Cl][1] * 10.0) / 10.0;
 
-            // we need this later for decrimenting psilent detections after 20 minutes!
+            // we need this later for decrimenting psilent detections after 10 minutes!
             int userid = GetClientUserId(Cl);
 
             // we have to do all these annoying checks to make sure we get as few false positives as possible.
@@ -1275,7 +1275,7 @@ public Action OnPlayerRunCmd
                             )
                             {
                                 pSilentDetects[Cl]++;
-                                // have this detection expire in 20 minutes
+                                // have this detection expire in 10 minutes
                                 CreateTimer(600.0, Timer_decr_pSilent, userid);
                                 // first detection is LIKELY bullshit
                                 if (pSilentDetects[Cl] > 0)
