@@ -16,7 +16,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.5.8b"
+#define PLUGIN_VERSION  "3.6.0"
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
@@ -25,7 +25,7 @@ public Plugin myinfo =
     author           =  "steph&nie",
     description      =  "Anticheat plugin [tf2 only] written by Stephanie. Originally forked from IntegriTF2 by Miggy (RIP)",
     version          =   PLUGIN_VERSION,
-    url              =  "https://steph.anie.dev/"
+    url              =  "https://sappho.io"
 }
 
 // TIMER HANDLES
@@ -1269,8 +1269,8 @@ public Action OnPlayerRunCmd
                                 )
                                 ||
                                 (
-                                    // needs to be more a degree if fuzzy (futureproofing)
-                                    aDiffReal >= 1.0 && fuzzy == 1
+                                    // needs to be more 3 degrees if fuzzy
+                                    aDiffReal >= 3.0 && fuzzy == 1
                                 )
                             )
                             {
