@@ -111,11 +111,6 @@
         "#format"   "{1:N}"
         "en"        "{hotpink}[StAC]{white} Player {1} was using turn binds. {palegreen}Kicked from server."
     }
-    "turnbindLogMsg"
-    {
-        "#format"   "{1:N}"
-        "en"        "[StAC] Player {1} was using turn binds. Kicked from server."
-    }
     /*
              __  __                 __
       ____  / /_/ /_  ___  _____   / /_  ____ _____     ____ ___  _________ ______
@@ -195,25 +190,15 @@
         "#format"   "{1:N},{2:.1f}"
         "en"        "{hotpink}[StAC]{white} Player {1}'s {mediumpurple}interp{white} was {mediumpurple}{2}{white}ms, indicating interp exploitation. {palegreen}Kicked from server."
     }
-    "interpLogMsg"
+
+    // client cmd spamming
+    "settingsChangesSpamAllChat"
     {
-        "#format"   "{1:N},{2:.1f}"
-        "en"        "[StAC] Player {1}'s interp was {2}ms, indicating interp exploitation. Kicked from server."
+        "#format"   "{1:N},{2:i},{3:.0f}"
+        "en"        "{hotpink}[StAC]{white} Player {1} {mediumpurple}spammed userinfo changes {yellow}{2}{white} times within the last {yellow}{3}{white} seconds. {palegreen}Kicked from server."
     }
-    // pingmasking violations
-    "pingmaskingKickMsg"
+    "settingsChangesSpamKickMsg"
     {
-        "#format"   "{1:s}"
-        "en"        "[StAC] CVar cl_cmdrate = {1}, indicating pingmasking. Remove any non numeric characters before reconnecting"
-    }
-    "pingmaskingAllChat"
-    {
-        "#format"   "{1:N},{2:s}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}ping masking{white} using a cl_cmdrate setting of {mediumpurple}{2}. Kicked from server"
-    }
-    "pingmaskingLogMsg"
-    {
-        "#format"   "{1:N},{2:s}"
-        "en"        "[StAC] Player {1} was ping masking using a cl_cmdrate setting of {2}"
+        "en"        "[StAC] Kicked for spamming userinfo changes"
     }
 }
