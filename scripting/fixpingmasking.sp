@@ -6,11 +6,12 @@
 
 public Plugin myinfo =
 {
-    name        = "Fix ping masking",
-    author      = "sappho",
-    description = "Fix fake ping values for clients that are ping masking",
-    version     = "0.0.6"
-};
+    name             =  "[StAC] Fix ping masking",
+    author           =  "sappho",
+    description      =  "Fix fake ping values for clients that are ping masking",
+    version          =  "1.0.0",
+    url              =  "https://github.com/sapphonie/StAC-tf2"
+}
 
 int imaxcmdrate;
 int imincmdrate;
@@ -73,8 +74,8 @@ public void OnClientSettingsChanged(int client)
     SetClientInfo(client, "cl_cmdrate", sclamprate);
 
     // check our work - debug only
-    GetClientInfo(client, "cl_cmdrate", sclamprate, sizeof(sclamprate));
-    LogMessage("client cmdrate is %s", sclamprate);
+    // GetClientInfo(client, "cl_cmdrate", sclamprate, sizeof(sclamprate));
+    // LogMessage("client cmdrate is %s", sclamprate);
 }
 
 bool IsValidClient(int client)
