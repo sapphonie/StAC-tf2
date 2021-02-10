@@ -4,6 +4,8 @@
 // i love my partners
 #pragma semicolon 1
 #pragma newdecls required
+
+#include <sourcemod>
 #include <morecolors>
 #include <regex>
 #include <sdktools>
@@ -14,13 +16,12 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.7.11b"
+#define PLUGIN_VERSION  "4.0.0"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
 
-#include <sourcemod>
 {
     name             =  "Steph's AntiCheat (StAC)",
     author           =  "steph&nie",
@@ -1105,7 +1106,7 @@ public Action OnPlayerRunCmd
     {
         if (cmdnum < 0 || tickcount < 0)
         {
-            KickClient(Cl, "[StAC] Invalid usercmd data");
+            KickClient(Cl, "%t", "invalidUsercmdData");
             return Plugin_Handled;
         }
         return Plugin_Continue;
@@ -1494,7 +1495,6 @@ public Action OnPlayerRunCmd
     //if (clcmdnum[1][Cl] == clcmdnum[0][Cl])
     //{
     //    StacLog("[StAC] SAME CMDNUM REPORTED!!!");
-    //    KickClient(Cl, "gay");
     //    return Plugin_Handled;
     //}
     //if (clcmdnum[1][Cl] > clcmdnum[0][Cl])
@@ -1907,7 +1907,7 @@ public Action OnClientCommand(int Cl, int args)
         if (strlen(ClientCommandChar) > 254 || len > 128)
         {
             StacLog("[StAC] '%L' issued client side command '%s' - '%i' length.", Cl, ClientCommandChar, strlen(ClientCommandChar));
-            KickClient(Cl, "[StAC] Issued too large of a command to the server");
+            KickClient(Cl, "%t", "commandTooBig");
             return Plugin_Stop;
         }
     }

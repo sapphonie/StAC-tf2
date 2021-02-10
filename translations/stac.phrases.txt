@@ -150,16 +150,6 @@
     {
         "en"        "[StAC] Banned for newline chars in chat"
     }
-    // illegal chars in name
-    "illegalNameBanAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}illegal characters{white} in their name! {palegreen}BANNED from server."
-    }
-    "illegalNameBanMsg"
-    {
-        "en"        "[StAC] Banned for illegal chars in their name"
-    }
     // bad item schema
     "badItemSchemaBanAllChat"
     {
@@ -190,7 +180,6 @@
         "#format"   "{1:N},{2:.1f}"
         "en"        "{hotpink}[StAC]{white} Player {1}'s {mediumpurple}interp{white} was {mediumpurple}{2}{white}ms, indicating interp exploitation. {palegreen}Kicked from server."
     }
-
     // client cmd spamming
     "settingsChangesSpamAllChat"
     {
@@ -200,5 +189,15 @@
     "settingsChangesSpamKickMsg"
     {
         "en"        "[StAC] Kicked for spamming userinfo changes"
+    }
+    // client issued too big of a command to the server
+    "commandTooBig"
+    {
+        "en"        "[StAC] Issued too large of a command to the server"
+    }
+    // client had an extra chunky command that the server blocked
+    "invalidUsercmdData"
+    {
+        "en"        "[StAC] Invalid usercmd data"
     }
 }
