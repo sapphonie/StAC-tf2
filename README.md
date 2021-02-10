@@ -6,7 +6,7 @@
 - pSilentAim / NoRecoil cheats
 *(logs detections to admins / STV / file, bans on `stac_max_psilent_detections` detections, defaults to 15)*
 - plain aimsnap/aimbot cheats
-*(logs detections to admins / STV / file, bans on `stac_max_aimsnap_detections` detections, defaults to 999 - DOES NOT AUTOBAN YET!)*
+*(logs detections to admins / STV / file, bans on `stac_max_aimsnap_detections` detections, defaults to 25)*
 - bhop cheats and scripts
 *(logs detections to admins / STV, bans on `stac_max_bhop_detections` detections + 2 (defaults to 10)*
 
@@ -14,30 +14,34 @@ Note: After a client does `stac_max_bhop_detections` tick perfect bhops (default
 
 - fake eye angle violations
 *(logs detections to admins / STV, bans on `stac_max_fakeang_detections` detections, defaults to 10)*
+- cmdnum spikes - used for lmaobox NoRecoil and other shenanigans
+*(logs detections to admins / STV, bans on `stac_max_cmdnum_detections` detections, defaults to 25)*
 - interp/lerp abuse (some detection methods only available on default tickrate servers)
 *(kick if outside of values you set with `stac_min_interp_ms` and `stac_max_interp_ms`)*
 - clients using turn binds (can severely fuck up hitboxes)
 *(kick if `stac_max_allowed_turn_secs` is set to a value <= 0)*
-- cmdrate pingmasking if cvar has nonnumerical chars)
-*(kick if `stac_kick_for_pingmasking` is set to 1, default 0)*
 - newlines in chat messages
 *(ban)*
 - NoLerp cheats
 *(ban)*
-- fov abuse > 90
+- fov abuse > 90 || < 20
 *(fixes most cases, bans on blatant cvar changing)*
 - SOME third person cheats on clients
 *(fixes some cases)*
 - certain fake item schema violations - i.e. "ben cat hats" (cheat that ~~can unequip~~ used to unequip other people's hats)
 *(ban)*
-- illegal characters in name
-*(ban)*
+
+## Where'd the "Illegal Characters In Name" ban method go?
+Long story short: it was subject to false positives. I thought steam sanitized names, but it appears to only do so in the friends ui name change section, and NOT on the steamcommunity.com website. Any bans that have been recorded with this ban method __should be removed__.
 
 ### Backtrack Fix by J_Tanz
 This repo includes the latest version of J_Tanzanite's (author of another popular anticheat, [LilAC](https://github.com/J-Tanzanite/Little-Anti-Cheat)) Backtrack Patch, available [here](https://github.com/J-Tanzanite/Backtrack-Patch). It is enabled by default, but to disable it, set `stac_optimize_cvars` to `0` and `jay_backtrack_enable` to `0`.
 
+### FixPingMasking by me
+Instead of kicking clients who may be accidentally or purposefully pingmasking, I wrote a plugin to patch it and force clients to properly use the server specified cmdrate. This plugin is entirely optional, but is available in this repo as "fixpingmasking.smx".
+
 ### Attempted nospread fix
-This plugin currently reseeds the hl2 random seed at each map / tournament start and every 15 minutes to attempt to prevent possible nospread exploits by cheats guessing the server seed. This appears to work at least on NCC but I have not bothered to test it with other cheats.
+This plugin currently reseeds the hl2 random seed at each map / tournament start and every 15 minutes to attempt to prevent possible nospread exploits by cheats guessing the server seed. This appears to work at least on NCC, but not lmaobox. Lmaobox is detected with cmdnum spikes, however.
 
 ### Installation & Configuration
 1) download latest version from [here](https://github.com/sapphonie/StAC-tf2/raw/master/plugins/stac.smx) to your `/tf/addons/sourcemod/plugins` folder

@@ -4,8 +4,6 @@
 // i love my partners
 #pragma semicolon 1
 #pragma newdecls required
-
-#include <sourcemod>
 #include <morecolors>
 #include <regex>
 #include <sdktools>
@@ -16,11 +14,13 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "3.7.5b"
+#define PLUGIN_VERSION  "3.7.11b"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
+
+#include <sourcemod>
 {
     name             =  "Steph's AntiCheat (StAC)",
     author           =  "steph&nie",
@@ -59,7 +59,7 @@ float clangles           [3][TFMAXPLAYERS+1][2];
 // STORED POS PER CLIENT
 float clpos              [2][TFMAXPLAYERS+1][3];
 // STORED cmdnum PER CLIENT
-int clcmdnum             [3][TFMAXPLAYERS+1];
+int clcmdnum             [6][TFMAXPLAYERS+1];
 // STORED BUTTONS PER CLIENT
 int buttonsPrev             [TFMAXPLAYERS+1];
 // STORED GRAVITY STATE PER CLIENT
@@ -88,10 +88,12 @@ ConVar stac_verbose_info;
 ConVar stac_max_allowed_turn_secs;
 ConVar stac_ban_for_misccheats;
 ConVar stac_optimize_cvars;
+
 ConVar stac_max_aimsnap_detections;
 ConVar stac_max_psilent_detections;
 ConVar stac_max_bhop_detections;
 ConVar stac_max_fakeang_detections;
+ConVar stac_max_cmdnum_detections;
 
 ConVar stac_max_settings_changes;
 ConVar stac_settings_changes_window;
@@ -109,10 +111,12 @@ float maxAllowedTurnSecs    = -1.0;
 bool kickForPingMasking     = false;
 bool banForMiscCheats       = true;
 bool optimizeCvars          = true;
+
 int maxAimsnapDetections    = 25;
 int maxPsilentDetections    = 10;
 int maxFakeAngDetections    = 10;
 int maxBhopDetections       = 10;
+int maxCmdnumDetections     = 25;
 
 // max settings changes per...
 int maxSettingsChanges      = 40;
@@ -148,6 +152,7 @@ public void OnPluginStart()
     {
         SetFailState("[StAC] This plugin (and TF2 in general) does not support more than 33 players. Aborting!");
     }
+
     // updater
     if (LibraryExists("updater"))
     {
@@ -170,8 +175,6 @@ public void OnPluginStart()
     HookEvent("teamplay_round_start", eRoundStart);
     // grab player spawns
     HookEvent("player_spawn", ePlayerSpawned);
-    // grab player name changes
-    HookEvent("player_changename", ePlayerChangedName, EventHookMode_Pre);
 
     // check natives capibility
     CreateTimer(2.0, checkNatives);
@@ -392,6 +395,22 @@ void initCvars()
         _
     );
     HookConVarChange(stac_max_fakeang_detections, stacVarChanged);
+
+    // cmdnum spike detections
+    IntToString(maxCmdnumDetections, buffer, sizeof(buffer));
+    stac_max_cmdnum_detections =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_max_cmdnum_detections",
+        buffer,
+        "[StAC] maximum cmdnum spikes a client can have before getting banned. lmaobox does this with nospread on certain weapons, other cheats may also utilize it. legit users should not ever trigger this!\n(recommended 25)",
+        FCVAR_NONE,
+        true,
+        -1.0,
+        false,
+        _
+    );
+    HookConVarChange(stac_max_cmdnum_detections, stacVarChanged);
 
     // userinfo spam changes
     IntToString(maxSettingsChanges, buffer, sizeof(buffer));
@@ -793,12 +812,6 @@ public Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
     }
 }
 
-public Action ePlayerChangedName(Handle event, char[] name, bool dontBroadcast)
-{
-    int userid = GetEventInt(event, "userid");
-    NameCheck(userid);
-}
-
 Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
 {
     // get ent classname AKA the weapon name
@@ -1087,22 +1100,15 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
-    // get flags - this is used to kick airstuck clients, and later in the bhop check
-    int flags = GetEntityFlags(Cl);
-
     // originally from ssac - block invalid usercmds with invalid data
     if (cmdnum <= 0 || tickcount <= 0)
     {
-        if (IsClientPlaying(Cl))
+        if (cmdnum < 0 || tickcount < 0)
         {
-            if (!(flags & FL_ONGROUND))
-            {
-                KickClient(Cl, "[StAC] Kicked for attempted airstuck");
-                MC_PrintToChatAll("{hotpink}[StAC]{white} Player %N was kicked for {mediumpurple}attempted airstuck{white}.", Cl);
-            }
+            KickClient(Cl, "[StAC] Invalid usercmd data");
+            return Plugin_Handled;
         }
-        // technically we don't need to return Plugin_Handled, but this is more defensive programming than anything
-        return Plugin_Handled;
+        return Plugin_Continue;
     }
 
     // need this basically no matter what
@@ -1116,6 +1122,9 @@ public Action OnPlayerRunCmd
     // don't run this check if cvar is -1
     if (maxBhopDetections != -1)
     {
+        // get movement flags
+        int flags = GetEntityFlags(Cl);
+
         // only check on not weirdo tickrate servers
         if (bhopmult >= 1.0 && bhopmult <= 2.0)
         {
@@ -1203,6 +1212,7 @@ public Action OnPlayerRunCmd
                     BanUser(userid, reason);
                     MC_PrintToChatAll("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
                     StacLog("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
+                    return Plugin_Handled;
                 }
             }
             buttonsPrev[Cl] = buttons;
@@ -1271,9 +1281,12 @@ public Action OnPlayerRunCmd
     clangles[0][Cl][1] = angles[1];
 
     // grab cmdnum
-    clcmdnum[2][Cl] = clcmdnum[1][Cl];
-    clcmdnum[1][Cl] = clcmdnum[0][Cl];
+    for (int i = 5; i > 0; --i)
+    {
+        clcmdnum[i][Cl] = clcmdnum[i-1][Cl];
+    }
     clcmdnum[0][Cl] = cmdnum;
+
 
     // grab position
     clpos[1][Cl] = clpos[0][Cl];
@@ -1321,47 +1334,6 @@ public Action OnPlayerRunCmd
     {
         return Plugin_Continue;
     }
-
-    /* cmdnum test, heavily modified from ssac */
-    int spikeamt = abs(clcmdnum[1][Cl] - clcmdnum[0][Cl]);
-    if (spikeamt > 256)
-    {
-        cmdnumSpikeDetects[Cl]++;
-        PrintToImportant
-        (
-            "{hotpink}[StAC]{white} Cmdnum SPIKE of {yellow}%i{white} on %N.\nDetections so far: {palegreen}%i{white}.",
-            spikeamt,
-            Cl,
-            cmdnumSpikeDetects[Cl]
-        );
-        StacLog
-        (
-            "\n[StAC] Cmdnum SPIKE of %i on %L.\nDetections so far: %i.",
-            spikeamt,
-            Cl,
-            cmdnumSpikeDetects[Cl]
-        );
-
-        if (cmdnumSpikeDetects[Cl] >= 25)
-        {
-            KickClient(Cl, "[StAC] Too many cmdnum spikes");
-            return Plugin_Handled;
-        }
-    }
-
-    //if (clcmdnum[1][Cl] == clcmdnum[0][Cl])
-    //{
-    //    StacLog("[StAC] SAME CMDNUM REPORTED!!!");
-    //    //cmdnum = cmdnum++;
-    //    return Plugin_Changed;
-    //}
-    //if (clcmdnum[1][Cl] > clcmdnum[0][Cl])
-    //{
-    //    LogMessage("[StAC] cmdnum DROP of %i!", clcmdnum[1][Cl] - clcmdnum[0][Cl]);
-    //    LogMessage("%i , %i", clcmdnum[1][Cl], clcmdnum[0][Cl]);
-    //    cmdnum = cmdnum;
-    //    //return Plugin_Handled;
-    //}
 
     /*
         EYE ANGLES TEST
@@ -1415,6 +1387,7 @@ public Action OnPlayerRunCmd
             BanUser(userid, reason);
             MC_PrintToChatAll("%t", "fakeangBanAllChat", Cl, fakeAngDetects[Cl]);
             StacLog("%t", "fakeangBanAllChat", Cl, fakeAngDetects[Cl]);
+            return Plugin_Handled;
         }
     }
     /*
@@ -1471,6 +1444,67 @@ public Action OnPlayerRunCmd
     {
         return Plugin_Continue;
     }
+
+    /* cmdnum test, heavily modified from ssac */
+    int spikeamt = abs(clcmdnum[1][Cl] - clcmdnum[0][Cl]);
+    // 256 is a nice number but this could be raised or lowered, haven't done TOO much testing and so far zero legits have managed to trigger this since we ignore nullcmds
+    if (spikeamt >= 256)
+    {
+        char heldWeapon[256];
+        GetClientWeapon(Cl, heldWeapon, sizeof(heldWeapon));
+
+        cmdnumSpikeDetects[Cl]++;
+        PrintToImportant
+        (
+            "{hotpink}[StAC]{white} Cmdnum SPIKE of {yellow}%i{white} on %N.\nDetections so far: {palegreen}%i{white}.",
+            spikeamt,
+            Cl,
+            cmdnumSpikeDetects[Cl]
+        );
+        StacLog
+        (
+            "\n[StAC] Cmdnum SPIKE of %i on %L.\nDetections so far: %i. Held weapon: %s",
+            spikeamt,
+            Cl,
+            cmdnumSpikeDetects[Cl],
+            heldWeapon
+        );
+        StacLog
+        (
+            "\nPrevious cmdnums:\n0 %i\n1 %i\n2 %i\n3 %i\n4 %i\n5 %i\n",
+            clcmdnum[0][Cl],
+            clcmdnum[1][Cl],
+            clcmdnum[2][Cl],
+            clcmdnum[3][Cl],
+            clcmdnum[4][Cl],
+            clcmdnum[5][Cl]
+        );
+        // TEMP hardcoded for now
+        if (cmdnumSpikeDetects[Cl] >= maxCmdnumDetections)
+        {
+            char reason[128];
+            Format(reason, sizeof(reason), "%t", "cmdnumSpikesBanMsg", cmdnumSpikeDetects[Cl]);
+            BanUser(userid, reason);
+            MC_PrintToChatAll("%t", "cmdnumSpikesBanAllChat", Cl, cmdnumSpikeDetects[Cl]);
+            StacLog("%t", "cmdnumSpikesBanAllChat", Cl, cmdnumSpikeDetects[Cl]);
+            return Plugin_Handled;
+        }
+    }
+
+    //if (clcmdnum[1][Cl] == clcmdnum[0][Cl])
+    //{
+    //    StacLog("[StAC] SAME CMDNUM REPORTED!!!");
+    //    KickClient(Cl, "gay");
+    //    return Plugin_Handled;
+    //}
+    //if (clcmdnum[1][Cl] > clcmdnum[0][Cl])
+    //{
+    //    LogMessage("[StAC] cmdnum DROP of %i!", clcmdnum[1][Cl] - clcmdnum[0][Cl]);
+    //    LogMessage("%i , %i", clcmdnum[1][Cl], clcmdnum[0][Cl]);
+    //    cmdnum = cmdnum;
+    //    //return Plugin_Handled;
+    //}
+
     // we can reuse this for aimsnap as well!
     float aDiffReal = CalcAngDeg(clangles[0][Cl], clangles[1][Cl]);
     // refactored from smac - make sure we don't fuck up angles near the x/y axes!
@@ -1599,6 +1633,7 @@ public Action OnPlayerRunCmd
                     BanUser(userid, reason);
                     MC_PrintToChatAll("%t", "pSilentBanAllChat", Cl, pSilentDetects[Cl]);
                     StacLog("%t", "pSilentBanAllChat", Cl, pSilentDetects[Cl]);
+                    return Plugin_Handled;
                 }
             }
         }
@@ -1687,6 +1722,7 @@ public Action OnPlayerRunCmd
                     BanUser(userid, reason);
                     MC_PrintToChatAll("%t", "AimsnapBanAllChat", Cl, aimsnapDetects[Cl]);
                     StacLog("%t", "AimsnapBanAllChat", Cl, aimsnapDetects[Cl]);
+                    return Plugin_Handled;
                 }
             }
         }
@@ -1752,7 +1788,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         return;
     }
     int userid = GetClientUserId(Cl);
-    // log something about cvar errors xcept for cheat only cvars
+    // log something about cvar errors
     if (result != ConVarQuery_Okay)
     {
         PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", Cl);
@@ -1986,54 +2022,12 @@ public void BanUser(int userid, char[] reason)
     }
 }
 
-void NameCheck(int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-    if (IsValidClient(Cl))
-    {
-        char curName[64];
-        GetClientName(Cl, curName, sizeof(curName));
-        // ban for invalid characters in names
-        if
-        (
-            // nullcore uses \xE0\xB9\x8A for namestealing but you can put it in your steam name so we cant check for it
-            // might look into kicking for combining chars but who honestly cares
-            // apparently other cheats use these:
-            // thanks pazer
-               StrContains(curName, "\xE2\x80\x8F", false) != -1
-            || StrContains(curName, "\xE2\x80\x8E", false) != -1
-            // cathook uses this
-            || StrContains(curName, "\x1B", false)         != -1
-            // just in case
-            || StrContains(curName, "\n", false)           != -1
-            || StrContains(curName, "\r", false)           != -1
-        )
-        {
-            if (banForMiscCheats)
-            {
-                char reason[128];
-                Format(reason, sizeof(reason), "%t", "illegalNameBanMsg");
-                BanUser(userid, reason);
-                MC_PrintToChatAll("%t", "illegalNameBanAllChat", Cl);
-                StacLog("%t", "illegalNameBanAllChat", Cl);
-            }
-            else
-            {
-                StacLog("[StAC] Player %N has illegal chars in their name!", Cl);
-            }
-        }
-    }
-}
-
 void NetPropCheck(int userid)
 {
     int Cl = GetClientOfUserId(userid);
 
     if (IsValidClient(Cl))
     {
-        // not a net prop. Whatever though.
-        NameCheck(userid);
-
         // set real fov from client here - overrides cheat values (mostly works with ncc, untested on others)
         // we don't want to touch fov if a client is zoomed in while sniping or if they're in a bumper car or some other dumb halloween bullshit
         // we also don't want to check fov if they're dead or if cvars aren't optimized, because fov gets raised temporarily above 90 by teleporters if it isn't explicitly disabled by stac
@@ -2324,6 +2318,7 @@ bool IsValidClient(int client)
         (0 < client <= MaxClients)
         && IsClientInGame(client)
         && !IsFakeClient(client)
+        && !IsClientInKickQueue(client)
     );
 }
 
@@ -2336,6 +2331,7 @@ bool IsValidClientOrBot(int client)
         // don't bother sdkhooking stv or replay bots lol
         && !IsClientSourceTV(client)
         && !IsClientReplay(client)
+        && !IsClientInKickQueue(client)
     );
 }
 
