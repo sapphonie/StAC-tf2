@@ -1,7 +1,6 @@
 "Phrases"
 {
     /*
-        - You can disable printing to allchat by having the string after the "en" be blank ("")
         - kick and ban messages already have a period at the end of them in TF2, so don't add one
         - ban messages get printed to banned client as the kick reason if not using sourcebans and posted to sourcebans as the "ban reason" if you have it installed
     */
@@ -84,6 +83,26 @@
     {
         "#format"   "{1:i}"
         "en"        "[StAC] Banned for {1} fake angle detections"
+    }
+    /*
+
+                          __                                    _ __
+      _________ ___  ____/ /___  __  ______ ___     _________  (_) /_____  _____
+     / ___/ __ `__ \/ __  / __ \/ / / / __ `__ \   / ___/ __ \/ / //_/ _ \/ ___/
+    / /__/ / / / / / /_/ / / / / /_/ / / / / / /  (__  ) /_/ / / ,< /  __(__  )
+    \___/_/ /_/ /_/\__,_/_/ /_/\__,_/_/ /_/ /_/  /____/ .___/_/_/|_|\___/____/
+                                                     /_/
+
+    */
+    "cmdnumSpikesBanAllChat"
+    {
+        "#format"   "{1:N},{2:i}"
+        "en"        "{hotpink}[StAC]{white} Player {1} had too many {mediumpurple}cmdnum spikes{white}, indicating cheating. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+    }
+    "cmdnumSpikesBanMsg"
+    {
+        "#format"   "{1:i}"
+        "en"        "[StAC] Banned for {1} cmdnum spikes"
     }
     /*
        __                      __    _           __
