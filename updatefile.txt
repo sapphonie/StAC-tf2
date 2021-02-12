@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "3.6.1"
+            "Latest"    "4.0.1"
         }
 
         "Notes" "Changes in 3.6.1"
-        "Notes" "- Added J_Tanz's backtrack fix, replacing shavit's - remove shavit's from your plugins folder!"
+        "Notes" "- Check the github!"
     }
 
     "Files"
