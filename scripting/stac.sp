@@ -16,7 +16,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "4.0.0"
+#define PLUGIN_VERSION  "4.0.1"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -1373,7 +1373,7 @@ public Action OnPlayerRunCmd
         );
         StacLog
         (
-            "\n==========\n[StAC] Player %N has invalid eye angles!\nCurrent angles: %.2f %.2f %.2f.\nDetections so far: %i\n==========",
+            "\n==========\n[StAC] Player %N has invalid eye angles!\nCurrent angles: %f %f %f.\nDetections so far: %i\n==========",
             Cl,
             angles[0],
             angles[1],
@@ -1422,10 +1422,10 @@ public Action OnPlayerRunCmd
         // make sure client isnt using a spin bind
         || buttons & IN_LEFT
         || buttons & IN_RIGHT
-        // make sure client doesn't have 10% or more packet loss
-        || loss >= 10.0
-        // make sure client doesn't have 66.6% or more choke
-        || choke >= 66.6
+        // make sure client doesn't have 1% or more packet loss - this would be annoying to play with for cheaters - but may be tweaked in the future if cheats decide to try to get around it
+        || loss >= 1.0
+        // make sure client doesn't have 52% or more choke - nullcore fakechoke goes up to 51!
+        || choke >= 52.0
         // if a client misses 8 ticks, its safe to assume they're lagging
         // so check the difference between the last 10 ticks
         // if a client missed any of them, don't check
@@ -1596,7 +1596,7 @@ public Action OnPlayerRunCmd
                 );
                 StacLog
                 (
-                    "\n==========\n[StAC] SilentAim detection of %.2f° on \n%L.\nDetections so far: %i.\nfuzzy = %i",
+                    "\n==========\n[StAC] SilentAim detection of %f° on \n%L.\nDetections so far: %i.\nfuzzy = %i",
                     aDiffReal,
                     Cl,
                     pSilentDetects[Cl],
@@ -1604,7 +1604,7 @@ public Action OnPlayerRunCmd
                 );
                 StacLog
                 (
-                    "\nNetwork:\n %.2f loss\n %.2f choke\n %.2f ms ping\nAngles:\n angles0: x %.2f y %.2f\n angles1: x %.2f y %.2f\n angles2: x %.2f y %.2f\n",
+                    "\nNetwork:\n %f loss\n %f choke\n %f ms ping\nAngles:\n angles0: x %f y %f\n angles1: x %f y %f\n angles2: x %f y %f\n",
                     loss,
                     choke,
                     ping,
@@ -1674,14 +1674,14 @@ public Action OnPlayerRunCmd
                 // etc
                 StacLog
                 (
-                    "\n==========\n[StAC] Aimsnap detection of %.2f° on \n%L.\nDetections so far: %i.",
+                    "\n==========\n[StAC] Aimsnap detection of %f° on \n%L.\nDetections so far: %i.",
                     aDiffReal,
                     Cl,
                     aimsnapDetects[Cl]
                 );
                 StacLog
                 (
-                    "\nNetwork:\n %.2f loss\n %.2f choke\n %.2f ms ping\nAngles:\n angles0: x %.2f y %.2f\n angles1: x %.2f y %.2f\n",
+                    "\nNetwork:\n %f loss\n %f choke\n %f ms ping\nAngles:\n angles0: x %f y %f\n angles1: x %f y %f\n",
                     loss,
                     choke,
                     ping,
@@ -2359,17 +2359,17 @@ bool HasValidAngles(int Cl)
     if
     (
         // ignore weird angle resets in mge / dm
-           clangles[0][Cl][0] != 0.000000
-        || clangles[0][Cl][1] != 0.000000
-        || clangles[1][Cl][0] != 0.000000
-        || clangles[1][Cl][1] != 0.000000
-        || clangles[2][Cl][0] != 0.000000
-        || clangles[2][Cl][1] != 0.000000
+           clangles[0][Cl][0] == 0.0
+        || clangles[0][Cl][1] == 0.0
+        || clangles[1][Cl][0] == 0.0
+        || clangles[1][Cl][1] == 0.0
+        || clangles[2][Cl][0] == 0.0
+        || clangles[2][Cl][1] == 0.0
     )
     {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 }
 
 // print colored chat to all server/sourcemod admins
