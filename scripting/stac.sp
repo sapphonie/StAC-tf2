@@ -16,7 +16,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "4.0.1"
+#define PLUGIN_VERSION  "4.0.2"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -679,14 +679,25 @@ public Action checkNatives(Handle timer)
     }
 }
 
+
 public Action checkEveryone(Handle timer)
 {
-    ForceCheckAll(0, 0);
+    QueryEverythingAllClients();
 }
+
+
+public Action ForceCheckAll(int client, int args)
+{
+    QueryEverythingAllClients();
+}
+
 
 public Action ShowDetections(int callingCl, int args)
 {
-    ReplyToCommand(callingCl, "Check your console!");
+    if (callingCl != 0)
+    {
+        ReplyToCommand(callingCl, "Check your console!");
+    }
     PrintToConsole(callingCl, "\n[StAC] == CURRENT DETECTIONS == ");
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
@@ -1048,12 +1059,6 @@ public void OnClientDisconnect(int Cl)
         CloseHandle(QueryTimer[Cl]);
         QueryTimer[Cl] = null;
     }
-}
-
-public Action ForceCheckAll(int client, int args)
-{
-    QueryEverythingAllClients();
-    ReplyToCommand(client, "[StAC] Checking cvars on all clients.");
 }
 
 // TODO: monitor server tickrate
@@ -1479,7 +1484,7 @@ public Action OnPlayerRunCmd
             clcmdnum[4][Cl],
             clcmdnum[5][Cl]
         );
-        // TEMP hardcoded for now
+        // punish if we reach limit set by cvar
         if (cmdnumSpikeDetects[Cl] >= maxCmdnumDetections)
         {
             char reason[128];
@@ -1915,12 +1920,15 @@ public Action OnClientCommand(int Cl, int args)
 
 public OnClientSettingsChanged(Cl)
 {
-    // check for "too many client settings changes" cuz nullcore SPAMS this
-    // although that might be a bug with nullcore interacting with mastercomfig
-    if (!IsValidClient(Cl))
+    // check for "too many client settings changes" cuz nullcore and lmaobox both spam this
+    // although that might be a bug with them interacting with mastercomfig ?
+
+    // ignore invalid clients and dead / in spec clients
+    if (!IsValidClient(Cl) || !IsClientPlaying(Cl))
     {
         return;
     }
+    // ignore if cvar says ignore
     if (maxSettingsChanges <= 0 || SettingsChangeWindow <= 0.0)
     {
         return;
@@ -1933,7 +1941,7 @@ public OnClientSettingsChanged(Cl)
     // have this detection expire in 1 minute (default)
     CreateTimer(SettingsChangeWindow, Timer_decr_settingsChanges, userid, TIMER_FLAG_NO_MAPCHANGE);
 
-    // notify if player is CLOSE to getting yeeted
+    // notify admins if player is close to getting yeeted
     if (settingsChangesFor[Cl] > (maxSettingsChanges - 5))
     {
         PrintToImportant
@@ -2021,7 +2029,8 @@ public void BanUser(int userid, char[] reason)
     }
 }
 
-void NetPropCheck(int userid)
+// no longer just for netprops!
+void NetPropEtcCheck(int userid)
 {
     int Cl = GetClientOfUserId(userid);
 
@@ -2039,7 +2048,8 @@ void NetPropCheck(int userid)
         )
         {
             // double check fov just in case
-            if (GetEntProp(Cl, Prop_Send, "m_iFOV") > 90)
+            int fov = GetEntProp(Cl, Prop_Send, "m_iFOV");
+            if (20 < fov > 90)
             {
                 char reason[128];
                 Format(reason, sizeof(reason), "%t", "fovBanMsg");
@@ -2082,6 +2092,9 @@ void NetPropCheck(int userid)
             // fix broken equip slots. Note: this was patched by valve but you can still equip invalid items...
             // ...just without the annoying unequipping other people's items part.
             // cathook is cringe
+            // maybe one of these days i'll make this non-hardcoded and check for ANY item schema violation
+            // not right now though
+
             // only check if player has 3 (or more, hello creators.tf) valid hats on
             if (TF2_GetNumWearables(Cl) >= 3)
             {
@@ -2145,55 +2158,11 @@ void NetPropCheck(int userid)
     }
 }
 
-// these 3 functions are a god damn mess
-void QueryEverything(int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-    if (IsValidClient(Cl))
-    {
-        // check cvars!
-        int i;
-        QueryCvars(userid, i);
-    }
-}
+/////////////////
+// TIMER STUFF //
+/////////////////
 
-void QueryCvars(int userid, int i)
-{
-    int Cl = GetClientOfUserId(userid);
-    // don't check cvars if client is invalid
-    if (IsValidClient(Cl))
-    {
-        if (i < sizeof(cvarsToCheck) || i == 0)
-        {
-            DataPack pack;
-            QueryClientConVar(Cl, cvarsToCheck[i], ConVarCheck);
-            i++;
-            CreateDataTimer(2.5, timerqC, pack);
-            WritePackCell(pack, userid);
-            WritePackCell(pack, i);
-        }
-        else if (i >= sizeof(cvarsToCheck))
-        {
-            // checks a bunch of AC related netprops
-            NetPropCheck(userid);
-        }
-    }
-}
-
-// timer for checking the next cvar in the list (waits a second to balance out server load)
-public Action timerqC(Handle timer, DataPack pack)
-{
-    ResetPack(pack, false);
-    int userid = ReadPackCell(pack);
-    int i      = ReadPackCell(pack);
-    int Cl     = GetClientOfUserId(userid);
-    if (IsValidClient(Cl))
-    {
-        QueryCvars(userid, i);
-    }
-}
-
-// timer for checking ALL cvars and net props and everything else
+// timer for (re)checking ALL cvars and net props and everything else
 public Action Timer_CheckClientConVars(Handle timer, any userid)
 {
     // get actual client index
@@ -2206,10 +2175,75 @@ public Action Timer_CheckClientConVars(Handle timer, any userid)
         {
             StacLog("[StAC] Checking client id, %i, %N", Cl, Cl);
         }
+        // init variable to pass to QueryCvarsEtc
+        int i;
         // query the client!
-        QueryEverything(userid);
-        // check randomly using values of stac_min_randomcheck_secs & stac_max_randomcheck_secs for violating clients, then recheck with a new random value
-        QueryTimer[Cl] = CreateTimer(GetRandomFloat(minRandCheckVal, maxRandCheckVal), Timer_CheckClientConVars, userid);
+        QueryCvarsEtc(userid, i);
+        // we just checked, but we want to check again eventually
+        // lets make a timer with a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
+        QueryTimer[Cl] =
+        CreateTimer
+        (
+            GetRandomFloat
+            (
+                minRandCheckVal,
+                maxRandCheckVal
+            ),
+            Timer_CheckClientConVars,
+            userid
+        );
+    }
+}
+
+// query all cvars and netprops for userid
+void QueryCvarsEtc(int userid, int i)
+{
+    // get client index of userid
+    int Cl = GetClientOfUserId(userid);
+    // don't go no further if client isn't valid!
+    if (IsValidClient(Cl))
+    {
+        // check cvars!
+        if (i < sizeof(cvarsToCheck))
+        {
+            // make pack
+            DataPack pack = CreateDataPack();
+            // actually query the cvar here based on pos in convar array
+            QueryClientConVar(Cl, cvarsToCheck[i], ConVarCheck);
+            // increase pos in convar array
+            i++;
+            // prepare pack
+            WritePackCell(pack, userid);
+            WritePackCell(pack, i);
+            // reset pack pos to 0
+            ResetPack(pack, false);
+            // make data timer
+            CreateTimer(2.5, timer_QueryNextCvar, pack, TIMER_DATA_HNDL_CLOSE);
+        }
+        // we checked all the cvars!
+        else
+        {
+            // now lets check some AC related netprops and other misc stuff
+            NetPropEtcCheck(userid);
+        }
+    }
+}
+
+// timer for checking the next cvar in the list (waits a bit to balance out server load)
+public Action timer_QueryNextCvar(Handle timer, DataPack pack)
+{
+    // read userid
+    int userid = ReadPackCell(pack);
+    // read i
+    int i      = ReadPackCell(pack);
+
+    // get client index out of userid
+    int Cl     = GetClientOfUserId(userid);
+
+    // check validity of client index
+    if (IsValidClient(Cl))
+    {
+        QueryCvarsEtc(userid, i);
     }
 }
 
@@ -2220,12 +2254,17 @@ void QueryEverythingAllClients()
     {
         StacLog("[StAC] Querying all clients");
     }
+    // loop thru all clients
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
         if (IsValidClient(Cl))
         {
+            // get userid of this client index
             int userid = GetClientUserId(Cl);
-            QueryEverything(userid);
+            // init variable to pass to QueryCvarsEtc
+            int i;
+            // query the client!
+            QueryCvarsEtc(userid, i);
         }
     }
 }
