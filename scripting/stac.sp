@@ -16,7 +16,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "4.1.3"
+#define PLUGIN_VERSION  "4.1.4"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -2464,7 +2464,7 @@ void PrintColoredChatToAdmins(const char[] format, any ...)
 
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (IsClientInGame(i) && CheckCommandAccess(i, "sm_ban", ADMFLAG_ROOT))
+        if (IsClientInGame(i) && CheckCommandAccess(i, "sm_ban", ADMFLAG_GENERIC))
         {
             SetGlobalTransTarget(i);
             VFormat(buffer, sizeof(buffer), format, 2);
@@ -2493,7 +2493,7 @@ PrintToConsoleAllAdmins(const char[] format, any ...)
         (
             (
                    IsClientInGame(i)
-                && CheckCommandAccess(i, "sm_ban", ADMFLAG_ROOT)
+                && CheckCommandAccess(i, "sm_ban", ADMFLAG_GENERIC)
             )
             ||
             (
