@@ -16,7 +16,7 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "4.0.2"
+#define PLUGIN_VERSION  "4.0.3"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -81,6 +81,7 @@ float timeSinceDidHurt      [TFMAXPLAYERS+1];
 
 // NATIVE BOOLS
 bool SOURCEBANS;
+bool GBANS;
 
 // CVARS
 ConVar stac_enabled;
@@ -102,7 +103,7 @@ ConVar stac_min_interp_ms;
 ConVar stac_max_interp_ms;
 ConVar stac_min_randomcheck_secs;
 ConVar stac_max_randomcheck_secs;
-ConVar stac_include_demoname_in_sb;
+ConVar stac_include_demoname_in_banreason;
 ConVar stac_log_to_file;
 
 // VARIOUS DETECTION BOUNDS & CVAR VALUES
@@ -130,8 +131,8 @@ int max_interp_ms           = 101;
 // RANDOM CVARS CHECK MIN/MAX BOUNDS (in seconds)
 float minRandCheckVal       = 60.0;
 float maxRandCheckVal       = 300.0;
-// put demoname in sourcebans?
-bool demonameinSB           = true;
+// put demoname in sourcebans / gbans?
+bool demonameInBanReason    = true;
 bool logtofile              = true;
 
 // demoname for currently recording demo if extant
@@ -508,8 +509,8 @@ void initCvars()
     );
     HookConVarChange(stac_max_randomcheck_secs, stacVarChanged);
 
-    // demoname in sb
-    if (demonameinSB)
+    // demoname in ban reason
+    if (demonameInBanReason)
     {
         buffer = "1";
     }
@@ -517,19 +518,19 @@ void initCvars()
     {
         buffer = "0";
     }
-    stac_include_demoname_in_sb =
+    stac_include_demoname_in_banreason =
     AutoExecConfig_CreateConVar
     (
-        "stac_include_demoname_in_sb",
+        "stac_include_demoname_in_banreason",
         buffer,
-        "[StAC] enable/disable putting the currently recording demo in the SourceBans ban reason\n(recommended 1)",
+        "[StAC] enable/disable putting the currently recording demo in the SourceBans / gbans ban reason\n(recommended 1)",
         FCVAR_NONE,
         true,
         0.0,
         true,
         1.0
     );
-    HookConVarChange(stac_include_demoname_in_sb, stacVarChanged);
+    HookConVarChange(stac_include_demoname_in_banreason, stacVarChanged);
 
     // log to file
     if (logtofile)
@@ -669,13 +670,21 @@ public Action checkNatives(Handle timer)
             StacLog("[StAC] Sourcebans detected! Using Sourcebans as default ban handler.");
         }
     }
-    else
+    else if (CommandExists("gb_ban"))
     {
-        SOURCEBANS = false;
+        GBANS = true;
         if (DEBUG)
         {
-            StacLog("[StAC] No Sourcebans installation detected! Using TF2's default ban handler.");
+            StacLog("[StAC] Gbans detected! Using gbans as default ban handler.");
         }
+    }
+    else
+    {
+        if (DEBUG)
+        {
+            StacLog("[StAC] No external ban method available! Using TF2's default ban handler");
+        }
+
     }
 }
 
@@ -796,11 +805,24 @@ void ResetTimers()
     {
         if (IsValidClient(Cl))
         {
+            int userid = GetClientUserId(Cl);
+
             if (DEBUG)
             {
                 StacLog("[StAC] Creating timer for %L", Cl);
             }
-            QueryTimer[Cl] = CreateTimer(GetRandomFloat(minRandCheckVal, maxRandCheckVal), Timer_CheckClientConVars, GetClientUserId(Cl));
+            // lets make a timer with a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
+            QueryTimer[Cl] =
+            CreateTimer
+            (
+                GetRandomFloat
+                (
+                    minRandCheckVal,
+                    maxRandCheckVal
+                ),
+                Timer_CheckClientConVars,
+                userid
+            );
         }
     }
     // create timer to reset seed every 15 mins
@@ -1969,7 +1991,7 @@ Action tvRecordListener(int client, const char[] command, int argc)
 {
     if (client == 0)
     {
-        if (SOURCEBANS)
+        if (SOURCEBANS || GBANS)
         {
             // null out old info
             demoname[0] = '\0';
@@ -1988,9 +2010,9 @@ public void BanUser(int userid, char[] reason)
     {
         return;
     }
-    if (SOURCEBANS)
+    if (SOURCEBANS || GBANS)
     {
-        if (demonameinSB)
+        if (demonameInBanReason)
         {
             // make sure demoname is initialized!
             if (demoname[0] != '\0')
@@ -2007,26 +2029,32 @@ public void BanUser(int userid, char[] reason)
                 }
                 else
                 {
-                    StacLog("[StAC] No STV demo is being recorded! No STV info will be printed to SourceBans!");
+                    StacLog("[StAC] No STV demo is being recorded! No STV info will be printed to ban reason!");
                     // clear demoname
                     demoname[0] = '\0';
                 }
             }
             else
             {
-                StacLog("[StAC] Null string returned for demoname. No STV info will be printed to SourceBans!");
+                StacLog("[StAC] Null string returned for demoname. No STV info will be printed to ban reason!");
                 // don't need to clear, it's already null
             }
         }
 
-        SBPP_BanPlayer(0, Cl, 0, reason);
-        userBanQueued[Cl] = true;
+        if (SOURCEBANS)
+        {
+            SBPP_BanPlayer(0, Cl, 0, reason);
+        }
+        if (GBANS)
+        {
+            ServerCommand("gb_ban %i, 0, %s", userid, reason);
+        }
     }
     else
     {
         BanClient(Cl, 0, BANFLAG_AUTO, reason, reason, _, _);
-        userBanQueued[Cl] = true;
     }
+    userBanQueued[Cl] = true;
 }
 
 // no longer just for netprops!
