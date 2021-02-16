@@ -1158,6 +1158,58 @@ public Action OnPlayerRunCmd
     // need this basically no matter what
     int userid = GetClientUserId(Cl);
 
+    // set previous tick times to test lagginess (THANK YOU BACKWARDS FOR HELP WITH THIS)
+    for (int i = 10; i > 0; --i)
+    {
+        engineTime[i][Cl] = engineTime[i-1][Cl];
+    }
+    engineTime[0][Cl] = GetEngineTime();
+
+
+    // grab current time to compare to time since last spawn/taunt/tele
+    // convert to percentages
+    float loss = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
+    float choke = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
+    // convert to ms
+    float ping = GetClientAvgLatency(Cl, NetFlow_Both) * 1000.0;
+
+    // grab angles
+    // thanks to nosoop from the sm discord for some help with this
+    clangles[2][Cl] = clangles[1][Cl];
+    clangles[1][Cl] = clangles[0][Cl];
+    clangles[0][Cl][0] = angles[0];
+    clangles[0][Cl][1] = angles[1];
+
+    // grab cmdnum
+    for (int i = 5; i > 0; --i)
+    {
+        clcmdnum[i][Cl] = clcmdnum[i-1][Cl];
+    }
+    clcmdnum[0][Cl] = cmdnum;
+
+
+    // grab position
+    clpos[1][Cl] = clpos[0][Cl];
+    GetClientEyePosition(Cl, clpos[0][Cl]);
+
+    // detect trigger teleports
+    if (GetVectorDistance(clpos[0][Cl], clpos[1][Cl], false) > 500)
+    {
+        // reuse this variable
+        timeSinceTeled[Cl] = GetEngineTime();
+    }
+
+    // R O U N D ( fuzzy psilent detection to detect lmaobox silent+ and better detect other forms of silent aim )
+    float fuzzyClangles[3][2];
+
+    fuzzyClangles[2][0] = RoundFloat(clangles[2][Cl][0] * 10.0) / 10.0;
+    fuzzyClangles[2][1] = RoundFloat(clangles[2][Cl][1] * 10.0) / 10.0;
+    fuzzyClangles[1][0] = RoundFloat(clangles[1][Cl][0] * 10.0) / 10.0;
+    fuzzyClangles[1][1] = RoundFloat(clangles[1][Cl][1] * 10.0) / 10.0;
+    fuzzyClangles[0][0] = RoundFloat(clangles[0][Cl][0] * 10.0) / 10.0;
+    fuzzyClangles[0][1] = RoundFloat(clangles[0][Cl][1] * 10.0) / 10.0;
+
+
     // neither of these tests need fancy checks, so we do them first
 
     /*
@@ -1298,26 +1350,6 @@ public Action OnPlayerRunCmd
         }
     }
 
-    // grab last and current position
-    clpos[1][Cl] = clpos[0][Cl];
-    GetClientEyePosition(Cl, clpos[0][Cl]);
-
-    // set previous tick times to test lagginess (THANK YOU BACKWARDS FOR HELP WITH THIS)
-    for (int i = 10; i > 0; --i)
-    {
-        engineTime[i][Cl] = engineTime[i-1][Cl];
-    }
-    // grab current time to compare to time since last spawn/taunt/tele
-    engineTime[0][Cl] = GetEngineTime();
-
-
-    // detect trigger teleports
-    if (GetVectorDistance(clpos[0][Cl], clpos[1][Cl], false) > 500)
-    {
-        // reuse this variable
-        timeSinceTeled[Cl] = GetEngineTime();
-    }
-
     // we have to do all these annoying checks to make sure we get as few false positives as possible.
     if
     (
@@ -1397,37 +1429,6 @@ public Action OnPlayerRunCmd
             return Plugin_Handled;
         }
     }
-    // if these detections are all zero, we can save some cpu here
-
-    // grab current and previous angles
-    // thanks to nosoop from the sm discord for some help with this
-    clangles[2][Cl] = clangles[1][Cl];
-    clangles[1][Cl] = clangles[0][Cl];
-    clangles[0][Cl][0] = angles[0];
-    clangles[0][Cl][1] = angles[1];
-
-    // obvious. but let's convert these to percentages
-    float loss = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
-    float choke = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
-    // convert to ms
-    float ping = GetClientAvgLatency(Cl, NetFlow_Both) * 1000.0;
-    // grab current and previous cmdnums
-    for (int i = 5; i > 0; --i)
-    {
-        clcmdnum[i][Cl] = clcmdnum[i-1][Cl];
-    }
-    clcmdnum[0][Cl] = cmdnum;
-
-    // R O U N D -
-    // fuzzy psilent detection to detect lmaobox silent+ and better detect other forms of silent aim )
-    float fuzzyClangles[3][2];
-
-    fuzzyClangles[2][0] = RoundFloat(clangles[2][Cl][0] * 10.0) / 10.0;
-    fuzzyClangles[2][1] = RoundFloat(clangles[2][Cl][1] * 10.0) / 10.0;
-    fuzzyClangles[1][0] = RoundFloat(clangles[1][Cl][0] * 10.0) / 10.0;
-    fuzzyClangles[1][1] = RoundFloat(clangles[1][Cl][1] * 10.0) / 10.0;
-    fuzzyClangles[0][0] = RoundFloat(clangles[0][Cl][0] * 10.0) / 10.0;
-    fuzzyClangles[0][1] = RoundFloat(clangles[0][Cl][1] * 10.0) / 10.0;
     /*
         SILENT AIM DETECTION
         silent aim (in this context) works by aimbotting for 1 tick and then snapping your viewangle back to what it was
