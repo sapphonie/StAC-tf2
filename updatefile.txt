@@ -4,10 +4,10 @@
     {
         "Version"
         {
-            "Latest"    "4.0.1"
+            "Latest"    "4.1.4"
         }
 
-        "Notes" "Changes in 3.6.1"
+        "Notes" "Changes in 4.1.4"
         "Notes" "- Check the github!"
     }
 
