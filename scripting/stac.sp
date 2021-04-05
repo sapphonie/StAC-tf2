@@ -15,10 +15,15 @@
 #undef REQUIRE_PLUGIN
 #include <updater>
 #include <sourcebanspp>
+#undef REQUIRE_EXTENSIONS 
+#include <steamtools>
+#include <SteamWorks>
 
-#define PLUGIN_VERSION  "4.1.4"
+#define PLUGIN_VERSION  "4.2.0"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
+
+#pragma newdecls required
 
 public Plugin myinfo =
 {
@@ -82,7 +87,12 @@ float timeSinceDidHurt      [TFMAXPLAYERS+1];
 // NATIVE BOOLS
 bool SOURCEBANS;
 bool GBANS;
+bool STEAMTOOLS;
+bool STEAMWORKS;
+bool AIMPLOTTER;
 
+// are we in MVM
+bool MVM;
 // CVARS
 ConVar stac_enabled;
 ConVar stac_verbose_info;
@@ -134,11 +144,14 @@ bool demonameInBanReason    = true;
 // log to file?
 bool logtofile              = true;
 
-// demoname for currently recording demo if extant
-char demoname[128];
+// bool that gets set by steamtools/steamworks forwards - used to kick clients that dont auth
+int isSteamAlive            = -1;
 
 // Log file
 File StacLogFile;
+
+// REGEX
+Regex demonameRegex;
 
 public void OnPluginStart()
 {
@@ -150,7 +163,7 @@ public void OnPluginStart()
 
     if (MaxClients > TFMAXPLAYERS)
     {
-        SetFailState("[StAC] This plugin (and TF2 in general) does not support more than 33 players. Aborting!");
+        SetFailState("[StAC] This plugin (and TF2 in general) does not support more than 33 players (32 + 1 for STV). Aborting!");
     }
 
     // updater
@@ -172,18 +185,17 @@ public void OnPluginStart()
     // reset random server seed
     ActuallySetRandomSeed();
 
+    // setup regex - "Recording to ".*""
+    demonameRegex = new Regex("Recording to \".*\"");
+
     // grab round start events for calculating tps
     HookEvent("teamplay_round_start", eRoundStart);
     // grab player spawns
     HookEvent("player_spawn", ePlayerSpawned);
 
-    // check natives capibility
-    CreateTimer(2.0, checkNatives);
     // check EVERYONE's cvars on plugin reload
-    CreateTimer(3.0, checkEveryone);
+    CreateTimer(0.5, checkEveryone);
 
-    // hook currently recording demo name if extant
-    AddCommandListener(tvRecordListener, "tv_record");
     // hook sv_cheats so we can instantly unload if cheats get turned on
     HookConVarChange(FindConVar("sv_cheats"), GenericCvarChanged);
     // Create ConVars for adjusting settings
@@ -191,18 +203,15 @@ public void OnPluginStart()
     // load translations
     LoadTranslations("stac.phrases.txt");
 
-    // check sv cheats on startup
-    if (GetConVarBool(FindConVar("sv_cheats")))
-    {
-        SetFailState("[StAC] sv_cheats set to 1! Aborting!");
-    }
-
     // reset all client based vars on plugin reload
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
         if (IsValidClient(Cl))
         {
-            ClearClBasedVars(GetClientUserId(Cl));
+            int userid = GetClientUserId(Cl);
+            ClearClBasedVars(userid);
+            // wait a second to let natives get checked
+            CreateTimer(1.0, CheckAuthOn, userid);
         }
         if (IsValidClientOrBot(Cl))
         {
@@ -214,7 +223,6 @@ public void OnPluginStart()
 
     StacLog("[StAC] Plugin vers. ---- %s ---- loaded", PLUGIN_VERSION);
 }
-
 
 void initCvars()
 {
@@ -396,6 +404,7 @@ void initCvars()
         _
     );
     HookConVarChange(stac_max_fakeang_detections, stacVarChanged);
+
 
     // cmdnum spike detections
     IntToString(maxCmdnumDetections, buffer, sizeof(buffer));
@@ -609,10 +618,13 @@ void setStacVars()
     // fakeang var
     maxFakeAngDetections    = GetConVarInt(stac_max_fakeang_detections);
 
-    // fakeang var
+    // cmdnum spikes var
+    maxCmdnumDetections     = GetConVarInt(stac_max_cmdnum_detections);
+
+    // max settings changes var
     maxSettingsChanges      = GetConVarInt(stac_max_settings_changes);
 
-    // fakeang var
+    // settings change var
     SettingsChangeWindow    = GetConVarFloat(stac_settings_changes_window);
 
     // minterp var - clamp to -1 if 0
@@ -662,56 +674,80 @@ void RunOptimizeCvars()
     SetConVarFloat(FindConVar("sv_maxunlag"), 0.2);
     // fix backtracking
     // dont error out on server start
-    if (FindConVar("jay_backtrack_enable") != INVALID_HANDLE)
+    ConVar jay_backtrack_enable     = FindConVar("jay_backtrack_enable");
+    ConVar jay_backtrack_tolerance  = FindConVar("jay_backtrack_tolerance");
+    if (jay_backtrack_enable != null && jay_backtrack_tolerance != null)
     {
-        SetConVarInt(FindConVar("jay_backtrack_enable"), 1);
-        SetConVarInt(FindConVar("jay_backtrack_tolerance"), 0);
+        // enable jaypatch
+        SetConVarInt(jay_backtrack_enable, 1);
+        // clamp jaypatch to sane values
+        SetConVarInt(jay_backtrack_tolerance, Math_Clamp(GetConVarInt(jay_backtrack_tolerance), 0, 1));
     }
     // get rid of any possible exploits by using teleporters and fov
     SetConVarInt(FindConVar("tf_teleporter_fov_start"), 90);
     SetConVarFloat(FindConVar("tf_teleporter_fov_time"), 0.0);
 }
 
-public Action checkNatives(Handle timer)
+public Action checkNativesEtc(Handle timer)
 {
+    // check sv cheats
+    if (GetConVarBool(FindConVar("sv_cheats")))
+    {
+        SetFailState("[StAC] sv_cheats set to 1! Aborting!");
+    }
+    // check natives!
+    if (GetFeatureStatus(FeatureType_Native, "Steam_IsConnected") == FeatureStatus_Available)
+    {
+        STEAMTOOLS = true;
+    }
+    if (GetFeatureStatus(FeatureType_Native, "SteamWorks_IsConnected") == FeatureStatus_Available)
+    {
+        STEAMWORKS = true;
+    }
     if (GetFeatureStatus(FeatureType_Native, "SBPP_BanPlayer") == FeatureStatus_Available)
     {
         SOURCEBANS = true;
-        if (DEBUG)
-        {
-            StacLog("[StAC] Sourcebans detected! Using Sourcebans as default ban handler.");
-        }
     }
-    else if (CommandExists("gb_ban"))
+    if (CommandExists("gb_ban"))
     {
         GBANS = true;
-        if (DEBUG)
-        {
-            StacLog("[StAC] Gbans detected! Using gbans as default ban handler.");
-        }
+    }
+    if (CommandExists("sm_aimplot"))
+    {
+        AIMPLOTTER = true;
+    }
+
+    if (GameRules_GetProp("m_bPlayingMannVsMachine") == 1)
+    {
+        MVM = true;
     }
     else
     {
-        if (DEBUG)
-        {
-            StacLog("[StAC] No external ban method available! Using TF2's default ban handler.");
-        }
+        MVM = false;
+    }
 
+    if (DEBUG)
+    {
+        StacLog
+        (
+            "\nSTEAMTOOLS = %i\nSTEAMWORKS = %i\nSOURCEBANS = %i\nGBANS = %i",
+            STEAMTOOLS,
+            STEAMWORKS,
+            SOURCEBANS,
+            GBANS
+        );
     }
 }
-
 
 public Action checkEveryone(Handle timer)
 {
     QueryEverythingAllClients();
 }
 
-
 public Action ForceCheckAll(int client, int args)
 {
     QueryEverythingAllClients();
 }
-
 
 public Action ShowDetections(int callingCl, int args)
 {
@@ -724,16 +760,16 @@ public Action ShowDetections(int callingCl, int args)
     {
         if (IsValidClient(Cl))
         {
-            if  (
-                       turnTimes[Cl]           >= 1
-                    || aimsnapDetects[Cl]      >= 1
-                    || pSilentDetects[Cl]      >= 1
-                    || fakeAngDetects[Cl]      >= 1
-                    || bhopConsecDetects[Cl]   >= 1
-                    || cmdnumSpikeDetects[Cl]  >= 1
-                )
+            if
+            (
+                   turnTimes[Cl]           >= 1
+                || aimsnapDetects[Cl]      >= 1
+                || pSilentDetects[Cl]      >= 1
+                || fakeAngDetects[Cl]      >= 1
+                || bhopConsecDetects[Cl]   >= 1
+                || cmdnumSpikeDetects[Cl]  >= 1
+            )
             {
-
                 PrintToConsole(callingCl, "Detections for %L", Cl);
                 if (turnTimes[Cl] >= 1)
                 {
@@ -789,6 +825,7 @@ void NukeTimers()
 {
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
+        // delete QueryTimer[Cl];
         if (QueryTimer[Cl] != null)
         {
             if (DEBUG)
@@ -799,6 +836,7 @@ void NukeTimers()
             QueryTimer[Cl] = null;
         }
     }
+    // delete TriggerTimedStuffTimer;
     if (TriggerTimedStuffTimer != null)
     {
         if (DEBUG)
@@ -899,20 +937,7 @@ public void TF2_OnConditionAdded(int Cl, TFCond condition)
         {
             playerTaunting[Cl] = true;
         }
-        else if
-        (
-               condition == TFCond_HalloweenKart
-            || condition == TFCond_HalloweenKartDash
-            || condition == TFCond_HalloweenThriller
-            || condition == TFCond_HalloweenBombHead
-            || condition == TFCond_HalloweenGiant
-            || condition == TFCond_HalloweenTiny
-            || condition == TFCond_HalloweenInHell
-            || condition == TFCond_HalloweenGhostMode
-            || condition == TFCond_HalloweenKartNoTurn
-            || condition == TFCond_HalloweenKartCage
-            || condition == TFCond_SwimmingCurse
-        )
+        else if (IsHalloweenCond(condition))
         {
             playerInBadCond[Cl]++;
         }
@@ -928,20 +953,7 @@ public void TF2_OnConditionRemoved(int Cl, TFCond condition)
             timeSinceTaunt[Cl] = GetEngineTime();
             playerTaunting[Cl] = false;
         }
-        else if
-        (
-               condition == TFCond_HalloweenKart
-            || condition == TFCond_HalloweenKartDash
-            || condition == TFCond_HalloweenThriller
-            || condition == TFCond_HalloweenBombHead
-            || condition == TFCond_HalloweenGiant
-            || condition == TFCond_HalloweenTiny
-            || condition == TFCond_HalloweenInHell
-            || condition == TFCond_HalloweenGhostMode
-            || condition == TFCond_HalloweenKartNoTurn
-            || condition == TFCond_HalloweenKartCage
-            || condition == TFCond_SwimmingCurse
-        )
+        else if (IsHalloweenCond(condition))
         {
             if (playerInBadCond[Cl] > 0)
             {
@@ -1011,6 +1023,7 @@ public void OnMapStart()
         RunOptimizeCvars();
     }
     timeSinceMapStart = GetEngineTime();
+    CreateTimer(0.1, checkNativesEtc);
 }
 
 public void OnMapEnd()
@@ -1068,13 +1081,14 @@ void ClearClBasedVars(int userid)
 
 public void OnClientPutInServer(int Cl)
 {
+    int userid = GetClientUserId(Cl);
+
     if (IsValidClientOrBot(Cl))
     {
         SDKHook(Cl, SDKHook_OnTakeDamage, hOnTakeDamage);
     }
     if (IsValidClient(Cl))
     {
-        int userid = GetClientUserId(Cl);
         // clear per client values
         ClearClBasedVars(userid);
         // clear timer
@@ -1084,7 +1098,34 @@ public void OnClientPutInServer(int Cl)
         {
             StacLog("[StAC] %N joined. Checking cvars", Cl);
         }
-        QueryTimer[Cl] = CreateTimer(0.01, Timer_CheckClientConVars, userid);
+        QueryTimer[Cl] = CreateTimer(0.1, Timer_CheckClientConVars, userid);
+        // wait 5 seconds just in case
+        CreateTimer(5.0, CheckAuthOn, userid);
+    }
+}
+
+Action CheckAuthOn(Handle timer, int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    if (IsValidClient(Cl))
+    {
+        // don't bother checking if already authed and DEFINITELY don't check if steam is down or there's no way to do so thru an ext
+        if (!IsClientAuthorized(Cl) && (isSteamAlive == 1))
+        {
+            PrintToImportant("Client %N isn't authorized and Steam is online. Checking in 5 seconds and kicking them if both are still true!", Cl);
+            CreateTimer(5.0, Timer_checkAuth, userid);
+        }
+    }
+}
+
+Action Timer_checkAuth(Handle timer, int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if (!IsClientAuthorized(Cl) && (isSteamAlive == 1))
+    {
+        StacLog("[StAC] Kicking %N for not being authorized with Steam.", Cl);
+        KickClient(Cl, "[StAC] Not authorized with Steam Network, please reconnect");
     }
 }
 
@@ -1093,6 +1134,7 @@ public void OnClientDisconnect(int Cl)
     int userid = GetClientUserId(Cl);
     // clear per client values
     ClearClBasedVars(userid);
+    // delete QueryTimer[Cl];
     if (QueryTimer[Cl] != null)
     {
         CloseHandle(QueryTimer[Cl]);
@@ -1138,6 +1180,12 @@ public Action OnPlayerRunCmd
     int mouse[2]
 )
 {
+    // sanity check, don't let banned clients do anything!
+    if (userBanQueued[Cl])
+    {
+        return Plugin_Handled;
+    }
+
     // make sure client is real & not a bot - don't bother checking if so
     if (!IsValidClient(Cl))
     {
@@ -1312,9 +1360,8 @@ public Action OnPlayerRunCmd
                 {
                     char reason[128];
                     Format(reason, sizeof(reason), "%t", "bhopBanMsg", bhopDetects[Cl]);
-                    BanUser(userid, reason);
-                    MC_PrintToChatAll("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
-                    StacLog("%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
+                    char pubreason[128];
+                    Format(pubreason, sizeof(pubreason), "%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
                     return Plugin_Handled;
                 }
             }
@@ -1423,9 +1470,9 @@ public Action OnPlayerRunCmd
         {
             char reason[128];
             Format(reason, sizeof(reason), "%t", "fakeangBanMsg", fakeAngDetects[Cl]);
-            BanUser(userid, reason);
-            MC_PrintToChatAll("%t", "fakeangBanAllChat", Cl, fakeAngDetects[Cl]);
-            StacLog("%t", "fakeangBanAllChat", Cl, fakeAngDetects[Cl]);
+            char pubreason[128];
+            Format(pubreason, sizeof(pubreason), "%t", "fakeangBanAllChat", Cl, fakeAngDetects[Cl]);
+            BanUser(userid, reason, pubreason);
             return Plugin_Handled;
         }
     }
@@ -1461,10 +1508,11 @@ public Action OnPlayerRunCmd
         // make sure client isnt using a spin bind
         || buttons & IN_LEFT
         || buttons & IN_RIGHT
-        // make sure client doesn't have 1% or more packet loss - this would be annoying to play with for cheaters - but may be tweaked in the future if cheats decide to try to get around it
-        || loss >= 1.0
+        // make sure client doesn't have 2.5% or more packet loss - this would be annoying to play with for cheaters - but may be tweaked in the future if cheats decide to try to get around it
+        || loss >= 2.5
         // make sure client doesn't have 52% or more choke - nullcore fakechoke goes up to 51!
-        || choke >= 52.0
+        // we might not need to check this !! !
+        //|| choke >= 52.0
         // if a client misses 8 ticks, its safe to assume they're lagging
         // so check the difference between the last 10 ticks
         // if a client missed any of the 10 server ticks by 8 ticks of time or more, don't check them
@@ -1524,9 +1572,9 @@ public Action OnPlayerRunCmd
         {
             char reason[128];
             Format(reason, sizeof(reason), "%t", "cmdnumSpikesBanMsg", cmdnumSpikeDetects[Cl]);
-            BanUser(userid, reason);
-            MC_PrintToChatAll("%t", "cmdnumSpikesBanAllChat", Cl, cmdnumSpikeDetects[Cl]);
-            StacLog("%t", "cmdnumSpikesBanAllChat", Cl, cmdnumSpikeDetects[Cl]);
+            char pubreason[128];
+            Format(pubreason, sizeof(pubreason), "%t", "cmdnumSpikesBanAllChat", Cl, cmdnumSpikeDetects[Cl]);
+            BanUser(userid, reason, pubreason);
             return Plugin_Handled;
         }
     }
@@ -1664,14 +1712,20 @@ public Action OnPlayerRunCmd
                     engineTime[3][Cl] - engineTime[4][Cl],
                     engineTime[4][Cl] - engineTime[5][Cl]
                 );
+
+                if (AIMPLOTTER)
+                {
+                    ServerCommand("sm_aimplot #%i on", userid);
+                }
+
                 // BAN USER if they trigger too many detections
                 if (pSilentDetects[Cl] >= maxPsilentDetections && maxPsilentDetections > 0)
                 {
                     char reason[128];
                     Format(reason, sizeof(reason), "%t", "pSilentBanMsg", pSilentDetects[Cl]);
-                    BanUser(userid, reason);
-                    MC_PrintToChatAll("%t", "pSilentBanAllChat", Cl, pSilentDetects[Cl]);
-                    StacLog("%t", "pSilentBanAllChat", Cl, pSilentDetects[Cl]);
+                    char pubreason[128];
+                    Format(pubreason, sizeof(pubreason), "%t", "pSilentBanAllChat", Cl, pSilentDetects[Cl]);
+                    BanUser(userid, reason, pubreason);
                     return Plugin_Handled;
                 }
             }
@@ -1683,9 +1737,14 @@ public Action OnPlayerRunCmd
         Now lets be fair here - this also detects silent aim a lot too, but it's more for checking plain snaps.
     */
     // only check if we actually did dmg with a hitscan weapon in the last 3(ish) ticks
+    // in the future i want this to look ahead 3 ticks and behind 3 ticks - aka, if there was a snap within +/- 3 ticks, record it
+    // currently it only looks behind
+    // this could probably be done with requestframe 3 times and then just checking (timeSinceDidHurt[Cl] <= (tickinterv * 6)
     if
     (
         engineTime[0][Cl] - timeSinceDidHurt[Cl] <= (tickinterv * 3)
+        &&
+        !MVM
     )
     {
         if (aDiffReal >= 10.0)
@@ -1760,14 +1819,20 @@ public Action OnPlayerRunCmd
                     sensFor[Cl],
                     hurtWeapon[Cl]
                 );
+
+                if (AIMPLOTTER)
+                {
+                    ServerCommand("sm_aimplot #%i on", userid);
+                }
+
                 // BAN USER if they trigger too many detections
                 if (aimsnapDetects[Cl] >= maxAimsnapDetections && maxAimsnapDetections > 0)
                 {
                     char reason[128];
                     Format(reason, sizeof(reason), "%t", "AimsnapBanMsg", aimsnapDetects[Cl]);
-                    BanUser(userid, reason);
-                    MC_PrintToChatAll("%t", "AimsnapBanAllChat", Cl, aimsnapDetects[Cl]);
-                    StacLog("%t", "AimsnapBanAllChat", Cl, aimsnapDetects[Cl]);
+                    char pubreason[128];
+                    Format(pubreason, sizeof(pubreason), "%t", "AimsnapBanAllChat", Cl, aimsnapDetects[Cl]);
+                    BanUser(userid, reason, pubreason);
                     return Plugin_Handled;
                 }
             }
@@ -1787,6 +1852,13 @@ public Action Timer_decr_aimsnaps(Handle timer, any userid)
         {
             aimsnapDetects[Cl]--;
         }
+        if (aimsnapDetects[Cl] <= 0)
+        {
+            if (AIMPLOTTER)
+            {
+                ServerCommand("sm_aimplot #%i off", userid);
+            }
+        }
     }
 }
 
@@ -1800,8 +1872,16 @@ public Action Timer_decr_pSilent(Handle timer, any userid)
         {
             pSilentDetects[Cl]--;
         }
+        if (pSilentDetects[Cl] <= 0)
+        {
+            if (AIMPLOTTER)
+            {
+                ServerCommand("sm_aimplot #%i off", userid);
+            }
+        }
     }
 }
+
 
 public Action Timer_decr_settingsChanges(Handle timer, any userid)
 {
@@ -1834,11 +1914,18 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         return;
     }
     int userid = GetClientUserId(Cl);
+
+    if (DEBUG)
+    {
+        StacLog("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
+    }
+
     // log something about cvar errors
     if (result != ConVarQuery_Okay)
     {
         PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", Cl);
         StacLog("[StAC] Could not query cvar %s on player %N", cvarName, Cl);
+        return;
     }
 
     if (StrEqual(cvarName, "sensitivity"))
@@ -1858,9 +1945,22 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             {
                 char reason[128];
                 Format(reason, sizeof(reason), "%t", "nolerpBanMsg");
-                BanUser(userid, reason);
-                MC_PrintToChatAll("%t", "nolerpBanAllChat", Cl);
-                StacLog("%t", "nolerpBanAllChat", Cl);
+                char pubreason[128];
+                Format(pubreason, sizeof(pubreason), "%t", "nolerpBanAllChat", Cl);
+                // we have to do extra bullshit here so we don't crash when banning clients out of this callback
+                // make a pack
+                DataPack pack = CreateDataPack();
+
+                // prepare pack
+                WritePackCell(pack, userid);
+                WritePackString(pack, reason);
+                WritePackString(pack, pubreason);
+
+                ResetPack(pack, false);
+
+                // make data timer
+                CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
+                return;
             }
             else
             {
@@ -1886,9 +1986,22 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             {
                 char reason[128];
                 Format(reason, sizeof(reason), "%t", "fovBanMsg");
-                BanUser(userid, reason);
-                MC_PrintToChatAll("%t", "fovBanAllChat", Cl);
-                StacLog("%t", "fovBanAllChat", Cl);
+                char pubreason[128];
+                Format(pubreason, sizeof(pubreason), "%t", "fovBanAllChat", Cl);
+                // we have to do extra bullshit here so we don't crash when banning clients out of this callback
+                // make a pack
+                DataPack pack = CreateDataPack();
+
+                // prepare pack
+                WritePackCell(pack, userid);
+                WritePackString(pack, reason);
+                WritePackString(pack, pubreason);
+
+                ResetPack(pack, false);
+
+                // make data timer
+                CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
+                return;
             }
             else
             {
@@ -1897,9 +2010,24 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             }
         }
     }
-    if (DEBUG)
+}
+
+// we wait a bit to prevent crashing the server when banning a player from a queryclientconvar callback
+public Action Timer_BanUser(Handle timer, DataPack pack)
+{
+    int userid          = ReadPackCell(pack);
+    char reason[128];
+    ReadPackString(pack, reason, sizeof(reason));
+    char pubreason[128];
+    ReadPackString(pack, pubreason, sizeof(pubreason));
+
+    // get client index out of userid
+    int Cl              = GetClientOfUserId(userid);
+
+    // check validity of client index
+    if (IsValidClient(Cl))
     {
-        StacLog("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
+        BanUser(userid, reason, pubreason);
     }
 }
 
@@ -1923,9 +2051,9 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
             int userid = GetClientUserId(Cl);
             char reason[128];
             Format(reason, sizeof(reason), "%t", "newlineBanMsg");
-            BanUser(userid, reason);
-            MC_PrintToChatAll("%t", "newlineBanAllChat", Cl);
-            StacLog("%t", "newlineBanAllChat", Cl);
+            char pubreason[128];
+            Format(pubreason, sizeof(pubreason), "%t", "newlineBanAllChat", Cl);
+            BanUser(userid, reason, pubreason);
         }
         else
         {
@@ -1976,7 +2104,7 @@ public Action OnClientCommand(int Cl, int args)
     return Plugin_Continue;
 }
 
-public OnClientSettingsChanged(Cl)
+public void OnClientSettingsChanged(int Cl)
 {
     // check for "too many client settings changes" cuz nullcore and lmaobox both spam this
     // although that might be a bug with them interacting with mastercomfig ?
@@ -2023,75 +2151,87 @@ public OnClientSettingsChanged(Cl)
     }
 }
 
-Action tvRecordListener(int client, const char[] command, int argc)
-{
-    if (client == 0)
-    {
-        if (SOURCEBANS || GBANS)
-        {
-            // null out old info
-            demoname[0] = '\0';
-            // get the recording name
-            GetCmdArg(1, demoname, sizeof(demoname));
-            // strip dem extension if it exists because i don't want double extensions. we'll add it later
-            ReplaceString(demoname, sizeof(demoname), ".dem", "", false);
-        }
-    }
-}
-
-public void BanUser(int userid, char[] reason)
+public void BanUser(int userid, char[] reason, char[] pubreason)
 {
     int Cl = GetClientOfUserId(userid);
+
     if (userBanQueued[Cl])
     {
         return;
     }
+    // make sure we dont detect on already banned players
+    userBanQueued[Cl] = true;
+
+    // check if client is authed before banning normally
+    bool isAuthed = IsClientAuthorized(Cl);
+
     if (demonameInBanReason)
     {
-        // make sure demoname is initialized!
-        if (demoname[0] != '\0')
+        char tvStatus[512];
+        char demoname[128];
+        ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
+        // if we found a match, there's a demo recording
+        if (MatchRegex(demonameRegex, tvStatus))
         {
-            char tvStatus[512];
-            ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
-
-            // is there a demo recording?
-            if (StrContains(tvStatus, "Recording to", false) != -1)
+            if (GetRegexSubString(demonameRegex, 0, demoname, sizeof(demoname)))
             {
-                Format(demoname, sizeof(demoname), ". Demo file: %s.dem", demoname);
+                ReplaceString(demoname, sizeof(demoname), "Recording to ", "");
+                TrimString(demoname);
+                StripQuotes(demoname);
+
+                Format(demoname, sizeof(demoname), ". Demo file: %s", demoname);
                 StrCat(reason, 256, demoname);
                 StacLog("Reason: %s", reason);
             }
             else
             {
-                StacLog("[StAC] No STV demo is being recorded! No STV info will be printed to ban reason!");
-                // clear demoname
-                demoname[0] = '\0';
+                StacLog("[StAC] No STV demo is being recorded, no demo name will be printed to the ban reason!");
             }
         }
         else
         {
-            StacLog("[StAC] Null string returned for demoname. No STV info will be printed to ban reason!");
-            // don't need to clear, it's already null
+            StacLog("[StAC] No STV demo is being recorded, no demo name will be printed to the ban reason!");
         }
     }
 
-    // sb
-    if (SOURCEBANS)
+    // ext ban handlers
+    if (SOURCEBANS || GBANS)
     {
-        SBPP_BanPlayer(0, Cl, 0, reason);
-    }
-    // gbans
-    else if (GBANS)
-    {
-        ServerCommand("gb_ban %i, 0, %s", userid, reason);
+        if (SOURCEBANS)
+        {
+            SBPP_BanPlayer(0, Cl, 0, reason);
+        }
+        if (GBANS)
+        {
+            ServerCommand("gb_ban %i, 0, %s", userid, reason);
+        }
+        // now lets check if that player was connected to steam
+        if
+        (
+            !isAuthed
+        )
+        {
+            PrintToImportant("{hotpink}[StAC]{white} Client %N is UNAUTHORIZED or STEAM IS DOWN!!! Banning by IP instead...", Cl);
+            StacLog("Client %N is UNAUTHORIZED or STEAM IS DOWN!!! Banning by IP instead...", Cl);
+            if (SOURCEBANS)
+            {
+                char ip[48];
+                GetClientIP(Cl, ip, sizeof(ip));
+                ServerCommand("sm_banip %s 0 %s", ip, reason);
+            }
+            else
+            {
+                BanClient(Cl, 0, BANFLAG_IP, reason, reason, _, _);
+            }
+        }
     }
     // default
     else
     {
         BanClient(Cl, 0, BANFLAG_AUTO, reason, reason, _, _);
     }
-    // make sure we dont detect on already banned players
-    userBanQueued[Cl] = true;
+    MC_PrintToChatAll("%s", pubreason);
+    StacLog("%s", pubreason);
 }
 
 // no longer just for netprops!
@@ -2187,9 +2327,9 @@ void NetPropEtcCheck(int userid)
                         {
                             char reason[128];
                             Format(reason, sizeof(reason), "%t", "badItemSchemaBanMsg");
-                            BanUser(userid, reason);
-                            MC_PrintToChatAll("%t", "badItemSchemaBanAllChat", Cl);
-                            StacLog("%t", "badItemSchemaBanAllChat", Cl);
+                            char pubreason[128];
+                            Format(pubreason, sizeof(pubreason), "%t", "badItemSchemaBanAllChat", Cl);
+                            BanUser(userid, reason, pubreason);
                         }
                         else
                         {
@@ -2319,7 +2459,7 @@ void QueryEverythingAllClients()
 ////////////
 
 // Open log file for StAC
-OpenStacLog()
+void OpenStacLog()
 {
     // current date for log file (gets updated on map change to not spread out maps across files on date changes)
     char curDate[32];
@@ -2351,8 +2491,9 @@ OpenStacLog()
 }
 
 // Close log file for StAC
-CloseStacLog()
+void CloseStacLog()
 {
+    // delete StacLogFile;
     if (StacLogFile != null)
     {
         if (DEBUG)
@@ -2484,7 +2625,7 @@ void PrintToImportant(const char[] format, any ...)
 }
 
 // print to all server/sourcemod admin's consoles
-PrintToConsoleAllAdmins(const char[] format, any ...)
+void PrintToConsoleAllAdmins(const char[] format, any ...)
 {
     char buffer[254];
 
@@ -2578,7 +2719,7 @@ int TF2_GetNumWearables(int client)
     return GetEntData(client, offset);
 }
 
-any abs(x)
+any abs(any x)
 {
    return x > 0 ? x : -x;
 }
@@ -2621,4 +2762,85 @@ bool isWeaponHitscan(char weaponname[256])
         return true;
     }
     return false;
+}
+
+
+public void Steam_SteamServersConnected()
+{
+    isSteamAlive = 1;
+    StacLog("[Steamtools] Steam connected.");
+}
+public void Steam_SteamServersDisconnected()
+{
+    isSteamAlive = 0;
+    StacLog("[Steamtools] Steam disconnected.");
+}
+
+public void SteamWorks_SteamServersConnected()
+{
+    StacLog("[SteamWorks] Steam connected.");
+    if (!STEAMTOOLS)
+    {
+        isSteamAlive = 1;
+    }
+}
+
+public void SteamWorks_SteamServersDisconnected()
+{
+    StacLog("[SteamWorks] Steam disconnected.");
+    if (!STEAMTOOLS)
+    {
+        isSteamAlive = 0;
+    }
+}
+
+bool IsHalloweenCond(TFCond condition)
+{
+    if
+    (
+           condition == TFCond_HalloweenKart
+        || condition == TFCond_HalloweenKartDash
+        || condition == TFCond_HalloweenThriller
+        || condition == TFCond_HalloweenBombHead
+        || condition == TFCond_HalloweenGiant
+        || condition == TFCond_HalloweenTiny
+        || condition == TFCond_HalloweenInHell
+        || condition == TFCond_HalloweenGhostMode
+        || condition == TFCond_HalloweenKartNoTurn
+        || condition == TFCond_HalloweenKartCage
+        || condition == TFCond_SwimmingCurse
+    )
+    {
+        return true;
+    }
+    return false;
+}
+
+// stolen from smlib
+int Math_Clamp(int value, int min, int max)
+{
+    value = Math_Min(value, min);
+    value = Math_Max(value, max);
+
+    return value;
+}
+
+int Math_Min(int value, int min)
+{
+    if (value < min)
+    {
+        value = min;
+    }
+
+    return value;
+}
+
+int Math_Max(int value, int max)
+{
+    if (value > max)
+    {
+        value = max;
+    }
+
+    return value;
 }
