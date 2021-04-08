@@ -37,8 +37,11 @@ Long story short: it was subject to false positives. I tested this, and thought 
 ### Backtrack Fix by J_Tanz
 This repo includes the latest version of J_Tanzanite's (author of another popular anticheat, [LilAC](https://github.com/J-Tanzanite/Little-Anti-Cheat)) Backtrack Patch, available [here](https://github.com/J-Tanzanite/Backtrack-Patch). It is enabled by default, but to disable it, set `stac_optimize_cvars` to `0` and `jay_backtrack_enable` to `0`.
 
-### FixPingMasking by me
+### FixPingMasking
 Instead of kicking clients who may be accidentally or purposefully pingmasking, I wrote a plugin to patch it and force clients to properly use the server specified cmdrate. This plugin is entirely optional, but is available in this repo as "fixpingmasking.smx".
+
+### Aimplotter
+This plugin is now compatible with [Sourcemod Aimplotter](https://github.com/sapphonie/sourcemod-aimplotter), and automatically enables an aimplot on a client if they trigger an aim related detection.
 
 ### Attempted nospread fix
 This plugin currently reseeds the hl2 random seed at each map / tournament start and every 15 minutes to attempt to prevent possible nospread exploits by cheats guessing the server seed. This appears to work at least on NCC, but not lmaobox. Lmaobox is detected with cmdnum spikes, however.
