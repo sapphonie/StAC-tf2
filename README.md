@@ -81,5 +81,6 @@ SMAC: https://github.com/Silenci0/SMAC
 ### Translation Credits
 
 Blueberryy - Russian Translation
+
 KsGoesCoding - Danish Translation
 
