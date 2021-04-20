@@ -78,3 +78,9 @@ LilAC: https://forums.alliedmods.net/showthread.php?t=321480
 
 SMAC: https://github.com/Silenci0/SMAC
 
+### Translation Credits
+
+@Blueberryy - Russian Translation
+
+@KsGoesCoding - Danish Translation
+
