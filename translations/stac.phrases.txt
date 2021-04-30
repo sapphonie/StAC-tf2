@@ -105,11 +105,50 @@
         "en"        "[StAC] Banned for {1} cmdnum spikes"
     }
     /*
+       __       _                       __          __
+      / /______(_)___ _____ ____  _____/ /_  ____  / /_
+     / __/ ___/ / __ `/ __ `/ _ \/ ___/ __ \/ __ \/ __/
+    / /_/ /  / / /_/ / /_/ /  __/ /  / /_/ / /_/ / /_
+    \__/_/  /_/\__, /\__, /\___/_/  /_.___/\____/\__/
+              /____//____/
+
+    */
+    "tbotBanAllChat"
+    {
+        "#format"   "{1:N},{2:i}"
+        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}triggerbotting{white}. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+    }
+    "tbotBanMsg"
+    {
+        "#format"   "{1:i}"
+        "en"        "[StAC] Banned for triggerbotting after {1} detections"
+    }
+    /*
+
+                   _       __          __
+       _________  (_)___  / /_  ____  / /_
+      / ___/ __ \/ / __ \/ __ \/ __ \/ __/
+     (__  ) /_/ / / / / / /_/ / /_/ / /_
+    /____/ .___/_/_/ /_/_____/\____/\__/
+        /_/
+
+    */
+    "spinbotBanAllChat"
+    {
+        "#format"   "{1:N},{2:i}"
+        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}spinbotting{white}. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+    }
+    "spinbotBanMsg"
+    {
+        "#format"   "{1:i}"
+        "en"        "[StAC] Banned for spinbotting after {1} detections"
+    }
+    /*
        __                      __    _           __
       / /___  ___________     / /_  (_)___  ____/ /____
      / __/ / / / ___/ __ \   / __ \/ / __ \/ __  / ___/
     / /_/ /_/ / /  / / / /  / /_/ / / / / / /_/ (__  )
-    \__/\__,_/_/  /_/ /_/  /_.___/_/_/ /_/\__,_/____/
+    \__/\____/_/  /_/ /_/  /_____/_/_/ /_/\____/____/
 
     */
     "turnbindKickMsg"
