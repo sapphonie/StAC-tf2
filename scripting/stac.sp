@@ -20,7 +20,7 @@
 #include <steamtools>
 #include <SteamWorks>
 
-#define PLUGIN_VERSION  "4.4.12"
+#define PLUGIN_VERSION  "4.4.13"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -125,6 +125,7 @@ ConVar stac_max_bhop_detections;
 ConVar stac_max_fakeang_detections;
 ConVar stac_max_cmdnum_detections;
 ConVar stac_max_tbot_detections;
+ConVar stac_max_spinbot_detections;
 ConVar stac_max_settings_changes;
 ConVar stac_settings_changes_window;
 ConVar stac_min_interp_ms;
@@ -147,7 +148,7 @@ int maxPsilentDetections    = 10;
 int maxFakeAngDetections    = 10;
 int maxBhopDetections       = 10;
 int maxCmdnumDetections     = 25;
-int maxTbotDetections       = 30;
+int maxTbotDetections       = 0;
 int maxSpinbotDetections    = 60;
 // this gets set later
 int maxBhopDetectionsScaled;
@@ -455,14 +456,30 @@ void initCvars()
     );
     HookConVarChange(stac_max_cmdnum_detections, stacVarChanged);
 
-    // cmdnum spike detections
+    // triggerbot detections
     IntToString(maxTbotDetections, buffer, sizeof(buffer));
     stac_max_tbot_detections =
     AutoExecConfig_CreateConVar
     (
         "stac_max_tbot_detections",
         buffer,
-        "[StAC] maximum triggerbot detections before banning a client. \n(recommended 20)",
+        "[StAC] maximum triggerbot detections before banning a client. \n(I HIGHLY RECOMMEND NOT AUTOBANNING - AKA LEAVING THIS CVAR AT 0 - WITH THIS CHECK!)",
+        FCVAR_NONE,
+        true,
+        -1.0,
+        false,
+        _
+    );
+    HookConVarChange(stac_max_tbot_detections, stacVarChanged);
+
+    // spinbot detections
+    IntToString(maxSpinbotDetections, buffer, sizeof(buffer));
+    stac_max_spinbot_detections =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_max_spinbot_detections",
+        buffer,
+        "[StAC] maximum spinbot detections before banning a client. \n(recommended 60 or higher)",
         FCVAR_NONE,
         true,
         -1.0,
@@ -672,6 +689,9 @@ void setStacVars()
 
     // tbot var
     maxTbotDetections       = GetConVarInt(stac_max_tbot_detections);
+
+    // spinbot var
+    maxSpinbotDetections    = GetConVarInt(stac_max_spinbot_detections);
 
     // max settings changes var
     maxSettingsChanges      = GetConVarInt(stac_max_settings_changes);
@@ -1480,28 +1500,29 @@ public Action OnPlayerRunCmd
     */
     if
     (
-        buttons & IN_LEFT
-        ||
-        buttons & IN_RIGHT
+        maxAllowedTurnSecs != -1.0
+        &&
+        (
+            buttons & IN_LEFT
+            ||
+            buttons & IN_RIGHT
+        )
     )
     {
-        if (maxAllowedTurnSecs != -1.0)
-        {
-            turnTimes[Cl]++;
-            float turnSec = turnTimes[Cl] * tickinterv;
-            PrintToImportant("%t", "turnbindAdminMsg", Cl, turnSec);
+        turnTimes[Cl]++;
+        float turnSec = turnTimes[Cl] * tickinterv;
+        PrintToImportant("%t", "turnbindAdminMsg", Cl, turnSec);
 
-            if (turnSec < maxAllowedTurnSecs)
-            {
-                MC_PrintToChat(Cl, "%t", "turnbindWarnPlayer");
-            }
-            else if (turnSec >= maxAllowedTurnSecs)
-            {
-                StacGeneralPlayerDiscordNotify(userid, "Client was kicked for turn binds");
-                KickClient(Cl, "%t", "turnbindKickMsg");
-                MC_PrintToChatAll("%t", "turnbindAllChat", Cl);
-                StacLog("%t", "turnbindAllChat", Cl);
-            }
+        if (turnSec < maxAllowedTurnSecs)
+        {
+            MC_PrintToChat(Cl, "%t", "turnbindWarnPlayer");
+        }
+        else if (turnSec >= maxAllowedTurnSecs)
+        {
+            StacGeneralPlayerDiscordNotify(userid, "Client was kicked for turn binds");
+            KickClient(Cl, "%t", "turnbindKickMsg");
+            MC_PrintToChatAll("%t", "turnbindAllChat", Cl);
+            StacLog("%t", "turnbindAllChat", Cl);
         }
     }
 
@@ -1610,6 +1631,8 @@ public Action OnPlayerRunCmd
     // ignore clients using turn binds!
     if
     (
+        maxSpinbotDetections != -1
+        &&
         !(
             buttons & IN_LEFT
             ||
@@ -1784,53 +1807,57 @@ public Action OnPlayerRunCmd
     }
 
     /* cmdnum test, heavily modified from ssac */
-    int spikeamt = abs(clcmdnum[1][Cl] - clcmdnum[0][Cl]);
-    // 256 is a nice number but this could be raised or lowered, haven't done TOO much testing and so far zero legits have managed to trigger this since we ignore nullcmds.
-    // this is for detecting when cheats "skip ahead" their cmdnum so they can (at my best guess) fire a "perfect shot" aka a shot with no spread
-    if (spikeamt >= 256)
+    if (maxCmdnumDetections != -1)
     {
-        char heldWeapon[256];
-        GetClientWeapon(Cl, heldWeapon, sizeof(heldWeapon));
+        int spikeamt = abs(clcmdnum[1][Cl] - clcmdnum[0][Cl]);
+        // 256 is a nice number but this could be raised or lowered, haven't done TOO much testing and so far zero legits have managed to trigger this since we ignore nullcmds.
+        // this is for detecting when cheats "skip ahead" their cmdnum so they can (at my best guess) fire a "perfect shot" aka a shot with no spread
+        // note from future steph - the above comment is wrong. it's for client side decal nospread only, lol
+        if (spikeamt >= 256)
+        {
+            char heldWeapon[256];
+            GetClientWeapon(Cl, heldWeapon, sizeof(heldWeapon));
 
-        cmdnumSpikeDetects[Cl]++;
-        PrintToImportant
-        (
-            "{hotpink}[StAC]{white} Cmdnum SPIKE of {yellow}%i{white} on %N.\nDetections so far: {palegreen}%i{white}.",
-            spikeamt,
-            Cl,
-            cmdnumSpikeDetects[Cl]
-        );
-        StacLog
-        (
-            "\n[StAC] Cmdnum SPIKE of %i on %L.\nDetections so far: %i. Held weapon: %s",
-            spikeamt,
-            Cl,
-            cmdnumSpikeDetects[Cl],
-            heldWeapon
-        );
-        StacLog
-        (
-            "\nPrevious cmdnums:\n0 %i\n1 %i\n2 %i\n3 %i\n4 %i\n5 %i\n",
-            clcmdnum[0][Cl],
-            clcmdnum[1][Cl],
-            clcmdnum[2][Cl],
-            clcmdnum[3][Cl],
-            clcmdnum[4][Cl],
-            clcmdnum[5][Cl]
-        );
-        if (cmdnumSpikeDetects[Cl] % 5 == 0)
-        {
-            StacDetectionDiscordNotify(userid, "cmdnum spike", cmdnumSpikeDetects[Cl]);
-        }
-        // punish if we reach limit set by cvar
-        if (cmdnumSpikeDetects[Cl] >= maxCmdnumDetections && maxCmdnumDetections > 0)
-        {
-            char reason[128];
-            Format(reason, sizeof(reason), "%t", "cmdnumSpikesBanMsg", cmdnumSpikeDetects[Cl]);
-            char pubreason[256];
-            Format(pubreason, sizeof(pubreason), "%t", "cmdnumSpikesBanAllChat", Cl, cmdnumSpikeDetects[Cl]);
-            BanUser(userid, reason, pubreason);
-            return Plugin_Handled;
+            cmdnumSpikeDetects[Cl]++;
+            PrintToImportant
+            (
+                "{hotpink}[StAC]{white} Cmdnum SPIKE of {yellow}%i{white} on %N.\nDetections so far: {palegreen}%i{white}.",
+                spikeamt,
+                Cl,
+                cmdnumSpikeDetects[Cl]
+            );
+            StacLog
+            (
+                "\n[StAC] Cmdnum SPIKE of %i on %L.\nDetections so far: %i. Held weapon: %s",
+                spikeamt,
+                Cl,
+                cmdnumSpikeDetects[Cl],
+                heldWeapon
+            );
+            StacLog
+            (
+                "\nPrevious cmdnums:\n0 %i\n1 %i\n2 %i\n3 %i\n4 %i\n5 %i\n",
+                clcmdnum[0][Cl],
+                clcmdnum[1][Cl],
+                clcmdnum[2][Cl],
+                clcmdnum[3][Cl],
+                clcmdnum[4][Cl],
+                clcmdnum[5][Cl]
+            );
+            if (cmdnumSpikeDetects[Cl] % 5 == 0)
+            {
+                StacDetectionDiscordNotify(userid, "cmdnum spike", cmdnumSpikeDetects[Cl]);
+            }
+            // punish if we reach limit set by cvar
+            if (cmdnumSpikeDetects[Cl] >= maxCmdnumDetections && maxCmdnumDetections > 0)
+            {
+                char reason[128];
+                Format(reason, sizeof(reason), "%t", "cmdnumSpikesBanMsg", cmdnumSpikeDetects[Cl]);
+                char pubreason[256];
+                Format(pubreason, sizeof(pubreason), "%t", "cmdnumSpikesBanAllChat", Cl, cmdnumSpikeDetects[Cl]);
+                BanUser(userid, reason, pubreason);
+                return Plugin_Handled;
+            }
         }
     }
 
@@ -1847,13 +1874,13 @@ public Action OnPlayerRunCmd
     {
         StacLog("[StAC] cmdnum DROP of %i!", clcmdnum[1][Cl] - clcmdnum[0][Cl]);
         StacLog("%i , %i", clcmdnum[1][Cl], clcmdnum[0][Cl]);
-        StacGeneralPlayerDiscordNotify(userid, "CMDNUM DROP ON THIS CLIENT BOTHER STEPH ABOUT THIS");
+        StacGeneralPlayerDiscordNotify(userid, "CMDNUM DROP ON THIS CLIENT BOTHER STEPH ABOUT THIS THIS SHOULD NEVER HAPPEN");
 
         //cmdnum = cmdnum;
         //return Plugin_Handled;
     }
 
-    // get difference between angles
+    // get difference between angles - used for psilent and aimsnap
     float aDiffReal = NormalizeAngleDiff(CalcAngDeg(clangles[0][Cl], clangles[1][Cl]));
 
     // is this a fuzzy detect or not
@@ -2491,7 +2518,7 @@ char cvarsToCheck[][] =
     "sensitivity",
     // possible cheat vars
     "cl_interpolate",
-    // this is a useless check but we leave it here to set fov randomly to annoy cheaters
+    // this is a useless check but we check it anyway
     "fov_desired",
 };
 
