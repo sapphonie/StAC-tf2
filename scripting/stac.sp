@@ -20,7 +20,7 @@
 #include <steamtools>
 #include <SteamWorks>
 
-#define PLUGIN_VERSION  "4.4.16"
+#define PLUGIN_VERSION  "4.5.2b"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -53,7 +53,8 @@ int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = -1;
 int spinbotDetects          [TFMAXPLAYERS+1];
 int fakeChokeDetects        [TFMAXPLAYERS+1];
-int pingReduceDetects       [TFMAXPLAYERS+1];
+int cmdrateSpamDetects      [TFMAXPLAYERS+1];
+int backtrackDetects        [TFMAXPLAYERS+1];
 
 bool isConsecStringOfBhops  [TFMAXPLAYERS+1];
 int bhopConsecDetects       [TFMAXPLAYERS+1];
@@ -65,16 +66,27 @@ float timeSinceSpawn        [TFMAXPLAYERS+1];
 float timeSinceTaunt        [TFMAXPLAYERS+1];
 float timeSinceTeled        [TFMAXPLAYERS+1];
 float timeSinceNullCmd      [TFMAXPLAYERS+1];
-// STORED ANGLES PER CLIENT
-float clangles           [5][TFMAXPLAYERS+1][2];
-// STORED POS PER CLIENT
-float clpos              [2][TFMAXPLAYERS+1][3];
+// STORED ANGLES PER CLIENT -
+// we want the last 5 angles, including roll
+float clangles              [TFMAXPLAYERS+1][5][3];
+
+// we only need the last 3 angles, and we dont need roll
+float fuzzyClangles         [TFMAXPLAYERS+1][3][2];
+
+// STORED POS PER CLIENT - we want the current and last position (which is a vector) of the client
+float clpos                 [TFMAXPLAYERS+1][2][3];
 // STORED cmdnum PER CLIENT
-int clcmdnum             [6][TFMAXPLAYERS+1];
+int clcmdnum                [TFMAXPLAYERS+1][6];
 // STORED tickcount PER CLIENT
-int cltickcount          [6][TFMAXPLAYERS+1];
+int cltickcount             [TFMAXPLAYERS+1][6];
+
+// MAX tickcount PER CLIENT [ for backtracking ]
+//int maxTickCountFor[TFMAXPLAYERS+1];
+
 // STORED BUTTONS PER CLIENT
-int clbuttons            [6][TFMAXPLAYERS+1];
+int clbuttons               [TFMAXPLAYERS+1][6];
+// STORED MOUSE PER CLIENT
+int clmouse                 [TFMAXPLAYERS+1][2];
 // STORED GRAVITY STATE PER CLIENT
 bool highGrav               [TFMAXPLAYERS+1];
 // STORED MISC VARS PER CLIENT
@@ -83,8 +95,8 @@ int playerInBadCond         [TFMAXPLAYERS+1];
 bool userBanQueued          [TFMAXPLAYERS+1];
 // STORED SENS PER CLIENT
 float sensFor               [TFMAXPLAYERS+1];
-// get last 2 ticks
-float engineTime         [2][TFMAXPLAYERS+1];
+// get last 11 ticks
+float engineTime            [TFMAXPLAYERS+1][11];
 // time since the map started (duh)
 float timeSinceMapStart;
 // time since the last lag spike occurred
@@ -92,8 +104,10 @@ float timeSinceLagSpike;
 // weapon name, gets passed to aimsnap check
 char hurtWeapon             [TFMAXPLAYERS+1][256];
 // time since player did damage, for aimsnap check
-bool didBangOnFrame      [3][TFMAXPLAYERS+1];
-bool didHurtOnFrame      [3][TFMAXPLAYERS+1];
+bool didBangOnFrame         [TFMAXPLAYERS+1][3];
+bool didHurtOnFrame         [TFMAXPLAYERS+1][3];
+
+
 
 // time since player did damage, for aimsnap check
 bool didBangThisFrame       [TFMAXPLAYERS+1];
@@ -108,6 +122,8 @@ char hostipandport[24];
 
 int imaxcmdrate;
 int imincmdrate;
+int imaxupdaterate;
+int iminupdaterate;
 
 
 // NATIVE BOOLS
@@ -123,7 +139,7 @@ char detectionTemplate[1024] = "{ \"embeds\": [ { \"title\": \"StAC Detection!\"
 char generalTemplate[1024] = "{ \"embeds\": [ { \"title\": \"StAC Message\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Message\", \"value\": \"%s\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
 
 // are we in MVM
-bool MVM;
+//bool MVM;
 // CVARS
 ConVar stac_enabled;
 ConVar stac_verbose_info;
@@ -137,7 +153,7 @@ ConVar stac_max_fakeang_detections;
 ConVar stac_max_cmdnum_detections;
 ConVar stac_max_tbot_detections;
 ConVar stac_max_spinbot_detections;
-ConVar stac_max_pingreduce_detections;
+ConVar stac_max_cmdrate_spam_detections;
 ConVar stac_min_interp_ms;
 ConVar stac_max_interp_ms;
 ConVar stac_min_randomcheck_secs;
@@ -159,7 +175,7 @@ int maxBhopDetections       = 10;
 int maxCmdnumDetections     = 25;
 int maxTbotDetections       = 0;
 int maxSpinbotDetections    = 100;
-int maxPingReduceDetects    = 100;
+int maxCmdrateSpamDetects   = 50;
 // this gets set later
 int maxBhopDetectionsScaled;
 
@@ -181,7 +197,6 @@ int isSteamAlive            = -1;
 // current recording demoname
 char demoname[128];
 
-
 // server tickrate stuff
 float gameEngineTime[2];
 float realTPS[2];
@@ -195,7 +210,7 @@ Regex demonameRegexFINAL;
 Regex publicIPRegex;
 Regex IPRegex;
 
-float spinDiff[2][TFMAXPLAYERS+1];
+float spinDiff[TFMAXPLAYERS+1][2];
 
 public void OnPluginStart()
 {
@@ -249,10 +264,12 @@ public void OnPluginStart()
     HookConVarChange(FindConVar("sv_allow_wait_command"), GenericCvarChanged);
 
     // hook these for pingmasking stuff
-    HookConVarChange(FindConVar("sv_mincmdrate"), CmdRateChange);
-    HookConVarChange(FindConVar("sv_maxcmdrate"), CmdRateChange);
+    HookConVarChange(FindConVar("sv_mincmdrate"), RateChange);
+    HookConVarChange(FindConVar("sv_maxcmdrate"), RateChange);
+    HookConVarChange(FindConVar("sv_minupdaterate"), RateChange);
+    HookConVarChange(FindConVar("sv_maxupdaterate"), RateChange);
 
-    UpdateCmdRate();
+    UpdateRates();
 
     // Create ConVars for adjusting settings
     initCvars();
@@ -461,7 +478,7 @@ void initCvars()
     (
         "stac_max_cmdnum_detections",
         buffer,
-        "[StAC] maximum cmdnum spikes a client can have before getting banned. lmaobox does this with nospread on certain weapons, other cheats may also utilize it. legit users should not ever trigger this!\n(recommended 25)",
+        "[StAC] maximum cmdnum spikes a client can have before getting banned. lmaobox does this with nospread on certain weapons, other cheats utilize it for other stuff, like sequence breaking on nullcore etc. legit users should never ever trigger this!\n(recommended 25)",
         FCVAR_NONE,
         true,
         -1.0,
@@ -493,14 +510,14 @@ void initCvars()
     (
         "stac_max_spinbot_detections",
         buffer,
-        "[StAC] maximum spinbot detections before banning a client. \n(recommended 60 or higher)",
+        "[StAC] maximum spinbot detections before banning a client. \n(recommended 50 or higher)",
         FCVAR_NONE,
         true,
         -1.0,
         false,
         _
     );
-    HookConVarChange(stac_max_tbot_detections, stacVarChanged);
+    HookConVarChange(stac_max_spinbot_detections, stacVarChanged);
 
     // min interp
     IntToString(min_interp_ms, buffer, sizeof(buffer));
@@ -626,7 +643,7 @@ void initCvars()
     (
         "stac_fixpingmasking_enabled",
         buffer,
-        "enable fixing pingmasking? This also allows StAC to ban cheating clients using ping reducing.",
+        "enable fixing pingmasking? This also allows StAC to ban cheating clients attempting to pingreduce.",
         FCVAR_NONE,
         true,
         0.0,
@@ -636,20 +653,20 @@ void initCvars()
     HookConVarChange(stac_fixpingmasking_enabled, stacVarChanged);
 
     // pingreduce
-    IntToString(maxPingReduceDetects, buffer, sizeof(buffer));
-    stac_max_pingreduce_detections =
+    IntToString(maxCmdrateSpamDetects, buffer, sizeof(buffer));
+    stac_max_cmdrate_spam_detections =
     AutoExecConfig_CreateConVar
     (
-        "stac_max_pingreduce_detections",
+        "stac_max_cmdrate_spam_detections",
         buffer,
-        "[StAC] maximum pingreduce detections before banning a client.\n(recommended 50+)",
+        "[StAC] maximum number of times a client can consecutively spam cmdrate changes before getting banned - this is used by cheats for \"ping reducing\".\n(recommended 50+)",
         FCVAR_NONE,
         true,
         -1.0,
         false,
         _
     );
-    HookConVarChange(stac_max_pingreduce_detections, stacVarChanged);
+    HookConVarChange(stac_max_cmdrate_spam_detections, stacVarChanged);
 
     // actually exec the cfg after initing cvars lol
     AutoExecConfig_ExecuteFile();
@@ -715,7 +732,7 @@ void setStacVars()
     maxSpinbotDetections    = GetConVarInt(stac_max_spinbot_detections);
 
     // max ping reduce detections - clamp to -1 if 0
-    maxPingReduceDetects    = GetConVarInt(stac_max_pingreduce_detections);
+    maxCmdrateSpamDetects   = GetConVarInt(stac_max_cmdrate_spam_detections);
 
     // minterp var - clamp to -1 if 0
     min_interp_ms           = GetConVarInt(stac_min_interp_ms);
@@ -754,7 +771,7 @@ void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newVa
     {
         if (StringToInt(newValue) != 0)
         {
-            SetFailState("[StAC] sv_cheats set to 1! Aborting!");
+            //SetFailState("[StAC] sv_cheats set to 1! Aborting!");
         }
     }
     if (convar == FindConVar("sv_allow_wait_command"))
@@ -778,7 +795,7 @@ void RunOptimizeCvars()
     ConVar jay_backtrack_tolerance  = FindConVar("jay_backtrack_tolerance");
     if (jay_backtrack_enable != null && jay_backtrack_tolerance != null)
     {
-        // enable jaypatch
+        // DISABLE jaypatch
         SetConVarInt(jay_backtrack_enable, 1);
         // clamp jaypatch to sane values
         SetConVarInt(jay_backtrack_tolerance, Math_Clamp(GetConVarInt(jay_backtrack_tolerance), 0, 1));
@@ -793,7 +810,7 @@ public Action checkNativesEtc(Handle timer)
     // check sv cheats
     if (GetConVarBool(FindConVar("sv_cheats")))
     {
-        SetFailState("[StAC] sv_cheats set to 1! Aborting!");
+        //SetFailState("[StAC] sv_cheats set to 1! Aborting!");
     }
     // check wait command
     if (GetConVarBool(FindConVar("sv_allow_wait_command")))
@@ -827,14 +844,14 @@ public Action checkNativesEtc(Handle timer)
         DISCORD = true;
     }
 
-    if (GameRules_GetProp("m_bPlayingMannVsMachine") == 1)
-    {
-        MVM = true;
-    }
-    else
-    {
-        MVM = false;
-    }
+    //if (GameRules_GetProp("m_bPlayingMannVsMachine") == 1)
+    //{
+    //    MVM = true;
+    //}
+    //else
+    //{
+    //    MVM = false;
+    //}
 
     if (DEBUG)
     {
@@ -1160,9 +1177,10 @@ void ClearClBasedVars(int userid)
     tbotDetects             [Cl] = -1; // ignore first detect, it's prolly bunk
     spinbotDetects          [Cl] = 0;
     fakeChokeDetects        [Cl] = 0;
-    pingReduceDetects       [Cl] = 0;
+    cmdrateSpamDetects      [Cl] = 0;
     isConsecStringOfBhops   [Cl] = false;
     bhopConsecDetects       [Cl] = 0;
+    backtrackDetects        [Cl] = 0;
 
     // TIME SINCE LAST ACTION PER CLIENT
     timeSinceSpawn          [Cl] = 0.0;
@@ -1255,7 +1273,7 @@ public void OnGameFrame()
 
         float smoothedTPS = ((realTPS[0] + realTPS[1]) / 2);
 
-        if (GetEngineTime() - 1.0 < timeSinceMapStart)
+        if (GetEngineTime() - 30.0 < timeSinceMapStart)
         {
             return;
         }
@@ -1310,6 +1328,7 @@ public Action OnPlayerRunCmd
     // need this basically no matter what
     int userid = GetClientUserId(Cl);
 
+
     // originally from ssac - block invalid usercmds with invalid data
     if (cmdnum <= 0 || tickcount <= 0)
     {
@@ -1323,97 +1342,213 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
-    // grab current time to compare to time since last spawn/taunt/tele
-    // convert to percentages
-    float loss = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
-    float choke = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
-    // convert to ms
-    float ping = GetClientAvgLatency(Cl, NetFlow_Both) * 1000.0;
-
-    float inchoke  = GetClientAvgChoke(Cl, NetFlow_Incoming) * 100.0;
-    float outchoke = GetClientAvgChoke(Cl, NetFlow_Outgoing) * 100.0;
 
     // grab engine time
-    engineTime[1][Cl] = engineTime[0][Cl];
-    engineTime[0][Cl] = GetEngineTime();
+    for (int i = 10; i > 0; --i)
+    {
+        engineTime[Cl][i] = engineTime[Cl][i-1];
+    }
+    engineTime[Cl][0] = GetEngineTime();
+
 
     // grab angles - we ignore roll
     // thanks to nosoop from the sm discord for some help with this
-    clangles[4][Cl] = clangles[3][Cl];
-    clangles[3][Cl] = clangles[2][Cl];
-    clangles[2][Cl] = clangles[1][Cl];
-    clangles[1][Cl] = clangles[0][Cl];
-    clangles[0][Cl][0] = angles[0];
-    clangles[0][Cl][1] = angles[1];
+    clangles[Cl][4] = clangles[Cl][3];
+    clangles[Cl][3] = clangles[Cl][2];
+    clangles[Cl][2] = clangles[Cl][1];
+    clangles[Cl][1] = clangles[Cl][0];
+    clangles[Cl][0][0] = angles[0];
+    clangles[Cl][0][1] = angles[1];
+    clangles[Cl][0][2] = angles[2];
 
     // grab cmdnum
     for (int i = 5; i > 0; --i)
     {
-        clcmdnum[i][Cl] = clcmdnum[i-1][Cl];
+        clcmdnum[Cl][i] = clcmdnum[Cl][i-1];
     }
-    clcmdnum[0][Cl] = cmdnum;
+    clcmdnum[Cl][0] = cmdnum;
 
     // grab tickccount
     for (int i = 5; i > 0; --i)
     {
-        cltickcount[i][Cl] = cltickcount[i-1][Cl];
+        cltickcount[Cl][i] = cltickcount[Cl][i-1];
     }
-    cltickcount[0][Cl] = tickcount;
+    cltickcount[Cl][0] = tickcount;
 
     // grab buttons
     for (int i = 5; i > 0; --i)
     {
-        clbuttons[i][Cl] = clbuttons[i-1][Cl];
+        clbuttons[Cl][i] = clbuttons[Cl][i-1];
     }
-    clbuttons[0][Cl] = buttons;
+    clbuttons[Cl][0] = buttons;
+
+    clmouse[Cl] = mouse;
 
     // grab position
-    clpos[1][Cl] = clpos[0][Cl];
-    GetClientEyePosition(Cl, clpos[0][Cl]);
+    clpos[Cl][1] = clpos[Cl][0];
+    GetClientEyePosition(Cl, clpos[Cl][0]);
 
     // did we hurt someone in any of the past few frames?
-    didHurtOnFrame[2][Cl] = didHurtOnFrame[1][Cl];
-    didHurtOnFrame[1][Cl] = didHurtOnFrame[0][Cl];
-    didHurtOnFrame[0][Cl] = didHurtThisFrame[Cl];
+    didHurtOnFrame[Cl][2] = didHurtOnFrame[Cl][1];
+    didHurtOnFrame[Cl][1] = didHurtOnFrame[Cl][0];
+    didHurtOnFrame[Cl][0] = didHurtThisFrame[Cl];
     didHurtThisFrame[Cl] = false;
 
     // did we shoot a bullet in any of the past few frames?
-    didBangOnFrame[2][Cl] = didBangOnFrame[1][Cl];
-    didBangOnFrame[1][Cl] = didBangOnFrame[0][Cl];
-    didBangOnFrame[0][Cl] = didBangThisFrame[Cl];
+    didBangOnFrame[Cl][2] = didBangOnFrame[Cl][1];
+    didBangOnFrame[Cl][1] = didBangOnFrame[Cl][0];
+    didBangOnFrame[Cl][0] = didBangThisFrame[Cl];
     didBangThisFrame[Cl] = false;
 
     // detect trigger teleports
-    if (GetVectorDistance(clpos[0][Cl], clpos[1][Cl], false) > 500)
+    if (GetVectorDistance(clpos[Cl][0], clpos[Cl][1], false) > 500)
     {
         // reuse this variable
         timeSinceTeled[Cl] = GetEngineTime();
     }
 
     // R O U N D ( fuzzy psilent detection to detect lmaobox silent+ and better detect other forms of silent aim )
-    float fuzzyClangles[3][2];
 
-    fuzzyClangles[2][0] = RoundFloat(clangles[2][Cl][0] * 10.0) / 10.0;
-    fuzzyClangles[2][1] = RoundFloat(clangles[2][Cl][1] * 10.0) / 10.0;
-    fuzzyClangles[1][0] = RoundFloat(clangles[1][Cl][0] * 10.0) / 10.0;
-    fuzzyClangles[1][1] = RoundFloat(clangles[1][Cl][1] * 10.0) / 10.0;
-    fuzzyClangles[0][0] = RoundFloat(clangles[0][Cl][0] * 10.0) / 10.0;
-    fuzzyClangles[0][1] = RoundFloat(clangles[0][Cl][1] * 10.0) / 10.0;
+    fuzzyClangles[Cl][2][0] = RoundFloat(clangles[Cl][2][0] * 10.0) / 10.0;
+    fuzzyClangles[Cl][2][1] = RoundFloat(clangles[Cl][2][1] * 10.0) / 10.0;
+    fuzzyClangles[Cl][1][0] = RoundFloat(clangles[Cl][1][0] * 10.0) / 10.0;
+    fuzzyClangles[Cl][1][1] = RoundFloat(clangles[Cl][1][1] * 10.0) / 10.0;
+    fuzzyClangles[Cl][0][0] = RoundFloat(clangles[Cl][0][0] * 10.0) / 10.0;
+    fuzzyClangles[Cl][0][1] = RoundFloat(clangles[Cl][0][1] * 10.0) / 10.0;
 
-
-    // neither of these tests need fancy checks, so we do them first
+    float loss = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
+    //float ping = GetClientAvgLatency(Cl, NetFlow_Both) * 1000.0;
 
     /*
-        BHOP DETECTION - using lilac and ssac as reference, this one's better tho
+    // backtrack shennanigans
+    maxTickCountFor[Cl] = Math_Min(maxTickCountFor[Cl], tickcount);
+    if
+    (
+        tickcount < maxTickCountFor[Cl]
+    )
+    {
+        if (isCmdnumSequential(userid) && clbuttons[Cl][0] & IN_ATTACK)
+        {
+            backtrackDetects[Cl]++;
+            PrintToImportant("\
+                {hotpink}[StAC]{white} Player %N {mediumpurple}tried to backtrack {white} another client!\
+                \nDetections so far: {palegreen}%i",
+                Cl,
+                backtrackDetects[Cl]
+            );
+            StacLog("\
+                [StAC] Player %N {mediumpurple}tried to backtrack another client!\
+                \nDetections so far: %i\
+                \nTickcount: %i\
+                \nPrevious maximum tickcount: %i",
+                Cl,
+                backtrackDetects[Cl],
+                tickcount,
+                maxTickCountFor[Cl]
+            );
+            StacLogNetData(userid);
+            StacLogCmdnums(userid);
+            StacLogTickcounts(userid);
+
+            if (backtrackDetects[Cl] % 5 == 0)
+            {
+                StacDetectionDiscordNotify(userid, "backtrack detection [ beta ]", backtrackDetects[Cl]);
+            }
+        }
+        // correct it anyway
+        tickcount = maxTickCountFor[Cl];
+    }
     */
-    // IGNORE IF HIGHER TICKRATE (AKA invalid bhop mult) as bhops become SIGNIFICANTLY easier for noncheaters on higher tickrates
+
+    // neither of these tests need fancy checks, so we do them first
+    bhopCheck(userid);
+    turnbindCheck(userid);
+
+    // we have to do all these annoying checks to make sure we get as few false positives as possible.
+    if
+    (
+        // make sure client is on a team & alive - spec cameras can cause fake angs!
+           !IsClientPlaying(Cl)
+        // ...isn't currently taunting - can cause fake angs!
+        || playerTaunting[Cl]
+        // ...didn't recently spawn - can cause invalid psilent detects
+        || engineTime[Cl][0] - 1.0 < timeSinceSpawn[Cl]
+        // ...didn't recently taunt - can (obviously) cause fake angs!
+        || engineTime[Cl][0] - 1.0 < timeSinceTaunt[Cl]
+        // ...didn't recently teleport - can cause psilent detects
+        || engineTime[Cl][0] - 1.0 < timeSinceTeled[Cl]
+        // don't touch this client if they've recently run a nullcmd, because they're probably lagging
+        // I will tighten this up if cheats decide to try to get around stac by spamming nullcmds.
+        // Do not test me.
+        || engineTime[Cl][0] - 0.5 < timeSinceNullCmd[Cl]
+        // don't touch if map or plugin just started - let the server framerate stabilize a bit
+        || engineTime[Cl][0] - 2.5 < timeSinceMapStart
+        // lets wait a bit if we had a lag spike in the last 5 seconds
+        || engineTime[Cl][0] - stutterWaitLength < timeSinceLagSpike
+        // make sure client isn't timing out - duh
+        || IsClientTimingOut(Cl)
+        // this is just for halloween shit - plenty of halloween effects can and will mess up all of these checks
+        || playerInBadCond[Cl] != 0
+        // exp lag check
+        || engineTime[Cl][0] - engineTime[Cl][10] < (tickinterv / 3.0)
+    )
+    {
+        return Plugin_Continue;
+    }
+
+    fakeangCheck(userid);
+    cmdnumspikeCheck(userid);
+
+    // check if we're lagging.
+    // cmdnums need to be sequential and not repeated
+    // tickcount needs to be sequential and to not go downward - repeating is ok
+    if
+    (
+        !isCmdnumSequential(userid)
+        ||
+        !isTickcountInOrder(userid)
+    )
+    {
+        return Plugin_Continue;
+    }
+    if
+    (
+        // make sure client doesn't have invalid angles. "invalid" in this case means "any angle is 0.000000", usually caused by plugin / trigger based teleportation
+        !HasValidAngles(Cl)
+        // make sure client isnt using a spin bind
+        || buttons & IN_LEFT
+        || buttons & IN_RIGHT
+        // make sure client doesn't have 1.5% or more packet loss
+        || loss >= 1.5
+    )
+    // if any of these things are true, don't check angles or cmdnum spikes or spinbot stuff
+    {
+        return Plugin_Continue;
+    }
+
+    fakechokeCheck(userid);
+    spinbotCheck(userid);
+    psilentCheck(userid);
+    aimsnapCheck(userid);
+    triggerbotCheck(userid);
+
+    return Plugin_Continue;
+}
+
+/*
+    BHOP DETECTION - using lilac and ssac as reference, this one's better tho
+*/
+void bhopCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
     // don't run this check if cvar is -1
     if (maxBhopDetections != -1)
     {
         // get movement flags
         int flags = GetEntityFlags(Cl);
 
-        // only check on not weirdo tickrate servers
+        // only check on not weirdo tickrate servers -
+        // bhops become SIGNIFICANTLY easier for noncheaters on higher tickrates
         if (bhopmult >= 1.0 && bhopmult <= 2.0)
         {
             // reset their gravity if it's high!
@@ -1427,7 +1562,7 @@ public Action OnPlayerRunCmd
             (
                 // player didn't press jump
                 !(
-                    clbuttons[0][Cl] & IN_JUMP
+                    clbuttons[Cl][0] & IN_JUMP
                 )
                 // player is on the ground
                 &&
@@ -1456,12 +1591,12 @@ public Action OnPlayerRunCmd
             (
                 // last input didn't have a jump - include to prevent legits holding spacebar from triggering detections
                 !(
-                    clbuttons[1][Cl] & IN_JUMP
+                    clbuttons[Cl][1] & IN_JUMP
                 )
                 &&
                 // player pressed jump
                 (
-                    clbuttons[0][Cl] & IN_JUMP
+                    clbuttons[Cl][0] & IN_JUMP
                 )
                 // they were on the ground when they pressed space
                 &&
@@ -1505,23 +1640,26 @@ public Action OnPlayerRunCmd
                     Format(reason, sizeof(reason), "%t", "bhopBanMsg", bhopDetects[Cl]);
                     char pubreason[256];
                     Format(pubreason, sizeof(pubreason), "%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
-                    return Plugin_Handled;
                 }
             }
         }
     }
+}
 
-    /*
-        TURN BIND TEST
-    */
+/*
+    TURN BIND TEST
+*/
+void turnbindCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
     if
     (
         maxAllowedTurnSecs != -1.0
         &&
         (
-            buttons & IN_LEFT
+            clbuttons[Cl][0] & IN_LEFT
             ||
-            buttons & IN_RIGHT
+            clbuttons[Cl][0] & IN_RIGHT
         )
     )
     {
@@ -1541,42 +1679,23 @@ public Action OnPlayerRunCmd
             StacLog("%t", "turnbindAllChat", Cl);
         }
     }
+}
 
-    // we have to do all these annoying checks to make sure we get as few false positives as possible.
-    if
-    (
-        // make sure client is on a team & alive - spec cameras can cause fake angs!
-           !IsClientPlaying(Cl)
-        // ...isn't currently taunting - can cause fake angs!
-        || playerTaunting[Cl]
-        // ...didn't recently spawn - can cause invalid psilent detects
-        || engineTime[0][Cl] - 1.0 < timeSinceSpawn[Cl]
-        // ...didn't recently taunt - can (obviously) cause fake angs!
-        || engineTime[0][Cl] - 1.0 < timeSinceTaunt[Cl]
-        // ...didn't recently teleport - can cause psilent detects
-        || engineTime[0][Cl] - 1.0 < timeSinceTeled[Cl]
-        // don't touch this client if they've recently run a nullcmd, because they're probably lagging
-        // I will tighten this up if cheats decide to try to get around stac by spamming nullcmds.
-        // Do not test me.
-        || engineTime[0][Cl] - 0.5 < timeSinceNullCmd[Cl]
-        // don't touch if map or plugin just started - let the server framerate stabilize a bit
-        || engineTime[0][Cl] - 1.0 < timeSinceMapStart
-        // lets wait a bit if we had a lag spike in the last 5 seconds
-        || engineTime[0][Cl] - stutterWaitLength < timeSinceLagSpike
-        // make sure client isn't timing out - duh
-        || IsClientTimingOut(Cl)
-        // this is just for halloween shit - plenty of halloween effects can and will mess up all of these checks
-        || playerInBadCond[Cl] != 0
-    )
+/*
+    FAKECHOKE TEST
+*/
+void fakechokeCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if (!isDefaultTickrate())
     {
-        return Plugin_Continue;
+        return;
     }
-
     // detect fakechoke ( BETA )
-    if (engineTime[0][Cl] - engineTime[1][Cl] > tickinterv * 8)
+    if (engineTime[Cl][0] - engineTime[Cl][1] > tickinterv * 8)
     {
         // off by one from what ncc says
-        int amt = cmdnum - lastChokeCmdnum[Cl];
+        int amt = clcmdnum[Cl][0] - lastChokeCmdnum[Cl];
         if (amt >= 8)
         {
             if (amt == lastChokeAmt[Cl])
@@ -1584,23 +1703,11 @@ public Action OnPlayerRunCmd
                 fakeChokeDetects[Cl]++;
                 if (fakeChokeDetects[Cl] >= 5)
                 {
-                    StacLog("Client %L is repeatedly choking exactly %i ticks - %i detections", Cl, amt, fakeChokeDetects[Cl]);
-                    StacLog
-                    (
-                        "\
-                        \nNetwork:\
-                        \n %.2f loss\
-                        \n %.2f ms ping\
-                        \n %.2f inchoke\
-                        \n %.2f outchoke\
-                        \n %.2f totalchoke\
-                        ",
-                        loss,
-                        ping,
-                        inchoke,
-                        outchoke,
-                        choke
-                    );
+                    PrintToImportant("{hotpink}[StAC]{white} Player %N is repeatedly choking {mediumpurple}%i{white} ticks.\nThey may be fake-choking. Bother steph!\nDetections so far: {palegreen}%i" , Cl, amt, fakeChokeDetects[Cl]);
+                    StacLog("Player %L is repeatedly choking exactly %i ticks - %i detections", Cl, amt, fakeChokeDetects[Cl]);
+                    StacLogNetData(userid);
+                    StacLogCmdnums(userid);
+                    StacLogTickcounts(userid);
                     if (fakeChokeDetects[Cl] % 20 == 0)
                     {
                         StacDetectionDiscordNotify(userid, "fake choke [ BETA ]", fakeChokeDetects[Cl]);
@@ -1613,41 +1720,35 @@ public Action OnPlayerRunCmd
             }
         }
         lastChokeAmt[Cl]    = amt;
-        lastChokeCmdnum[Cl] = cmdnum;
+        lastChokeCmdnum[Cl] = clcmdnum[Cl][0];
     }
+}
 
-    // init vars for mouse movement - weightedx and weightedy
-    int wx;
-    int wy;
-    // scale mouse movement to sensitivity
-    if (sensFor[Cl] != 0.0)
-    {
-        wx = abs(RoundFloat(mouse[0] * ( 1 / sensFor[Cl])));
-        wy = abs(RoundFloat(mouse[1] * ( 1 / sensFor[Cl])));
-    }
+/*
+    EYE ANGLES TEST
+    if clients are outside of allowed angles in tf2, which are
+      +/- 89.0 x (up / down)
+      +/- 180 y (left / right, but we don't check this atm because there's things that naturally fuck up y angles, such as taunts)
+      +/- 50 z (roll / tilt)
+    while they are not in spec & on a map camera, we should log it.
+    we would fix them but cheaters can just ignore server-enforced viewangle changes so there's no point
 
-    /*
-        EYE ANGLES TEST
-        if clients are outside of allowed angles in tf2, which are
-          +/- 89.0 x (up / down)
-          +/- 180 y (left / right, but we don't check this atm because there's things that naturally fuck up y angles, such as taunts)
-          +/- 50 z (roll / tilt)
-        while they are not in spec & on a map camera, we should log it.
-        we would fix them but cheaters can just ignore server-enforced viewangle changes so there's no point
-
-        these bounds were lifted from lilac. Thanks lilac.
-        lilac patches roll, we do not, i think it (screen shake) is an important part of tf2,
-        jtanz says that lmaobox can abuse roll so it should just be removed. i think both opinions are fine
-    */
+    these bounds were lifted from lilac. Thanks lilac.
+    lilac patches roll, we do not, i think it (screen shake) is an important part of tf2,
+    jtanz says that lmaobox can abuse roll so it should just be removed. i think both opinions are fine
+*/
+void fakeangCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
     if
     (
         // don't bother checking if fakeang detection is off
         maxFakeAngDetections != -1
         &&
         (
-            FloatAbs(angles[0]) > 89.00
+            FloatAbs(clangles[Cl][0][0]) > 89.00
             ||
-            FloatAbs(angles[2]) > 50.00
+            FloatAbs(clangles[Cl][0][2]) > 50.00
         )
     )
     {
@@ -1656,18 +1757,18 @@ public Action OnPlayerRunCmd
         (
             "{hotpink}[StAC]{white} Player %N has {mediumpurple}invalid eye angles{white}!\nCurrent angles: {mediumpurple}%.2f %.2f %.2f{white}.\nDetections so far: {palegreen}%i",
             Cl,
-            angles[0],
-            angles[1],
-            angles[2],
+            clangles[Cl][0][0],
+            clangles[Cl][0][1],
+            clangles[Cl][0][2],
             fakeAngDetects[Cl]
         );
         StacLog
         (
             "\n==========\n[StAC] Player %N has invalid eye angles!\nCurrent angles: %f %f %f.\nDetections so far: %i\n==========",
             Cl,
-            angles[0],
-            angles[1],
-            angles[2],
+            clangles[Cl][0][0],
+            clangles[Cl][0][1],
+            clangles[Cl][0][2],
             fakeAngDetects[Cl]
         );
         if (fakeAngDetects[Cl] % 20 == 0)
@@ -1681,90 +1782,22 @@ public Action OnPlayerRunCmd
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "fakeangBanAllChat", Cl, fakeAngDetects[Cl]);
             BanUser(userid, reason, pubreason);
-            return Plugin_Handled;
         }
     }
-    // check if we're lagging
-    if
-    (!
-        (
-            clcmdnum[0][Cl] >
-            clcmdnum[1][Cl] >
-            clcmdnum[2][Cl] >
-            clcmdnum[3][Cl] >
-            clcmdnum[4][Cl] >
-            clcmdnum[5][Cl]
-        )
-    )
+}
 
-    {
-        return Plugin_Continue;
-    }
-
-    if
-    (!
-        (
-            cltickcount[0][Cl] >=
-            cltickcount[1][Cl] >=
-            cltickcount[2][Cl] >=
-            cltickcount[3][Cl] >=
-            cltickcount[4][Cl] >=
-            cltickcount[5][Cl]
-        )
-    )
-    {
-        return Plugin_Continue;
-    }
-    /*
-        SILENT AIM DETECTION
-        silent aim (in this context) works by aimbotting for 1 tick and then snapping your viewangle back to what it was
-        example snap:
-            L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: angles0  angles: x 5.120096 y 9.763162
-            L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: angles1  angles: x 1.635611 y 12.876886
-            L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: angles2  angles: x 5.120096 y 9.763162
-        we can just look for these snaps and log them as detections!
-        note that this won't detect some snaps when a player is moving their strafe keys and mouse @ the same time while they are aimlocking.
-        i'll *try* to work mouse movement into this function at SOME point but it works reasonably well for right now.
-    */
-    // we have to do EXTRA checks because a lot of things can fuck up silent aim detection
-    // make sure ticks are sequential, hopefully avoid laggy players
-    // example real detection:
-    /*
-        [StAC] pSilent / NoRecoil detection of 5.20° on <user>.
-        Detections so far: 15
-        User Net Info: 0.00% loss, 24.10% choke, 66.22 ms ping
-         clcmdnum[0]: 61167
-         clcmdnum[1]: 61166
-         clcmdnum[2]: 61165
-         angles0: x 8.82 y 127.68
-         angles1: x 5.38 y 131.60
-         angles2: x 8.82 y 127.68
-    */
-    if
-    (
-        // make sure client doesn't have invalid angles. "invalid" in this case means "any angle is 0.000000", usually caused by plugin / trigger based teleportation
-        !HasValidAngles(Cl)
-        // make sure client isnt using a spin bind
-        || buttons & IN_LEFT
-        || buttons & IN_RIGHT
-        // make sure client doesn't have 1.5% or more packet loss
-        || loss >= 1.5
-        // ignore anyone with more than 900 ping. temp check.
-        || ping >= 900.0
-    )
-    // if any of these things are true, don't check angles or cmdnum spikes or spinbot stuff
-    {
-        return Plugin_Continue;
-    }
-
-    /* cmdnum test, heavily modified from ssac */
+/*
+    CMDNUM SPIKE TEST - heavily modified from SSAC
+    this is for detecting when cheats "skip ahead" their cmdnum so they can fire a "perfect shot" aka a shot with no spread
+    funnily enough, it actually DOESN'T change where their bullet goes, it's just a client side visual effect with decals
+*/
+void cmdnumspikeCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
     if (maxCmdnumDetections != -1)
     {
-        int spikeamt = abs(clcmdnum[1][Cl] - clcmdnum[0][Cl]);
-        // 256 is a nice number but this could be raised or lowered, haven't done TOO much testing and so far zero legits have managed to trigger this since we ignore nullcmds.
-        // this is for detecting when cheats "skip ahead" their cmdnum so they can (at my best guess) fire a "perfect shot" aka a shot with no spread
-        // note from future steph - the above comment is wrong. it's for client side decal nospread only, lol
-        if (spikeamt >= 256)
+        int spikeamt = clcmdnum[Cl][0] - clcmdnum[Cl][1];
+        if (spikeamt >= 64 || spikeamt < 0)
         {
             char heldWeapon[256];
             GetClientWeapon(Cl, heldWeapon, sizeof(heldWeapon));
@@ -1785,20 +1818,15 @@ public Action OnPlayerRunCmd
                 cmdnumSpikeDetects[Cl],
                 heldWeapon
             );
-            StacLog
-            (
-                "\nPrevious cmdnums:\n0 %i\n1 %i\n2 %i\n3 %i\n4 %i\n5 %i\n",
-                clcmdnum[0][Cl],
-                clcmdnum[1][Cl],
-                clcmdnum[2][Cl],
-                clcmdnum[3][Cl],
-                clcmdnum[4][Cl],
-                clcmdnum[5][Cl]
-            );
-            if (cmdnumSpikeDetects[Cl] % 5 == 0)
+            StacLogNetData(userid);
+            StacLogCmdnums(userid);
+            StacLogTickcounts(userid);
+
+            if (cmdnumSpikeDetects[Cl] % 25 == 0)
             {
                 StacDetectionDiscordNotify(userid, "cmdnum spike", cmdnumSpikeDetects[Cl]);
             }
+
             // punish if we reach limit set by cvar
             if (cmdnumSpikeDetects[Cl] >= maxCmdnumDetections && maxCmdnumDetections > 0)
             {
@@ -1807,60 +1835,42 @@ public Action OnPlayerRunCmd
                 char pubreason[256];
                 Format(pubreason, sizeof(pubreason), "%t", "cmdnumSpikesBanAllChat", Cl, cmdnumSpikeDetects[Cl]);
                 BanUser(userid, reason, pubreason);
-                return Plugin_Handled;
             }
         }
     }
+}
 
-    //if (clcmdnum[1][Cl] == clcmdnum[0][Cl])
-    //{
-    //    if (DEBUG)
-    //    {
-    //        StacLog("[StAC] Same cmdnum reported on %N - %i", Cl, clcmdnum[0][Cl]);
-    //    }
-    //    return Plugin_Continue;
-    //}
-
-    // I am almost certain that this could be a ban method
-    if (clcmdnum[1][Cl] > clcmdnum[0][Cl])
-    {
-        StacLog("[StAC] cmdnum DROP of %i!", clcmdnum[1][Cl] - clcmdnum[0][Cl]);
-        StacLog("%i , %i", clcmdnum[1][Cl], clcmdnum[0][Cl]);
-        StacGeneralPlayerDiscordNotify(userid, "CMDNUM DROP ON THIS CLIENT BOTHER STEPH ABOUT THIS THIS SHOULD NEVER HAPPEN");
-
-        //cmdnum = cmdnum;
-        //return Plugin_Handled;
-    }
-
-    /*
-        SPINBOT DETECTION - shoutout to SSAC
-    */
-    // we already ignore clients using turn binds!
+/*
+    SPINBOT DETECTION - again heavily modified from SSAC
+*/
+void spinbotCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    // ignore clients using turn binds!
     if
     (
         maxSpinbotDetections != -1
     )
     {
         // get the abs value of the difference between the last two y angles
-        float angBuff = FloatAbs(NormalizeAngleDiff(clangles[0][Cl][1] - clangles[1][Cl][1]));
+        float angBuff = FloatAbs(NormalizeAngleDiff(clangles[Cl][0][1] - clangles[Cl][1][1]));
         // set up our array
-        spinDiff[1][Cl] = spinDiff[0][Cl];
-        spinDiff[0][Cl] = angBuff;
+        spinDiff[Cl][1] = spinDiff[Cl][0];
+        spinDiff[Cl][0] = angBuff;
 
-
-        // only count this as a detect if the spin amt ( spinDiff[0][Cl] )
-        // is greater than 10 degrees and ALSO matches the last value ( spinDiff[1][Cl] )
+        // only count this as a detect if the spin amt ( spinDiff[Cl][0] )
+        // is greater than 10 degrees and ALSO matches the last value ( spinDiff[Cl][1] )
         // AND it isn't a moronicly high amt of mouse movement / sensitivity
         if
         (
-            mouse[0] < 5000
+            clmouse[Cl][0] < 5000
             &&
-            mouse[1] < 5000
+            clmouse[Cl][1] < 5000
             &&
             (
-                FloatAbs(spinDiff[0][Cl]) >= 10.0
+                FloatAbs(spinDiff[Cl][0]) >= 10.0
                 &&
-                (spinDiff[0][Cl] == spinDiff[1][Cl])
+                (spinDiff[Cl][0] == spinDiff[Cl][1])
             )
         )
         {
@@ -1872,44 +1882,22 @@ public Action OnPlayerRunCmd
                 PrintToImportant
                 (
                     "{hotpink}[StAC]{white} Spinbot detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i{white}.",
-                    spinDiff[0][Cl],
+                    spinDiff[Cl][0],
                     Cl,
                     spinbotDetects[Cl]
                 );
                 StacLog
                 (
                     "[StAC] Spinbot detection of %f° on %N.\nDetections so far: %i.",
-                    spinDiff[0][Cl],
+                    spinDiff[Cl][0],
                     Cl,
                     spinbotDetects[Cl]
                 );
-                StacLog
-                (
-                    "\nAngles:\n angles0: x %f y %f\n angles1: x %f y %f\n angles2: x %f y %f\n angles3: x %f y %f\n angles4: x %f y %f\n",
-                    clangles[0][Cl][0],
-                    clangles[0][Cl][1],
-                    clangles[1][Cl][0],
-                    clangles[1][Cl][1],
-                    clangles[2][Cl][0],
-                    clangles[2][Cl][1],
-                    clangles[3][Cl][0],
-                    clangles[3][Cl][1],
-                    clangles[4][Cl][0],
-                    clangles[4][Cl][1]
-                );
-                StacLog
-                (
-                    "\nUser Mouse Movement (weighted to sens): abs(x): %i, abs(y): %i\nUser Mouse Movement (unweighted): x: %i, y: %i.",
-                    wx,
-                    wy,
-                    mouse[0],
-                    mouse[1]
-                );
-                StacLog
-                (
-                    "Sens for client: %f\n",
-                    sensFor[Cl]
-                );
+                StacLogNetData(userid);
+                StacLogAngles(userid);
+                StacLogCmdnums(userid);
+                StacLogTickcounts(userid);
+                StacLogMouse(userid);
                 if (spinbotDetects[Cl] % 20 == 0)
                 {
                     StacDetectionDiscordNotify(userid, "spinbot", spinbotDetects[Cl]);
@@ -1921,7 +1909,6 @@ public Action OnPlayerRunCmd
                     char pubreason[256];
                     Format(pubreason, sizeof(pubreason), "%t", "spinbotBanAllChat", Cl, spinbotDetects[Cl]);
                     BanUser(userid, reason, pubreason);
-                    return Plugin_Handled;
                 }
             }
         }
@@ -1934,9 +1921,38 @@ public Action OnPlayerRunCmd
             }
         }
     }
+}
 
+/*
+    SILENT AIM DETECTION
+    silent aim (in this context) works by aimbotting for 1 tick and then snapping your viewangle back to what it was
+    example snap:
+        L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: angles0  angles: x 5.120096 y 9.763162
+        L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: angles1  angles: x 1.635611 y 12.876886
+        L 03/25/2020 - 06:03:50: [stac.smx] [StAC] pSilent detection: angles2  angles: x 5.120096 y 9.763162
+    we can just look for these snaps and log them as detections!
+    note that this won't detect some snaps when a player is moving their strafe keys and mouse @ the same time while they are aimlocking.
+
+    we have to do EXTRA checks because a lot of things can fuck up silent aim detection
+    make sure ticks are sequential, hopefully avoid laggy players
+    example real detection:
+
+    [StAC] pSilent / NoRecoil detection of 5.20° on <user>.
+    Detections so far: 15
+    User Net Info: 0.00% loss, 24.10% choke, 66.22 ms ping
+     clcmdnum[0]: 61167
+     clcmdnum[1]: 61166
+     clcmdnum[2]: 61165
+     angles0: x 8.82 y 127.68
+     angles1: x 5.38 y 131.60
+     angles2: x 8.82 y 127.68
+*/
+
+void psilentCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
     // get difference between angles - used for psilent
-    float aDiffReal = NormalizeAngleDiff(CalcAngDeg(clangles[0][Cl], clangles[1][Cl]));
+    float aDiffReal = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], clangles[Cl][1]));
 
     // is this a fuzzy detect or not
     int fuzzy = -1;
@@ -1946,9 +1962,9 @@ public Action OnPlayerRunCmd
         maxPsilentDetections != -1
         &&
         (
-            buttons & IN_ATTACK
+            clbuttons[Cl][0] & IN_ATTACK
             ||
-            clbuttons[1][Cl] & IN_ATTACK
+            clbuttons[Cl][1] & IN_ATTACK
         )
     )
     {
@@ -1956,16 +1972,16 @@ public Action OnPlayerRunCmd
         (
             // so the current and 2nd previous angles match...
             (
-                   clangles[0][Cl][0] == clangles[2][Cl][0]
-                && clangles[0][Cl][1] == clangles[2][Cl][1]
+                   clangles[Cl][0][0] == clangles[Cl][2][0]
+                && clangles[Cl][0][1] == clangles[Cl][2][1]
             )
             &&
             // BUT the 1st previous (in between) angle doesnt?
             (
-                   clangles[1][Cl][0] != clangles[0][Cl][0]
-                && clangles[1][Cl][1] != clangles[0][Cl][1]
-                && clangles[1][Cl][0] != clangles[2][Cl][0]
-                && clangles[1][Cl][1] != clangles[2][Cl][1]
+                   clangles[Cl][1][0] != clangles[Cl][0][0]
+                && clangles[Cl][1][1] != clangles[Cl][0][1]
+                && clangles[Cl][1][0] != clangles[Cl][2][0]
+                && clangles[Cl][1][1] != clangles[Cl][2][1]
             )
         )
         {
@@ -1975,16 +1991,16 @@ public Action OnPlayerRunCmd
         (
             // etc
             (
-                   fuzzyClangles[0][0] == fuzzyClangles[2][0]
-                && fuzzyClangles[0][1] == fuzzyClangles[2][1]
+                   fuzzyClangles[Cl][0][0] == fuzzyClangles[Cl][2][0]
+                && fuzzyClangles[Cl][0][1] == fuzzyClangles[Cl][2][1]
             )
             &&
             // etc
             (
-                   fuzzyClangles[1][0] != fuzzyClangles[0][0]
-                && fuzzyClangles[1][1] != fuzzyClangles[0][1]
-                && fuzzyClangles[1][0] != fuzzyClangles[2][0]
-                && fuzzyClangles[1][1] != fuzzyClangles[2][1]
+                   fuzzyClangles[Cl][1][0] != fuzzyClangles[Cl][0][0]
+                && fuzzyClangles[Cl][1][1] != fuzzyClangles[Cl][0][1]
+                && fuzzyClangles[Cl][1][0] != fuzzyClangles[Cl][2][0]
+                && fuzzyClangles[Cl][1][1] != fuzzyClangles[Cl][2][1]
             )
         )
         {
@@ -2023,51 +2039,21 @@ public Action OnPlayerRunCmd
                 );
                 StacLog
                 (
-                    "\n==========\n[StAC] SilentAim detection of %f° on \n%L.\nDetections so far: %i.\nfuzzy = %i",
+                    "\n[StAC] SilentAim detection of %f° on \n%L.\nDetections so far: %i.\nfuzzy = %i",
                     aDiffReal,
                     Cl,
                     pSilentDetects[Cl],
                     fuzzy
                 );
-                StacLog
-                (
-                    "\nNetwork:\n %f loss\n %f choke\n %f ms ping\nAngles:\n angles0: x %f y %f\n angles1: x %f y %f\n angles2: x %f y %f\n",
-                    loss,
-                    choke,
-                    ping,
-                    clangles[0][Cl][0],
-                    clangles[0][Cl][1],
-                    clangles[1][Cl][0],
-                    clangles[1][Cl][1],
-                    clangles[2][Cl][0],
-                    clangles[2][Cl][1]
-                );
-                StacLog
-                (
-                    "\nPrevious cmdnums:\n0 %i\n1 %i\n2 %i\n3 %i\n4 %i\n5 %i\n",
-                    clcmdnum[0][Cl],
-                    clcmdnum[1][Cl],
-                    clcmdnum[2][Cl],
-                    clcmdnum[3][Cl],
-                    clcmdnum[4][Cl],
-                    clcmdnum[5][Cl]
-                );
-                StacLog
-                (
-                    "\nPrevious tickcounts:\n0 %i\n1 %i\n2 %i\n3 %i\n4 %i\n5 %i\n",
-                    cltickcount[0][Cl],
-                    cltickcount[1][Cl],
-                    cltickcount[2][Cl],
-                    cltickcount[3][Cl],
-                    cltickcount[4][Cl],
-                    cltickcount[5][Cl]
-                );
-
+                StacLogNetData(userid);
+                StacLogAngles(userid);
+                StacLogCmdnums(userid);
+                StacLogTickcounts(userid);
+                StacLogMouse(userid);
                 if (AIMPLOTTER)
                 {
                     ServerCommand("sm_aimplot #%i on", userid);
                 }
-
                 if (pSilentDetects[Cl] % 5 == 0)
                 {
                     StacDetectionDiscordNotify(userid, "psilent", pSilentDetects[Cl]);
@@ -2080,39 +2066,34 @@ public Action OnPlayerRunCmd
                     char pubreason[256];
                     Format(pubreason, sizeof(pubreason), "%t", "pSilentBanAllChat", Cl, pSilentDetects[Cl]);
                     BanUser(userid, reason, pubreason);
-                    return Plugin_Handled;
                 }
             }
         }
     }
+}
+/*
+    AIMSNAP DETECTION - BETA
 
-    if (MVM)
-    {
-        return Plugin_Continue;
-    }
+    Alright, here's how this works.
 
-    /*
-        AIMSNAP DETECTION - BETA
+    If we try to just detect one frame snaps and nothing else, users can just crank up their sens,
+    and wave their mouse around and get detects. so what we do is this:
 
-        Alright, here's how this works.
+    if a user has a snap of more than 10 degrees, and that snap is surrounded on one or both sides by "noise delta" of LESS than 5 degrees
+    ...that counts as an aimsnap. this will catch cheaters, unless they wave their mouse around wildly, making the game miserable to play
+    AND obvious that they're avoiding the anticheat.
 
-        If we try to just detect one frame snaps and nothing else, users can just crank up their sens,
-        and wave their mouse around and get detects. so what we do is this:
-
-        if a user has a snap of more than 10 degrees, and that snap is surrounded on one or both sides by "noise delta" of LESS than 5 degrees
-        ...that counts as an aimsnap. this will catch cheaters, unless they wave their mouse around wildly, making the game miserable to play
-        AND obvious that they're avoiding the anticheat.
-
-    */
-
+*/
+void aimsnapCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
     if (maxAimsnapDetections != -1)
     {
-
         float aDiff[4];
-        aDiff[0] = NormalizeAngleDiff(CalcAngDeg(clangles[0][Cl], clangles[1][Cl]));
-        aDiff[1] = NormalizeAngleDiff(CalcAngDeg(clangles[1][Cl], clangles[2][Cl]));
-        aDiff[2] = NormalizeAngleDiff(CalcAngDeg(clangles[2][Cl], clangles[3][Cl]));
-        aDiff[3] = NormalizeAngleDiff(CalcAngDeg(clangles[3][Cl], clangles[4][Cl]));
+        aDiff[0] = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], clangles[Cl][1]));
+        aDiff[1] = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][1], clangles[Cl][2]));
+        aDiff[2] = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][2], clangles[Cl][3]));
+        aDiff[3] = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][3], clangles[Cl][4]));
 
         // example values of a snap:
         // 0.000000, 91.355995, 0.000000, 0.000000
@@ -2121,9 +2102,9 @@ public Action OnPlayerRunCmd
         // only check if we actually did hitscan dmg in the current frame
         if
         (
-            didHurtOnFrame[1][Cl]
+            didHurtOnFrame[Cl][1]
             &&
-            didBangOnFrame[1][Cl]
+            didBangOnFrame[Cl][1]
         )
         {
             float snapsize = 15.0;
@@ -2174,7 +2155,7 @@ public Action OnPlayerRunCmd
             // we got one!
             if (aDiffToUse > -1)
             {
-                aDiffReal = aDiff[aDiffToUse];
+                float aDiffReal = aDiff[aDiffToUse];
 
                 // increment aimsnap detects
                 aimsnapDetects[Cl]++;
@@ -2199,51 +2180,11 @@ public Action OnPlayerRunCmd
                         Cl,
                         aimsnapDetects[Cl]
                     );
-                    StacLog
-                    (
-                        "\nNetwork:\n %f loss\n %f choke\n %f ms ping\n",
-                        loss,
-                        choke,
-                        ping
-                    );
-                    StacLog
-                    (
-                        "\nAngles:\n angles0: x %f y %f\n angles1: x %f y %f\n angles2: x %f y %f\n angles3: x %f y %f\n angles4: x %f y %f\n",
-                        clangles[0][Cl][0],
-                        clangles[0][Cl][1],
-                        clangles[1][Cl][0],
-                        clangles[1][Cl][1],
-                        clangles[2][Cl][0],
-                        clangles[2][Cl][1],
-                        clangles[3][Cl][0],
-                        clangles[3][Cl][1],
-                        clangles[4][Cl][0],
-                        clangles[4][Cl][1]
-                    );
-                    StacLog
-                    (
-                        "\nUser Mouse Movement (weighted to sens): abs(x): %i, abs(y): %i\nUser Mouse Movement (unweighted): x: %i, y: %i.",
-                        wx,
-                        wy,
-                        mouse[0],
-                        mouse[1]
-                    );
-                    StacLog
-                    (
-                        "Sens for client: %f\nWeapon used: %s\n==========",
-                        sensFor[Cl],
-                        hurtWeapon[Cl]
-                    );
-                    StacLog
-                    (
-                        "\nPrevious cmdnums:\n0 %i\n1 %i\n2 %i\n3 %i\n4 %i\n5 %i\n",
-                        clcmdnum[0][Cl],
-                        clcmdnum[1][Cl],
-                        clcmdnum[2][Cl],
-                        clcmdnum[3][Cl],
-                        clcmdnum[4][Cl],
-                        clcmdnum[5][Cl]
-                    );
+                    StacLogNetData(userid);
+                    StacLogAngles(userid);
+                    StacLogCmdnums(userid);
+                    StacLogTickcounts(userid);
+                    StacLogMouse(userid);
                     StacLog
                     (
                         "\nAngle deltas:\n0 %f\n1 %f\n2 %f\n3 %f\n",
@@ -2251,20 +2192,6 @@ public Action OnPlayerRunCmd
                         aDiff[1],
                         aDiff[2],
                         aDiff[3]
-                    );
-                    StacLog
-                    (
-                        "\nAngles:\n angles0: x %f y %f\n angles1: x %f y %f\n angles2: x %f y %f\n angles3: x %f y %f\n angles4: x %f y %f\n",
-                        clangles[0][Cl][0],
-                        clangles[0][Cl][1],
-                        clangles[1][Cl][0],
-                        clangles[1][Cl][1],
-                        clangles[2][Cl][0],
-                        clangles[2][Cl][1],
-                        clangles[3][Cl][0],
-                        clangles[3][Cl][1],
-                        clangles[4][Cl][0],
-                        clangles[4][Cl][1]
                     );
 
                     if (AIMPLOTTER)
@@ -2285,15 +2212,19 @@ public Action OnPlayerRunCmd
                         char pubreason[256];
                         Format(pubreason, sizeof(pubreason), "%t", "AimsnapBanAllChat", Cl, aimsnapDetects[Cl]);
                         BanUser(userid, reason, pubreason);
-                        return Plugin_Handled;
                     }
                 }
             }
         }
     }
-    /*
-        TRIGGERBOT DETECTION - BETA
-    */
+}
+
+/*
+    TRIGGERBOT DETECTION - BETA
+*/
+void triggerbotCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
     // don't run if cvar is -1 or if wait is enabled on this server
     if (maxTbotDetections != -1 && !waitStatus)
     {
@@ -2309,23 +2240,23 @@ public Action OnPlayerRunCmd
         if
         (
             !(
-                clbuttons[4][Cl] & IN_ATTACK
+                clbuttons[Cl][4] & IN_ATTACK
             )
             &&
             !(
-                clbuttons[3][Cl] & IN_ATTACK
+                clbuttons[Cl][3] & IN_ATTACK
             )
             &&
             (
-                clbuttons[2][Cl] & IN_ATTACK
+                clbuttons[Cl][2] & IN_ATTACK
             )
             &&
             !(
-                clbuttons[1][Cl] & IN_ATTACK
+                clbuttons[Cl][1] & IN_ATTACK
             )
             &&
             !(
-                clbuttons[0][Cl] & IN_ATTACK
+                clbuttons[Cl][0] & IN_ATTACK
             )
         )
         {
@@ -2343,23 +2274,23 @@ public Action OnPlayerRunCmd
         else if
         (
             !(
-                clbuttons[4][Cl] & IN_ATTACK2
+                clbuttons[Cl][4] & IN_ATTACK2
             )
             &&
             !(
-                clbuttons[3][Cl] & IN_ATTACK2
+                clbuttons[Cl][3] & IN_ATTACK2
             )
             &&
             (
-                clbuttons[2][Cl] & IN_ATTACK2
+                clbuttons[Cl][2] & IN_ATTACK2
             )
             &&
             !(
-                clbuttons[1][Cl] & IN_ATTACK2
+                clbuttons[Cl][1] & IN_ATTACK2
             )
             &&
             !(
-                clbuttons[0][Cl] & IN_ATTACK2
+                clbuttons[Cl][0] & IN_ATTACK2
             )
         )
         {
@@ -2374,21 +2305,21 @@ public Action OnPlayerRunCmd
                     // will eventually add checks for if the user hurt and bang'd last frame as well
                     (
                         (
-                            didBangOnFrame[0][Cl]
+                            didBangOnFrame[Cl][0]
                             &&
-                            didHurtOnFrame[0][Cl]
+                            didHurtOnFrame[Cl][0]
                         )
                         ||
                         (
-                            didBangOnFrame[1][Cl]
+                            didBangOnFrame[Cl][1]
                             &&
-                            didHurtOnFrame[1][Cl]
+                            didHurtOnFrame[Cl][1]
                         )
                         ||
                         (
-                            didBangOnFrame[2][Cl]
+                            didBangOnFrame[Cl][2]
                             &&
-                            didHurtOnFrame[2][Cl]
+                            didHurtOnFrame[Cl][2]
                         )
                     )
                 )
@@ -2398,11 +2329,11 @@ public Action OnPlayerRunCmd
                     attack == 2
                     &&
                     (
-                        didHurtOnFrame[0][Cl]
+                        didHurtOnFrame[Cl][0]
                         ||
-                        didHurtOnFrame[1][Cl]
+                        didHurtOnFrame[Cl][1]
                         ||
-                        didHurtOnFrame[2][Cl]
+                        didHurtOnFrame[Cl][2]
                     )
                 )
             )
@@ -2428,29 +2359,14 @@ public Action OnPlayerRunCmd
                     tbotDetects[Cl],
                     attack
                 );
+                StacLogNetData(userid);
+                StacLogAngles(userid);
+                StacLogCmdnums(userid);
+                StacLogTickcounts(userid);
+                StacLogMouse(userid);
                 StacLog
                 (
-                    "\nNetwork:\n %f loss\n %f choke\n %f ms ping\nAngles:\n angles0: x %f y %f\n angles1: x %f y %f\n",
-                    loss,
-                    choke,
-                    ping,
-                    clangles[0][Cl][0],
-                    clangles[0][Cl][1],
-                    clangles[1][Cl][0],
-                    clangles[1][Cl][1]
-                );
-                StacLog
-                (
-                    "\nUser Mouse Movement (weighted to sens): abs(x): %i, abs(y): %i\nUser Mouse Movement (unweighted): x: %i, y: %i.",
-                    wx,
-                    wy,
-                    mouse[0],
-                    mouse[1]
-                );
-                StacLog
-                (
-                    "Sens for client: %f\nWeapon used: %s\n==========",
-                    sensFor[Cl],
+                    "Weapon used: %s",
                     hurtWeapon[Cl]
                 );
 
@@ -2462,7 +2378,6 @@ public Action OnPlayerRunCmd
                 {
                     StacDetectionDiscordNotify(userid, "triggerbot", tbotDetects[Cl]);
                 }
-
                 // BAN USER if they trigger too many detections
                 if (tbotDetects[Cl] >= maxTbotDetections && maxTbotDetections > 0)
                 {
@@ -2471,13 +2386,147 @@ public Action OnPlayerRunCmd
                     char pubreason[256];
                     Format(pubreason, sizeof(pubreason), "%t", "tbotBanAllChat", Cl, tbotDetects[Cl]);
                     BanUser(userid, reason, pubreason);
-                    return Plugin_Handled;
                 }
             }
         }
     }
+}
 
-    return Plugin_Continue;
+void StacLogNetData(userid)
+{
+    int Cl          = GetClientOfUserId(userid);
+    // convert to percentages
+    float loss      = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
+    float choke     = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
+    float inchoke   = GetClientAvgChoke(Cl, NetFlow_Incoming) * 100.0;
+    float outchoke  = GetClientAvgChoke(Cl, NetFlow_Outgoing) * 100.0;
+    // convert to ms
+    float ping      = GetClientAvgLatency(Cl, NetFlow_Both) * 1000.0;
+
+    StacLog
+    (
+        "\
+        \nNetwork:\
+        \n %.2f loss\
+        \n %.2f ms ping\
+        \n %.2f inchoke\
+        \n %.2f outchoke\
+        \n %.2f totalchoke\
+        ",
+        loss,
+        ping,
+        inchoke,
+        outchoke,
+        choke
+    );
+}
+
+void StacLogMouse(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    //if (GetRandomInt(1, 5) == 1)
+    //{
+    //    QueryClientConVar(Cl, "sensitivity", ConVarCheck);
+    //}
+    // init vars for mouse movement - weightedx and weightedy
+    int wx;
+    int wy;
+    // scale mouse movement to sensitivity
+    if (sensFor[Cl] != 0.0)
+    {
+        wx = abs(RoundFloat(clmouse[Cl][0] * ( 1 / sensFor[Cl])));
+        wy = abs(RoundFloat(clmouse[Cl][1] * ( 1 / sensFor[Cl])));
+    }
+    StacLog
+    (
+        "\
+        \nMouse Movement (sens weighted):\
+        \n abs(x): %i\
+        \n abs(y): %i\
+        \nMouse Movement (unweighted):\
+        \n x: %i\
+        \n y: %i\
+        \nClient Sens:\
+        \n %f\
+        ",
+        wx,
+        wy,
+        clmouse[Cl][0],
+        clmouse[Cl][1],
+        sensFor[Cl]
+    );
+}
+
+StacLogAngles(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    StacLog
+    (
+        "\
+        \nAngles:\
+        \n angles0: x %f y %f\
+        \n angles1: x %f y %f\
+        \n angles2: x %f y %f\
+        \n angles3: x %f y %f\
+        \n angles4: x %f y %f\
+        ",
+        clangles[Cl][0][0],
+        clangles[Cl][0][1],
+        clangles[Cl][1][0],
+        clangles[Cl][1][1],
+        clangles[Cl][2][0],
+        clangles[Cl][2][1],
+        clangles[Cl][3][0],
+        clangles[Cl][3][1],
+        clangles[Cl][4][0],
+        clangles[Cl][4][1]
+    );
+}
+
+StacLogCmdnums(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    StacLog
+    (
+        "\
+        \nPrevious cmdnums:\
+        \n0 %i\
+        \n1 %i\
+        \n2 %i\
+        \n3 %i\
+        \n4 %i\
+        \n5 %i\
+        ",
+        clcmdnum[Cl][0],
+        clcmdnum[Cl][1],
+        clcmdnum[Cl][2],
+        clcmdnum[Cl][3],
+        clcmdnum[Cl][4],
+        clcmdnum[Cl][5]
+    );
+}
+
+StacLogTickcounts(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    StacLog
+    (
+        "\
+        \nPrevious tickcounts:\
+        \n0 %i\
+        \n1 %i\
+        \n2 %i\
+        \n3 %i\
+        \n4 %i\
+        \n5 %i\
+        ",
+        cltickcount[Cl][0],
+        cltickcount[Cl][1],
+        cltickcount[Cl][2],
+        cltickcount[Cl][3],
+        cltickcount[Cl][4],
+        cltickcount[Cl][5]
+    );
 }
 
 public Action Timer_decr_aimsnaps(Handle timer, any userid)
@@ -2540,15 +2589,15 @@ public Action Timer_decr_tbot(Handle timer, any userid)
     }
 }
 
-public Action Timer_decr_pingreduce(Handle timer, any userid)
+public Action Timer_decr_cmdratespam(Handle timer, any userid)
 {
     int Cl = GetClientOfUserId(userid);
 
     if (IsValidClient(Cl))
     {
-        if (pingReduceDetects[Cl] > 0)
+        if (cmdrateSpamDetects[Cl] > 0)
         {
-            pingReduceDetects[Cl]--;
+            cmdrateSpamDetects[Cl]--;
         }
     }
 }
@@ -2723,6 +2772,8 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
     return Plugin_Continue;
 }
 
+char lastCommandFor[TFMAXPLAYERS+1][256];
+float timeSinceLastCommand[TFMAXPLAYERS+1];
 // block long commands - i don't know if this actually does anything but it makes me feel better
 public Action OnClientCommand(int Cl, int args)
 {
@@ -2743,6 +2794,10 @@ public Action OnClientCommand(int Cl, int args)
             ClientCommandChar[len++] = ' ';
             GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
         }
+
+        strcopy(lastCommandFor[Cl], 256, ClientCommandChar);
+        timeSinceLastCommand[Cl] = engineTime[Cl][0];
+        
 
         // clean it up ( PROBABLY NOT NEEDED )
         // TrimString(ClientCommandChar);
@@ -2773,10 +2828,23 @@ public void OnClientSettingsChanged(int Cl)
         return;
     }
 
+    if
+    (
+        // command occured very recently
+        engineTime[Cl][0] - 2.5 < timeSinceLastCommand[Cl]
+        &&
+        // and it's a demorestart
+        StrEqual("demorestart", lastCommandFor[Cl])
+    )
+    {
+        LogMessage("ignoring demorestart settings change");
+        return;
+    }
+
     // get userid for timer
     int userid = GetClientUserId(Cl);
 
-    // pingreduce check only works if you have fixpingmasking installed!
+    // pingreduce check only works if you are using fixpingmasking!
     // buffer for cmdrate value
 
     char scmdrate[4];
@@ -2791,71 +2859,110 @@ public void OnClientSettingsChanged(int Cl)
     // convert it to string
     IntToString(iclamprate, sclamprate, sizeof(sclamprate));
 
-    // technically this could be triggered by clients spam recording and stopping demos, but cheats do it infinitely faster
-    pingReduceDetects[Cl]++;
+    // do the same thing with updaterate
+    char supdaterate[4];
+    // get actual value of cl updaterate
+    GetClientInfo(Cl, "cl_updaterate", supdaterate, sizeof(supdaterate));
+    // convert it to int
+    int iupdaterate = StringToInt(supdaterate);
+
+    // clamp it
+    int iclampupdaterate = Math_Clamp(iupdaterate, iminupdaterate, imaxupdaterate);
+    char sclampupdaterate[4];
+    // convert it to string
+    IntToString(iclampupdaterate, sclampupdaterate, sizeof(sclampupdaterate));
+
+    /*
+        CMDRATE SPAM CHECK
+
+        technically this could be triggered by clients spam recording and stopping demos, but cheats do it infinitely faster
+    */
+    cmdrateSpamDetects[Cl]++;
     // have this detection expire in 10 seconds!!! remember - this means that the amount of detects are ONLY in the last 10 seconds!
     // ncc caps out at 140ish
-    CreateTimer(10.0, Timer_decr_pingreduce, userid, TIMER_FLAG_NO_MAPCHANGE);
-    if (pingReduceDetects[Cl] >= 10)
+    CreateTimer(10.0, Timer_decr_cmdratespam, userid, TIMER_FLAG_NO_MAPCHANGE);
+    if (cmdrateSpamDetects[Cl] >= 10)
     {
         PrintToImportant
         (
-            "{hotpink}[StAC]{white} %N is suspected of ping-reducing or masking using a cheat.\nDetections so far: {palegreen}%i{white}. Cmdrate value: {blue}%i",
+            "{hotpink}[StAC]{white} %N is suspected of ping-reducing or masking using a cheat.\nDetections within the last 10 seconds: {palegreen}%i{white}. Cmdrate value: {blue}%i",
             Cl,
-            pingReduceDetects[Cl],
+            cmdrateSpamDetects[Cl],
             icmdrate
         );
         StacLog
         (
             "[StAC] %N is suspected of ping-reducing or masking using a cheat.\nDetections so far: %i.\nCmdrate value: %i",
             Cl,
-            pingReduceDetects[Cl],
+            cmdrateSpamDetects[Cl],
             icmdrate
         );
-        if (pingReduceDetects[Cl] % 25 == 0)
+        if (cmdrateSpamDetects[Cl] % 25 == 0)
         {
-            StacDetectionDiscordNotify(userid, "suspected of pingreducing using a cheat (badger steph lol)", pingReduceDetects[Cl]);
+            StacDetectionDiscordNotify(userid, "suspected of pingreducing using a cheat (badger steph lol)",cmdrateSpamDetects[Cl]);
         }
 
         // BAN USER if they trigger too many detections
-        if (pingReduceDetects[Cl] >= maxPingReduceDetects && maxPingReduceDetects > 0)
+        if (cmdrateSpamDetects[Cl] >= maxCmdrateSpamDetects && maxCmdrateSpamDetects > 0)
         {
-            //char reason[128];
-            //Format(reason, sizeof(reason), "%t", "PingReduceBanMsg", pingReduceDetects[Cl]);
-            //char pubreason[256];
-            //Format(pubreason, sizeof(pubreason), "%t", "PingReduceBanAllChat", Cl, pingReduceDetects[Cl]);
-            //BanUser(userid, reason, pubreason);
-            //return Plugin_Handled;
+            char reason[128];
+            Format(reason, sizeof(reason), "%t", "cmdrateSpamBanMsg", cmdrateSpamDetects[Cl]);
+            char pubreason[256];
+            Format(pubreason, sizeof(pubreason), "%t", "cmdrateSpamBanAllChat", Cl, cmdrateSpamDetects[Cl]);
+            BanUser(userid, reason, pubreason);
+            return;
         }
     }
 
     if
     (
         // cmdrate is == to optimal clamped rate
-        icmdrate == iclamprate
-        &&
+        icmdrate != iclamprate
+        ||
         // client string is exactly equal to string of optimal cmdrate
-        StrEqual(scmdrate, sclamprate)
+        !StrEqual(scmdrate, sclamprate)
     )
     {
-        return;
+        SetClientInfo(Cl, "cl_cmdrate", sclamprate);
+        LogMessage("clamping cmdrate to %s", sclamprate);    
     }
 
+    if
+    (
+        // cmdrate is == to optimal clamped rate
+        iupdaterate != iclampupdaterate
+        ||
+        // client string is exactly equal to string of optimal cmdrate
+        !StrEqual(supdaterate, sclampupdaterate)
+    )
+    {
+        SetClientInfo(Cl, "cl_updaterate", sclampupdaterate);
+        LogMessage("clamping updaterate to %s", sclampupdaterate);    
+    }
 
-    // if client has unoptimal cmdrate, clamp it.
-    SetClientInfo(Cl, "cl_cmdrate", sclamprate);
-
+    
 }
 
-void UpdateCmdRate()
+void UpdateRates()
 {
     imincmdrate = GetConVarInt(FindConVar("sv_mincmdrate"));
     imaxcmdrate = GetConVarInt(FindConVar("sv_maxcmdrate"));
+    iminupdaterate = GetConVarInt(FindConVar("sv_minupdaterate"));
+    imaxupdaterate = GetConVarInt(FindConVar("sv_maxupdaterate"));
+
+    // reset all client based vars on plugin reload
+    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    {
+        if (IsValidClient(Cl))
+        {
+            OnClientSettingsChanged(Cl);
+        }
+    }
 }
 
-void CmdRateChange(ConVar convar, const char[] oldValue, const char[] newValue)
+void RateChange(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    UpdateCmdRate();
+    UpdateRates();
 }
 
 // no longer just for netprops!
@@ -2907,7 +3014,7 @@ void NetPropEtcCheck(int userid)
             )
             {
                 char message[256];
-                Format(message, sizeof(message), "Client was kicked for attempted interp exploitation. Their interp: %.2f", lerp);
+                Format(message, sizeof(message), "Client was kicked for attempted interp exploitation. Their interp: %.2fms", lerp);
                 StacGeneralPlayerDiscordNotify(userid, message);
                 KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
                 MC_PrintToChatAll("%t", "interpAllChat", Cl, lerp);
@@ -3161,7 +3268,7 @@ void StacLog(const char[] format, any ...)
 }
 
 // i hope youre proud of me, 9th grade geometry teacher
-float CalcAngDeg(const float array1[2], const float array2[2])
+float CalcAngDeg(const float array1[3], const float array2[3])
 {
     float arDiff[2];
     arDiff[0] = array1[0] - array2[0];
@@ -3222,33 +3329,33 @@ bool HasValidAngles(int Cl)
     (
         // ignore weird angle resets in mge / dm, ignore laggy players
         (
-            clangles[0][Cl][0] == 0.0
+            clangles[Cl][0][0] == 0.0
             &&
-            clangles[0][Cl][1] == 0.0
+            clangles[Cl][0][1] == 0.0
         )
         ||
         (
-            clangles[1][Cl][0] == 0.0
+            clangles[Cl][1][0] == 0.0
             &&
-            clangles[1][Cl][1] == 0.0
+            clangles[Cl][1][1] == 0.0
         )
         ||
         (
-            clangles[2][Cl][0] == 0.0
+            clangles[Cl][2][0] == 0.0
             &&
-            clangles[2][Cl][1] == 0.0
+            clangles[Cl][2][1] == 0.0
         )
         ||
         (
-            clangles[3][Cl][0] == 0.0
+            clangles[Cl][3][0] == 0.0
             &&
-            clangles[3][Cl][1] == 0.0
+            clangles[Cl][3][1] == 0.0
         )
         ||
         (
-            clangles[4][Cl][0] == 0.0
+            clangles[Cl][4][0] == 0.0
             &&
-            clangles[4][Cl][1] == 0.0
+            clangles[Cl][4][1] == 0.0
         )
     )
     {
@@ -3454,6 +3561,7 @@ float NormalizeAngleDiff(float aDiff)
 
 void StacDetectionDiscordNotify(int userid, char[] type, int detections)
 {
+
     if (!DISCORD)
     {
         return;
@@ -3588,3 +3696,39 @@ bool isDefaultTickrate()
     }
     return false;
 }
+
+bool isCmdnumSequential(userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if
+    (
+           clcmdnum[Cl][0] == clcmdnum[Cl][1] + 1
+        && clcmdnum[Cl][1] == clcmdnum[Cl][2] + 1
+        && clcmdnum[Cl][2] == clcmdnum[Cl][3] + 1
+        && clcmdnum[Cl][3] == clcmdnum[Cl][4] + 1
+        && clcmdnum[Cl][4] == clcmdnum[Cl][5] + 1
+    )
+    {
+        return true;
+    }
+    return false;
+}
+
+bool isTickcountInOrder(userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if
+    (
+        cltickcount[Cl][0] >=
+        cltickcount[Cl][1] >=
+        cltickcount[Cl][2] >=
+        cltickcount[Cl][3] >=
+        cltickcount[Cl][4] >=
+        cltickcount[Cl][5]
+    )
+    {
+        return true;
+    }
+    return false;
+}
+        
