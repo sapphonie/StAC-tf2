@@ -20,7 +20,7 @@
 #include <steamtools>
 #include <SteamWorks>
 
-#define PLUGIN_VERSION  "4.5.2b"
+#define PLUGIN_VERSION  "4.5.6b"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -38,13 +38,13 @@ public Plugin myinfo =
 // TIMER HANDLES
 Handle QueryTimer           [TFMAXPLAYERS+1];
 Handle TriggerTimedStuffTimer;
+
+float steamLastOnlineTime;
 // TPS INFO
 float tickinterv;
 float tps;
-float bhopmult;
 // DETECTIONS PER CLIENT
 int turnTimes               [TFMAXPLAYERS+1];
-int fovDesired              [TFMAXPLAYERS+1] = 75;
 int fakeAngDetects          [TFMAXPLAYERS+1];
 int aimsnapDetects          [TFMAXPLAYERS+1] = -1; // set to -1 to ignore first detections, as theyre most likely junk
 int pSilentDetects          [TFMAXPLAYERS+1] = -1; // ^
@@ -54,10 +54,7 @@ int tbotDetects             [TFMAXPLAYERS+1] = -1;
 int spinbotDetects          [TFMAXPLAYERS+1];
 int fakeChokeDetects        [TFMAXPLAYERS+1];
 int cmdrateSpamDetects      [TFMAXPLAYERS+1];
-int backtrackDetects        [TFMAXPLAYERS+1];
-
-bool isConsecStringOfBhops  [TFMAXPLAYERS+1];
-int bhopConsecDetects       [TFMAXPLAYERS+1];
+//int backtrackDetects      [TFMAXPLAYERS+1];
 
 bool waitStatus;
 
@@ -107,7 +104,7 @@ char hurtWeapon             [TFMAXPLAYERS+1][256];
 bool didBangOnFrame         [TFMAXPLAYERS+1][3];
 bool didHurtOnFrame         [TFMAXPLAYERS+1][3];
 
-
+char SteamAuthFor           [TFMAXPLAYERS+1][64];
 
 // time since player did damage, for aimsnap check
 bool didBangThisFrame       [TFMAXPLAYERS+1];
@@ -139,7 +136,7 @@ char detectionTemplate[1024] = "{ \"embeds\": [ { \"title\": \"StAC Detection!\"
 char generalTemplate[1024] = "{ \"embeds\": [ { \"title\": \"StAC Message\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Message\", \"value\": \"%s\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
 
 // are we in MVM
-//bool MVM;
+bool MVM;
 // CVARS
 ConVar stac_enabled;
 ConVar stac_verbose_info;
@@ -168,16 +165,14 @@ float maxAllowedTurnSecs    = -1.0;
 bool banForMiscCheats       = true;
 bool optimizeCvars          = true;
 
-int maxAimsnapDetections    = 30;
+int maxAimsnapDetections    = 20;
 int maxPsilentDetections    = 10;
 int maxFakeAngDetections    = 10;
 int maxBhopDetections       = 10;
-int maxCmdnumDetections     = 25;
-int maxTbotDetections       = 0;
-int maxSpinbotDetections    = 100;
-int maxCmdrateSpamDetects   = 50;
-// this gets set later
-int maxBhopDetectionsScaled;
+int maxCmdnumDetections     = 20;
+int maxTbotDetections       = 20;
+int maxSpinbotDetections    = 50;
+int maxCmdrateSpamDetects   = 25;
 
 // interp limits
 int min_interp_ms           = -1;
@@ -225,6 +220,8 @@ public void OnPluginStart()
         SetFailState("[StAC] This plugin (and TF2 in general) does not support more than 33 players (32 + 1 for STV). Aborting!");
     }
 
+    LoadTranslations("common.phrases");
+
     // updater
     if (LibraryExists("updater"))
     {
@@ -237,6 +234,7 @@ public void OnPluginStart()
     // TODO: make these invisible for non admins
     RegAdminCmd("sm_stac_checkall", ForceCheckAll,    ADMFLAG_GENERIC, "Force check all client convars (ALL CLIENTS) for anticheat stuff");
     RegAdminCmd("sm_stac_detections", ShowDetections, ADMFLAG_GENERIC, "Show all current detections on all connected clients");
+    RegAdminCmd("sm_stac_getauth", GetAuth,           ADMFLAG_GENERIC, "Print StAC's cached auth for a client");
     //RegAdminCmd("sm_stac_shutup", ShutTheHellUpBitch, ADMFLAG_GENERIC, "Make StAC be quiet for whoever runs this command!");
 
     // get tick interval - some modded tf2 servers run at >66.7 tick!
@@ -254,6 +252,8 @@ public void OnPluginStart()
     HookEvent("teamplay_round_start", eRoundStart);
     // grab player spawns
     HookEvent("player_spawn", ePlayerSpawned);
+
+    HookEvent("player_disconnect", ePlayerDisconnect);
 
     // check EVERYONE's cvars on plugin reload
     CreateTimer(0.5, checkEveryone);
@@ -279,17 +279,9 @@ public void OnPluginStart()
     // reset all client based vars on plugin reload
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
-        if (IsValidClient(Cl))
-        {
-            int userid = GetClientUserId(Cl);
-            ClearClBasedVars(userid);
-            OnClientSettingsChanged(Cl);
-            // wait a second to let natives get checked
-            CreateTimer(1.0, CheckAuthOn, userid);
-        }
         if (IsValidClientOrBot(Cl))
         {
-            SDKHook(Cl, SDKHook_OnTakeDamage, hOnTakeDamage);
+            OnClientPutInServer(Cl);
         }
     }
 
@@ -759,9 +751,6 @@ void setStacVars()
 
     // properly fix pingmasking
     fixpingmasking          = GetConVarBool(stac_fixpingmasking_enabled);
-
-    // this is for bhop detection only
-    DoTPSMath();
 }
 
 void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
@@ -844,14 +833,19 @@ public Action checkNativesEtc(Handle timer)
         DISCORD = true;
     }
 
-    //if (GameRules_GetProp("m_bPlayingMannVsMachine") == 1)
-    //{
-    //    MVM = true;
-    //}
-    //else
-    //{
-    //    MVM = false;
-    //}
+    if (GameRules_GetProp("m_bPlayingMannVsMachine") == 1)
+    {
+        MVM = true;
+    }
+    else
+    {
+        MVM = false;
+    }
+
+    if (isSteamAlive == -1)
+    {
+        checkSteam();
+    }
 
     if (DEBUG)
     {
@@ -871,9 +865,59 @@ public Action checkEveryone(Handle timer)
     QueryEverythingAllClients();
 }
 
-public Action ForceCheckAll(int client, int args)
+public Action ForceCheckAll(int callingCl, int args)
 {
     QueryEverythingAllClients();
+}
+
+public Action GetAuth(int callingCl, int args)
+{
+    if (args != 1)
+    {
+        ReplyToCommand(callingCl, "Usage: sm_stac_getauth <client>");
+    }
+    else
+    {
+        char arg1[32];
+        GetCmdArg(1, arg1, sizeof(arg1));
+
+        char target_name[MAX_TARGET_LENGTH];
+        int target_list[MAXPLAYERS];
+        int target_count;
+        bool tn_is_ml;
+
+        if
+        (
+            (
+                target_count = ProcessTargetString
+                (
+                    arg1,
+                    callingCl,
+                    target_list,
+                    MAXPLAYERS,
+                    COMMAND_FILTER_NO_BOTS,
+                    target_name,
+                    sizeof(target_name),
+                    tn_is_ml
+                )
+            )
+            <= 0
+        )
+        {
+            ReplyToTargetError(callingCl, target_count);
+            return Plugin_Handled;
+        }
+
+        for (int i = 0; i < target_count; i++)
+        {
+            int Cl = target_list[i];
+            if (IsValidClient(Cl))
+            {
+                ReplyToCommand(callingCl, "[StAC] Auth for \"%N\" - %s", Cl, SteamAuthFor[Cl]);
+            }
+        }
+    }
+    return Plugin_Handled;
 }
 
 public Action ShowDetections(int callingCl, int args)
@@ -893,7 +937,6 @@ public Action ShowDetections(int callingCl, int args)
                 || aimsnapDetects[Cl]      >= 1
                 || pSilentDetects[Cl]      >= 1
                 || fakeAngDetects[Cl]      >= 1
-                || bhopConsecDetects[Cl]   >= 1
                 || cmdnumSpikeDetects[Cl]  >= 1
                 || tbotDetects[Cl]         >= 1
             )
@@ -914,10 +957,6 @@ public Action ShowDetections(int callingCl, int args)
                 if (fakeAngDetects[Cl] >= 1)
                 {
                     PrintToConsole(callingCl, "- %i fake angle detections for %N", fakeAngDetects[Cl], Cl);
-                }
-                if (bhopConsecDetects[Cl] >= 1)
-                {
-                    PrintToConsole(callingCl, "- %i consecutive bhop strings for %N", bhopConsecDetects[Cl], Cl);
                 }
                 if (cmdnumSpikeDetects[Cl] >= 1)
                 {
@@ -1091,42 +1130,9 @@ void DoTPSMath()
     tickinterv = GetTickInterval();
     tps = Pow(tickinterv, -1.0);
 
-    // we have to adjust bhop stuff for tickrate - ignore past 200
-    // you can bhop easier on higher tick
-    // 66 = default, 133 = * 2, 200 = * 3
-
-    // thanks to joined senses for some cleanup
-    if (tps > 210.0 || tps < 60.0)
-    {
-        bhopmult = 0.0;
-    }
-    else if (tps >= 195.0)
-    {
-        bhopmult = 2.0;
-    }
-    else if (tps >= 165.0)
-    {
-        bhopmult = 1.75;
-    }
-    else if (tps >= 99.0)
-    {
-        bhopmult = 1.5;
-    }
-    else
-    {
-        bhopmult = 1.0;
-    }
-
-    maxBhopDetectionsScaled = RoundFloat(bhopmult * maxBhopDetections);
-
-    if (maxBhopDetections == 0)
-    {
-        maxBhopDetectionsScaled = RoundFloat(bhopmult * 10);
-    }
-
     if (DEBUG)
     {
-        StacLog("tickinterv %f, tps %f, bhopmult %.2f, maxBhopDetectionsScaled %i", tickinterv, tps, bhopmult, maxBhopDetectionsScaled);
+        StacLog("tickinterv %f, tps %f", tickinterv, tps);
     }
 }
 
@@ -1168,7 +1174,6 @@ void ClearClBasedVars(int userid)
     int Cl = GetClientOfUserId(userid);
     // clear all old values for cli id based stuff
     turnTimes               [Cl] = 0;
-    fovDesired              [Cl] = 0;
     fakeAngDetects          [Cl] = 0;
     aimsnapDetects          [Cl] = -1; // ignore first detect, it's prolly bunk
     pSilentDetects          [Cl] = -1; // ignore first detect, it's prolly bunk
@@ -1178,9 +1183,6 @@ void ClearClBasedVars(int userid)
     spinbotDetects          [Cl] = 0;
     fakeChokeDetects        [Cl] = 0;
     cmdrateSpamDetects      [Cl] = 0;
-    isConsecStringOfBhops   [Cl] = false;
-    bhopConsecDetects       [Cl] = 0;
-    backtrackDetects        [Cl] = 0;
 
     // TIME SINCE LAST ACTION PER CLIENT
     timeSinceSpawn          [Cl] = 0.0;
@@ -1195,7 +1197,6 @@ void ClearClBasedVars(int userid)
     userBanQueued           [Cl] = false;
     // STORED SENS PER CLIENT
     sensFor                 [Cl] = 0.0;
-
     // don't bother clearing arrays
 }
 
@@ -1219,8 +1220,8 @@ public void OnClientPutInServer(int Cl)
             StacLog("[StAC] %N joined. Checking cvars", Cl);
         }
         QueryTimer[Cl] = CreateTimer(0.1, Timer_CheckClientConVars, userid);
-        // wait 10 seconds just in case
-        CreateTimer(10.0, CheckAuthOn, userid);
+
+        CreateTimer(2.5, CheckAuthOn, userid);
     }
 }
 
@@ -1231,22 +1232,36 @@ Action CheckAuthOn(Handle timer, int userid)
     if (IsValidClient(Cl))
     {
         // don't bother checking if already authed and DEFINITELY don't check if steam is down or there's no way to do so thru an ext
-        if (!IsClientAuthorized(Cl) && (isSteamAlive == 1))
+        if (!IsClientAuthorized(Cl))
         {
-            PrintToImportant("Client %N isn't authorized and Steam is online. Checking in 10 seconds and kicking them if both are still true!", Cl);
-            CreateTimer(10.0, Timer_checkAuth, userid);
+            if (shouldCheckAuth())
+            {
+                StacGeneralPlayerDiscordNotify(userid, "Kicked for being unauthorized w/ Steam");
+                StacLog("[StAC] Kicking %N for not being authorized with Steam.", Cl);
+                KickClient(Cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
+            }
+        }
+        else
+        {
+            char steamid[64];
+
+            // let's try to get their auth anyway
+            if (GetClientAuthId(Cl, AuthId_Steam2, steamid, sizeof(steamid)))
+            {
+                // if we get it, copy to our global list
+                strcopy(SteamAuthFor[Cl], sizeof(SteamAuthFor[]), steamid);
+            }
         }
     }
 }
 
-Action Timer_checkAuth(Handle timer, int userid)
+// cache this! we don't need to clear this because it gets overwritten when a new client connects with the same index
+public void OnClientAuthorized(int Cl, const char[] auth)
 {
-    int Cl = GetClientOfUserId(userid);
-    if (!IsClientAuthorized(Cl) && (isSteamAlive == 1))
+    if (IsValidClient(Cl))
     {
-        StacGeneralPlayerDiscordNotify(userid, "Kicked for being unauthorized w/ Steam");
-        StacLog("[StAC] Kicking %N for not being authorized with Steam.", Cl);
-        KickClient(Cl, "[StAC] Not authorized with Steam Network, please reconnect");
+        strcopy(SteamAuthFor[Cl], sizeof(SteamAuthFor[]), auth);
+        LogMessage("auth %s for Cl %N", auth, Cl);
     }
 }
 
@@ -1258,6 +1273,13 @@ public void OnClientDisconnect(int Cl)
     delete QueryTimer[Cl];
 }
 
+// player is OUT of the server
+public void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
+{
+    int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
+    SteamAuthFor[Cl][0] = '\0';
+
+}
 
 // monitor server tickrate
 float stutterWaitLength = 5.0;
@@ -1328,7 +1350,6 @@ public Action OnPlayerRunCmd
     // need this basically no matter what
     int userid = GetClientUserId(Cl);
 
-
     // originally from ssac - block invalid usercmds with invalid data
     if (cmdnum <= 0 || tickcount <= 0)
     {
@@ -1342,14 +1363,12 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
-
     // grab engine time
     for (int i = 10; i > 0; --i)
     {
         engineTime[Cl][i] = engineTime[Cl][i-1];
     }
     engineTime[Cl][0] = GetEngineTime();
-
 
     // grab angles - we ignore roll
     // thanks to nosoop from the sm discord for some help with this
@@ -1417,7 +1436,6 @@ public Action OnPlayerRunCmd
     fuzzyClangles[Cl][0][1] = RoundFloat(clangles[Cl][0][1] * 10.0) / 10.0;
 
     float loss = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
-    //float ping = GetClientAvgLatency(Cl, NetFlow_Both) * 1000.0;
 
     /*
     // backtrack shennanigans
@@ -1490,7 +1508,7 @@ public Action OnPlayerRunCmd
         // this is just for halloween shit - plenty of halloween effects can and will mess up all of these checks
         || playerInBadCond[Cl] != 0
         // exp lag check
-        || engineTime[Cl][0] - engineTime[Cl][10] < (tickinterv / 3.0)
+        || engineTime[Cl][0] - engineTime[Cl][10] < (tickinterv)
     )
     {
         return Plugin_Continue;
@@ -1535,6 +1553,7 @@ public Action OnPlayerRunCmd
     return Plugin_Continue;
 }
 
+
 /*
     BHOP DETECTION - using lilac and ssac as reference, this one's better tho
 */
@@ -1547,80 +1566,78 @@ void bhopCheck(int userid)
         // get movement flags
         int flags = GetEntityFlags(Cl);
 
-        // only check on not weirdo tickrate servers -
-        // bhops become SIGNIFICANTLY easier for noncheaters on higher tickrates
-        if (bhopmult >= 1.0 && bhopmult <= 2.0)
+        bool noban;
+        if (maxBhopDetections == 0)
         {
-            // reset their gravity if it's high!
-            if (highGrav[Cl])
-            {
-                SetEntityGravity(Cl, 1.0);
-                highGrav[Cl] = false;
-            }
+            noban = true;
+        }
 
+        // reset their gravity if it's high!
+        if (highGrav[Cl])
+        {
+            SetEntityGravity(Cl, 1.0);
+            highGrav[Cl] = false;
+        }
+
+        if
+        (
+            // last input didn't have a jump - include to prevent legits holding spacebar from triggering detections
+            !(
+                clbuttons[Cl][1] & IN_JUMP
+            )
+            &&
+            // player pressed jump
+            (
+                clbuttons[Cl][0] & IN_JUMP
+            )
+            // they were on the ground when they pressed space
+            &&
+            (
+                flags & FL_ONGROUND
+            )
+        )
+        {
+            // increment bhops
+            bhopDetects[Cl]++;
+
+            // print to admins if halfway to getting banned - or halfway to default bhop amt ( 10 )
             if
             (
-                // player didn't press jump
-                !(
-                    clbuttons[Cl][0] & IN_JUMP
-                )
-                // player is on the ground
-                &&
                 (
-                    flags & FL_ONGROUND
+                    bhopDetects[Cl] >= RoundToFloor(maxBhopDetections / 2.0)
+                    &&
+                    !noban
                 )
-            )
-            // RESET COUNT!
-            {
-                // set to -1 to ignore single jumps, we ONLY want to count bhops
-                bhopDetects[Cl] = -1;
-                // count consecutive strings of bhops- a "consecutive string" is maxBhopDetectionsScaled or more
-                // bhopmult is for higher tickrate servers
-                if (isConsecStringOfBhops[Cl])
-                {
-                    bhopConsecDetects[Cl]++;
-                    isConsecStringOfBhops[Cl] = false;
-                    // print to admins if we get a consec detection
-                    // i don't want to ban legits who are REALLY fucking good at real bhopping, so I removed the consec ban code for now
-                    PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped consecutively {yellow}%i{mediumpurple} or more times{white}!\nDetections so far: {palegreen}%i", Cl, maxBhopDetectionsScaled, bhopConsecDetects[Cl]);
-                    StacLog("\n[StAC] Player %N bhopped consecutively %i or more times! Detections so far: %i", Cl, maxBhopDetectionsScaled, bhopConsecDetects[Cl]);
-                }
-            }
-            // if a client didn't trigger the reset conditions above, they bhopped
-            else if
-            (
-                // last input didn't have a jump - include to prevent legits holding spacebar from triggering detections
-                !(
-                    clbuttons[Cl][1] & IN_JUMP
-                )
-                &&
-                // player pressed jump
+                ||
                 (
-                    clbuttons[Cl][0] & IN_JUMP
-                )
-                // they were on the ground when they pressed space
-                &&
-                (
-                    flags & FL_ONGROUND
+                    bhopDetects[Cl] >= 5
+                    &&
+                    noban
                 )
             )
             {
-                // increment bhops
-                bhopDetects[Cl]++;
+                PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , Cl, bhopDetects[Cl]);
+                StacLog("\n[StAC] Player %N bhopped! Consecutive detections so far: %i" , Cl, bhopDetects[Cl]);
 
-                // print to admin if halfway to getting banned - or halfway to default bhop amt ( 10 on 66.6 tps )
-                if
-                (
-                    bhopDetects[Cl] >= RoundToFloor(maxBhopDetectionsScaled / 2.0)
-                )
+                if (bhopDetects[Cl] >= maxBhopDetections)
                 {
-                    PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , Cl, bhopDetects[Cl]);
-                    StacLog("\n[StAC] Player %N bhopped! Consecutive detections so far: %i" , Cl, bhopDetects[Cl]);
-                }
-
-                if (bhopDetects[Cl] >= maxBhopDetectionsScaled)
-                {
-                    isConsecStringOfBhops[Cl] = true;
+                    // punish on maxBhopDetections + 2 (for the extra TWO tick perfect bhops at 8x grav with no warning - no human can do this!)
+                    if
+                    (
+                        (bhopDetects[Cl] >= (maxBhopDetections + 2))
+                        &&
+                        !noban
+                    )
+                    {
+                        SetEntityGravity(Cl, 1.0);
+                        highGrav[Cl] = false;
+                        char reason[128];
+                        Format(reason, sizeof(reason), "%t", "bhopBanMsg", bhopDetects[Cl]);
+                        char pubreason[256];
+                        Format(pubreason, sizeof(pubreason), "%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
+                        BanUser(userid, reason, pubreason);
+                        return;
+                    }
 
                     // don't run antibhop if cvar is 0
                     if (maxBhopDetections > 0)
@@ -1633,18 +1650,27 @@ void bhopCheck(int userid)
                         highGrav[Cl] = true;
                     }
                 }
-                // punish on maxBhopDetectionsScaled + 2 (for the extra TWO tick perfect bhops at 8x grav with no warning - no human can do this!)
-                if (bhopDetects[Cl] >= (maxBhopDetectionsScaled + 2) && maxBhopDetections > 0)
-                {
-                    char reason[128];
-                    Format(reason, sizeof(reason), "%t", "bhopBanMsg", bhopDetects[Cl]);
-                    char pubreason[256];
-                    Format(pubreason, sizeof(pubreason), "%t", "bhopBanAllChat", Cl, bhopDetects[Cl]);
-                }
             }
+        }
+        else if
+        (
+            // player didn't press jump
+            !(
+                clbuttons[Cl][0] & IN_JUMP
+            )
+            // player is on the ground
+            &&
+            (
+                flags & FL_ONGROUND
+            )
+        )
+        {
+            // set to -1 to ignore single jumps, we ONLY want to count bhops
+            bhopDetects[Cl] = -1;
         }
     }
 }
+
 
 /*
     TURN BIND TEST
@@ -2023,8 +2049,8 @@ void psilentCheck(int userid)
         )
         {
             pSilentDetects[Cl]++;
-            // have this detection expire in 10 minutes
-            CreateTimer(600.0, Timer_decr_pSilent, userid, TIMER_FLAG_NO_MAPCHANGE);
+            // have this detection expire in 30 minutes
+            CreateTimer(1800.0, Timer_decr_pSilent, userid, TIMER_FLAG_NO_MAPCHANGE);
             // first detection is LIKELY bullshit
             if (pSilentDetects[Cl] > 0)
             {
@@ -2087,7 +2113,7 @@ void psilentCheck(int userid)
 void aimsnapCheck(int userid)
 {
     int Cl = GetClientOfUserId(userid);
-    if (maxAimsnapDetections != -1)
+    if (maxAimsnapDetections != -1 && !MVM)
     {
         float aDiff[4];
         aDiff[0] = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], clangles[Cl][1]));
@@ -2112,16 +2138,16 @@ void aimsnapCheck(int userid)
 
             int aDiffToUse = -1;
 
-            if
-            (
-                   aDiff[0] > snapsize
-                && aDiff[1] < noisesize
-                && aDiff[2] < noisesize
-                && aDiff[3] < noisesize
-            )
-            {
-                aDiffToUse = 0;
-            }
+            //if
+            //(
+            //       aDiff[0] > snapsize
+            //    && aDiff[1] < noisesize
+            //    && aDiff[2] < noisesize
+            //    && aDiff[3] < noisesize
+            //)
+            //{
+            //    aDiffToUse = 0;
+            //}
             if
             (
                    aDiff[0] < noisesize
@@ -2132,7 +2158,7 @@ void aimsnapCheck(int userid)
             {
                 aDiffToUse = 1;
             }
-            else if
+            if
             (
                    aDiff[0] < noisesize
                 && aDiff[1] < noisesize
@@ -2142,16 +2168,16 @@ void aimsnapCheck(int userid)
             {
                 aDiffToUse = 2;
             }
-            else if
-            (
-                   aDiff[0] < noisesize
-                && aDiff[1] < noisesize
-                && aDiff[2] < noisesize
-                && aDiff[3] > snapsize
-            )
-            {
-                aDiffToUse = 3;
-            }
+            //else if
+            //(
+            //       aDiff[0] < noisesize
+            //    && aDiff[1] < noisesize
+            //    && aDiff[2] < noisesize
+            //    && aDiff[3] > snapsize
+            //)
+            //{
+            //    aDiffToUse = 3;
+            //}
             // we got one!
             if (aDiffToUse > -1)
             {
@@ -2159,9 +2185,9 @@ void aimsnapCheck(int userid)
 
                 // increment aimsnap detects
                 aimsnapDetects[Cl]++;
-                // have this detection expire in 10 minutes
-                CreateTimer(600.0, Timer_decr_aimsnaps, userid, TIMER_FLAG_NO_MAPCHANGE);
-                // first detection is, likely bullshit - this is copied from smac but in my genuine experience it's also true, and i can't really tell you why
+                // have this detection expire in 30 minutes
+                CreateTimer(1800.0, Timer_decr_aimsnaps, userid, TIMER_FLAG_NO_MAPCHANGE);
+                // first detection is, likely bullshit
                 // because i don't fucking know
                 if (aimsnapDetects[Cl] > 0)
                 {
@@ -2302,25 +2328,22 @@ void triggerbotCheck(int userid)
                 attack == 1
                 &&
                 (
-                    // will eventually add checks for if the user hurt and bang'd last frame as well
                     (
-                        (
-                            didBangOnFrame[Cl][0]
-                            &&
-                            didHurtOnFrame[Cl][0]
-                        )
-                        ||
-                        (
-                            didBangOnFrame[Cl][1]
-                            &&
-                            didHurtOnFrame[Cl][1]
-                        )
-                        ||
-                        (
-                            didBangOnFrame[Cl][2]
-                            &&
-                            didHurtOnFrame[Cl][2]
-                        )
+                        didBangOnFrame[Cl][0]
+                        &&
+                        didHurtOnFrame[Cl][0]
+                    )
+                    ||
+                    (
+                        didBangOnFrame[Cl][1]
+                        &&
+                        didHurtOnFrame[Cl][1]
+                    )
+                    ||
+                    (
+                        didBangOnFrame[Cl][2]
+                        &&
+                        didHurtOnFrame[Cl][2]
                     )
                 )
                 ||
@@ -2340,8 +2363,8 @@ void triggerbotCheck(int userid)
         )
         {
             tbotDetects[Cl]++;
-            // have this detection expire in 10 minutes
-            CreateTimer(600.0, Timer_decr_tbot, userid, TIMER_FLAG_NO_MAPCHANGE);
+            // have this detection expire in 30 minutes
+            CreateTimer(1800.0, Timer_decr_tbot, userid, TIMER_FLAG_NO_MAPCHANGE);
 
             if (tbotDetects[Cl] > 0)
             {
@@ -2419,6 +2442,7 @@ void StacLogNetData(userid)
         outchoke,
         choke
     );
+    StacLog("Time since last 10 ticks: %f", engineTime[Cl][0] - engineTime[Cl][10]);
 }
 
 void StacLogMouse(int userid)
@@ -2610,6 +2634,8 @@ char cvarsToCheck[][] =
     "cl_interpolate",
     // this is a useless check but we check it anyway
     "fov_desired",
+    //
+    "cl_cmdrate",
 };
 
 public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
@@ -2675,17 +2701,16 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             }
         }
     }
-    // fov check #1 (if u get banned by this you are a clown)
+    // fov check #1 - if u get banned by this you are a clown
     else if (StrEqual(cvarName, "fov_desired"))
     {
-        // save fov to var to reset later with netpropcheck
-        fovDesired[Cl] = StringToInt(cvarValue);
+        int fovDesired = StringToInt(cvarValue);
         // check just in case
         if
         (
-            fovDesired[Cl] < 20
+            fovDesired < 20
             ||
-            fovDesired[Cl] > 90
+            fovDesired > 90
         )
         {
             if (banForMiscCheats)
@@ -2713,6 +2738,48 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             {
                 PrintToImportant("{hotpink}[StAC]{white} [Detection] Player %L is using fov cheats!", Cl);
                 StacLog("[StAC] [Detection] Player %L is using fov cheats!", Cl);
+            }
+        }
+    }
+    // fov check #1 - if u get banned by this you are a clown
+    else if (StrEqual(cvarName, "cl_cmdrate"))
+    {
+        if
+        (
+            StrEqual("-9999", cvarValue)
+            ||
+            StrEqual("-1", cvarValue)
+        )
+        {
+            char scmdrate[16];
+            // get actual value of cl cmdrate
+            GetClientInfo(Cl, "cl_cmdrate", scmdrate, sizeof(scmdrate));
+            if (!StrEqual(cvarValue, scmdrate))
+            {
+                StacLog("%N had cl_cmdrate value of %s, userinfo showed %s", Cl, cvarValue, scmdrate);
+                if (banForMiscCheats)
+                {
+                    char reason[128];
+                    Format(reason, sizeof(reason), "%t", "illegalCmdrateBanMsg");
+                    char pubreason[256];
+                    Format(pubreason, sizeof(pubreason), "%t", "illegalCmdrateBanAllChat", Cl);
+                    // we have to do extra bullshit here so we don't crash when banning clients out of this callback
+                    // make a pack
+                    DataPack pack = CreateDataPack();
+                    // prepare pack
+                    WritePackCell(pack, userid);
+                    WritePackString(pack, reason);
+                    WritePackString(pack, pubreason);
+                    ResetPack(pack, false);
+                    // make data timer
+                    CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
+                    return;
+                }
+                else
+                {
+                    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L has an illegal cmdrate value!", Cl);
+                    StacLog("[StAC] [Detection] Player %L has an illegal cmdrate value!", Cl);
+                }
             }
         }
     }
@@ -2768,7 +2835,26 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         }
         return Plugin_Stop;
     }
+    /*
+    // MEGA DEBUG
+    if (StrContains(sArgs, "steamdown", false) != -1)
+    {
+        Steam_SteamServersDisconnected();
+        SteamWorks_SteamServersDisconnected(view_as<EResult>(1));
+        LogMessage("steamdown!");
+    }
+    if (StrContains(sArgs, "steamup", false) != -1)
+    {
+        Steam_SteamServersConnected();
+        SteamWorks_SteamServersConnected();
+        LogMessage("steamup!");
+    }
 
+    if (StrContains(sArgs, "checksteam", false) != -1)
+    {
+        LogMessage("%i", shouldCheckAuth());
+    }
+    */
     return Plugin_Continue;
 }
 
@@ -2795,9 +2881,9 @@ public Action OnClientCommand(int Cl, int args)
             GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
         }
 
-        strcopy(lastCommandFor[Cl], 256, ClientCommandChar);
+        strcopy(lastCommandFor[Cl], sizeof(lastCommandFor[]), ClientCommandChar);
         timeSinceLastCommand[Cl] = engineTime[Cl][0];
-        
+
 
         // clean it up ( PROBABLY NOT NEEDED )
         // TrimString(ClientCommandChar);
@@ -2822,6 +2908,11 @@ public Action OnClientCommand(int Cl, int args)
 // cheats do this to fake their ping
 public void OnClientSettingsChanged(int Cl)
 {
+    CheckAndFixCmdrate(Cl);
+}
+
+void CheckAndFixCmdrate(int Cl)
+{
     // ignore invalid clients and dead / in spec clients
     if (!IsValidClient(Cl) || !IsClientPlaying(Cl) || !fixpingmasking)
     {
@@ -2837,7 +2928,7 @@ public void OnClientSettingsChanged(int Cl)
         StrEqual("demorestart", lastCommandFor[Cl])
     )
     {
-        LogMessage("ignoring demorestart settings change");
+        //StacLog("Ignoring demorestart settings change for %N", Cl);
         return;
     }
 
@@ -2847,7 +2938,7 @@ public void OnClientSettingsChanged(int Cl)
     // pingreduce check only works if you are using fixpingmasking!
     // buffer for cmdrate value
 
-    char scmdrate[4];
+    char scmdrate[16];
     // get actual value of cl cmdrate
     GetClientInfo(Cl, "cl_cmdrate", scmdrate, sizeof(scmdrate));
     // convert it to int
@@ -2892,14 +2983,15 @@ public void OnClientSettingsChanged(int Cl)
         );
         StacLog
         (
-            "[StAC] %N is suspected of ping-reducing or masking using a cheat.\nDetections so far: %i.\nCmdrate value: %i",
+            "[StAC] %N is suspected of ping-reducing or masking using a cheat.\nDetections so far: %i.\nCmdrate: %i\nUpdaterate: %i",
             Cl,
             cmdrateSpamDetects[Cl],
-            icmdrate
+            icmdrate,
+            iupdaterate
         );
-        if (cmdrateSpamDetects[Cl] % 25 == 0)
+        if (cmdrateSpamDetects[Cl] % 5 == 0)
         {
-            StacDetectionDiscordNotify(userid, "suspected of pingreducing using a cheat (badger steph lol)",cmdrateSpamDetects[Cl]);
+            StacDetectionDiscordNotify(userid, "cmdrate spam / ping modification", cmdrateSpamDetects[Cl]);
         }
 
         // BAN USER if they trigger too many detections
@@ -2924,7 +3016,7 @@ public void OnClientSettingsChanged(int Cl)
     )
     {
         SetClientInfo(Cl, "cl_cmdrate", sclamprate);
-        LogMessage("clamping cmdrate to %s", sclamprate);    
+        //LogMessage("clamping cmdrate to %s", sclamprate);
     }
 
     if
@@ -2937,16 +3029,14 @@ public void OnClientSettingsChanged(int Cl)
     )
     {
         SetClientInfo(Cl, "cl_updaterate", sclampupdaterate);
-        LogMessage("clamping updaterate to %s", sclampupdaterate);    
+        //LogMessage("clamping updaterate to %s", sclampupdaterate);
     }
-
-    
 }
 
 void UpdateRates()
 {
-    imincmdrate = GetConVarInt(FindConVar("sv_mincmdrate"));
-    imaxcmdrate = GetConVarInt(FindConVar("sv_maxcmdrate"));
+    imincmdrate    = GetConVarInt(FindConVar("sv_mincmdrate"));
+    imaxcmdrate    = GetConVarInt(FindConVar("sv_maxcmdrate"));
     iminupdaterate = GetConVarInt(FindConVar("sv_minupdaterate"));
     imaxupdaterate = GetConVarInt(FindConVar("sv_maxupdaterate"));
 
@@ -2981,6 +3071,7 @@ void NetPropEtcCheck(int userid)
         {
             StacLog("[StAC] Executed firstperson command on Player %N", Cl);
         }
+
         // lerp check - we check the netprop
         // don't check if not default tickrate
         if (isDefaultTickrate())
@@ -3143,10 +3234,13 @@ public void BanUser(int userid, char[] reason, char[] pubreason)
 {
     int Cl = GetClientOfUserId(userid);
 
+    // prevent double bans
     if (userBanQueued[Cl])
     {
+        KickClient(Cl, "Banned by StAC");
         return;
     }
+
     // make sure we dont detect on already banned players
     userBanQueued[Cl] = true;
 
@@ -3168,43 +3262,46 @@ public void BanUser(int userid, char[] reason, char[] pubreason)
             StacLog("[StAC] No STV demo is being recorded, no demo name will be printed to the ban reason!");
         }
     }
-
-    // ext ban handlers
-    if (SOURCEBANS || GBANS)
+    if (isAuthed)
     {
         if (SOURCEBANS)
         {
             SBPP_BanPlayer(0, Cl, 0, reason);
+            // there's no return value for that native, so we have to just assume it worked lol
+            return;
         }
         if (GBANS)
         {
             ServerCommand("gb_ban %i, 0, %s", userid, reason);
+            // there's no return value nor a native for gbans bans (YET), so we have to just assume it worked lol
+            return;
         }
-        // now lets check if that player was connected to steam
-        if
-        (
-            !isAuthed
-        )
+        // stock tf2, no ext ban system. if we somehow fail here, keep going.
+        if (BanClient(Cl, 0, BANFLAG_AUTO, reason, reason, _, _))
         {
-            PrintToImportant("{hotpink}[StAC]{white} Client %N is UNAUTHORIZED or STEAM IS DOWN!!! Banning by IP instead...", Cl);
-            StacLog("Client %N is UNAUTHORIZED or STEAM IS DOWN!!! Banning by IP instead...", Cl);
-            if (SOURCEBANS)
-            {
-                char ip[48];
-                GetClientIP(Cl, ip, sizeof(ip));
-                ServerCommand("sm_banip %s 0 %s", ip, reason);
-            }
-            else
-            {
-                BanClient(Cl, 0, BANFLAG_IP, reason, reason, _, _);
-            }
+            return;
         }
     }
-    // default
+    // if we got here steam is being fussy or the client is not auth'd in some way, or the stock tf2 ban failed somehow.
+    StacLog("Client %N is not authorized, steam is down, or the ban failed for some other reason. Attempting to ban with cached SteamID...", Cl);
+    // if this returns true, we can still ban the client with their steamid in a roundabout and annoying way.
+    if (!IsActuallyNullString(SteamAuthFor[Cl]))
+    {
+        ServerCommand("sm_addban 0 \"%s\" %s", SteamAuthFor[Cl], reason);
+        KickClient(Cl, "%s", reason);
+    }
+    // if the above returns false, we can only do ip :/
     else
     {
-        BanClient(Cl, 0, BANFLAG_AUTO, reason, reason, _, _);
+        char ip[16];
+        GetClientIP(Cl, ip, sizeof(ip));
+
+        StacLog("[StAC] No cached SteamID for %N! Banning with IP %s...", Cl, ip);
+        ServerCommand("sm_banip %s 0 %s", ip, reason);
+        // this kick client might not be needed - you get kicked by "being added to ban list"
+        KickClient(Cl, "%s", reason);
     }
+
     MC_PrintToChatAll("%s", pubreason);
     StacLog("%s", pubreason);
 }
@@ -3467,36 +3564,98 @@ void CPrintToSTV(const char[] format, any ...)
 
 any abs(any x)
 {
-   return x > 0 ? x : -x;
+    return x > 0 ? x : -x;
 }
 
-public void Steam_SteamServersConnected()
-{
-    isSteamAlive = 1;
-    StacLog("[Steamtools] Steam connected.");
-}
 public void Steam_SteamServersDisconnected()
 {
     isSteamAlive = 0;
     StacLog("[Steamtools] Steam disconnected.");
 }
 
-public void SteamWorks_SteamServersConnected()
+public void SteamWorks_SteamServersDisconnected(EResult result)
 {
-    StacLog("[SteamWorks] Steam connected.");
-    if (!STEAMTOOLS)
-    {
-        isSteamAlive = 1;
-    }
+    isSteamAlive = 0;
+    StacLog("[SteamWorks] Steam disconnected.");
 }
 
-public void SteamWorks_SteamServersDisconnected()
+public void Steam_SteamServersConnected()
 {
-    StacLog("[SteamWorks] Steam disconnected.");
-    if (!STEAMTOOLS)
+    setSteamOnline();
+    StacLog("[Steamtools] Steam connected.");
+}
+
+public void SteamWorks_SteamServersConnected()
+{
+    setSteamOnline();
+    StacLog("[SteamWorks] Steam connected.");
+}
+
+void setSteamOnline()
+{
+    isSteamAlive = 1;
+    steamLastOnlineTime = GetEngineTime();
+}
+
+// this will return false for 300 seconds after server start. just a heads up.
+bool isSteamStable()
+{
+    if (steamLastOnlineTime == 0.0 || isSteamAlive == -1)
     {
+        checkSteam();
+        return false;
+    }
+
+    StacLog("[StAC] GetEngineTime() - steamLastOnlineTime = %f >? 300.0", GetEngineTime() - steamLastOnlineTime);
+
+    // time since steam last came online must be greater than 300
+    if (GetEngineTime() - steamLastOnlineTime >= 300.0)
+    {
+        StacLog("steam stable!");
+        return true;
+    }
+    StacLog("steam went down too recently");
+    return false;
+}
+
+bool checkSteam()
+{
+    if (STEAMTOOLS)
+    {
+        if (Steam_IsConnected())
+        {
+            steamLastOnlineTime = GetEngineTime();
+            isSteamAlive = 1;
+            return true;
+        }
         isSteamAlive = 0;
     }
+    if (STEAMWORKS)
+    {
+        if (SteamWorks_IsConnected())
+        {
+            steamLastOnlineTime = GetEngineTime();
+            isSteamAlive = 1;
+            return true;
+        }
+        isSteamAlive = 0;
+    }
+    isSteamAlive = -1;
+    return false;
+}
+
+bool shouldCheckAuth()
+{
+    if
+    (
+        isSteamAlive == 1
+        &&
+        isSteamStable()
+    )
+    {
+        return true;
+    }
+    return false;
 }
 
 bool IsHalloweenCond(TFCond condition)
@@ -3574,11 +3733,20 @@ void StacDetectionDiscordNotify(int userid, char[] type, int detections)
     GetClientName(Cl, ClName, sizeof(ClName));
     Discord_EscapeString(ClName, sizeof(ClName));
     GetDemoName();
-    char steamid[64];
-    if (!GetClientAuthId(Cl, AuthId_SteamID64, steamid, sizeof(steamid)))
+    // we technically store the url in this so it has to be bigger
+    char steamid[96];
+    // ok we store these on client connect & auth, this shouldn't be null
+    if (!IsActuallyNullString(SteamAuthFor[Cl]))
+    {
+        // make this a clickable link in discord
+        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
+    }
+    // if it is, that means the plugin reloaded or steam is being fussy.
+    else
     {
         steamid = "N/A";
     }
+
     Format
     (
         msg,
@@ -3609,8 +3777,16 @@ void StacGeneralPlayerDiscordNotify(int userid, char[] message)
     GetClientName(Cl, ClName, sizeof(ClName));
     Discord_EscapeString(ClName, sizeof(ClName));
     GetDemoName();
-    char steamid[64];
-    if (!GetClientAuthId(Cl, AuthId_SteamID64, steamid, sizeof(steamid)))
+    // we technically store the url in this so it has to be bigger
+    char steamid[96];
+    // ok we store these on client connect & auth, this shouldn't be null
+    if (!IsActuallyNullString(SteamAuthFor[Cl]))
+    {
+        // make this a clickable link in discord
+        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
+    }
+    // if it is, that means the plugin reloaded or steam is being fussy.
+    else
     {
         steamid = "N/A";
     }
@@ -3670,13 +3846,11 @@ bool GetDemoName()
     {
         if (GetRegexSubString(demonameRegex, 0, demoname_etc, sizeof(demoname_etc)))
         {
-            LogMessage("demoname_etc %s", demoname_etc);
             TrimString(demoname_etc);
             if (MatchRegex(demonameRegexFINAL, demoname_etc) > 0)
             {
                 if (GetRegexSubString(demonameRegexFINAL, 0, demoname, sizeof(demoname)))
                 {
-                    LogMessage("demoname %s", demoname);
                     TrimString(demoname);
                     StripQuotes(demoname);
                     return true;
@@ -3731,4 +3905,13 @@ bool isTickcountInOrder(userid)
     }
     return false;
 }
-        
+
+// sourcemod is fucking ridiculous, "IsNullString" only checks for a specific definition of nullstring
+bool IsActuallyNullString(char[] somestring)
+{
+    if (somestring[0] != '\0')
+    {
+        return false;
+    }
+    return true;
+}
