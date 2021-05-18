@@ -23,7 +23,7 @@
 
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "4.5.0"
+#define PLUGIN_VERSION  "4.5.1"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -489,7 +489,7 @@ void initCvars()
     (
         "stac_max_tbot_detections",
         buffer,
-        "[StAC] maximum triggerbot detections before banning a client. \n(I HIGHLY RECOMMEND NOT AUTOBANNING - AKA LEAVING THIS CVAR AT 0 - WITH THIS CHECK!)",
+        "[StAC] maximum triggerbot detections before banning a client.\n(recommended 20+)",
         FCVAR_NONE,
         true,
         -1.0,

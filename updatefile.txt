@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "4.2.0"
+            "Latest"    "4.5.1"
         }
 
-        "Notes" "Changes in 4.2.0"
-        "Notes" "- Check the github!"
+        "Notes" "Changes in 4.5.1"
+        "Notes" "- Check the github - new detection methods!"
     }
 
     "Files"
