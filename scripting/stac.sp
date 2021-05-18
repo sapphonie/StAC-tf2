@@ -6,11 +6,12 @@
 #pragma newdecls required
 
 #include <sourcemod>
-#include <morecolors>
 #include <regex>
 #include <sdktools>
 #include <sdkhooks>
 #include <tf2_stocks>
+// external incs
+#include <morecolors>
 #include <autoexecconfig>
 #undef REQUIRE_PLUGIN
 #include <updater>
@@ -20,7 +21,9 @@
 #include <steamtools>
 #include <SteamWorks>
 
-#define PLUGIN_VERSION  "4.5.6b"
+#pragma newdecls required
+
+#define PLUGIN_VERSION  "4.5.0"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -760,7 +763,7 @@ void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newVa
     {
         if (StringToInt(newValue) != 0)
         {
-            //SetFailState("[StAC] sv_cheats set to 1! Aborting!");
+            SetFailState("[StAC] sv_cheats set to 1! Aborting!");
         }
     }
     if (convar == FindConVar("sv_allow_wait_command"))
@@ -799,7 +802,7 @@ public Action checkNativesEtc(Handle timer)
     // check sv cheats
     if (GetConVarBool(FindConVar("sv_cheats")))
     {
-        //SetFailState("[StAC] sv_cheats set to 1! Aborting!");
+        SetFailState("[StAC] sv_cheats set to 1! Aborting!");
     }
     // check wait command
     if (GetConVarBool(FindConVar("sv_allow_wait_command")))
@@ -2415,7 +2418,7 @@ void triggerbotCheck(int userid)
     }
 }
 
-void StacLogNetData(userid)
+void StacLogNetData(int userid)
 {
     int Cl          = GetClientOfUserId(userid);
     // convert to percentages
@@ -2481,7 +2484,7 @@ void StacLogMouse(int userid)
     );
 }
 
-StacLogAngles(int userid)
+void StacLogAngles(int userid)
 {
     int Cl = GetClientOfUserId(userid);
     StacLog
@@ -2507,7 +2510,7 @@ StacLogAngles(int userid)
     );
 }
 
-StacLogCmdnums(int userid)
+void StacLogCmdnums(int userid)
 {
     int Cl = GetClientOfUserId(userid);
     StacLog
@@ -2530,7 +2533,7 @@ StacLogCmdnums(int userid)
     );
 }
 
-StacLogTickcounts(int userid)
+void StacLogTickcounts(int userid)
 {
     int Cl = GetClientOfUserId(userid);
     StacLog
@@ -3871,7 +3874,7 @@ bool isDefaultTickrate()
     return false;
 }
 
-bool isCmdnumSequential(userid)
+bool isCmdnumSequential(int userid)
 {
     int Cl = GetClientOfUserId(userid);
     if
@@ -3888,7 +3891,7 @@ bool isCmdnumSequential(userid)
     return false;
 }
 
-bool isTickcountInOrder(userid)
+bool isTickcountInOrder(int userid)
 {
     int Cl = GetClientOfUserId(userid);
     if
