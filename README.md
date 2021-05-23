@@ -1,41 +1,3 @@
-# STEPH'S ANTICHEAT <span color=#FF69B4>[StAC]</span>
-
-## An Anti-Cheat SourceMod Plugin for Team Fortress 2
-
-### This plugin can currently prevent:
-- pSilentAim / NoRecoil cheats
-*(logs detections to admins / STV / file, bans on `stac_max_psilent_detections` detections, defaults to 15)*
-- plain aimsnap/aimbot cheats
-*(logs detections to admins / STV / file, bans on `stac_max_aimsnap_detections` detections, defaults to 25)*
-- bhop cheats and scripts
-*(logs detections to admins / STV, bans on `stac_max_bhop_detections` detections + 2 (defaults to 10)*
-
-Note: After a client does `stac_max_bhop_detections` tick perfect bhops (default 10), they will get "antibhopped". This will set their gravity to 8x and their velocity to 0. Cheating clients will get banned if they hold down their spacebar and successfully do 2 extra tick perfect bhops with 8x gravity, something that is functionally impossible for a human.
-
-- fake eye angle violations
-*(logs detections to admins / STV, bans on `stac_max_fakeang_detections` detections, defaults to 10)*
-- cmdnum spikes - used for lmaobox NoRecoil and other shenanigans
-*(logs detections to admins / STV, bans on `stac_max_cmdnum_detections` detections, defaults to 25)*
-- interp/lerp abuse (some detection methods only available on default tickrate servers)
-*(kick if outside of values you set with `stac_min_interp_ms` and `stac_max_interp_ms`)*
-- clients using turn binds (can severely fuck up hitboxes)
-*(kick if `stac_max_allowed_turn_secs` is set to a value <= 0)*
-- newlines in chat messages
-*(ban)*
-- NoLerp cheats
-*(ban)*
-- fov abuse > 90 || < 20
-*(fixes most cases, bans on blatant cvar changing)*
-- SOME third person cheats on clients
-*(fixes some cases)*
-- certain fake item schema violations - i.e. "ben cat hats" (cheat that ~~can unequip~~ used to unequip other people's hats)
-*(ban)*
-- certain fake item schema violations - i.e. "ben cat hats" (cheat that ~~can unequip~~ used to unequip other people's hats)
-*(ban)*
-
-## Where'd the "Illegal Characters In Name" ban method go?
-Long story short: it was subject to false positives. I tested this, and thought Steam sanitized names, but it appears to only do so in the friends ui name change section, and NOT on the steamcommunity.com website. Any bans that have been recorded with this ban method __should be removed__. I ***HIGHLY RECOMMEND*** using something like [JoinedSenses' RegexTriggers plugin](https://github.com/JoinedSenses/SM-Regex-Trigger) to sanitize names to only contain ASCII characters, not only to fix possible sql issues with mismatched character sets / collation AND possibly sql injection, but also to prevent cheaters from using newlines and other malicious characters. Doing so in StAC would be outside the scope of this plugin.
-
 
 # Steph's AntiCheat
 ### This plugin - "StAC" - and the ones bundled with it, can detect, log, patch, and punish for a majority of the cheats, macros, and unfair scripts available for Team Fortress 2, including:
@@ -91,4 +53,3 @@ LilAC: https://forums.alliedmods.net/showthread.php?t=321480
 SMAC: https://github.com/Silenci0/SMAC
 
 SSaC: Private. Thank you [AS] Nacho Replay, dog, and Miggy.
-
