@@ -30,48 +30,65 @@ Note: After a client does `stac_max_bhop_detections` tick perfect bhops (default
 *(fixes some cases)*
 - certain fake item schema violations - i.e. "ben cat hats" (cheat that ~~can unequip~~ used to unequip other people's hats)
 *(ban)*
+- certain fake item schema violations - i.e. "ben cat hats" (cheat that ~~can unequip~~ used to unequip other people's hats)
+*(ban)*
 
 ## Where'd the "Illegal Characters In Name" ban method go?
 Long story short: it was subject to false positives. I tested this, and thought Steam sanitized names, but it appears to only do so in the friends ui name change section, and NOT on the steamcommunity.com website. Any bans that have been recorded with this ban method __should be removed__. I ***HIGHLY RECOMMEND*** using something like [JoinedSenses' RegexTriggers plugin](https://github.com/JoinedSenses/SM-Regex-Trigger) to sanitize names to only contain ASCII characters, not only to fix possible sql issues with mismatched character sets / collation AND possibly sql injection, but also to prevent cheaters from using newlines and other malicious characters. Doing so in StAC would be outside the scope of this plugin.
 
-### Backtrack Fix by J_Tanz
-This repo includes the latest version of J_Tanzanite's (author of another popular anticheat, [LilAC](https://github.com/J-Tanzanite/Little-Anti-Cheat)) Backtrack Patch, available [here](https://github.com/J-Tanzanite/Backtrack-Patch). It is enabled by default, but to disable it, set `stac_optimize_cvars` to `0` and `jay_backtrack_enable` to `0`.
 
-### FixPingMasking by me
-Instead of kicking clients who may be accidentally or purposefully pingmasking, I wrote a plugin to patch it and force clients to properly use the server specified cmdrate. This plugin is entirely optional, but is available in this repo as "fixpingmasking.smx".
+# Steph's AntiCheat
+### This plugin - "StAC" - and the ones bundled with it, can detect, log, patch, and punish for a majority of the cheats, macros, and unfair scripts available for Team Fortress 2, including:
+- pSilentAim / NoRecoil / Angle Repeat cheats
+- Plain aimsnap / Aimbot cheats
+- Auto bhop cheats
+- Fake eye angle cheats
+- NoLerp cheats
+- Some FoV cheats
+- Spinbot cheats
+### It also prevents and/or detects:
+- Newlines/invalid characters in chat messages
+- Cmdnum manipulation (clientside nospread)
+- Tickcount manipulation (backtracking)
+- Interp/lerp abuse
+- Clients using +right/+left inputs
+- "Ping reducing" cheats (and patches "pingmasking" by legit clients as well)
+- Clients purposefully not authorizing with Steam
 
-### Attempted nospread fix
-This plugin currently reseeds the hl2 random seed at each map / tournament start and every 15 minutes to attempt to prevent possible nospread exploits by cheats guessing the server seed. This appears to work at least on NCC, but not lmaobox. Lmaobox is detected with cmdnum spikes, however.
+##
+I hate cheaters. Everyone does. But you know what I hate more? Taking the sweet time out of my day to catch them. A lot of TF2 cheats do a lot of the same things, and if you know what to look for, you can detect their patterns and ban them ***automatically***! Cool!
+Of course, StAC is serverside, so that means it sucks, right? Wrong! Of course, there's limitations to what this plugin can do. It **can't** scan the memory or programs on your computer, it **can't** see exactly what keys you're pressing on your keyboard, and players don't live inside the server room, so there's always the factor of **lag** and **loss**. But StAC is written so that it has as few false detections as possible. I would rather someone closet cheat, and not get banned, than have someone get falsely banned for cheating. No server admin wants to unban someone who wasn't cheating, and **no player wants to get banned when they weren't cheating**. This plugin is set up to be as easy to use and install as possible, and it's designed to work right. I've reverse engineered cheats, installed them myself (on an alt, don't worry!) and I've tested and refined this plugin over the course of years and thousands of hours of work. It also [runs on](https://sappho.io) [more community servers](https://creators.tf) [than you might think](https://gflclan.com/)!
+
+StAC is also fully configurable, and the current list of cvars is listed [here](cvars.md). The defaults should be good for most people, if you want to the plugin to autoban. If not, you can set any "detection" cvar to 0 to never ban, and to -1 to never even log or check in the first place.
 
 ### Installation & Configuration
-1) download latest version from [here](https://github.com/sapphonie/StAC-tf2/raw/master/plugins/stac.smx) to your `/tf/addons/sourcemod/plugins` folder
-2) download latest translation file from [here](https://github.com/sapphonie/StAC-tf2/raw/master/translations/stac.phrases.txt) to your `/tf/addons/sourcemod/translations` folder
+1) clone the repository from [here](https://github.com/sapphonie/StAC-tf2/archive/refs/heads/master.zip)
+2) drag the `translations`, `scripting`, and `plugins` folders into `/tf/addons/sourcemod/` on your tf2 server. Overwrite any files if prompted.
 3) restart your server
-4) wait 30 seconds
-5) edit `/tf/cfg/sourcemod/stac.cfg` to your liking. the recommended values are the default but feel free to change any of them to your liking. I personally use stricter values on my own servers.
+
+If you want to customize cvars,
+
+4) wait 30 seconds after doing the above
+5) edit `/tf/cfg/sourcemod/stac.cfg` to your liking
 6) restart your server again
 
 You should be good to go!
 
 ### Sourcebans
-This plugin is compatible with both SourceBans and the default TF2 ban handler, and auto detects which it should use. The plugin, by default, logs the currently recording demo (if one is recording) to the sourcebans ban message. To disable this, set `stac_include_demoname_in_sb` to `0`.
+This plugin is compatible with both SourceBans, gbans, and the default TF2 ban handler, and auto detects which it should use. The plugin, by default, logs the currently recording demo (if one is recording) to the sourcebans ban message. To disable this, set `stac_include_demoname_in_sb` to `0`.
 
 ### Logging
 This plugin logs (by default) to /tf/addons/sourcemod/logs/stac/stac_month_day_year.log. To disable this, set `stac_log_to_file` to `0`
 
 ### Disclaimers
-False positives are always a possibility! Feel free to submit a bug report if you can reproduce a way to trigger false positives.
+Though I wrote StAC to throw as few false positives as possible, I can't guarantee perfection. I also can't guarantee that everything will always work how it's supposed to. Please submit a bug report if you can reproduce a way to trigger false positives, or for any bug or feature request. If you're more comfortable talking to me personally about it, join the development discord for StAC here: https://discord.gg/tUGgCByZVJ
 
-### Todo (may not be possible):
-- break/ban for esp/wallhack shit (not thru painting but possibly with checking m_bGlowEnabled)
-- fix spy decloak exploit / other soundscript exploits (STILL in the works)
-- fix other sv pure stuff (flat / invisible textures)
-- fix sniper scope removal exploit
-- fix changing world visibility
 
-### Other AC plugins that I took inspiration from / lifted a few lines of code from - Check them out!
+### Other AC plugins that I took inspiration from / lifted a few lines of code from
 
 LilAC: https://forums.alliedmods.net/showthread.php?t=321480
 
 SMAC: https://github.com/Silenci0/SMAC
+
+SSaC: Private. Thank you [AS] Nacho Replay, dog, and Miggy.
 
