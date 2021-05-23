@@ -23,7 +23,7 @@
 
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.0.3a"
+#define PLUGIN_VERSION  "5.0.5a"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -86,9 +86,6 @@ float clpos                 [TFMAXPLAYERS+1][2][3];
 int clcmdnum                [TFMAXPLAYERS+1][6];
 // STORED tickcount PER CLIENT
 int cltickcount             [TFMAXPLAYERS+1][6];
-
-// STORED tickcount PER CLIENT
-int climpulse               [TFMAXPLAYERS+1];
 
 // MAX tickcount PER CLIENT [ for backtracking ]
 //int maxTickCountFor[TFMAXPLAYERS+1];
@@ -701,7 +698,7 @@ void initCvars()
     HookConVarChange(stac_max_cmdrate_spam_detections, stacVarChanged);
 
 
-    // fixpingmasking
+    // kick unauthed clients
     if (kickUnauth)
     {
         buffer = "1";
@@ -816,7 +813,7 @@ void setStacVars()
     // properly fix pingmasking
     fixpingmasking          = GetConVarBool(stac_fixpingmasking_enabled);
 
-    // properly fix pingmasking
+    // kick unauthed clients
     kickUnauth              = GetConVarBool(stac_kick_unauthed_clients);
 
 }
@@ -1641,9 +1638,8 @@ public Action OnPlayerRunCmd
     }
     clbuttons[Cl][0] = buttons;
 
+    // grab mouse
     clmouse[Cl] = mouse;
-
-    climpulse[Cl] = impulse;
 
     // grab position
     clpos[Cl][1] = clpos[Cl][0];
@@ -1660,7 +1656,6 @@ public Action OnPlayerRunCmd
     didBangOnFrame[Cl][1] = didBangOnFrame[Cl][0];
     didBangOnFrame[Cl][0] = didBangThisFrame[Cl];
     didBangThisFrame[Cl] = false;
-
 
     // detect trigger teleports
     if (GetVectorDistance(clpos[Cl][0], clpos[Cl][1], false) > 500)
