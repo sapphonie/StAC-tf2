@@ -48,9 +48,9 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: ls
-      id: ls
-      run: ls -la
+    - name: cd 
+      id: cd
+      run: cd ../ && ls
 
 
     - name: Upload Release Asset
