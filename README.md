@@ -1,5 +1,11 @@
-
 # Steph's AntiCheat
+
+[![Version](https://img.shields.io/github/v/release/sapphonie/StAC-TF2?color=98FB98&style=for-the-badge)](https://github.com/sapphonie/StAC-tf2/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/sapphonie/Stac-TF2/total?color=%239370D8&label=Downloads%20since%20v5&style=for-the-badge)](https://github.com/sapphonie/StAC-tf2/releases/latest)
+[![Dev discord](https://img.shields.io/badge/Dev%20discord-%23StAC-7289DA?style=for-the-badge&logo=discord)](https://discord.gg/tUGgCByZVJ)
+[![Donations](https://img.shields.io/badge/Support%20me-here!%20:\)-1F1F2A?style=for-the-badge)](https://sappho.io/donate)
+
+
 ### This plugin - "StAC" - and the ones bundled with it, can detect, log, patch, and punish for a majority of the cheats, macros, and unfair scripts available for Team Fortress 2, including:
 - pSilentAim / NoRecoil / Angle Repeat cheats
 - Plain aimsnap / Aimbot cheats
