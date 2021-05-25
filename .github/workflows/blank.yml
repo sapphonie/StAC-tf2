@@ -27,14 +27,12 @@ jobs:
     - name: Compile plugins
       run: cd ./scripting && pwd && find . -name "*.sp" -exec bash -c 'spcomp -i"./include/" "$0" -o ../plugins/$(basename "$0" .sp).smx' {} \;
 
-
     - name: Zip package
-      # the package generation should probably be part of the ninja script itself
       run: |
+        cd 
         mkdir build
-        pushd build
-        7za a -r stac.zip scripting/ plugins/ gamedata/
-        popd
+        7za a -r build/stac.zip scripting/ plugins/ gamedata/
+
     - name: Set Commit Hash
       id: commit_info
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
@@ -57,6 +55,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/package.zip
-        asset_name: package.zip
+        asset_path: ./build/stac.zip
+        asset_name: stac.zip
         asset_content_type: application/zip
