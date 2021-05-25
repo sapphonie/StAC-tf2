@@ -29,9 +29,8 @@ jobs:
 
     - name: Zip package
       run: |
-        cd 
         mkdir build
-        7za a -r build/package.zip scripting/ plugins/ gamedata/
+        7za a -r build/package.zip scripting/ plugins/ gamedata/ translations/
 
     - name: Set Commit Hash
       id: commit_info
