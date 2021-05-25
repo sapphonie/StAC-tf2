@@ -4,7 +4,7 @@ on:
   push:
     # you may need change this so it applies to the correct branch
     # at the moment the template uses 'master' as the default branch
-    branches: [ master ]
+    branches: [ autobuild ]
 
 jobs:
   run:
