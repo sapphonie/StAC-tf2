@@ -24,13 +24,21 @@ jobs:
       with:
         version: "1.10.x"
 
+    # this is just futureproofing lol
     - name: Compile plugins
-      run: cd ./scripting && pwd && find . -name "*.sp" -exec bash -c 'spcomp -i"./include/" "$0" -o ../plugins/$(basename "$0" .sp).smx' {} \;
+      run: |
+        cd ./scripting
+        pwd
+        find . -name "*.sp" -exec bash -c \
+        'spcomp -i"./include/" "$0" -o ../plugins/$(basename "$0" .sp).smx' {} +
+        ls -la
 
     - name: Zip package
       run: |
         mkdir build
         7za a -r build/package.zip scripting/ plugins/ gamedata/ translations/
+        ls -la
+        pwd
 
     - name: Set Commit Hash
       id: commit_info
