@@ -859,7 +859,9 @@ void RunOptimizeCvars()
     if (jay_backtrack_enable != null && jay_backtrack_tolerance != null)
     {
         // enable jaypatch
-        SetConVarInt(jay_backtrack_enable, 1);
+        //SetConVarInt(jay_backtrack_enable, 1);
+        // disable jaypatch for now
+        SetConVarInt(jay_backtrack_enable, 0);
         // clamp jaypatch to sane values
         SetConVarInt(jay_backtrack_tolerance, Math_Clamp(GetConVarInt(jay_backtrack_tolerance), 0, 1));
     }
@@ -873,6 +875,12 @@ void RunOptimizeCvars()
 // sm_stac_checkall
 Action ForceCheckAll(int callingCl, int args)
 {
+    ReplyToCommand(callingCl, "[StAC] Checking cvars on all clients.");
+
+    if (callingCl != 0)
+    {
+        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to force-check all cvars");
+    }
     QueryEverythingAllClients();
 }
 
@@ -887,6 +895,7 @@ Action ShowAllDetections(int callingCl, int args)
     char arg1[32];
     GetCmdArg(1, arg1, sizeof(arg1));
 
+    ReplyToCommand(callingCl, "[StAC] === Printing current detections ===");
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
         if (IsValidClient(Cl))
@@ -894,14 +903,14 @@ Action ShowAllDetections(int callingCl, int args)
             // we don't check everything because some checks are "in the moment" and can expire very quickly
             if
             (
-                   turnTimes               [Cl] >= 1
-                || fakeAngDetects          [Cl] >= 1
-                || aimsnapDetects          [Cl] >= 1
-                || pSilentDetects          [Cl] >= 1
-                || cmdnumSpikeDetects      [Cl] >= 1
-                || tbotDetects             [Cl] >= 1
-                || cmdrateSpamDetects      [Cl] >= 1
-                || backtrackDetects        [Cl] >= 1
+                   turnTimes               [Cl] > 0
+                || fakeAngDetects          [Cl] > 0
+                || aimsnapDetects          [Cl] > 0
+                || pSilentDetects          [Cl] > 0
+                || cmdnumSpikeDetects      [Cl] > 0
+                || tbotDetects             [Cl] > 0
+                || cmdrateSpamDetects      [Cl] > 0
+                || backtrackDetects        [Cl] > 0
             )
             {
                 PrintToConsole
@@ -928,7 +937,12 @@ Action ShowAllDetections(int callingCl, int args)
             }
         }
     }
-    StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to check StAC detections");
+    ReplyToCommand(callingCl, "[StAC] === End detections ===");
+
+    if (callingCl != 0)
+    {
+        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to check StAC detections");
+    }
 }
 
 // sm_stac_getauth  <client/s>
@@ -1010,9 +1024,14 @@ Action StacTargetCommand(int callingCl, int args)
                         LiveFeedOn[j] = false;
                     }
                 }
-                ReplyToCommand(callingCl, "[StAC] Toggled livefeed for \"%N\".", SteamAuthFor[Cl]);
+                ReplyToCommand(callingCl, "[StAC] Toggled livefeed for \"%N\".", Cl);
             }
         }
+    }
+
+    if (callingCl == 0)
+    {
+        return Plugin_Handled;
     }
 
     if (getauth)
@@ -1679,7 +1698,6 @@ public Action OnPlayerRunCmd
     {
         tickcount = maxTickCountFor[Cl];
     }
-
 
     // not really lag dependant check
     fakeangCheck(userid);
@@ -2587,9 +2605,16 @@ int backtrackFix(int userid, int tolerance = 1)
 {
     int Cl = GetClientOfUserId(userid);
     maxTickCountFor[Cl] = Math_Max(cltickcount[Cl][0], maxTickCountFor[Cl]);
-    if (!IsValidTickcount(Cl, tolerance))
+
+    if (cltickcount[Cl][0] == 0)
     {
-        if (isCmdnumSequential(userid) && clbuttons[Cl][0] & IN_ATTACK)
+        return maxTickCountFor[Cl];
+    }
+
+    int spikeamt = cltickcount[Cl][0] - cltickcount[Cl][1];
+    if (spikeamt < -tolerance && isCmdnumSequential(Cl))
+    {
+        if (clbuttons[Cl][0] & IN_ATTACK)
         {
             backtrackDetects[Cl]++;
             PrintToImportant("\
@@ -2601,10 +2626,12 @@ int backtrackFix(int userid, int tolerance = 1)
             StacLog("\
                 [StAC] Player %N {mediumpurple}tried to backtrack another client!\
                 \nDetections so far: %i\
+                \nSpike amt: %i\
                 \nTickcount: %i\
                 \nPrevious maximum tickcount: %i",
                 Cl,
                 backtrackDetects[Cl],
+                spikeamt,
                 cltickcount[Cl][0],
                 maxTickCountFor[Cl]
             );
@@ -2726,12 +2753,6 @@ bool isTickcountRepeated(int userid)
     return false;
 }
 
-// Returns if a tickcount is within the tolerance set - thanks Jtanz!
-bool IsValidTickcount(int Cl, int tolerance)
-{
-    return (abs((cltickcount[Cl][1] + 1) - cltickcount[Cl][0]) <= tolerance);
-}
-
 /********** StacLog functions **********/
 
 // Open log file for StAC
@@ -2808,11 +2829,6 @@ void StacLogNetData(int userid)
         \n %.2f kbps rate\
         \n %.2f pps rate\
         ",
-        Cl,
-        Cl,
-        GetClientUserId(Cl),
-        IsPlayerAlive(Cl) ? "alive" : "dead",
-        GetClientTime(Cl),
         pingFor[Cl],
         lossFor[Cl],
         inchokeFor[Cl],
