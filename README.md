@@ -89,6 +89,3 @@ SMAC: https://github.com/Silenci0/SMAC
 Blueberryy - Russian Translation
 
 KsGoesCoding - Danish Translation
-
-
-test
