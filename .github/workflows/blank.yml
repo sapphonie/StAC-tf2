@@ -31,7 +31,7 @@ jobs:
       run: |
         cd 
         mkdir build
-        7za a -r build/stac.zip scripting/ plugins/ gamedata/
+        7za a -r build/package.zip scripting/ plugins/ gamedata/
 
     - name: Set Commit Hash
       id: commit_info
@@ -48,6 +48,11 @@ jobs:
         draft: false
         prerelease: false
 
+    - name: ls
+      id: ls
+      run: ls -la
+
+
     - name: Upload Release Asset
       id: upload-release-asset
       uses: actions/upload-release-asset@v1
@@ -55,6 +60,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/stac.zip
-        asset_name: stac.zip
+        asset_path: ./build/package.zip
+        asset_name: package.zip
         asset_content_type: application/zip
