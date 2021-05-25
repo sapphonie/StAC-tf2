@@ -1,7 +1,7 @@
 // see the readme for more info:
-// https://github.com/stephanieLGBT/StAC-tf2/blob/master/README.md
-// written by steph, chloe, and liza
-// i love my partners
+// https://github.com/sapphonie/StAC-tf2/blob/master/README.md
+// written by steph&
+
 #pragma semicolon 1
 #pragma newdecls required
 
@@ -21,9 +21,10 @@
 #include <steamtools>
 #include <SteamWorks>
 
+// we have to re pragma because sourcemod sucks lol
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.0.5a"
+#define PLUGIN_VERSION  "5.1.0a"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -31,135 +32,22 @@ public Plugin myinfo =
 {
     name             =  "Steph's AntiCheat (StAC)",
     author           =  "steph&nie",
-    description      =  "Anticheat plugin [tf2 only] written by Stephanie. Originally forked from IntegriTF2 by Miggy (RIP)",
+    description      =  "TF2 AntiCheat plugin written by Stephanie. Originally forked from IntegriTF2 by Miggy (RIP)",
     version          =   PLUGIN_VERSION,
     url              =  "https://sappho.io"
 }
 
+// we don't need 64 maxplayers because this is only for tf2. saves some memory.
 #define TFMAXPLAYERS 33
 
-// TIMER HANDLES
-Handle QueryTimer           [TFMAXPLAYERS+1];
-Handle TriggerTimedStuffTimer;
+/********** GLOBAL VARS **********/
 
-// hud sync handles
-Handle HudSyncRunCmd;
-Handle HudSyncRunCmdMisc;
-Handle HudSyncNetwork;
-
-bool LiveFeedOn             [TFMAXPLAYERS+1];
-
-float steamLastOnlineTime;
-// TPS INFO
-float tickinterv;
-float tps;
-// DETECTIONS PER CLIENT
-int turnTimes               [TFMAXPLAYERS+1];
-int fakeAngDetects          [TFMAXPLAYERS+1];
-int aimsnapDetects          [TFMAXPLAYERS+1] = -1; // set to -1 to ignore first detections, as theyre most likely junk
-int pSilentDetects          [TFMAXPLAYERS+1] = -1; // ^
-int bhopDetects             [TFMAXPLAYERS+1] = -1; // set to -1 to ignore single jumps
-int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
-int tbotDetects             [TFMAXPLAYERS+1] = -1;
-int spinbotDetects          [TFMAXPLAYERS+1];
-int fakeChokeDetects        [TFMAXPLAYERS+1];
-int cmdrateSpamDetects      [TFMAXPLAYERS+1];
-//int backtrackDetects      [TFMAXPLAYERS+1];
-
-bool waitStatus;
-
-// TIME SINCE LAST ACTION PER CLIENT
-float timeSinceSpawn        [TFMAXPLAYERS+1];
-float timeSinceTaunt        [TFMAXPLAYERS+1];
-float timeSinceTeled        [TFMAXPLAYERS+1];
-float timeSinceNullCmd      [TFMAXPLAYERS+1];
-// STORED ANGLES PER CLIENT -
-// we want the last 5 angles, including roll
-float clangles              [TFMAXPLAYERS+1][5][3];
-
-// we only need the last 3 angles, and we dont need roll
-float fuzzyClangles         [TFMAXPLAYERS+1][3][2];
-
-// STORED POS PER CLIENT - we want the current and last position (which is a vector) of the client
-float clpos                 [TFMAXPLAYERS+1][2][3];
-// STORED cmdnum PER CLIENT
-int clcmdnum                [TFMAXPLAYERS+1][6];
-// STORED tickcount PER CLIENT
-int cltickcount             [TFMAXPLAYERS+1][6];
-
-// MAX tickcount PER CLIENT [ for backtracking ]
-//int maxTickCountFor[TFMAXPLAYERS+1];
-
-// STORED BUTTONS PER CLIENT
-int clbuttons               [TFMAXPLAYERS+1][6];
-// STORED MOUSE PER CLIENT
-int clmouse                 [TFMAXPLAYERS+1][2];
-
-float calcCmdrateFor        [TFMAXPLAYERS+1];
-// STORED GRAVITY STATE PER CLIENT
-bool highGrav               [TFMAXPLAYERS+1];
-// STORED MISC VARS PER CLIENT
-bool playerTaunting         [TFMAXPLAYERS+1];
-int playerInBadCond         [TFMAXPLAYERS+1];
-bool userBanQueued          [TFMAXPLAYERS+1];
-// STORED SENS PER CLIENT
-float sensFor               [TFMAXPLAYERS+1];
-// get last 11 ticks
-float engineTime            [TFMAXPLAYERS+1][11];
-// time since the map started (duh)
-float timeSinceMapStart;
-// time since the last lag spike occurred
-float timeSinceLagSpike;
-// weapon name, gets passed to aimsnap check
-char hurtWeapon             [TFMAXPLAYERS+1][256];
-// time since player did damage, for aimsnap check
-bool didBangOnFrame         [TFMAXPLAYERS+1][3];
-bool didHurtOnFrame         [TFMAXPLAYERS+1][3];
-
-char SteamAuthFor           [TFMAXPLAYERS+1][64];
-
-// time since player did damage, for aimsnap check
-bool didBangThisFrame       [TFMAXPLAYERS+1];
-bool didHurtThisFrame       [TFMAXPLAYERS+1];
-
-// for fakechoke
-int lastChokeAmt            [TFMAXPLAYERS+1];
-int lastChokeCmdnum         [TFMAXPLAYERS+1];
-
-// network info
-
-float lossFor               [TFMAXPLAYERS+1];
-float chokeFor              [TFMAXPLAYERS+1];
-float inchokeFor            [TFMAXPLAYERS+1];
-float outchokeFor           [TFMAXPLAYERS+1];
-float pingFor               [TFMAXPLAYERS+1];
-float rateFor               [TFMAXPLAYERS+1];
-float ppsFor                [TFMAXPLAYERS+1];
-
-char hostname[64];
-char hostipandport[24];
-
-int imaxcmdrate;
-int imincmdrate;
-int imaxupdaterate;
-int iminupdaterate;
-
-
-// NATIVE BOOLS
-bool SOURCEBANS;
-bool GBANS;
-bool STEAMTOOLS;
-bool STEAMWORKS;
-bool AIMPLOTTER;
-bool DISCORD;
-
+/***** Discord Json *****/
 char detectionTemplate[1024] = "{ \"embeds\": [ { \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Detection type\", \"value\": \"%s\" }, { \"name\": \"Detection\", \"value\": \"%i\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
 
 char generalTemplate[1024] = "{ \"embeds\": [ { \"title\": \"StAC Message\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Message\", \"value\": \"%s\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
 
-// are we in MVM
-bool MVM;
-// CVARS
+/***** Cvar Handles *****/
 ConVar stac_enabled;
 ConVar stac_verbose_info;
 ConVar stac_max_allowed_turn_secs;
@@ -182,55 +70,168 @@ ConVar stac_log_to_file;
 ConVar stac_fixpingmasking_enabled;
 ConVar stac_kick_unauthed_clients;
 
-// VARIOUS DETECTION BOUNDS & CVAR VALUES
-bool DEBUG                  = false;
-float maxAllowedTurnSecs    = -1.0;
-bool banForMiscCheats       = true;
-bool optimizeCvars          = true;
-
-int maxAimsnapDetections    = 20;
-int maxPsilentDetections    = 10;
-int maxFakeAngDetections    = 10;
-int maxBhopDetections       = 10;
-int maxCmdnumDetections     = 20;
-int maxTbotDetections       = 0;
-int maxSpinbotDetections    = 50;
-int maxCmdrateSpamDetects   = 25;
-
-// interp limits
-int min_interp_ms           = -1;
-int max_interp_ms           = 101;
-// RANDOM CVARS CHECK MIN/MAX BOUNDS (in seconds)
-float minRandCheckVal       = 60.0;
-float maxRandCheckVal       = 300.0;
-// put demoname in sourcebans / gbans?
-bool demonameInBanReason    = true;
-// log to file?
-bool logtofile              = true;
-// fix pingmasking? required for pingreduce check
-bool fixpingmasking         = true;
+/***** Misc cheat defaults *****/
+// verbose mode
+bool DEBUG                      = false;
+// interp
+int min_interp_ms               = -1;
+int max_interp_ms               = 101;
+// random misccheats check (in secs)
+float minRandCheckVal           = 60.0;
+float maxRandCheckVal           = 300.0;
+// demoname in sourcebans / gbans?
+bool demonameInBanReason        = true;
+// log to file
+bool logtofile                  = true;
+// fix pingmasking - required for pingreduce check
+bool fixpingmasking             = true;
 // bool that gets set by steamtools/steamworks forwards - used to kick clients that dont auth
-int isSteamAlive            = -1;
-bool kickUnauth             = true;
+int isSteamAlive                = -1;
+bool kickUnauth                 = true;
+float maxAllowedTurnSecs        = -1.0;
+bool banForMiscCheats           = true;
+bool optimizeCvars              = true;
 
-// current recording demoname
+/***** Detection based cheat defaults *****/
+int maxAimsnapDetections        = 20;
+int maxPsilentDetections        = 10;
+int maxFakeAngDetections        = 10;
+int maxBhopDetections           = 10;
+int maxCmdnumDetections         = 20;
+int maxTbotDetections           = 0;
+int maxSpinbotDetections        = 50;
+int maxCmdrateSpamDetections    = 25;
+
+/***** Server based stuff *****/
+
+// tickrate stuff
+float tickinterv;
+float tps;
+
+// approx calculated server tickrate
+float smoothedTPS;
+// time to wait after server "stutters"
+float stutterWaitLength = 5.0;
+
+// misc server info
+char hostname[64];
+char hostipandport[24];
 char demoname[128];
 
-// server tickrate stuff
-float gameEngineTime[2];
-float realTPS[2];
-float smoothedTPS;
+// server cvar values
+bool waitStatus;
+int imaxcmdrate;
+int imincmdrate;
+int imaxupdaterate;
+int iminupdaterate;
+
+// time since some server event happened
+// last time steam came online
+float steamLastOnlineTime;
+// time since the map started
+float timeSinceMapStart;
+// time since the last server stutter occurred
+float timeSinceLagSpike;
+
+// native/gamemode/plugin etc bools
+bool SOURCEBANS;
+bool GBANS;
+bool STEAMTOOLS;
+bool STEAMWORKS;
+bool AIMPLOTTER;
+bool DISCORD;
+bool MVM;
+
+/***** client based stuff *****/
+
+// cheat detections per client
+int turnTimes               [TFMAXPLAYERS+1];
+int fakeAngDetects          [TFMAXPLAYERS+1];
+int aimsnapDetects          [TFMAXPLAYERS+1] = -1; // set to -1 to ignore first detections, as theyre most likely junk
+int pSilentDetects          [TFMAXPLAYERS+1] = -1; // ^
+int bhopDetects             [TFMAXPLAYERS+1] = -1; // set to -1 to ignore single jumps
+int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
+int tbotDetects             [TFMAXPLAYERS+1] = -1;
+int spinbotDetects          [TFMAXPLAYERS+1];
+int fakeChokeDetects        [TFMAXPLAYERS+1];
+int cmdrateSpamDetects      [TFMAXPLAYERS+1];
+int backtrackDetects        [TFMAXPLAYERS+1];
+
+// frames since client "did something"
+//                          [ client index ][history]
+float timeSinceSpawn        [TFMAXPLAYERS+1];
+float timeSinceTaunt        [TFMAXPLAYERS+1];
+float timeSinceTeled        [TFMAXPLAYERS+1];
+float timeSinceNullCmd      [TFMAXPLAYERS+1];
+float timeSinceLastCommand  [TFMAXPLAYERS+1];
+// ticks since client "did something"
+//                          [ client index ][history]
+bool didBangOnFrame         [TFMAXPLAYERS+1][3];
+bool didHurtOnFrame         [TFMAXPLAYERS+1][3];
+bool didBangThisFrame       [TFMAXPLAYERS+1];
+bool didHurtThisFrame       [TFMAXPLAYERS+1];
+
+// OnPlayerRunCmd vars      [ client index ][history][ang/pos]
+float clangles              [TFMAXPLAYERS+1][5][3];
+int   clcmdnum              [TFMAXPLAYERS+1][6];
+int   cltickcount           [TFMAXPLAYERS+1][6];
+int   clbuttons             [TFMAXPLAYERS+1][6];
+int   clmouse               [TFMAXPLAYERS+1][2];
+// OnPlayerRunCmd misc
+float engineTime            [TFMAXPLAYERS+1][11];
+float fuzzyClangles         [TFMAXPLAYERS+1][3][2];
+float clpos                 [TFMAXPLAYERS+1][2][3];
+int   maxTickCountFor       [TFMAXPLAYERS+1];
+// fakechoke
+int lastChokeAmt            [TFMAXPLAYERS+1];
+int lastChokeCmdnum         [TFMAXPLAYERS+1];
+
+// Misc stuff per client    [ client index ][char size]
+char SteamAuthFor           [TFMAXPLAYERS+1][64];
+
+bool highGrav               [TFMAXPLAYERS+1];
+bool playerTaunting         [TFMAXPLAYERS+1];
+int playerInBadCond         [TFMAXPLAYERS+1];
+bool userBanQueued          [TFMAXPLAYERS+1];
+float sensFor               [TFMAXPLAYERS+1];
+// weapon name, gets passed to aimsnap check
+char hurtWeapon             [TFMAXPLAYERS+1][256];
+char lastCommandFor         [TFMAXPLAYERS+1][256];
+bool LiveFeedOn             [TFMAXPLAYERS+1];
+
+// network info
+float lossFor               [TFMAXPLAYERS+1];
+float chokeFor              [TFMAXPLAYERS+1];
+float inchokeFor            [TFMAXPLAYERS+1];
+float outchokeFor           [TFMAXPLAYERS+1];
+float pingFor               [TFMAXPLAYERS+1];
+float rateFor               [TFMAXPLAYERS+1];
+float ppsFor                [TFMAXPLAYERS+1];
+// approx calculated cmdrate for client
+float calcCmdrateFor        [TFMAXPLAYERS+1];
+
+/***** Misc other handles *****/
 
 // Log file
 File StacLogFile;
 
-// REGEX
+// regex for getting demoname and server pub ip
 Regex demonameRegex;
 Regex demonameRegexFINAL;
 Regex publicIPRegex;
 Regex IPRegex;
 
-float spinDiff[TFMAXPLAYERS+1][2];
+// hud sync handles for livefeed
+Handle HudSyncRunCmd;
+Handle HudSyncRunCmdMisc;
+Handle HudSyncNetwork;
+
+// Timer handles
+Handle QueryTimer           [TFMAXPLAYERS+1];
+Handle TriggerTimedStuffTimer;
+
+
+/********** PLUGIN LOAD & UNLOAD **********/
 
 public void OnPluginStart()
 {
@@ -246,27 +247,21 @@ public void OnPluginStart()
     }
 
     LoadTranslations("common.phrases");
+    LoadTranslations("stac.phrases.txt");
 
     // updater
     if (LibraryExists("updater"))
     {
         Updater_AddPlugin(UPDATE_URL);
     }
-    // open log
-    OpenStacLog();
 
     // reg admin commands
     // TODO: make these invisible for non admins
-    RegAdminCmd("sm_stac_checkall", ForceCheckAll,    ADMFLAG_GENERIC, "Force check all client convars (ALL CLIENTS) for anticheat stuff");
-    RegAdminCmd("sm_stac_detections", ShowDetections, ADMFLAG_GENERIC, "Show all current detections on all connected clients");
-    RegAdminCmd("sm_stac_getauth", GetAuth,           ADMFLAG_GENERIC, "Print StAC's cached auth for a client");
-    RegAdminCmd("sm_stac_livefeed", LiveFeed,         ADMFLAG_GENERIC, "Show live feed (debug info etc) for a client. This gets printed to SourceTV if available.");
-    RegAdminCmd("sm_livefeed",      LiveFeed,         ADMFLAG_GENERIC, "Show live feed (debug info etc) for a client. This gets printed to SourceTV if available.");
+    RegAdminCmd("sm_stac_checkall", ForceCheckAll,          ADMFLAG_GENERIC, "Force check all client convars (ALL CLIENTS) for anticheat stuff");
+    RegAdminCmd("sm_stac_detections", ShowAllDetections,    ADMFLAG_GENERIC, "Show all current detections on all connected clients");
+    RegAdminCmd("sm_stac_getauth", StacTargetCommand,       ADMFLAG_GENERIC, "Print StAC's cached auth for a client");
+    RegAdminCmd("sm_stac_livefeed", StacTargetCommand,      ADMFLAG_GENERIC, "Show live feed (debug info etc) for a client. This gets printed to SourceTV if available.");
 
-    // get tick interval - some modded tf2 servers run at >66.7 tick!
-    tickinterv = GetTickInterval();
-    // reset random server seed
-    ActuallySetRandomSeed();
 
     // setup regex - "Recording to ".*""
     demonameRegex       = CompileRegex("Recording to \".*\"");
@@ -278,31 +273,26 @@ public void OnPluginStart()
     HookEvent("teamplay_round_start", eRoundStart);
     // grab player spawns
     HookEvent("player_spawn", ePlayerSpawned);
-
+    // hook real player disconnects
     HookEvent("player_disconnect", ePlayerDisconnect);
-
-    // check EVERYONE's cvars on plugin reload
-    CreateTimer(0.5, checkEveryone);
 
     // hook sv_cheats so we can instantly unload if cheats get turned on
     HookConVarChange(FindConVar("sv_cheats"), GenericCvarChanged);
-    // hook wait for tbot
+    // hook wait command status for tbot
     HookConVarChange(FindConVar("sv_allow_wait_command"), GenericCvarChanged);
-
     // hook these for pingmasking stuff
-    HookConVarChange(FindConVar("sv_mincmdrate"), RateChange);
-    HookConVarChange(FindConVar("sv_maxcmdrate"), RateChange);
-    HookConVarChange(FindConVar("sv_minupdaterate"), RateChange);
-    HookConVarChange(FindConVar("sv_maxupdaterate"), RateChange);
+    HookConVarChange(FindConVar("sv_mincmdrate"), UpdateRates);
+    HookConVarChange(FindConVar("sv_maxcmdrate"), UpdateRates);
+    HookConVarChange(FindConVar("sv_minupdaterate"), UpdateRates);
+    HookConVarChange(FindConVar("sv_maxupdaterate"), UpdateRates);
 
-    UpdateRates();
+    // make sure we get the actual values on plugin load in our plugin vars
+    UpdateRates(null, "", "");
 
-    // Create ConVars for adjusting settings
+    // Create Stac ConVars for adjusting settings
     initCvars();
-    // load translations
-    LoadTranslations("stac.phrases.txt");
 
-    // reset all client based vars on plugin reload
+    // redo all client based stuff on plugin reload
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
         if (IsValidClientOrBot(Cl))
@@ -311,26 +301,33 @@ public void OnPluginStart()
         }
     }
 
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
-    {
-        delete QueryTimer[Cl];
-    }
-
-    CreateTimer(0.5, timer_GetNetInfo, _, TIMER_REPEAT);
-
-    timeSinceMapStart = GetEngineTime();
+    // hook bullets fired for aimsnap and triggerbot
     AddTempEntHook("Fire Bullets", Hook_TEFireBullets);
 
-    HudSyncRunCmd = CreateHudSynchronizer();
-    HudSyncRunCmdMisc = CreateHudSynchronizer();
-    HudSyncNetwork = CreateHudSynchronizer();
+    // check everyone's cvars on plugin reload
+    CreateTimer(0.5, checkEveryone);
+    // create global timer running every half second for getting all clients' network info
+    CreateTimer(0.5, Timer_GetNetInfo, _, TIMER_REPEAT);
+
+    // init hud sync stuff for livefeed
+    HudSyncRunCmd       = CreateHudSynchronizer();
+    HudSyncRunCmdMisc   = CreateHudSynchronizer();
+    HudSyncNetwork      = CreateHudSynchronizer();
 
     StacLog("[StAC] Plugin vers. ---- %s ---- loaded", PLUGIN_VERSION);
 }
 
+public void OnPluginEnd()
+{
+    StacLog("[StAC] Plugin vers. ---- %s ---- unloaded", PLUGIN_VERSION);
+    NukeTimers();
+    OnMapEnd();
+}
+
+/********** CONVAR RELATED STUFF **********/
+
 void initCvars()
 {
-
     AutoExecConfig_SetFile("stac");
     AutoExecConfig_SetCreateFile(true);
 
@@ -349,7 +346,7 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_enabled, stacVarChanged);
+    HookConVarChange(stac_enabled, setStacVars);
 
     // verbose mode
     if (DEBUG)
@@ -372,7 +369,7 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_verbose_info, stacVarChanged);
+    HookConVarChange(stac_verbose_info, setStacVars);
 
     // turn seconds
     FloatToString(maxAllowedTurnSecs, buffer, sizeof(buffer));
@@ -388,7 +385,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_allowed_turn_secs, stacVarChanged);
+    HookConVarChange(stac_max_allowed_turn_secs, setStacVars);
 
     // cheatvars ban bool
     if (banForMiscCheats)
@@ -411,7 +408,7 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_ban_for_misccheats, stacVarChanged);
+    HookConVarChange(stac_ban_for_misccheats, setStacVars);
 
     // cheatvars ban bool
     if (optimizeCvars)
@@ -434,7 +431,7 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_optimize_cvars, stacVarChanged);
+    HookConVarChange(stac_optimize_cvars, setStacVars);
 
     // aimsnap detections
     IntToString(maxAimsnapDetections, buffer, sizeof(buffer));
@@ -450,7 +447,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_aimsnap_detections, stacVarChanged);
+    HookConVarChange(stac_max_aimsnap_detections, setStacVars);
 
     // psilent detections
     IntToString(maxPsilentDetections, buffer, sizeof(buffer));
@@ -466,7 +463,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_psilent_detections, stacVarChanged);
+    HookConVarChange(stac_max_psilent_detections, setStacVars);
 
     // bhop detections
     IntToString(maxBhopDetections, buffer, sizeof(buffer));
@@ -482,7 +479,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_bhop_detections, stacVarChanged);
+    HookConVarChange(stac_max_bhop_detections, setStacVars);
 
     // fakeang detections
     IntToString(maxFakeAngDetections, buffer, sizeof(buffer));
@@ -498,7 +495,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_fakeang_detections, stacVarChanged);
+    HookConVarChange(stac_max_fakeang_detections, setStacVars);
 
     // cmdnum spike detections
     IntToString(maxCmdnumDetections, buffer, sizeof(buffer));
@@ -514,7 +511,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_cmdnum_detections, stacVarChanged);
+    HookConVarChange(stac_max_cmdnum_detections, setStacVars);
 
     // triggerbot detections
     IntToString(maxTbotDetections, buffer, sizeof(buffer));
@@ -530,7 +527,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_tbot_detections, stacVarChanged);
+    HookConVarChange(stac_max_tbot_detections, setStacVars);
 
     // spinbot detections
     IntToString(maxSpinbotDetections, buffer, sizeof(buffer));
@@ -546,7 +543,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_spinbot_detections, stacVarChanged);
+    HookConVarChange(stac_max_spinbot_detections, setStacVars);
 
     // min interp
     IntToString(min_interp_ms, buffer, sizeof(buffer));
@@ -562,7 +559,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_min_interp_ms, stacVarChanged);
+    HookConVarChange(stac_min_interp_ms, setStacVars);
 
     // min interp
     IntToString(max_interp_ms, buffer, sizeof(buffer));
@@ -578,7 +575,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_interp_ms, stacVarChanged);
+    HookConVarChange(stac_max_interp_ms, setStacVars);
 
     // min random check secs
     FloatToString(minRandCheckVal, buffer, sizeof(buffer));
@@ -594,7 +591,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_min_randomcheck_secs, stacVarChanged);
+    HookConVarChange(stac_min_randomcheck_secs, setStacVars);
 
     // min random check secs
     FloatToString(maxRandCheckVal, buffer, sizeof(buffer));
@@ -610,7 +607,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_randomcheck_secs, stacVarChanged);
+    HookConVarChange(stac_max_randomcheck_secs, setStacVars);
 
     // demoname in ban reason
     if (demonameInBanReason)
@@ -633,7 +630,7 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_include_demoname_in_banreason, stacVarChanged);
+    HookConVarChange(stac_include_demoname_in_banreason, setStacVars);
 
     // log to file
     if (logtofile)
@@ -656,7 +653,7 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_log_to_file, stacVarChanged);
+    HookConVarChange(stac_log_to_file, setStacVars);
 
     // fixpingmasking
     if (fixpingmasking)
@@ -679,10 +676,10 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_fixpingmasking_enabled, stacVarChanged);
+    HookConVarChange(stac_fixpingmasking_enabled, setStacVars);
 
     // pingreduce
-    IntToString(maxCmdrateSpamDetects, buffer, sizeof(buffer));
+    IntToString(maxCmdrateSpamDetections, buffer, sizeof(buffer));
     stac_max_cmdrate_spam_detections =
     AutoExecConfig_CreateConVar
     (
@@ -695,7 +692,7 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_cmdrate_spam_detections, stacVarChanged);
+    HookConVarChange(stac_max_cmdrate_spam_detections, setStacVars);
 
 
     // kick unauthed clients
@@ -719,22 +716,17 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_kick_unauthed_clients, stacVarChanged);
+    HookConVarChange(stac_kick_unauthed_clients, setStacVars);
 
     // actually exec the cfg after initing cvars lol
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
-    setStacVars();
+    setStacVars(null, "", "");
 }
 
-void stacVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
 {
     // this regrabs all cvar values but it's neater than having two similar functions that do the same thing
-    setStacVars();
-}
-
-void setStacVars()
-{
     // now covers late loads
 
     // enabled var
@@ -785,7 +777,7 @@ void setStacVars()
     maxSpinbotDetections    = GetConVarInt(stac_max_spinbot_detections);
 
     // max ping reduce detections - clamp to -1 if 0
-    maxCmdrateSpamDetects   = GetConVarInt(stac_max_cmdrate_spam_detections);
+    maxCmdrateSpamDetections   = GetConVarInt(stac_max_cmdrate_spam_detections);
 
     // minterp var - clamp to -1 if 0
     min_interp_ms           = GetConVarInt(stac_min_interp_ms);
@@ -815,7 +807,6 @@ void setStacVars()
 
     // kick unauthed clients
     kickUnauth              = GetConVarBool(stac_kick_unauthed_clients);
-
 }
 
 void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
@@ -833,6 +824,24 @@ void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newVa
         if (StringToInt(newValue) != 0)
         {
             waitStatus = true;
+        }
+    }
+}
+
+// update server rate settings for cmdrate spam check - i'd rather have one func do this lol
+void UpdateRates(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+    imincmdrate    = GetConVarInt(FindConVar("sv_mincmdrate"));
+    imaxcmdrate    = GetConVarInt(FindConVar("sv_maxcmdrate"));
+    iminupdaterate = GetConVarInt(FindConVar("sv_minupdaterate"));
+    imaxupdaterate = GetConVarInt(FindConVar("sv_maxupdaterate"));
+
+    // update clients
+    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    {
+        if (IsValidClient(Cl))
+        {
+            OnClientSettingsChanged(Cl);
         }
     }
 }
@@ -859,7 +868,201 @@ void RunOptimizeCvars()
     SetConVarFloat(FindConVar("tf_teleporter_fov_time"), 0.0);
 }
 
-public Action checkNativesEtc(Handle timer)
+/********** STAC COMMANDS FOR ADMINS **********/
+
+// sm_stac_checkall
+Action ForceCheckAll(int callingCl, int args)
+{
+    QueryEverythingAllClients();
+}
+
+// sm_stac_detections
+Action ShowAllDetections(int callingCl, int args)
+{
+    if (callingCl != 0)
+    {
+        ReplyToCommand(callingCl, "Check your console!");
+    }
+
+    char arg1[32];
+    GetCmdArg(1, arg1, sizeof(arg1));
+
+    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    {
+        if (IsValidClient(Cl))
+        {
+            // we don't check everything because some checks are "in the moment" and can expire very quickly
+            if
+            (
+                   turnTimes               [Cl] >= 1
+                || fakeAngDetects          [Cl] >= 1
+                || aimsnapDetects          [Cl] >= 1
+                || pSilentDetects          [Cl] >= 1
+                || cmdnumSpikeDetects      [Cl] >= 1
+                || tbotDetects             [Cl] >= 1
+                || cmdrateSpamDetects      [Cl] >= 1
+                || backtrackDetects        [Cl] >= 1
+            )
+            {
+                PrintToConsole
+                (
+                    callingCl,
+                    "Detections for %L -\
+                    \n Turn binds    %i\
+                    \n FakeAngs      %i\
+                    \n Aimsnaps      %i\
+                    \n pSilent       %i\
+                    \n Cmdnum spikes %i\
+                    \n Triggerbots   %i\
+                    \n Backtracks    %i\
+                    ",
+                    Cl,
+                    turnTimes               [Cl],
+                    fakeAngDetects          [Cl],
+                    aimsnapDetects          [Cl],
+                    pSilentDetects          [Cl],
+                    cmdnumSpikeDetects      [Cl],
+                    tbotDetects             [Cl],
+                    backtrackDetects        [Cl]
+                );
+            }
+        }
+    }
+    StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to check StAC detections");
+}
+
+// sm_stac_getauth  <client/s>
+// sm_stac_livefeed <single client>
+Action StacTargetCommand(int callingCl, int args)
+{
+    if (args != 1)
+    {
+        ReplyToCommand(callingCl, "Usage: sm_stac_getauth <client>");
+        return Plugin_Handled;
+    }
+
+    char arg0[32];
+    GetCmdArg(0, arg0, sizeof(arg0));
+
+    char arg1[32];
+    GetCmdArg(1, arg1, sizeof(arg1));
+
+    int flags = COMMAND_FILTER_NO_BOTS;
+
+    bool getauth;
+    bool livefeed;
+
+    if (StrEqual(arg0, "sm_stac_getauth"))
+    {
+        getauth = true;
+    }
+    if (StrEqual(arg0, "sm_stac_livefeed"))
+    {
+        flags |= COMMAND_FILTER_NO_MULTI;
+        livefeed = true;
+    }
+
+    char target_name[MAX_TARGET_LENGTH];
+    int target_list[TFMAXPLAYERS+1];
+    int target_count;
+    bool tn_is_ml;
+
+    if
+    (
+        (
+            target_count = ProcessTargetString
+            (
+                arg1,
+                callingCl,
+                target_list,
+                TFMAXPLAYERS+1,
+                flags,
+                target_name,
+                sizeof(target_name),
+                tn_is_ml
+            )
+        )
+        <= 0
+    )
+    {
+        ReplyToTargetError(callingCl, target_count);
+        return Plugin_Handled;
+    }
+
+    for (int i = 0; i < target_count; i++)
+    {
+        int Cl = target_list[i];
+        if (IsValidClient(Cl))
+        {
+            // getauth
+            if (getauth)
+            {
+                ReplyToCommand(callingCl, "[StAC] Auth for \"%N\" - %s", Cl, SteamAuthFor[Cl]);
+            }
+            if (livefeed)
+            {
+                // livefeed
+                LiveFeedOn[Cl] = !LiveFeedOn[Cl];
+                for (int j = 1; j <= MaxClients; j++)
+                {
+                    if (j != Cl)
+                    {
+                        LiveFeedOn[j] = false;
+                    }
+                }
+                ReplyToCommand(callingCl, "[StAC] Toggled livefeed for \"%N\".", SteamAuthFor[Cl]);
+            }
+        }
+    }
+
+    if (getauth)
+    {
+        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to use StAC getauth");
+    }
+    if (livefeed)
+    {
+        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to use StAC Livefeed");
+    }
+
+    return Plugin_Handled;
+}
+
+/********** MAP CHANGE / STARTUP RELATED STUFF **********/
+
+public void OnMapStart()
+{
+    OpenStacLog();
+    ActuallySetRandomSeed();
+    DoTPSMath();
+    ResetTimers();
+    RequestFrame(checkStatus);
+    if (optimizeCvars)
+    {
+        RunOptimizeCvars();
+    }
+    timeSinceMapStart = GetEngineTime();
+    CreateTimer(0.1, checkNativesEtc);
+    GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
+}
+
+Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
+{
+    DoTPSMath();
+    // might as well do this here!
+    ActuallySetRandomSeed();
+    // this counts
+    timeSinceMapStart = GetEngineTime();
+}
+
+public void OnMapEnd()
+{
+    ActuallySetRandomSeed();
+    DoTPSMath();
+    NukeTimers();
+    CloseStacLog();
+}
+
+Action checkNativesEtc(Handle timer)
 {
     // check sv cheats
     if (GetConVarBool(FindConVar("sv_cheats")))
@@ -871,33 +1074,7 @@ public Action checkNativesEtc(Handle timer)
     {
         waitStatus = true;
     }
-    // check natives!
-    if (GetFeatureStatus(FeatureType_Native, "Steam_IsConnected") == FeatureStatus_Available)
-    {
-        STEAMTOOLS = true;
-    }
-    if (GetFeatureStatus(FeatureType_Native, "SteamWorks_IsConnected") == FeatureStatus_Available)
-    {
-        STEAMWORKS = true;
-    }
-    if (GetFeatureStatus(FeatureType_Native, "SBPP_BanPlayer") == FeatureStatus_Available)
-    {
-        SOURCEBANS = true;
-    }
-    if (CommandExists("gb_ban"))
-    {
-        GBANS = true;
-    }
-    if (CommandExists("sm_aimplot"))
-    {
-        AIMPLOTTER = true;
-    }
-
-    if (GetFeatureStatus(FeatureType_Native, "Discord_SendMessage") == FeatureStatus_Available)
-    {
-        DISCORD = true;
-    }
-
+    // are we in mann vs machine?
     if (GameRules_GetProp("m_bPlayingMannVsMachine") == 1)
     {
         MVM = true;
@@ -907,213 +1084,49 @@ public Action checkNativesEtc(Handle timer)
         MVM = false;
     }
 
+    // check natives!
+
+    // steamtools
+    if (GetFeatureStatus(FeatureType_Native, "Steam_IsConnected") == FeatureStatus_Available)
+    {
+        STEAMTOOLS = true;
+    }
+    // steamworks
+    if (GetFeatureStatus(FeatureType_Native, "SteamWorks_IsConnected") == FeatureStatus_Available)
+    {
+        STEAMWORKS = true;
+    }
+    // sourcebans
+    if (GetFeatureStatus(FeatureType_Native, "SBPP_BanPlayer") == FeatureStatus_Available)
+    {
+        SOURCEBANS = true;
+    }
+    // gbans
+    if (CommandExists("gb_ban"))
+    {
+        GBANS = true;
+    }
+    // sourcemod aimplotter
+    if (CommandExists("sm_aimplot"))
+    {
+        AIMPLOTTER = true;
+    }
+    // discord functionality
+    if (GetFeatureStatus(FeatureType_Native, "Discord_SendMessage") == FeatureStatus_Available)
+    {
+        DISCORD = true;
+    }
+
+    // check steam status real quick
     if (isSteamAlive == -1)
     {
         checkSteam();
     }
-
-    if (DEBUG)
-    {
-        StacLog
-        (
-            "\nSTEAMTOOLS = %i\nSTEAMWORKS = %i\nSOURCEBANS = %i\nGBANS = %i",
-            STEAMTOOLS,
-            STEAMWORKS,
-            SOURCEBANS,
-            GBANS
-        );
-    }
 }
 
-public Action checkEveryone(Handle timer)
+Action checkEveryone(Handle timer)
 {
     QueryEverythingAllClients();
-}
-
-public Action ForceCheckAll(int callingCl, int args)
-{
-    QueryEverythingAllClients();
-}
-
-public Action GetAuth(int callingCl, int args)
-{
-    if (args != 1)
-    {
-        ReplyToCommand(callingCl, "Usage: sm_stac_getauth <client>");
-    }
-    else
-    {
-        char arg1[32];
-        GetCmdArg(1, arg1, sizeof(arg1));
-
-        char target_name[MAX_TARGET_LENGTH];
-        int target_list[MAXPLAYERS];
-        int target_count;
-        bool tn_is_ml;
-
-        if
-        (
-            (
-                target_count = ProcessTargetString
-                (
-                    arg1,
-                    callingCl,
-                    target_list,
-                    MAXPLAYERS,
-                    COMMAND_FILTER_NO_BOTS,
-                    target_name,
-                    sizeof(target_name),
-                    tn_is_ml
-                )
-            )
-            <= 0
-        )
-        {
-            ReplyToTargetError(callingCl, target_count);
-            return Plugin_Handled;
-        }
-
-        for (int i = 0; i < target_count; i++)
-        {
-            int Cl = target_list[i];
-            if (IsValidClient(Cl))
-            {
-                ReplyToCommand(callingCl, "[StAC] Auth for \"%N\" - %s", Cl, SteamAuthFor[Cl]);
-            }
-        }
-    }
-    StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to use StAC getauth");
-    return Plugin_Handled;
-}
-
-public Action LiveFeed(int callingCl, int args)
-{
-    if (args != 1)
-    {
-        ReplyToCommand(callingCl, "Usage: sm_stac_livefeed <client>");
-    }
-    else
-    {
-        char arg1[32];
-        GetCmdArg(1, arg1, sizeof(arg1));
-
-        char target_name[MAX_TARGET_LENGTH];
-        int target_list[MAXPLAYERS];
-        int target_count;
-        bool tn_is_ml;
-
-        if
-        (
-            (
-                target_count = ProcessTargetString
-                (
-                    arg1,
-                    callingCl,
-                    target_list,
-                    MAXPLAYERS,
-                    COMMAND_FILTER_NO_BOTS | COMMAND_FILTER_NO_MULTI,
-                    target_name,
-                    sizeof(target_name),
-                    tn_is_ml
-                )
-            )
-            <= 0
-        )
-        {
-            ReplyToTargetError(callingCl, target_count);
-            return Plugin_Handled;
-        }
-
-        for (int i = 0; i < target_count; i++)
-        {
-            int Cl = target_list[i];
-            if (IsValidClient(Cl))
-            {
-                LiveFeedOn[Cl] = !LiveFeedOn[Cl];
-            }
-            for (int j = 1; j <= MaxClients; j++)
-            {
-                if (j != Cl)
-                {
-                    LiveFeedOn[j] = false;
-                }
-            }
-        }
-    }
-    StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to use StAC Livefeed");
-    return Plugin_Handled;
-}
-
-public Action ShowDetections(int callingCl, int args)
-{
-    if (callingCl != 0)
-    {
-        ReplyToCommand(callingCl, "Check your console!");
-    }
-    PrintToConsole(callingCl, "\n[StAC] == CURRENT DETECTIONS == ");
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
-    {
-        if (IsValidClient(Cl))
-        {
-            if
-            (
-                   turnTimes[Cl]           >= 1
-                || aimsnapDetects[Cl]      >= 1
-                || pSilentDetects[Cl]      >= 1
-                || fakeAngDetects[Cl]      >= 1
-                || cmdnumSpikeDetects[Cl]  >= 1
-                || tbotDetects[Cl]         >= 1
-            )
-            {
-                PrintToConsole(callingCl, "Detections for %L", Cl);
-                if (turnTimes[Cl] >= 1)
-                {
-                    PrintToConsole(callingCl, "- %i turn bind frames for %N", turnTimes[Cl], Cl);
-                }
-                if (aimsnapDetects[Cl] >= 1)
-                {
-                    PrintToConsole(callingCl, "- %i aimsnap detections for %N", aimsnapDetects[Cl], Cl);
-                }
-                if (pSilentDetects[Cl] >= 1)
-                {
-                    PrintToConsole(callingCl, "- %i silent aim detections for %N", pSilentDetects[Cl], Cl);
-                }
-                if (fakeAngDetects[Cl] >= 1)
-                {
-                    PrintToConsole(callingCl, "- %i fake angle detections for %N", fakeAngDetects[Cl], Cl);
-                }
-                if (cmdnumSpikeDetects[Cl] >= 1)
-                {
-                    PrintToConsole(callingCl, "- %i cmdnum spikes for %N", cmdnumSpikeDetects[Cl], Cl);
-                }
-                if (tbotDetects[Cl] >= 1)
-                {
-                    PrintToConsole(callingCl, "- %i triggerbot detections for %N", tbotDetects[Cl], Cl);
-                }
-            }
-        }
-    }
-    PrintToConsole(callingCl, "[StAC] == END DETECTIONS == \n");
-    StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to check StAC detections");
-}
-
-public void OnPluginEnd()
-{
-    StacLog("[StAC] Plugin vers. ---- %s ---- unloaded", PLUGIN_VERSION);
-    NukeTimers();
-    OnMapEnd();
-}
-
-// reseed random server seed to help prevent certain nospread stuff from working.
-// this probably doesn't do anything, but it makes me feel better.
-void ActuallySetRandomSeed()
-{
-    int seed = GetURandomInt();
-    if (DEBUG)
-    {
-        StacLog("[StAC] setting random server seed to %i", seed);
-    }
-    SetRandomSeed(seed);
 }
 
 // NUKE the client timers from orbit on plugin and map reload
@@ -1154,186 +1167,43 @@ void ResetTimers()
         }
     }
     // create timer to reset seed every 15 mins
-    TriggerTimedStuffTimer = CreateTimer(900.0, timer_TriggerTimedStuff, _, TIMER_REPEAT);
+    TriggerTimedStuffTimer = CreateTimer(900.0, Timer_TriggerTimedStuff, _, TIMER_REPEAT);
 }
 
-public Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
+// reseed random server seed to help prevent certain nospread stuff from working.
+// this probably doesn't do anything, but it makes me feel better.
+void ActuallySetRandomSeed()
 {
-    DoTPSMath();
-    // might as well do this here!
-    ActuallySetRandomSeed();
-    // this counts
-    timeSinceMapStart = GetEngineTime();
-}
-
-public Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
-{
-    int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
-    //int userid = GetEventInt(event, "userid");
-    if (IsValidClient(Cl))
+    int seed = GetURandomInt();
+    if (DEBUG)
     {
-        //if (snapOnNextSpawn[Cl])
-        //{
-        //    CreateTimer(2.0, SnapClientAngles, userid);
-        //}
-        timeSinceSpawn[Cl] = GetEngineTime();
+        StacLog("[StAC] setting random server seed to %i", seed);
     }
+    SetRandomSeed(seed);
 }
 
-Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
+void checkStatus()
 {
-    // get ent classname AKA the weapon name
-    if (!IsValidEntity(weapon) || weapon <= 0 || !IsValidClient(attacker))
+    char status[2048];
+    ServerCommandEx(status, sizeof(status), "status");
+    char ipetc[128];
+    char ip[24];
+    if (MatchRegex(publicIPRegex, status) > 0)
     {
-        return Plugin_Continue;
-    }
-
-    GetEntityClassname(weapon, hurtWeapon[attacker], 256);
-    if
-    (
-        // player didn't hurt self
-           victim != attacker
-    )
-    {
-        didHurtThisFrame[attacker] = true;
-    }
-    return Plugin_Continue;
-}
-
-public Action Hook_TEFireBullets(const char[] te_name, const int[] players, int numClients, float delay)
-{
-    int Cl = TE_ReadNum("m_iPlayer") + 1;
-    // this user fired a bullet this frame!
-    didBangThisFrame[Cl] = true;
-}
-
-public Action TF2_OnPlayerTeleport(int Cl, int teleporter, bool& result)
-{
-    if (IsValidClient(Cl))
-    {
-        timeSinceTeled[Cl] = GetEngineTime();
-    }
-}
-
-public void TF2_OnConditionAdded(int Cl, TFCond condition)
-{
-    if (IsValidClient(Cl))
-    {
-        if (condition == TFCond_Taunting)
+        if (GetRegexSubString(publicIPRegex, 0, ipetc, sizeof(ipetc)))
         {
-            playerTaunting[Cl] = true;
-        }
-        else if (IsHalloweenCond(condition))
-        {
-            playerInBadCond[Cl]++;
-        }
-    }
-}
-
-public void TF2_OnConditionRemoved(int Cl, TFCond condition)
-{
-    if (IsValidClient(Cl))
-    {
-        if (condition == TFCond_Taunting)
-        {
-            timeSinceTaunt[Cl] = GetEngineTime();
-            playerTaunting[Cl] = false;
-        }
-        else if (IsHalloweenCond(condition))
-        {
-            if (playerInBadCond[Cl] > 0)
+            TrimString(ipetc);
+            if (MatchRegex(IPRegex, ipetc) > 0)
             {
-                playerInBadCond[Cl]--;
+                if (GetRegexSubString(IPRegex, 0, ip, sizeof(ip)))
+                {
+                    strcopy(hostipandport, sizeof(hostipandport), ip);
+                    StrCat(hostipandport, sizeof(hostipandport), ":");
+                    char hostport[6];
+                    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
+                    StrCat(hostipandport, sizeof(hostipandport), hostport);
+                }
             }
-        }
-    }
-}
-
-public Action timer_TriggerTimedStuff(Handle timer)
-{
-    ActuallySetRandomSeed();
-}
-
-public Action timer_GetNetInfo(Handle timer)
-{
-    // reset all client based vars on plugin reload
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
-    {
-        if (IsValidClient(Cl))
-        {
-            // convert to percentages
-            lossFor[Cl]      = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
-            chokeFor[Cl]     = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
-            inchokeFor[Cl]   = GetClientAvgChoke(Cl, NetFlow_Incoming) * 100.0;
-            outchokeFor[Cl]  = GetClientAvgChoke(Cl, NetFlow_Outgoing) * 100.0;
-            // convert to ms
-            pingFor[Cl]      = GetClientLatency(Cl, NetFlow_Both) * 1000.0;
-            rateFor[Cl]      = GetClientAvgData(Cl, NetFlow_Both) / 125.0;
-            ppsFor[Cl]       =GetClientAvgPackets(Cl, NetFlow_Both);
-            if (LiveFeedOn[Cl])
-            {
-                LiveFeed_NetInfo(GetClientUserId(Cl));
-            }
-        }
-    }
-}
-
-void LiveFeed_NetInfo(int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-    if (!IsValidClient(Cl))
-    {
-        return;
-    }
-    for (int LiveFeedViewer = 1; LiveFeedViewer <= MaxClients; LiveFeedViewer++)
-    {
-        if (IsValidAdmin(LiveFeedViewer) || IsValidSrcTV(LiveFeedViewer))
-        {
-            // NETINFO
-            SetHudTextParams
-            (
-                // x&y
-                0.85, 0.40,
-                // time to hold
-                4.0,
-                // rgba
-                255, 255, 255, 255,
-                // effects
-                0, 0.0, 0.0, 0.0
-            );
-            ShowSyncHudText
-            (
-                LiveFeedViewer,
-                HudSyncNetwork,
-                "\
-                \nClient: %N\
-                \n Index: %i\
-                \n Userid: %i\
-                \n Status: %s\
-                \n Connected for: %.0fs\
-                \n\
-                \nNetwork:\
-                \n %.2f ms ping\
-                \n %.2f loss\
-                \n %.2f inchoke\
-                \n %.2f outchoke\
-                \n %.2f totalchoke\
-                \n %.2f kbps rate\
-                \n %.2f pps rate\
-                ",
-                Cl,
-                Cl,
-                GetClientUserId(Cl),
-                IsPlayerAlive(Cl) ? "alive" : "dead",
-                GetClientTime(Cl),
-                pingFor[Cl],
-                lossFor[Cl],
-                inchokeFor[Cl],
-                outchokeFor[Cl],
-                chokeFor[Cl],
-                rateFor[Cl],
-                ppsFor[Cl]
-            );
         }
     }
 }
@@ -1349,71 +1219,40 @@ void DoTPSMath()
     }
 }
 
-public void OnMapStart()
-{
-    OpenStacLog();
-    ActuallySetRandomSeed();
-    DoTPSMath();
-    ResetTimers();
-    RequestFrame(checkStatus);
-    if (optimizeCvars)
-    {
-        RunOptimizeCvars();
-    }
-    timeSinceMapStart = GetEngineTime();
-    CreateTimer(0.1, checkNativesEtc);
-    GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
-}
+/********** ROUTINE TIMERS **********/
 
-public void OnMapEnd()
+Action Timer_GetNetInfo(Handle timer)
 {
-    ActuallySetRandomSeed();
-    DoTPSMath();
-    NukeTimers();
-    CloseStacLog();
-}
-
-public void OnLibraryAdded(const char[] name)
-{
-    if (StrEqual(name, "updater"))
+    // reset all client based vars on plugin reload
+    for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
-        Updater_AddPlugin(UPDATE_URL);
+        if (IsValidClient(Cl))
+        {
+            // convert to percentages
+            lossFor[Cl]      = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
+            chokeFor[Cl]     = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
+            inchokeFor[Cl]   = GetClientAvgChoke(Cl, NetFlow_Incoming) * 100.0;
+            outchokeFor[Cl]  = GetClientAvgChoke(Cl, NetFlow_Outgoing) * 100.0;
+            // convert to ms
+            pingFor[Cl]      = GetClientLatency(Cl, NetFlow_Both) * 1000.0;
+            rateFor[Cl]      = GetClientAvgData(Cl, NetFlow_Both) / 125.0;
+            ppsFor[Cl]       = GetClientAvgPackets(Cl, NetFlow_Both);
+            if (LiveFeedOn[Cl])
+            {
+                LiveFeed_NetInfo(GetClientUserId(Cl));
+            }
+        }
     }
 }
 
-void ClearClBasedVars(int userid)
+Action Timer_TriggerTimedStuff(Handle timer)
 {
-    // get fresh cli id
-    int Cl = GetClientOfUserId(userid);
-    // clear all old values for cli id based stuff
-    turnTimes               [Cl] = 0;
-    fakeAngDetects          [Cl] = 0;
-    aimsnapDetects          [Cl] = -1; // ignore first detect, it's prolly bunk
-    pSilentDetects          [Cl] = -1; // ignore first detect, it's prolly bunk
-    bhopDetects             [Cl] = -1; // set to -1 to ignore single jumps
-    cmdnumSpikeDetects      [Cl] = 0;
-    tbotDetects             [Cl] = -1; // ignore first detect, it's prolly bunk
-    spinbotDetects          [Cl] = 0;
-    fakeChokeDetects        [Cl] = 0;
-    cmdrateSpamDetects      [Cl] = 0;
-
-    // TIME SINCE LAST ACTION PER CLIENT
-    timeSinceSpawn          [Cl] = 0.0;
-    timeSinceTaunt          [Cl] = 0.0;
-    timeSinceTeled          [Cl] = 0.0;
-    timeSinceNullCmd        [Cl] = 0.0;
-    // STORED GRAVITY STATE PER CLIENT
-    highGrav                [Cl] = false;
-    // STORED MISC VARS PER CLIENT
-    playerTaunting          [Cl] = false;
-    playerInBadCond         [Cl] = 0;
-    userBanQueued           [Cl] = false;
-    // STORED SENS PER CLIENT
-    sensFor                 [Cl] = 0.0;
-    // don't bother clearing arrays
-    LiveFeedOn              [Cl] = false;
+    ActuallySetRandomSeed();
 }
 
+/********** MISC CLIENT JOIN/LEAVE **********/
+
+// client join
 public void OnClientPutInServer(int Cl)
 {
     int userid = GetClientUserId(Cl);
@@ -1501,16 +1340,138 @@ public void OnClientDisconnect(int Cl)
 }
 
 // player is OUT of the server
-public void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
+void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
 {
     int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
     SteamAuthFor[Cl][0] = '\0';
-
 }
-float stutterWaitLength = 5.0;
+
+/********** CLIENT BASED EVENTS **********/
+
+Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
+{
+    int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
+    //int userid = GetEventInt(event, "userid");
+    if (IsValidClient(Cl))
+    {
+        timeSinceSpawn[Cl] = GetEngineTime();
+    }
+}
+
+Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
+{
+    // get ent classname AKA the weapon name
+    if (!IsValidEntity(weapon) || weapon <= 0 || !IsValidClient(attacker))
+    {
+        return Plugin_Continue;
+    }
+
+    GetEntityClassname(weapon, hurtWeapon[attacker], 256);
+    if
+    (
+        // player didn't hurt self
+           victim != attacker
+    )
+    {
+        didHurtThisFrame[attacker] = true;
+    }
+    return Plugin_Continue;
+}
+
+Action Hook_TEFireBullets(const char[] te_name, const int[] players, int numClients, float delay)
+{
+    int Cl = TE_ReadNum("m_iPlayer") + 1;
+    // this user fired a bullet this frame!
+    didBangThisFrame[Cl] = true;
+}
+
+public Action TF2_OnPlayerTeleport(int Cl, int teleporter, bool& result)
+{
+    if (IsValidClient(Cl))
+    {
+        timeSinceTeled[Cl] = GetEngineTime();
+    }
+}
+
+public void TF2_OnConditionAdded(int Cl, TFCond condition)
+{
+    if (IsValidClient(Cl))
+    {
+        if (condition == TFCond_Taunting)
+        {
+            playerTaunting[Cl] = true;
+        }
+        else if (IsHalloweenCond(condition))
+        {
+            playerInBadCond[Cl]++;
+        }
+    }
+}
+
+public void TF2_OnConditionRemoved(int Cl, TFCond condition)
+{
+    if (IsValidClient(Cl))
+    {
+        if (condition == TFCond_Taunting)
+        {
+            timeSinceTaunt[Cl] = GetEngineTime();
+            playerTaunting[Cl] = false;
+        }
+        else if (IsHalloweenCond(condition))
+        {
+            if (playerInBadCond[Cl] > 0)
+            {
+                playerInBadCond[Cl]--;
+            }
+        }
+    }
+}
+
+void ClearClBasedVars(int userid)
+{
+    // get fresh cli id
+    int Cl = GetClientOfUserId(userid);
+    // clear all old values for cli id based stuff
+    turnTimes               [Cl] = 0;
+    fakeAngDetects          [Cl] = 0;
+    aimsnapDetects          [Cl] = -1; // ignore first detect, it's prolly bunk
+    pSilentDetects          [Cl] = -1; // ignore first detect, it's prolly bunk
+    bhopDetects             [Cl] = -1; // set to -1 to ignore single jumps
+    cmdnumSpikeDetects      [Cl] = 0;
+    tbotDetects             [Cl] = -1; // ignore first detect, it's prolly bunk
+    spinbotDetects          [Cl] = 0;
+    fakeChokeDetects        [Cl] = 0;
+    cmdrateSpamDetects      [Cl] = 0;
+    backtrackDetects        [Cl] = 0;
+
+    maxTickCountFor         [Cl] = 0;
+
+    // TIME SINCE LAST ACTION PER CLIENT
+    timeSinceSpawn          [Cl] = 0.0;
+    timeSinceTaunt          [Cl] = 0.0;
+    timeSinceTeled          [Cl] = 0.0;
+    timeSinceNullCmd        [Cl] = 0.0;
+    timeSinceLastCommand    [Cl] = 0.0;
+
+    lastCommandFor          [Cl][0] = '\0';
+    // STORED GRAVITY STATE PER CLIENT
+    highGrav                [Cl] = false;
+    // STORED MISC VARS PER CLIENT
+    playerTaunting          [Cl] = false;
+    playerInBadCond         [Cl] = 0;
+    userBanQueued           [Cl] = false;
+    // STORED SENS PER CLIENT
+    sensFor                 [Cl] = 0.0;
+    // don't bother clearing arrays
+    LiveFeedOn              [Cl] = false;
+}
+
+/********** ONGAMEFRAME **********/
+
 // monitor server tickrate
 public void OnGameFrame()
 {
+    static float realTPS[2];
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
         if (IsValidClient(Cl))
@@ -1522,11 +1483,11 @@ public void OnGameFrame()
         }
     }
 
-    gameEngineTime[1] = gameEngineTime[0];
-    gameEngineTime[0] = GetEngineTime();
+    engineTime[0][1] = engineTime[0][0];
+    engineTime[0][0] = GetEngineTime();
 
     realTPS[1] = realTPS[0];
-    realTPS[0] = 1/(gameEngineTime[0] - gameEngineTime[1]);
+    realTPS[0] = 1/(engineTime[0][0] - engineTime[0][1]);
 
     smoothedTPS = ((realTPS[0] + realTPS[1]) / 2);
 
@@ -1548,6 +1509,8 @@ public void OnGameFrame()
         }
     }
 }
+
+/********** OnPlayerRunCmd Detections **********/
 
 /*
     in OnPlayerRunCmd, we check for:
@@ -1674,48 +1637,7 @@ public Action OnPlayerRunCmd
     fuzzyClangles[Cl][0][1] = RoundToPlace(clangles[Cl][0][1], 1);
 
     // avg'd over 10 ticks
-    calcCmdrateFor[Cl] = 10.0 * Pow((engineTime[Cl][0] - engineTime[Cl][10]), -1.0),
-
-    /*
-    // backtrack shennanigans - you can't have the same tickcount twice
-    maxTickCountFor[Cl] = Math_Min(maxTickCountFor[Cl], tickcount);
-    if
-    (
-        tickcount < maxTickCountFor[Cl]
-    )
-    {
-        if (isCmdnumSequential(userid) && clbuttons[Cl][0] & IN_ATTACK)
-        {
-            backtrackDetects[Cl]++;
-            PrintToImportant("\
-                {hotpink}[StAC]{white} Player %N {mediumpurple}tried to backtrack {white} another client!\
-                \nDetections so far: {palegreen}%i",
-                Cl,
-                backtrackDetects[Cl]
-            );
-            StacLog("\
-                [StAC] Player %N {mediumpurple}tried to backtrack another client!\
-                \nDetections so far: %i\
-                \nTickcount: %i\
-                \nPrevious maximum tickcount: %i",
-                Cl,
-                backtrackDetects[Cl],
-                tickcount,
-                maxTickCountFor[Cl]
-            );
-            StacLogNetData(userid);
-            StacLogCmdnums(userid);
-            StacLogTickcounts(userid);
-
-            if (backtrackDetects[Cl] % 5 == 0)
-            {
-                StacDetectionDiscordNotify(userid, "backtrack detection [ beta ]", backtrackDetects[Cl]);
-            }
-        }
-        // correct it anyway
-        tickcount = maxTickCountFor[Cl];
-    }
-    */
+    calcCmdrateFor[Cl] = 10.0 * Pow((engineTime[Cl][0] - engineTime[Cl][10]), -1.0);
 
     // neither of these tests need fancy checks, so we do them first
     bhopCheck(userid);
@@ -1736,7 +1658,6 @@ public Action OnPlayerRunCmd
         || engineTime[Cl][0] - 1.0 < timeSinceTeled[Cl]
         // don't touch this client if they've recently run a nullcmd, because they're probably lagging
         // I will tighten this up if cheats decide to try to get around stac by spamming nullcmds.
-        // Do not test me.
         || engineTime[Cl][0] - 0.5 < timeSinceNullCmd[Cl]
         // don't touch if map or plugin just started - let the server framerate stabilize a bit
         || engineTime[Cl][0] - 2.5 < timeSinceMapStart
@@ -1753,6 +1674,14 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
+    // backtrack fix
+    if (backtrackFix(userid) != tickcount)
+    {
+        tickcount = maxTickCountFor[Cl];
+    }
+
+
+    // not really lag dependant check
     fakeangCheck(userid);
 
     // make sure client doesn't have 1.5% or more packet loss, can mess with cmdnumspikes
@@ -1761,16 +1690,22 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
+    // tickcount the same over 5 ticks, client is probably lagging
+    if (isTickcountRepeated(userid))
+    {
+        return Plugin_Continue;
+    }
+
+    // we don't want to check this if we're repeating tickcount a lot and/or if loss is high, but cmdnums and tickcounts DO NOT NEED TO BE PERFECT for this.
     cmdnumspikeCheck(userid);
 
     // check if we're lagging in other ways
     // cmdnums need to be sequential and not repeated
-    // tickcount needs to be sequential and to not go downward - repeating is ok
+    // tickcount needs to be sequential and to not go downward - repeating is ok as long as its not too much
     if
     (
-        !isCmdnumSequential(userid)
-        ||
-        !isTickcountInOrder(userid)
+           !isCmdnumSequential(userid)
+        || !isTickcountInOrder(userid)
     )
     {
         return Plugin_Continue;
@@ -1984,7 +1919,7 @@ void fakechokeCheck(int userid)
                 fakeChokeDetects[Cl]++;
                 if (fakeChokeDetects[Cl] >= 5)
                 {
-                    PrintToImportant("{hotpink}[StAC]{white} Player %N is repeatedly choking {mediumpurple}%i{white} ticks.\nThey may be fake-choking. Bother steph!\nDetections so far: {palegreen}%i" , Cl, amt, fakeChokeDetects[Cl]);
+                    PrintToImportant("{hotpink}[StAC]{white} Player %N is repeatedly choking {mediumpurple}%i{white} ticks.\nThey may be fake-choking.\nDetections so far: {palegreen}%i" , Cl, amt, fakeChokeDetects[Cl]);
                     StacLog("Player %L is repeatedly choking exactly %i ticks - %i detections", Cl, amt, fakeChokeDetects[Cl]);
                     StacLogNetData(userid);
                     StacLogCmdnums(userid);
@@ -2126,12 +2061,10 @@ void cmdnumspikeCheck(int userid)
 */
 void spinbotCheck(int userid)
 {
+    static float spinDiff[TFMAXPLAYERS+1][2];
     int Cl = GetClientOfUserId(userid);
     // ignore clients using turn binds!
-    if
-    (
-        maxSpinbotDetections != -1
-    )
+    if (maxSpinbotDetections != -1)
     {
         // get the abs value of the difference between the last two y angles
         float angBuff = FloatAbs(NormalizeAngleDiff(clangles[Cl][0][1] - clangles[Cl][1][1]));
@@ -2393,7 +2326,7 @@ void aimsnapCheck(int userid)
             float noisesize = 1.0;
 
             int aDiffToUse = -1;
-
+            // commented so we can make sure we have one or more noise buffers
             //if
             //(
             //       aDiff[0] > snapsize
@@ -2443,8 +2376,7 @@ void aimsnapCheck(int userid)
                 aimsnapDetects[Cl]++;
                 // have this detection expire in 30 minutes
                 CreateTimer(1800.0, Timer_decr_aimsnaps, userid, TIMER_FLAG_NO_MAPCHANGE);
-                // first detection is, likely bullshit
-                // because i don't fucking know
+                // first detection is likely bullshit
                 if (aimsnapDetects[Cl] > 0)
                 {
                     PrintToImportant
@@ -2650,6 +2582,1317 @@ void triggerbotCheck(int userid)
     }
 }
 
+// backtrack shennanigans - you can't have the same tickcount twice
+int backtrackFix(int userid, int tolerance = 1)
+{
+    int Cl = GetClientOfUserId(userid);
+    maxTickCountFor[Cl] = Math_Max(cltickcount[Cl][0], maxTickCountFor[Cl]);
+    if (!IsValidTickcount(Cl, tolerance))
+    {
+        if (isCmdnumSequential(userid) && clbuttons[Cl][0] & IN_ATTACK)
+        {
+            backtrackDetects[Cl]++;
+            PrintToImportant("\
+                {hotpink}[StAC]{white} Player %N {mediumpurple}tried to backtrack {white} another client!\
+                \nDetections so far: {palegreen}%i",
+                Cl,
+                backtrackDetects[Cl]
+            );
+            StacLog("\
+                [StAC] Player %N {mediumpurple}tried to backtrack another client!\
+                \nDetections so far: %i\
+                \nTickcount: %i\
+                \nPrevious maximum tickcount: %i",
+                Cl,
+                backtrackDetects[Cl],
+                cltickcount[Cl][0],
+                maxTickCountFor[Cl]
+            );
+            StacLogNetData(userid);
+            StacLogCmdnums(userid);
+            StacLogTickcounts(userid);
+
+            if (backtrackDetects[Cl] % 5 == 0)
+            {
+                StacDetectionDiscordNotify(userid, "backtrack detection [ beta ]", backtrackDetects[Cl]);
+            }
+        }
+        // correct it anyway
+        return maxTickCountFor[Cl];
+    }
+    return cltickcount[Cl][0];
+}
+
+/********** OnPlayerRunCmd based helper functions **********/
+
+// calc distance between snaps in degrees
+float CalcAngDeg(float array1[3], float array2[3])
+{
+    // ignore roll
+    array1[2] = 0.0;
+    array2[2] = 0.0;
+    return SquareRoot(GetVectorDistance(array1, array2, true));
+}
+
+float NormalizeAngleDiff(float aDiff)
+{
+    if (aDiff > 180.0)
+    {
+        aDiff = FloatAbs(aDiff - 360.0);
+    }
+    return aDiff;
+}
+
+bool HasValidAngles(int Cl)
+{
+    if
+    (
+        // ignore weird angle resets in mge / dm, ignore laggy players
+        (
+            IsNullVector(clangles[Cl][0])
+        )
+        ||
+        (
+            IsNullVector(clangles[Cl][1])
+        )
+        ||
+        (
+            IsNullVector(clangles[Cl][2])
+        )
+        ||
+        (
+            IsNullVector(clangles[Cl][3])
+        )
+        ||
+        (
+            IsNullVector(clangles[Cl][4])
+        )
+    )
+    {
+        return false;
+    }
+    return true;
+}
+
+bool isCmdnumSequential(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if
+    (
+           clcmdnum[Cl][0] == clcmdnum[Cl][1] + 1
+        && clcmdnum[Cl][1] == clcmdnum[Cl][2] + 1
+        && clcmdnum[Cl][2] == clcmdnum[Cl][3] + 1
+        && clcmdnum[Cl][3] == clcmdnum[Cl][4] + 1
+        && clcmdnum[Cl][4] == clcmdnum[Cl][5] + 1
+    )
+    {
+        return true;
+    }
+    return false;
+}
+
+bool isTickcountInOrder(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if
+    (
+        cltickcount[Cl][0] >=
+        cltickcount[Cl][1] >=
+        cltickcount[Cl][2] >=
+        cltickcount[Cl][3] >=
+        cltickcount[Cl][4] >=
+        cltickcount[Cl][5]
+    )
+    {
+        return true;
+    }
+    return false;
+}
+
+bool isTickcountRepeated(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if
+    (
+           cltickcount[Cl][0] == cltickcount[Cl][1]
+        && cltickcount[Cl][1] == cltickcount[Cl][2]
+        && cltickcount[Cl][2] == cltickcount[Cl][3]
+        && cltickcount[Cl][3] == cltickcount[Cl][4]
+        && cltickcount[Cl][4] == cltickcount[Cl][5]
+    )
+    {
+        return true;
+    }
+    return false;
+}
+
+// Returns if a tickcount is within the tolerance set - thanks Jtanz!
+bool IsValidTickcount(int Cl, int tolerance)
+{
+    return (abs((cltickcount[Cl][1] + 1) - cltickcount[Cl][0]) <= tolerance);
+}
+
+/********** StacLog functions **********/
+
+// Open log file for StAC
+void OpenStacLog()
+{
+    // current date for log file (gets updated on map change to not spread out maps across files on date changes)
+    char curDate[32];
+
+    // get current date
+    FormatTime(curDate, sizeof(curDate), "%m%d%y", GetTime());
+
+    // init path
+    char path[128];
+    // set path
+    BuildPath(Path_SM, path, sizeof(path), "logs/stac");
+
+    // create directory if not extant
+    if (!DirExists(path, false))
+    {
+        LogMessage("[StAC] StAC directory not extant! Creating...");
+        // 511 = unix 775 ?
+        if (!CreateDirectory(path, 511, false))
+        {
+            LogMessage("[StAC] StAC directory could not be created!");
+        }
+    }
+
+    // set up the full path here
+    Format(path, sizeof(path), "%s/stac_%s.log", path, curDate);
+
+    // actually create file here
+    StacLogFile = OpenFile(path, "at", false);
+}
+
+// Close log file for StAC
+void CloseStacLog()
+{
+    delete StacLogFile;
+}
+
+// log to StAC log file
+void StacLog(const char[] format, any ...)
+{
+    char buffer[254];
+    VFormat(buffer, sizeof(buffer), format, 2);
+    // clear color tags
+    MC_RemoveTags(buffer, sizeof(buffer));
+
+    if (StacLogFile != null)
+    {
+        LogToOpenFile(StacLogFile, buffer);
+    }
+    else
+    {
+        LogMessage("[StAC] File handle invalid!");
+        LogMessage("%s", buffer);
+    }
+    PrintToConsoleAllAdmins("%s", buffer);
+}
+
+void StacLogNetData(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    StacLog
+    (
+        "\
+        \nNetwork:\
+        \n %.2f ms ping\
+        \n %.2f loss\
+        \n %.2f inchoke\
+        \n %.2f outchoke\
+        \n %.2f totalchoke\
+        \n %.2f kbps rate\
+        \n %.2f pps rate\
+        ",
+        Cl,
+        Cl,
+        GetClientUserId(Cl),
+        IsPlayerAlive(Cl) ? "alive" : "dead",
+        GetClientTime(Cl),
+        pingFor[Cl],
+        lossFor[Cl],
+        inchokeFor[Cl],
+        outchokeFor[Cl],
+        chokeFor[Cl],
+        rateFor[Cl],
+        ppsFor[Cl]
+    );
+
+    StacLog
+    (
+        "\
+        \nMore network:\
+        \n Approx client cmdrate: ≈%.2f cmd/sec\
+        \n Approx server tickrate: ≈%.2f tick/sec\
+        \n 10 tick time : %.4f\
+        \n Failing lag check? %s\
+        \n HasValidAngles? %s\
+        \n SequentialCmdnum? %s\
+        \n OrderedTickcount? %s\
+        ",
+        calcCmdrateFor[Cl],
+        smoothedTPS,
+        engineTime[Cl][0] - engineTime[Cl][10],
+        engineTime[Cl][0] - engineTime[Cl][10] < (tickinterv) ? "yes" : "no",
+        HasValidAngles(Cl) ? "yes" : "no",
+        isCmdnumSequential(userid) ? "yes" : "no",
+        isTickcountInOrder(userid) ? "yes" : "no"
+    );
+}
+
+void StacLogMouse(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    //if (GetRandomInt(1, 5) == 1)
+    //{
+    //    QueryClientConVar(Cl, "sensitivity", ConVarCheck);
+    //}
+    // init vars for mouse movement - weightedx and weightedy
+    int wx;
+    int wy;
+    // scale mouse movement to sensitivity
+    if (sensFor[Cl] != 0.0)
+    {
+        wx = abs(RoundFloat(clmouse[Cl][0] * ( 1 / sensFor[Cl])));
+        wy = abs(RoundFloat(clmouse[Cl][1] * ( 1 / sensFor[Cl])));
+    }
+    StacLog
+    (
+        "\
+        \nMouse Movement (sens weighted):\
+        \n abs(x): %i\
+        \n abs(y): %i\
+        \nMouse Movement (unweighted):\
+        \n x: %i\
+        \n y: %i\
+        \nClient Sens:\
+        \n %f\
+        ",
+        wx,
+        wy,
+        clmouse[Cl][0],
+        clmouse[Cl][1],
+        sensFor[Cl]
+    );
+}
+
+void StacLogAngles(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    StacLog
+    (
+        "\
+        \nAngles:\
+        \n angles0: x %f y %f\
+        \n angles1: x %f y %f\
+        \n angles2: x %f y %f\
+        \n angles3: x %f y %f\
+        \n angles4: x %f y %f\
+        ",
+        clangles[Cl][0][0],
+        clangles[Cl][0][1],
+        clangles[Cl][1][0],
+        clangles[Cl][1][1],
+        clangles[Cl][2][0],
+        clangles[Cl][2][1],
+        clangles[Cl][3][0],
+        clangles[Cl][3][1],
+        clangles[Cl][4][0],
+        clangles[Cl][4][1]
+    );
+}
+
+void StacLogCmdnums(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    StacLog
+    (
+        "\
+        \nPrevious cmdnums:\
+        \n0 %i\
+        \n1 %i\
+        \n2 %i\
+        \n3 %i\
+        \n4 %i\
+        \n5 %i\
+        ",
+        clcmdnum[Cl][0],
+        clcmdnum[Cl][1],
+        clcmdnum[Cl][2],
+        clcmdnum[Cl][3],
+        clcmdnum[Cl][4],
+        clcmdnum[Cl][5]
+    );
+}
+
+void StacLogTickcounts(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    StacLog
+    (
+        "\
+        \nPrevious tickcounts:\
+        \n0 %i\
+        \n1 %i\
+        \n2 %i\
+        \n3 %i\
+        \n4 %i\
+        \n5 %i\
+        ",
+        cltickcount[Cl][0],
+        cltickcount[Cl][1],
+        cltickcount[Cl][2],
+        cltickcount[Cl][3],
+        cltickcount[Cl][4],
+        cltickcount[Cl][5]
+    );
+}
+
+/********** DETECTION FORGIVENESS TIMERS **********/
+
+Action Timer_decr_aimsnaps(Handle timer, any userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    if (IsValidClient(Cl))
+    {
+        if (aimsnapDetects[Cl] > -1)
+        {
+            aimsnapDetects[Cl]--;
+        }
+        if (aimsnapDetects[Cl] <= 0)
+        {
+            if (AIMPLOTTER)
+            {
+                ServerCommand("sm_aimplot #%i off", userid);
+            }
+        }
+    }
+}
+
+Action Timer_decr_pSilent(Handle timer, any userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    if (IsValidClient(Cl))
+    {
+        if (pSilentDetects[Cl] > -1)
+        {
+            pSilentDetects[Cl]--;
+        }
+        if (pSilentDetects[Cl] <= 0)
+        {
+            if (AIMPLOTTER)
+            {
+                ServerCommand("sm_aimplot #%i off", userid);
+            }
+        }
+    }
+}
+
+Action Timer_decr_tbot(Handle timer, any userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    if (IsValidClient(Cl))
+    {
+        if (tbotDetects[Cl] > -1)
+        {
+            tbotDetects[Cl]--;
+        }
+        if (tbotDetects[Cl] <= 0)
+        {
+            if (AIMPLOTTER)
+            {
+                ServerCommand("sm_aimplot #%i off", userid);
+            }
+        }
+    }
+}
+
+Action Timer_decr_cmdratespam(Handle timer, any userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    if (IsValidClient(Cl))
+    {
+        if (cmdrateSpamDetects[Cl] > 0)
+        {
+            cmdrateSpamDetects[Cl]--;
+        }
+    }
+}
+
+/********** CLIENT CONVAR BASED STUFF **********/
+
+char cvarsToCheck[][] =
+{
+    // misc vars
+    "sensitivity",
+    // possible cheat vars
+    "cl_interpolate",
+    // this is a useless check but we check it anyway
+    "fov_desired",
+    //
+    "cl_cmdrate",
+};
+
+void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
+{
+    // make sure client is valid
+    if (!IsValidClient(Cl))
+    {
+        return;
+    }
+    int userid = GetClientUserId(Cl);
+
+    if (DEBUG)
+    {
+        StacLog("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
+    }
+
+    // log something about cvar errors
+    if (result != ConVarQuery_Okay)
+    {
+        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", Cl);
+        StacLog("[StAC] Could not query cvar %s on player %N", cvarName, Cl);
+        return;
+    }
+
+    if (StrEqual(cvarName, "sensitivity"))
+    {
+        sensFor[Cl] = StringToFloat(cvarValue);
+    }
+
+    /*
+        POSSIBLE CHEAT VARS
+    */
+    // cl_interpolate (hidden cvar! should NEVER not be 1)
+    else if (StrEqual(cvarName, "cl_interpolate"))
+    {
+        if (StringToInt(cvarValue) != 1)
+        {
+            if (banForMiscCheats)
+            {
+                char reason[128];
+                Format(reason, sizeof(reason), "%t", "nolerpBanMsg");
+                char pubreason[256];
+                Format(pubreason, sizeof(pubreason), "%t", "nolerpBanAllChat", Cl);
+                // we have to do extra bullshit here so we don't crash when banning clients out of this callback
+                // make a pack
+                DataPack pack = CreateDataPack();
+
+                // prepare pack
+                WritePackCell(pack, userid);
+                WritePackString(pack, reason);
+                WritePackString(pack, pubreason);
+
+                ResetPack(pack, false);
+
+                // make data timer
+                CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
+                return;
+            }
+            else
+            {
+                PrintToImportant("{hotpink}[StAC]{white} [Detection] Player %L is using NoLerp!", Cl);
+                StacLog("[StAC] [Detection] Player %L is using NoLerp!", Cl);
+            }
+        }
+    }
+    // fov check #1 - if u get banned by this you are a clown
+    else if (StrEqual(cvarName, "fov_desired"))
+    {
+        int fovDesired = StringToInt(cvarValue);
+        // check just in case
+        if
+        (
+            fovDesired < 20
+            ||
+            fovDesired > 90
+        )
+        {
+            if (banForMiscCheats)
+            {
+                char reason[128];
+                Format(reason, sizeof(reason), "%t", "fovBanMsg");
+                char pubreason[256];
+                Format(pubreason, sizeof(pubreason), "%t", "fovBanAllChat", Cl);
+                // we have to do extra bullshit here so we don't crash when banning clients out of this callback
+                // make a pack
+                DataPack pack = CreateDataPack();
+
+                // prepare pack
+                WritePackCell(pack, userid);
+                WritePackString(pack, reason);
+                WritePackString(pack, pubreason);
+
+                ResetPack(pack, false);
+
+                // make data timer
+                CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
+                return;
+            }
+            else
+            {
+                PrintToImportant("{hotpink}[StAC]{white} [Detection] Player %L is using fov cheats!", Cl);
+                StacLog("[StAC] [Detection] Player %L is using fov cheats!", Cl);
+            }
+        }
+    }
+    // fov check #1 - if u get banned by this you are a clown
+    else if (StrEqual(cvarName, "cl_cmdrate"))
+    {
+        if
+        (
+            StrEqual("-9999", cvarValue)
+            ||
+            StrEqual("-1", cvarValue)
+        )
+        {
+            char scmdrate[16];
+            // get actual value of cl cmdrate
+            GetClientInfo(Cl, "cl_cmdrate", scmdrate, sizeof(scmdrate));
+            if (!StrEqual(cvarValue, scmdrate))
+            {
+                StacLog("%N had cl_cmdrate value of %s, userinfo showed %s", Cl, cvarValue, scmdrate);
+                if (banForMiscCheats)
+                {
+                    char reason[128];
+                    Format(reason, sizeof(reason), "%t", "illegalCmdrateBanMsg");
+                    char pubreason[256];
+                    Format(pubreason, sizeof(pubreason), "%t", "illegalCmdrateBanAllChat", Cl);
+                    // we have to do extra bullshit here so we don't crash when banning clients out of this callback
+                    // make a pack
+                    DataPack pack = CreateDataPack();
+                    // prepare pack
+                    WritePackCell(pack, userid);
+                    WritePackString(pack, reason);
+                    WritePackString(pack, pubreason);
+                    ResetPack(pack, false);
+                    // make data timer
+                    CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
+                    return;
+                }
+                else
+                {
+                    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L has an illegal cmdrate value!", Cl);
+                    StacLog("[StAC] [Detection] Player %L has an illegal cmdrate value!", Cl);
+                }
+            }
+        }
+    }
+}
+
+// we wait a bit to prevent crashing the server when banning a player from a queryclientconvar callback
+Action Timer_BanUser(Handle timer, DataPack pack)
+{
+    int userid          = ReadPackCell(pack);
+    char reason[128];
+    ReadPackString(pack, reason, sizeof(reason));
+    char pubreason[256];
+    ReadPackString(pack, pubreason, sizeof(pubreason));
+
+    // get client index out of userid
+    int Cl              = GetClientOfUserId(userid);
+
+    // check validity of client index
+    if (IsValidClient(Cl))
+    {
+        BanUser(userid, reason, pubreason);
+    }
+}
+
+// timer for (re)checking ALL cvars and net props and everything else
+Action Timer_CheckClientConVars(Handle timer, int userid)
+{
+    // get actual client index
+    int Cl = GetClientOfUserId(userid);
+    // null out timer here
+    QueryTimer[Cl] = null;
+    if (IsValidClient(Cl))
+    {
+        if (DEBUG)
+        {
+            StacLog("[StAC] Checking client id, %i, %N", Cl, Cl);
+        }
+        // init variable to pass to QueryCvarsEtc
+        int i;
+        // query the client!
+        QueryCvarsEtc(userid, i);
+        // we just checked, but we want to check again eventually
+        // lets redo this timer in a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
+        QueryTimer[Cl] =
+        CreateTimer
+        (
+            GetRandomFloat(minRandCheckVal, maxRandCheckVal),
+            Timer_CheckClientConVars,
+            userid
+        );
+    }
+}
+
+// query all cvars and netprops for userid
+void QueryCvarsEtc(int userid, int i)
+{
+    // get client index of userid
+    int Cl = GetClientOfUserId(userid);
+    // don't go no further if client isn't valid!
+    if (IsValidClient(Cl))
+    {
+        // check cvars!
+        if (i < sizeof(cvarsToCheck))
+        {
+            // make pack
+            DataPack pack = CreateDataPack();
+            // actually query the cvar here based on pos in convar array
+            QueryClientConVar(Cl, cvarsToCheck[i], ConVarCheck);
+            // increase pos in convar array
+            i++;
+            // prepare pack
+            WritePackCell(pack, userid);
+            WritePackCell(pack, i);
+            // reset pack pos to 0
+            ResetPack(pack, false);
+            // make data timer
+            CreateTimer(2.5, Timer_QueryNextCvar, pack, TIMER_DATA_HNDL_CLOSE);
+        }
+        // we checked all the cvars!
+        else
+        {
+            // now lets check some AC related netprops and other misc stuff
+            MiscCheatsEtcsCheck(userid);
+        }
+    }
+}
+
+// timer for checking the next cvar in the list (waits a bit to balance out server load)
+Action Timer_QueryNextCvar(Handle timer, DataPack pack)
+{
+    // read userid
+    int userid = ReadPackCell(pack);
+    // read i
+    int i      = ReadPackCell(pack);
+
+    // get client index out of userid
+    int Cl     = GetClientOfUserId(userid);
+
+    // check validity of client index
+    if (IsValidClient(Cl))
+    {
+        QueryCvarsEtc(userid, i);
+    }
+}
+
+// expensive!
+void QueryEverythingAllClients()
+{
+    if (DEBUG)
+    {
+        StacLog("[StAC] Querying all clients");
+    }
+    // loop thru all clients
+    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    {
+        if (IsValidClient(Cl))
+        {
+            // get userid of this client index
+            int userid = GetClientUserId(Cl);
+            // init variable to pass to QueryCvarsEtc
+            int i;
+            // query the client!
+            QueryCvarsEtc(userid, i);
+        }
+    }
+}
+
+/********** MISC CHEAT DETECTIONS / PATCHES *********/
+
+// ban on invalid characters (newlines, carriage returns, etc)
+public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArgs)
+{
+    // don't pick up console or bots
+    if (!IsValidClient(Cl))
+    {
+        return Plugin_Continue;
+    }
+    if
+    (
+        StrContains(sArgs, "\n", false) != -1
+        ||
+        StrContains(sArgs, "\r", false) != -1
+    )
+    {
+        if (banForMiscCheats)
+        {
+            int userid = GetClientUserId(Cl);
+            char reason[128];
+            Format(reason, sizeof(reason), "%t", "newlineBanMsg");
+            char pubreason[256];
+            Format(pubreason, sizeof(pubreason), "%t", "newlineBanAllChat", Cl);
+            BanUser(userid, reason, pubreason);
+        }
+        else
+        {
+            PrintToImportant("{hotpink}[StAC]{white} [Detection] Blocked newline print from player %L", Cl);
+            StacLog("[StAC] [Detection] Blocked newline print from player %L", Cl);
+        }
+        return Plugin_Stop;
+    }
+    /*
+    // MEGA DEBUG
+    if (StrContains(sArgs, "steamdown", false) != -1)
+    {
+        Steam_SteamServersDisconnected();
+        SteamWorks_SteamServersDisconnected(view_as<EResult>(1));
+        LogMessage("steamdown!");
+    }
+    if (StrContains(sArgs, "steamup", false) != -1)
+    {
+        Steam_SteamServersConnected();
+        SteamWorks_SteamServersConnected();
+        LogMessage("steamup!");
+    }
+
+    if (StrContains(sArgs, "checksteam", false) != -1)
+    {
+        LogMessage("%i", shouldCheckAuth());
+    }
+    */
+    return Plugin_Continue;
+}
+
+// block long commands - i don't know if this actually does anything but it makes me feel better
+public Action OnClientCommand(int Cl, int args)
+{
+    if (IsValidClient(Cl))
+    {
+        int userid = GetClientUserId(Cl);
+        // init var
+        char ClientCommandChar[512];
+        // gets the first command
+        GetCmdArg(0, ClientCommandChar, sizeof(ClientCommandChar));
+        // get length of string
+        int len = strlen(ClientCommandChar);
+
+        // is there more after this command?
+        if (GetCmdArgs() > 0)
+        {
+            // add a space at the end of it
+            ClientCommandChar[len++] = ' ';
+            GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
+        }
+
+        strcopy(lastCommandFor[Cl], sizeof(lastCommandFor[]), ClientCommandChar);
+        timeSinceLastCommand[Cl] = engineTime[Cl][0];
+
+
+        // clean it up ( PROBABLY NOT NEEDED )
+        // TrimString(ClientCommandChar);
+
+        if (DEBUG)
+        {
+            StacLog("[StAC] '%L' issued client side command with %i length:", Cl, strlen(ClientCommandChar));
+            StacLog("%s", ClientCommandChar);
+        }
+        if (strlen(ClientCommandChar) > 255 || len > 255)
+        {
+            StacGeneralPlayerDiscordNotify(userid, "Client sent a very large command to the server!");
+            StacLog("%s", ClientCommandChar);
+            return Plugin_Stop;
+        }
+    }
+    return Plugin_Continue;
+}
+
+// ban for cmdrate value change spam.
+// cheats do this to fake their ping
+public void OnClientSettingsChanged(int Cl)
+{
+    CheckAndFixCmdrate(Cl);
+}
+
+void CheckAndFixCmdrate(int Cl)
+{
+    // ignore invalid clients and dead / in spec clients
+    if (!IsValidClient(Cl) || !IsClientPlaying(Cl) || !fixpingmasking)
+    {
+        return;
+    }
+
+    if
+    (
+        // command occured recently
+        engineTime[Cl][0] - 2.5 < timeSinceLastCommand[Cl]
+        &&
+        // and it's a demorestart
+        StrEqual("demorestart", lastCommandFor[Cl])
+    )
+    {
+        //StacLog("Ignoring demorestart settings change for %N", Cl);
+        return;
+    }
+
+    // get userid for timer
+    int userid = GetClientUserId(Cl);
+
+    // pingreduce check only works if you are using fixpingmasking!
+    // buffer for cmdrate value
+
+    char scmdrate[16];
+    // get actual value of cl cmdrate
+    GetClientInfo(Cl, "cl_cmdrate", scmdrate, sizeof(scmdrate));
+    // convert it to int
+    int icmdrate = StringToInt(scmdrate);
+
+    // clamp it
+    int iclamprate = Math_Clamp(icmdrate, imincmdrate, imaxcmdrate);
+    char sclamprate[4];
+    // convert it to string
+    IntToString(iclamprate, sclamprate, sizeof(sclamprate));
+
+    // do the same thing with updaterate
+    char supdaterate[4];
+    // get actual value of cl updaterate
+    GetClientInfo(Cl, "cl_updaterate", supdaterate, sizeof(supdaterate));
+    // convert it to int
+    int iupdaterate = StringToInt(supdaterate);
+
+    // clamp it
+    int iclampupdaterate = Math_Clamp(iupdaterate, iminupdaterate, imaxupdaterate);
+    char sclampupdaterate[4];
+    // convert it to string
+    IntToString(iclampupdaterate, sclampupdaterate, sizeof(sclampupdaterate));
+
+    /*
+        CMDRATE SPAM CHECK
+
+        technically this could be triggered by clients spam recording and stopping demos, but cheats do it infinitely faster
+    */
+    cmdrateSpamDetects[Cl]++;
+    // have this detection expire in 10 seconds!!! remember - this means that the amount of detects are ONLY in the last 10 seconds!
+    // ncc caps out at 140ish
+    CreateTimer(10.0, Timer_decr_cmdratespam, userid, TIMER_FLAG_NO_MAPCHANGE);
+    if (cmdrateSpamDetects[Cl] >= 10)
+    {
+        PrintToImportant
+        (
+            "{hotpink}[StAC]{white} %N is suspected of ping-reducing or masking using a cheat.\nDetections within the last 10 seconds: {palegreen}%i{white}. Cmdrate value: {blue}%i",
+            Cl,
+            cmdrateSpamDetects[Cl],
+            icmdrate
+        );
+        StacLog
+        (
+            "[StAC] %N is suspected of ping-reducing or masking using a cheat.\nDetections so far: %i.\nCmdrate: %i\nUpdaterate: %i",
+            Cl,
+            cmdrateSpamDetects[Cl],
+            icmdrate,
+            iupdaterate
+        );
+        if (cmdrateSpamDetects[Cl] % 5 == 0)
+        {
+            StacDetectionDiscordNotify(userid, "cmdrate spam / ping modification", cmdrateSpamDetects[Cl]);
+        }
+
+        // BAN USER if they trigger too many detections
+        if (cmdrateSpamDetects[Cl] >= maxCmdrateSpamDetections && maxCmdrateSpamDetections > 0)
+        {
+            char reason[128];
+            Format(reason, sizeof(reason), "%t", "cmdrateSpamBanMsg", cmdrateSpamDetects[Cl]);
+            char pubreason[256];
+            Format(pubreason, sizeof(pubreason), "%t", "cmdrateSpamBanAllChat", Cl, cmdrateSpamDetects[Cl]);
+            BanUser(userid, reason, pubreason);
+            return;
+        }
+    }
+
+    if
+    (
+        // cmdrate is == to optimal clamped rate
+        icmdrate != iclamprate
+        ||
+        // client string is exactly equal to string of optimal cmdrate
+        !StrEqual(scmdrate, sclamprate)
+    )
+    {
+        SetClientInfo(Cl, "cl_cmdrate", sclamprate);
+        //LogMessage("clamping cmdrate to %s", sclamprate);
+    }
+
+    if
+    (
+        // cmdrate is == to optimal clamped rate
+        iupdaterate != iclampupdaterate
+        ||
+        // client string is exactly equal to string of optimal cmdrate
+        !StrEqual(supdaterate, sclampupdaterate)
+    )
+    {
+        SetClientInfo(Cl, "cl_updaterate", sclampupdaterate);
+        //LogMessage("clamping updaterate to %s", sclampupdaterate);
+    }
+}
+
+// no longer just for netprops!
+void MiscCheatsEtcsCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    if (IsValidClient(Cl))
+    {
+        // there used to be an fov check here - but there's odd behavior that i don't want to work around regarding the m_iFov netprop.
+        // sorry!
+
+        // forcibly disables thirdperson with some cheats
+        ClientCommand(Cl, "firstperson");
+        if (DEBUG)
+        {
+            StacLog("[StAC] Executed firstperson command on Player %N", Cl);
+        }
+
+        // lerp check - we check the netprop
+        // don't check if not default tickrate
+        if (isDefaultTickrate())
+        {
+            float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
+            if (DEBUG)
+            {
+                StacLog("%.2f ms interp on %N", lerp, Cl);
+            }
+            if (lerp == 0.0)
+            {
+                // repeated code lol
+                if (banForMiscCheats)
+                {
+                    char reason[128];
+                    Format(reason, sizeof(reason), "%t", "nolerpBanMsg");
+                    char pubreason[256];
+                    Format(pubreason, sizeof(pubreason), "%t", "nolerpBanAllChat", Cl);
+                }
+                else
+                {
+                    StacGeneralPlayerDiscordNotify(userid, "Client sent a very large command to the server!");
+                    PrintToImportant("{hotpink}[StAC]{white} [Detection] Player %L is using NoLerp!", Cl);
+                    StacLog("[StAC] [Detection] Player %L is using NoLerp!", Cl);
+                }
+            }
+            if
+            (
+                lerp < min_interp_ms && min_interp_ms != -1
+                ||
+                lerp > max_interp_ms && max_interp_ms != -1
+            )
+            {
+                char message[256];
+                Format(message, sizeof(message), "Client was kicked for attempted interp exploitation. Their interp: %.2fms", lerp);
+                StacGeneralPlayerDiscordNotify(userid, message);
+                KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
+                MC_PrintToChatAll("%t", "interpAllChat", Cl, lerp);
+                StacLog("%t", "interpAllChat", Cl, lerp);
+            }
+        }
+    }
+}
+
+/********** ISVALIDCLIENT STUFF *********/
+
+bool IsValidClient(int client)
+{
+    return
+    (
+        (0 < client <= MaxClients)
+        && IsClientInGame(client)
+        && !IsClientInKickQueue(client)
+        && !userBanQueued[client]
+        && !IsFakeClient(client)
+    );
+}
+
+bool IsValidClientOrBot(int client)
+{
+    return
+    (
+        (0 < client <= MaxClients)
+        && IsClientInGame(client)
+        && !IsClientInKickQueue(client)
+        && !userBanQueued[client]
+        // don't bother sdkhooking stv or replay bots lol
+        && !IsClientSourceTV(client)
+        && !IsClientReplay(client)
+    );
+}
+
+bool IsValidAdmin(int Cl)
+{
+    if (IsValidClient(Cl))
+    {
+        if (CheckCommandAccess(Cl, "sm_ban", ADMFLAG_GENERIC))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool IsValidSrcTV(int client)
+{
+    return
+    (
+        (0 < client <= MaxClients)
+        && IsClientInGame(client)
+        && IsClientSourceTV(client)
+    );
+}
+
+/********** MISC FUNCS **********/
+
+void BanUser(int userid, char[] reason, char[] pubreason)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    // prevent double bans
+    if (userBanQueued[Cl])
+    {
+        KickClient(Cl, "Banned by StAC");
+        return;
+    }
+
+    // make sure we dont detect on already banned players
+    userBanQueued[Cl] = true;
+
+    // check if client is authed before banning normally
+    bool isAuthed = IsClientAuthorized(Cl);
+
+    if (demonameInBanReason)
+    {
+        if (GetDemoName())
+        {
+            char demoname_plus[256];
+            strcopy(demoname_plus, sizeof(demoname_plus), demoname);
+            Format(demoname_plus, sizeof(demoname_plus), ". Demo file: %s", demoname_plus);
+            StrCat(reason, 256, demoname_plus);
+            StacLog("Reason: %s", reason);
+        }
+        else
+        {
+            StacLog("[StAC] No STV demo is being recorded, no demo name will be printed to the ban reason!");
+        }
+    }
+    if (isAuthed)
+    {
+        if (SOURCEBANS)
+        {
+            SBPP_BanPlayer(0, Cl, 0, reason);
+            // there's no return value for that native, so we have to just assume it worked lol
+            return;
+        }
+        if (GBANS)
+        {
+            ServerCommand("gb_ban %i, 0, %s", userid, reason);
+            // there's no return value nor a native for gbans bans (YET), so we have to just assume it worked lol
+            return;
+        }
+        // stock tf2, no ext ban system. if we somehow fail here, keep going.
+        if (BanClient(Cl, 0, BANFLAG_AUTO, reason, reason, _, _))
+        {
+            return;
+        }
+    }
+    // if we got here steam is being fussy or the client is not auth'd in some way, or the stock tf2 ban failed somehow.
+    StacLog("Client %N is not authorized, steam is down, or the ban failed for some other reason. Attempting to ban with cached SteamID...", Cl);
+    // if this returns true, we can still ban the client with their steamid in a roundabout and annoying way.
+    if (!IsActuallyNullString(SteamAuthFor[Cl]))
+    {
+        ServerCommand("sm_addban 0 \"%s\" %s", SteamAuthFor[Cl], reason);
+        KickClient(Cl, "%s", reason);
+    }
+    // if the above returns false, we can only do ip :/
+    else
+    {
+        char ip[16];
+        GetClientIP(Cl, ip, sizeof(ip));
+
+        StacLog("[StAC] No cached SteamID for %N! Banning with IP %s...", Cl, ip);
+        ServerCommand("sm_banip %s 0 %s", ip, reason);
+        // this kick client might not be needed - you get kicked by "being added to ban list"
+        // KickClient(Cl, "%s", reason);
+    }
+
+    MC_PrintToChatAll("%s", pubreason);
+    StacLog("%s", pubreason);
+}
+
+bool GetDemoName()
+{
+    char tvStatus[512];
+    ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
+    char demoname_etc[128];
+    if (MatchRegex(demonameRegex, tvStatus) > 0)
+    {
+        if (GetRegexSubString(demonameRegex, 0, demoname_etc, sizeof(demoname_etc)))
+        {
+            TrimString(demoname_etc);
+            if (MatchRegex(demonameRegexFINAL, demoname_etc) > 0)
+            {
+                if (GetRegexSubString(demonameRegexFINAL, 0, demoname, sizeof(demoname)))
+                {
+                    TrimString(demoname);
+                    StripQuotes(demoname);
+                    return true;
+                }
+            }
+        }
+    }
+    demoname = "N/A";
+    return false;
+}
+
+bool isDefaultTickrate()
+{
+    if (tps > 60.0 && tps < 70.0)
+    {
+        return true;
+    }
+    return false;
+}
+
+// sourcemod is fucking ridiculous, "IsNullString" only checks for a specific definition of nullstring
+bool IsActuallyNullString(char[] somestring)
+{
+    if (somestring[0] != '\0')
+    {
+        return false;
+    }
+    return true;
+}
+
+bool IsHalloweenCond(TFCond condition)
+{
+    if
+    (
+           condition == TFCond_HalloweenKart
+        || condition == TFCond_HalloweenKartDash
+        || condition == TFCond_HalloweenThriller
+        || condition == TFCond_HalloweenBombHead
+        || condition == TFCond_HalloweenGiant
+        || condition == TFCond_HalloweenTiny
+        || condition == TFCond_HalloweenInHell
+        || condition == TFCond_HalloweenGhostMode
+        || condition == TFCond_HalloweenKartNoTurn
+        || condition == TFCond_HalloweenKartCage
+        || condition == TFCond_SwimmingCurse
+    )
+    {
+        return true;
+    }
+    return false;
+}
+
+/********** MISC CLIENT CHECKS **********/
+
+// is client on a team and not dead
+bool IsClientPlaying(int client)
+{
+    TFTeam team = TF2_GetClientTeam(client);
+    if
+    (
+        IsPlayerAlive(client)
+        &&
+        (
+            team != TFTeam_Unassigned
+            &&
+            team != TFTeam_Spectator
+        )
+    )
+    {
+        return true;
+    }
+    return false;
+}
+
+/********** PRINT HELPER FUNCS **********/
+
+// print colored chat to all server/sourcemod admins
+void PrintToImportant(const char[] format, any ...)
+{
+    char buffer[254];
+
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (IsValidAdmin(i) || IsValidSrcTV(i))
+        {
+            SetGlobalTransTarget(i);
+            VFormat(buffer, sizeof(buffer), format, 2);
+            MC_PrintToChat(i, "%s", buffer);
+        }
+    }
+}
+
+// print to all server/sourcemod admin's consoles
+void PrintToConsoleAllAdmins(const char[] format, any ...)
+{
+    char buffer[254];
+
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (IsValidAdmin(i) || IsValidSrcTV(i))
+        {
+            SetGlobalTransTarget(i);
+            VFormat(buffer, sizeof(buffer), format, 2);
+            PrintToConsole(i, "%s", buffer);
+        }
+    }
+}
+
+/********** MATH STUFF **********/
+
+// from smlib
+int Math_Clamp(int value, int min, int max)
+{
+    value = Math_Min(value, min);
+    value = Math_Max(value, max);
+
+    return value;
+}
+
+int Math_Min(int value, int min)
+{
+    if (value < min)
+    {
+        value = min;
+    }
+
+    return value;
+}
+
+int Math_Max(int value, int max)
+{
+    if (value > max)
+    {
+        value = max;
+    }
+
+    return value;
+}
+
+any abs(any x)
+{
+    return x > 0 ? x : -x;
+}
+
+float RoundToPlace(float input, int decimalPlaces)
+{
+    float poweroften = Pow(10.0, float(decimalPlaces));
+    return RoundToNearest(input * poweroften) / (poweroften);
+}
+
+/********** LIVEFEED **********/
+
 void LiveFeed_PlayerCmd(int userid)
 {
     int Cl = GetClientOfUserId(userid);
@@ -2850,1079 +4093,171 @@ void LiveFeed_PlayerCmd(int userid)
         }
     }
 }
-
-void StacLogNetData(int userid)
-{
-    int Cl          = GetClientOfUserId(userid);
-    // convert to percentages
-    float loss      = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
-    float choke     = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
-    float inchoke   = GetClientAvgChoke(Cl, NetFlow_Incoming) * 100.0;
-    float outchoke  = GetClientAvgChoke(Cl, NetFlow_Outgoing) * 100.0;
-    // convert to ms
-    float ping      = GetClientAvgLatency(Cl, NetFlow_Both) * 1000.0;
-
-    StacLog
-    (
-        "\
-        \nNetwork:\
-        \n %.2f loss\
-        \n %.2f ms ping\
-        \n %.2f inchoke\
-        \n %.2f outchoke\
-        \n %.2f totalchoke\
-        ",
-        loss,
-        ping,
-        inchoke,
-        outchoke,
-        choke
-    );
-    StacLog("Time since last 10 ticks: %f", engineTime[Cl][0] - engineTime[Cl][10]);
-}
-
-void StacLogMouse(int userid)
+void LiveFeed_NetInfo(int userid)
 {
     int Cl = GetClientOfUserId(userid);
-    //if (GetRandomInt(1, 5) == 1)
-    //{
-    //    QueryClientConVar(Cl, "sensitivity", ConVarCheck);
-    //}
-    // init vars for mouse movement - weightedx and weightedy
-    int wx;
-    int wy;
-    // scale mouse movement to sensitivity
-    if (sensFor[Cl] != 0.0)
-    {
-        wx = abs(RoundFloat(clmouse[Cl][0] * ( 1 / sensFor[Cl])));
-        wy = abs(RoundFloat(clmouse[Cl][1] * ( 1 / sensFor[Cl])));
-    }
-    StacLog
-    (
-        "\
-        \nMouse Movement (sens weighted):\
-        \n abs(x): %i\
-        \n abs(y): %i\
-        \nMouse Movement (unweighted):\
-        \n x: %i\
-        \n y: %i\
-        \nClient Sens:\
-        \n %f\
-        ",
-        wx,
-        wy,
-        clmouse[Cl][0],
-        clmouse[Cl][1],
-        sensFor[Cl]
-    );
-}
-
-void StacLogAngles(int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-    StacLog
-    (
-        "\
-        \nAngles:\
-        \n angles0: x %f y %f\
-        \n angles1: x %f y %f\
-        \n angles2: x %f y %f\
-        \n angles3: x %f y %f\
-        \n angles4: x %f y %f\
-        ",
-        clangles[Cl][0][0],
-        clangles[Cl][0][1],
-        clangles[Cl][1][0],
-        clangles[Cl][1][1],
-        clangles[Cl][2][0],
-        clangles[Cl][2][1],
-        clangles[Cl][3][0],
-        clangles[Cl][3][1],
-        clangles[Cl][4][0],
-        clangles[Cl][4][1]
-    );
-}
-
-void StacLogCmdnums(int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-    StacLog
-    (
-        "\
-        \nPrevious cmdnums:\
-        \n0 %i\
-        \n1 %i\
-        \n2 %i\
-        \n3 %i\
-        \n4 %i\
-        \n5 %i\
-        ",
-        clcmdnum[Cl][0],
-        clcmdnum[Cl][1],
-        clcmdnum[Cl][2],
-        clcmdnum[Cl][3],
-        clcmdnum[Cl][4],
-        clcmdnum[Cl][5]
-    );
-}
-
-void StacLogTickcounts(int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-    StacLog
-    (
-        "\
-        \nPrevious tickcounts:\
-        \n0 %i\
-        \n1 %i\
-        \n2 %i\
-        \n3 %i\
-        \n4 %i\
-        \n5 %i\
-        ",
-        cltickcount[Cl][0],
-        cltickcount[Cl][1],
-        cltickcount[Cl][2],
-        cltickcount[Cl][3],
-        cltickcount[Cl][4],
-        cltickcount[Cl][5]
-    );
-}
-
-public Action Timer_decr_aimsnaps(Handle timer, any userid)
-{
-    int Cl = GetClientOfUserId(userid);
-
-    if (IsValidClient(Cl))
-    {
-        if (aimsnapDetects[Cl] > -1)
-        {
-            aimsnapDetects[Cl]--;
-        }
-        if (aimsnapDetects[Cl] <= 0)
-        {
-            if (AIMPLOTTER)
-            {
-                ServerCommand("sm_aimplot #%i off", userid);
-            }
-        }
-    }
-}
-
-public Action Timer_decr_pSilent(Handle timer, any userid)
-{
-    int Cl = GetClientOfUserId(userid);
-
-    if (IsValidClient(Cl))
-    {
-        if (pSilentDetects[Cl] > -1)
-        {
-            pSilentDetects[Cl]--;
-        }
-        if (pSilentDetects[Cl] <= 0)
-        {
-            if (AIMPLOTTER)
-            {
-                ServerCommand("sm_aimplot #%i off", userid);
-            }
-        }
-    }
-}
-
-public Action Timer_decr_tbot(Handle timer, any userid)
-{
-    int Cl = GetClientOfUserId(userid);
-
-    if (IsValidClient(Cl))
-    {
-        if (tbotDetects[Cl] > -1)
-        {
-            tbotDetects[Cl]--;
-        }
-        if (tbotDetects[Cl] <= 0)
-        {
-            if (AIMPLOTTER)
-            {
-                ServerCommand("sm_aimplot #%i off", userid);
-            }
-        }
-    }
-}
-
-public Action Timer_decr_cmdratespam(Handle timer, any userid)
-{
-    int Cl = GetClientOfUserId(userid);
-
-    if (IsValidClient(Cl))
-    {
-        if (cmdrateSpamDetects[Cl] > 0)
-        {
-            cmdrateSpamDetects[Cl]--;
-        }
-    }
-}
-
-char cvarsToCheck[][] =
-{
-    // misc vars
-    "sensitivity",
-    // possible cheat vars
-    "cl_interpolate",
-    // this is a useless check but we check it anyway
-    "fov_desired",
-    //
-    "cl_cmdrate",
-};
-
-public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
-{
-    // make sure client is valid
     if (!IsValidClient(Cl))
     {
         return;
     }
-    int userid = GetClientUserId(Cl);
-
-    if (DEBUG)
+    for (int LiveFeedViewer = 1; LiveFeedViewer <= MaxClients; LiveFeedViewer++)
     {
-        StacLog("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
-    }
-
-    // log something about cvar errors
-    if (result != ConVarQuery_Okay)
-    {
-        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", Cl);
-        StacLog("[StAC] Could not query cvar %s on player %N", cvarName, Cl);
-        return;
-    }
-
-    if (StrEqual(cvarName, "sensitivity"))
-    {
-        sensFor[Cl] = StringToFloat(cvarValue);
-    }
-
-    /*
-        POSSIBLE CHEAT VARS
-    */
-    // cl_interpolate (hidden cvar! should NEVER not be 1)
-    else if (StrEqual(cvarName, "cl_interpolate"))
-    {
-        if (StringToInt(cvarValue) != 1)
+        if (IsValidAdmin(LiveFeedViewer) || IsValidSrcTV(LiveFeedViewer))
         {
-            if (banForMiscCheats)
-            {
-                char reason[128];
-                Format(reason, sizeof(reason), "%t", "nolerpBanMsg");
-                char pubreason[256];
-                Format(pubreason, sizeof(pubreason), "%t", "nolerpBanAllChat", Cl);
-                // we have to do extra bullshit here so we don't crash when banning clients out of this callback
-                // make a pack
-                DataPack pack = CreateDataPack();
-
-                // prepare pack
-                WritePackCell(pack, userid);
-                WritePackString(pack, reason);
-                WritePackString(pack, pubreason);
-
-                ResetPack(pack, false);
-
-                // make data timer
-                CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
-                return;
-            }
-            else
-            {
-                PrintToImportant("{hotpink}[StAC]{white} [Detection] Player %L is using NoLerp!", Cl);
-                StacLog("[StAC] [Detection] Player %L is using NoLerp!", Cl);
-            }
-        }
-    }
-    // fov check #1 - if u get banned by this you are a clown
-    else if (StrEqual(cvarName, "fov_desired"))
-    {
-        int fovDesired = StringToInt(cvarValue);
-        // check just in case
-        if
-        (
-            fovDesired < 20
-            ||
-            fovDesired > 90
-        )
-        {
-            if (banForMiscCheats)
-            {
-                char reason[128];
-                Format(reason, sizeof(reason), "%t", "fovBanMsg");
-                char pubreason[256];
-                Format(pubreason, sizeof(pubreason), "%t", "fovBanAllChat", Cl);
-                // we have to do extra bullshit here so we don't crash when banning clients out of this callback
-                // make a pack
-                DataPack pack = CreateDataPack();
-
-                // prepare pack
-                WritePackCell(pack, userid);
-                WritePackString(pack, reason);
-                WritePackString(pack, pubreason);
-
-                ResetPack(pack, false);
-
-                // make data timer
-                CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
-                return;
-            }
-            else
-            {
-                PrintToImportant("{hotpink}[StAC]{white} [Detection] Player %L is using fov cheats!", Cl);
-                StacLog("[StAC] [Detection] Player %L is using fov cheats!", Cl);
-            }
-        }
-    }
-    // fov check #1 - if u get banned by this you are a clown
-    else if (StrEqual(cvarName, "cl_cmdrate"))
-    {
-        if
-        (
-            StrEqual("-9999", cvarValue)
-            ||
-            StrEqual("-1", cvarValue)
-        )
-        {
-            char scmdrate[16];
-            // get actual value of cl cmdrate
-            GetClientInfo(Cl, "cl_cmdrate", scmdrate, sizeof(scmdrate));
-            if (!StrEqual(cvarValue, scmdrate))
-            {
-                StacLog("%N had cl_cmdrate value of %s, userinfo showed %s", Cl, cvarValue, scmdrate);
-                if (banForMiscCheats)
-                {
-                    char reason[128];
-                    Format(reason, sizeof(reason), "%t", "illegalCmdrateBanMsg");
-                    char pubreason[256];
-                    Format(pubreason, sizeof(pubreason), "%t", "illegalCmdrateBanAllChat", Cl);
-                    // we have to do extra bullshit here so we don't crash when banning clients out of this callback
-                    // make a pack
-                    DataPack pack = CreateDataPack();
-                    // prepare pack
-                    WritePackCell(pack, userid);
-                    WritePackString(pack, reason);
-                    WritePackString(pack, pubreason);
-                    ResetPack(pack, false);
-                    // make data timer
-                    CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
-                    return;
-                }
-                else
-                {
-                    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L has an illegal cmdrate value!", Cl);
-                    StacLog("[StAC] [Detection] Player %L has an illegal cmdrate value!", Cl);
-                }
-            }
-        }
-    }
-}
-
-// we wait a bit to prevent crashing the server when banning a player from a queryclientconvar callback
-public Action Timer_BanUser(Handle timer, DataPack pack)
-{
-    int userid          = ReadPackCell(pack);
-    char reason[128];
-    ReadPackString(pack, reason, sizeof(reason));
-    char pubreason[256];
-    ReadPackString(pack, pubreason, sizeof(pubreason));
-
-    // get client index out of userid
-    int Cl              = GetClientOfUserId(userid);
-
-    // check validity of client index
-    if (IsValidClient(Cl))
-    {
-        BanUser(userid, reason, pubreason);
-    }
-}
-
-// ban on invalid characters (newlines, carriage returns, etc)
-public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArgs)
-{
-    // don't pick up console or bots
-    if (!IsValidClient(Cl))
-    {
-        return Plugin_Continue;
-    }
-    if
-    (
-        StrContains(sArgs, "\n", false) != -1
-        ||
-        StrContains(sArgs, "\r", false) != -1
-    )
-    {
-        if (banForMiscCheats)
-        {
-            int userid = GetClientUserId(Cl);
-            char reason[128];
-            Format(reason, sizeof(reason), "%t", "newlineBanMsg");
-            char pubreason[256];
-            Format(pubreason, sizeof(pubreason), "%t", "newlineBanAllChat", Cl);
-            BanUser(userid, reason, pubreason);
-        }
-        else
-        {
-            PrintToImportant("{hotpink}[StAC]{white} [Detection] Blocked newline print from player %L", Cl);
-            StacLog("[StAC] [Detection] Blocked newline print from player %L", Cl);
-        }
-        return Plugin_Stop;
-    }
-    /*
-    // MEGA DEBUG
-    if (StrContains(sArgs, "steamdown", false) != -1)
-    {
-        Steam_SteamServersDisconnected();
-        SteamWorks_SteamServersDisconnected(view_as<EResult>(1));
-        LogMessage("steamdown!");
-    }
-    if (StrContains(sArgs, "steamup", false) != -1)
-    {
-        Steam_SteamServersConnected();
-        SteamWorks_SteamServersConnected();
-        LogMessage("steamup!");
-    }
-
-    if (StrContains(sArgs, "checksteam", false) != -1)
-    {
-        LogMessage("%i", shouldCheckAuth());
-    }
-    */
-    return Plugin_Continue;
-}
-
-char lastCommandFor[TFMAXPLAYERS+1][256];
-float timeSinceLastCommand[TFMAXPLAYERS+1];
-// block long commands - i don't know if this actually does anything but it makes me feel better
-public Action OnClientCommand(int Cl, int args)
-{
-    if (IsValidClient(Cl))
-    {
-        int userid = GetClientUserId(Cl);
-        // init var
-        char ClientCommandChar[512];
-        // gets the first command
-        GetCmdArg(0, ClientCommandChar, sizeof(ClientCommandChar));
-        // get length of string
-        int len = strlen(ClientCommandChar);
-
-        // is there more after this command?
-        if (GetCmdArgs() > 0)
-        {
-            // add a space at the end of it
-            ClientCommandChar[len++] = ' ';
-            GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
-        }
-
-        strcopy(lastCommandFor[Cl], sizeof(lastCommandFor[]), ClientCommandChar);
-        timeSinceLastCommand[Cl] = engineTime[Cl][0];
-
-
-        // clean it up ( PROBABLY NOT NEEDED )
-        // TrimString(ClientCommandChar);
-
-        if (DEBUG)
-        {
-            StacLog("[StAC] '%L' issued client side command with %i length:", Cl, strlen(ClientCommandChar));
-            StacLog("%s", ClientCommandChar);
-        }
-        if (strlen(ClientCommandChar) > 255 || len > 255)
-        {
-            StacGeneralPlayerDiscordNotify(userid, "Client sent a very large command to the server!");
-            StacLog("%s", ClientCommandChar);
-            return Plugin_Stop;
-        }
-    }
-    return Plugin_Continue;
-}
-
-// ban for cmdrate value change spam.
-// cheats do this to fake their ping
-public void OnClientSettingsChanged(int Cl)
-{
-    CheckAndFixCmdrate(Cl);
-}
-
-void CheckAndFixCmdrate(int Cl)
-{
-    // ignore invalid clients and dead / in spec clients
-    if (!IsValidClient(Cl) || !IsClientPlaying(Cl) || !fixpingmasking)
-    {
-        return;
-    }
-
-    if
-    (
-        // command occured recently
-        engineTime[Cl][0] - 2.5 < timeSinceLastCommand[Cl]
-        &&
-        // and it's a demorestart
-        StrEqual("demorestart", lastCommandFor[Cl])
-    )
-    {
-        //StacLog("Ignoring demorestart settings change for %N", Cl);
-        return;
-    }
-
-    // get userid for timer
-    int userid = GetClientUserId(Cl);
-
-    // pingreduce check only works if you are using fixpingmasking!
-    // buffer for cmdrate value
-
-    char scmdrate[16];
-    // get actual value of cl cmdrate
-    GetClientInfo(Cl, "cl_cmdrate", scmdrate, sizeof(scmdrate));
-    // convert it to int
-    int icmdrate = StringToInt(scmdrate);
-
-    // clamp it
-    int iclamprate = Math_Clamp(icmdrate, imincmdrate, imaxcmdrate);
-    char sclamprate[4];
-    // convert it to string
-    IntToString(iclamprate, sclamprate, sizeof(sclamprate));
-
-    // do the same thing with updaterate
-    char supdaterate[4];
-    // get actual value of cl updaterate
-    GetClientInfo(Cl, "cl_updaterate", supdaterate, sizeof(supdaterate));
-    // convert it to int
-    int iupdaterate = StringToInt(supdaterate);
-
-    // clamp it
-    int iclampupdaterate = Math_Clamp(iupdaterate, iminupdaterate, imaxupdaterate);
-    char sclampupdaterate[4];
-    // convert it to string
-    IntToString(iclampupdaterate, sclampupdaterate, sizeof(sclampupdaterate));
-
-    /*
-        CMDRATE SPAM CHECK
-
-        technically this could be triggered by clients spam recording and stopping demos, but cheats do it infinitely faster
-    */
-    cmdrateSpamDetects[Cl]++;
-    // have this detection expire in 10 seconds!!! remember - this means that the amount of detects are ONLY in the last 10 seconds!
-    // ncc caps out at 140ish
-    CreateTimer(10.0, Timer_decr_cmdratespam, userid, TIMER_FLAG_NO_MAPCHANGE);
-    if (cmdrateSpamDetects[Cl] >= 10)
-    {
-        PrintToImportant
-        (
-            "{hotpink}[StAC]{white} %N is suspected of ping-reducing or masking using a cheat.\nDetections within the last 10 seconds: {palegreen}%i{white}. Cmdrate value: {blue}%i",
-            Cl,
-            cmdrateSpamDetects[Cl],
-            icmdrate
-        );
-        StacLog
-        (
-            "[StAC] %N is suspected of ping-reducing or masking using a cheat.\nDetections so far: %i.\nCmdrate: %i\nUpdaterate: %i",
-            Cl,
-            cmdrateSpamDetects[Cl],
-            icmdrate,
-            iupdaterate
-        );
-        if (cmdrateSpamDetects[Cl] % 5 == 0)
-        {
-            StacDetectionDiscordNotify(userid, "cmdrate spam / ping modification", cmdrateSpamDetects[Cl]);
-        }
-
-        // BAN USER if they trigger too many detections
-        if (cmdrateSpamDetects[Cl] >= maxCmdrateSpamDetects && maxCmdrateSpamDetects > 0)
-        {
-            char reason[128];
-            Format(reason, sizeof(reason), "%t", "cmdrateSpamBanMsg", cmdrateSpamDetects[Cl]);
-            char pubreason[256];
-            Format(pubreason, sizeof(pubreason), "%t", "cmdrateSpamBanAllChat", Cl, cmdrateSpamDetects[Cl]);
-            BanUser(userid, reason, pubreason);
-            return;
-        }
-    }
-
-    if
-    (
-        // cmdrate is == to optimal clamped rate
-        icmdrate != iclamprate
-        ||
-        // client string is exactly equal to string of optimal cmdrate
-        !StrEqual(scmdrate, sclamprate)
-    )
-    {
-        SetClientInfo(Cl, "cl_cmdrate", sclamprate);
-        //LogMessage("clamping cmdrate to %s", sclamprate);
-    }
-
-    if
-    (
-        // cmdrate is == to optimal clamped rate
-        iupdaterate != iclampupdaterate
-        ||
-        // client string is exactly equal to string of optimal cmdrate
-        !StrEqual(supdaterate, sclampupdaterate)
-    )
-    {
-        SetClientInfo(Cl, "cl_updaterate", sclampupdaterate);
-        //LogMessage("clamping updaterate to %s", sclampupdaterate);
-    }
-}
-
-void UpdateRates()
-{
-    imincmdrate    = GetConVarInt(FindConVar("sv_mincmdrate"));
-    imaxcmdrate    = GetConVarInt(FindConVar("sv_maxcmdrate"));
-    iminupdaterate = GetConVarInt(FindConVar("sv_minupdaterate"));
-    imaxupdaterate = GetConVarInt(FindConVar("sv_maxupdaterate"));
-
-    // reset all client based vars on plugin reload
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
-    {
-        if (IsValidClient(Cl))
-        {
-            OnClientSettingsChanged(Cl);
-        }
-    }
-}
-
-void RateChange(ConVar convar, const char[] oldValue, const char[] newValue)
-{
-    UpdateRates();
-}
-
-// no longer just for netprops!
-void NetPropEtcCheck(int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-
-    if (IsValidClient(Cl))
-    {
-        // there used to be an fov check here - but there's odd behavior that i don't want to work around regarding the m_iFov netprop.
-        // sorry!
-
-        // forcibly disables thirdperson with some cheats
-        ClientCommand(Cl, "firstperson");
-        if (DEBUG)
-        {
-            StacLog("[StAC] Executed firstperson command on Player %N", Cl);
-        }
-
-        // lerp check - we check the netprop
-        // don't check if not default tickrate
-        if (isDefaultTickrate())
-        {
-            float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
-            if (DEBUG)
-            {
-                StacLog("%.2f ms interp on %N", lerp, Cl);
-            }
-            if (lerp == 0.0)
-            {
-                // repeated code lol
-                if (banForMiscCheats)
-                {
-                    char reason[128];
-                    Format(reason, sizeof(reason), "%t", "nolerpBanMsg");
-                    char pubreason[256];
-                    Format(pubreason, sizeof(pubreason), "%t", "nolerpBanAllChat", Cl);
-                }
-                else
-                {
-                    StacGeneralPlayerDiscordNotify(userid, "Client sent a very large command to the server!");
-                    PrintToImportant("{hotpink}[StAC]{white} [Detection] Player %L is using NoLerp!", Cl);
-                    StacLog("[StAC] [Detection] Player %L is using NoLerp!", Cl);
-                }
-            }
-            if
+            // NETINFO
+            SetHudTextParams
             (
-                lerp < min_interp_ms && min_interp_ms != -1
-                ||
-                lerp > max_interp_ms && max_interp_ms != -1
-            )
-            {
-                char message[256];
-                Format(message, sizeof(message), "Client was kicked for attempted interp exploitation. Their interp: %.2fms", lerp);
-                StacGeneralPlayerDiscordNotify(userid, message);
-                KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
-                MC_PrintToChatAll("%t", "interpAllChat", Cl, lerp);
-                StacLog("%t", "interpAllChat", Cl, lerp);
-            }
-        }
-    }
-}
-
-/////////////////
-// TIMER STUFF //
-/////////////////
-
-// timer for (re)checking ALL cvars and net props and everything else
-public Action Timer_CheckClientConVars(Handle timer, int userid)
-{
-    // get actual client index
-    int Cl = GetClientOfUserId(userid);
-    // null out timer here
-    QueryTimer[Cl] = null;
-    if (IsValidClient(Cl))
-    {
-        if (DEBUG)
-        {
-            StacLog("[StAC] Checking client id, %i, %N", Cl, Cl);
-        }
-        // init variable to pass to QueryCvarsEtc
-        int i;
-        // query the client!
-        QueryCvarsEtc(userid, i);
-        // we just checked, but we want to check again eventually
-        // lets make a timer with a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
-        QueryTimer[Cl] =
-        CreateTimer
-        (
-            GetRandomFloat
+                // x&y
+                0.85, 0.40,
+                // time to hold
+                4.0,
+                // rgba
+                255, 255, 255, 255,
+                // effects
+                0, 0.0, 0.0, 0.0
+            );
+            ShowSyncHudText
             (
-                minRandCheckVal,
-                maxRandCheckVal
-            ),
-            Timer_CheckClientConVars,
-            userid
-        );
-    }
-}
-
-// query all cvars and netprops for userid
-void QueryCvarsEtc(int userid, int i)
-{
-    // get client index of userid
-    int Cl = GetClientOfUserId(userid);
-    // don't go no further if client isn't valid!
-    if (IsValidClient(Cl))
-    {
-        // check cvars!
-        if (i < sizeof(cvarsToCheck))
-        {
-            // make pack
-            DataPack pack = CreateDataPack();
-            // actually query the cvar here based on pos in convar array
-            QueryClientConVar(Cl, cvarsToCheck[i], ConVarCheck);
-            // increase pos in convar array
-            i++;
-            // prepare pack
-            WritePackCell(pack, userid);
-            WritePackCell(pack, i);
-            // reset pack pos to 0
-            ResetPack(pack, false);
-            // make data timer
-            CreateTimer(2.5, timer_QueryNextCvar, pack, TIMER_DATA_HNDL_CLOSE);
-        }
-        // we checked all the cvars!
-        else
-        {
-            // now lets check some AC related netprops and other misc stuff
-            NetPropEtcCheck(userid);
+                LiveFeedViewer,
+                HudSyncNetwork,
+                "\
+                \nClient: %N\
+                \n Index: %i\
+                \n Userid: %i\
+                \n Status: %s\
+                \n Connected for: %.0fs\
+                \n\
+                \nNetwork:\
+                \n %.2f ms ping\
+                \n %.2f loss\
+                \n %.2f inchoke\
+                \n %.2f outchoke\
+                \n %.2f totalchoke\
+                \n %.2f kbps rate\
+                \n %.2f pps rate\
+                ",
+                Cl,
+                Cl,
+                GetClientUserId(Cl),
+                IsPlayerAlive(Cl) ? "alive" : "dead",
+                GetClientTime(Cl),
+                pingFor[Cl],
+                lossFor[Cl],
+                inchokeFor[Cl],
+                outchokeFor[Cl],
+                chokeFor[Cl],
+                rateFor[Cl],
+                ppsFor[Cl]
+            );
         }
     }
 }
 
-// timer for checking the next cvar in the list (waits a bit to balance out server load)
-public Action timer_QueryNextCvar(Handle timer, DataPack pack)
+/********** UPDATER **********/
+
+public void OnLibraryAdded(const char[] name)
 {
-    // read userid
-    int userid = ReadPackCell(pack);
-    // read i
-    int i      = ReadPackCell(pack);
-
-    // get client index out of userid
-    int Cl     = GetClientOfUserId(userid);
-
-    // check validity of client index
-    if (IsValidClient(Cl))
+    if (StrEqual(name, "updater"))
     {
-        QueryCvarsEtc(userid, i);
+        Updater_AddPlugin(UPDATE_URL);
     }
 }
 
-// expensive!
-void QueryEverythingAllClients()
+/********** DISCORD **********/
+
+void StacGeneralPlayerDiscordNotify(int userid, char[] message)
 {
-    if (DEBUG)
+    if (!DISCORD)
     {
-        StacLog("[StAC] Querying all clients");
-    }
-    // loop thru all clients
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
-    {
-        if (IsValidClient(Cl))
-        {
-            // get userid of this client index
-            int userid = GetClientUserId(Cl);
-            // init variable to pass to QueryCvarsEtc
-            int i;
-            // query the client!
-            QueryCvarsEtc(userid, i);
-        }
-    }
-}
-
-////////////
-// STONKS //
-////////////
-
-public void BanUser(int userid, char[] reason, char[] pubreason)
-{
-    int Cl = GetClientOfUserId(userid);
-
-    // prevent double bans
-    if (userBanQueued[Cl])
-    {
-        KickClient(Cl, "Banned by StAC");
         return;
     }
 
-    // make sure we dont detect on already banned players
-    userBanQueued[Cl] = true;
+    char msg[1024];
 
-    // check if client is authed before banning normally
-    bool isAuthed = IsClientAuthorized(Cl);
-
-    if (demonameInBanReason)
-    {
-        if (GetDemoName())
-        {
-            char demoname_plus[256];
-            strcopy(demoname_plus, sizeof(demoname_plus), demoname);
-            Format(demoname_plus, sizeof(demoname_plus), ". Demo file: %s", demoname_plus);
-            StrCat(reason, 256, demoname_plus);
-            StacLog("Reason: %s", reason);
-        }
-        else
-        {
-            StacLog("[StAC] No STV demo is being recorded, no demo name will be printed to the ban reason!");
-        }
-    }
-    if (isAuthed)
-    {
-        if (SOURCEBANS)
-        {
-            SBPP_BanPlayer(0, Cl, 0, reason);
-            // there's no return value for that native, so we have to just assume it worked lol
-            return;
-        }
-        if (GBANS)
-        {
-            ServerCommand("gb_ban %i, 0, %s", userid, reason);
-            // there's no return value nor a native for gbans bans (YET), so we have to just assume it worked lol
-            return;
-        }
-        // stock tf2, no ext ban system. if we somehow fail here, keep going.
-        if (BanClient(Cl, 0, BANFLAG_AUTO, reason, reason, _, _))
-        {
-            return;
-        }
-    }
-    // if we got here steam is being fussy or the client is not auth'd in some way, or the stock tf2 ban failed somehow.
-    StacLog("Client %N is not authorized, steam is down, or the ban failed for some other reason. Attempting to ban with cached SteamID...", Cl);
-    // if this returns true, we can still ban the client with their steamid in a roundabout and annoying way.
+    int Cl = GetClientOfUserId(userid);
+    char ClName[64];
+    GetClientName(Cl, ClName, sizeof(ClName));
+    Discord_EscapeString(ClName, sizeof(ClName));
+    GetDemoName();
+    // we technically store the url in this so it has to be bigger
+    char steamid[96];
+    // ok we store these on client connect & auth, this shouldn't be null
     if (!IsActuallyNullString(SteamAuthFor[Cl]))
     {
-        ServerCommand("sm_addban 0 \"%s\" %s", SteamAuthFor[Cl], reason);
-        KickClient(Cl, "%s", reason);
+        // make this a clickable link in discord
+        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
     }
-    // if the above returns false, we can only do ip :/
+    // if it is, that means the plugin reloaded or steam is being fussy.
     else
     {
-        char ip[16];
-        GetClientIP(Cl, ip, sizeof(ip));
-
-        StacLog("[StAC] No cached SteamID for %N! Banning with IP %s...", Cl, ip);
-        ServerCommand("sm_banip %s 0 %s", ip, reason);
-        // this kick client might not be needed - you get kicked by "being added to ban list"
-        // KickClient(Cl, "%s", reason);
+        steamid = "N/A";
     }
-
-    MC_PrintToChatAll("%s", pubreason);
-    StacLog("%s", pubreason);
+    Format
+    (
+        msg,
+        sizeof(msg),
+        generalTemplate,
+        Cl,
+        steamid,
+        message,
+        hostname,
+        hostipandport,
+        demoname
+    );
+    SendMessageToDiscord(msg);
 }
 
-// Open log file for StAC
-void OpenStacLog()
+void StacDetectionDiscordNotify(int userid, char[] type, int detections)
 {
-    // current date for log file (gets updated on map change to not spread out maps across files on date changes)
-    char curDate[32];
-
-    // get current date
-    FormatTime(curDate, sizeof(curDate), "%m%d%y", GetTime());
-
-    // init path
-    char path[128];
-    // set path
-    BuildPath(Path_SM, path, sizeof(path), "logs/stac");
-
-    // create directory if not extant
-    if (!DirExists(path, false))
+    if (!DISCORD)
     {
-        LogMessage("[StAC] StAC directory not extant! Creating...");
-        // 511 = unix 775 ?
-        if (!CreateDirectory(path, 511, false))
-        {
-            LogMessage("[StAC] StAC directory could not be created!");
-        }
+        return;
     }
 
-    // set up the full path here
-    Format(path, sizeof(path), "%s/stac_%s.log", path, curDate);
+    char msg[1024];
 
-    // actually create file here
-    StacLogFile = OpenFile(path, "at", false);
-}
-
-// Close log file for StAC
-void CloseStacLog()
-{
-    delete StacLogFile;
-}
-
-// log to StAC log file
-void StacLog(const char[] format, any ...)
-{
-    char buffer[254];
-    VFormat(buffer, sizeof(buffer), format, 2);
-    // clear color tags
-    MC_RemoveTags(buffer, sizeof(buffer));
-
-    if (StacLogFile != null)
+    int Cl = GetClientOfUserId(userid);
+    char ClName[64];
+    GetClientName(Cl, ClName, sizeof(ClName));
+    Discord_EscapeString(ClName, sizeof(ClName));
+    GetDemoName();
+    // we technically store the url in this so it has to be bigger
+    char steamid[96];
+    // ok we store these on client connect & auth, this shouldn't be null
+    if (!IsActuallyNullString(SteamAuthFor[Cl]))
     {
-        LogToOpenFile(StacLogFile, buffer);
+        // make this a clickable link in discord
+        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
     }
+    // if it is, that means the plugin reloaded or steam is being fussy.
     else
     {
-        LogMessage("[StAC] File handle invalid!");
-        LogMessage("%s", buffer);
+        steamid = "N/A";
     }
-    PrintToConsoleAllAdmins("%s", buffer);
-}
 
-float CalcAngDeg(float array1[3], float array2[3])
-{
-    // ignore roll
-    array1[2] = 0.0;
-    array2[2] = 0.0;
-    return SquareRoot(GetVectorDistance(array1, array2, true));
-}
-
-// IsValidClient stocks
-bool IsValidClient(int client)
-{
-    return
+    Format
     (
-        (0 < client <= MaxClients)
-        && IsClientInGame(client)
-        && !IsClientInKickQueue(client)
-        && !userBanQueued[client]
-        && !IsFakeClient(client)
+        msg,
+        sizeof(msg),
+        detectionTemplate,
+        Cl,
+        steamid,
+        type,
+        detections,
+        hostname,
+        hostipandport,
+        demoname
     );
+    SendMessageToDiscord(msg);
 }
 
-bool IsValidClientOrBot(int client)
+void SendMessageToDiscord(char[] message)
 {
-    return
-    (
-        (0 < client <= MaxClients)
-        && IsClientInGame(client)
-        && !IsClientInKickQueue(client)
-        && !userBanQueued[client]
-        // don't bother sdkhooking stv or replay bots lol
-        && !IsClientSourceTV(client)
-        && !IsClientReplay(client)
-    );
+    char webhook[32] = "stac";
+    Discord_SendMessage(webhook, message);
 }
 
-
-// is client on a team and not dead
-bool IsClientPlaying(int client)
-{
-    TFTeam team = TF2_GetClientTeam(client);
-    if
-    (
-        IsPlayerAlive(client)
-        &&
-        (
-            team != TFTeam_Unassigned
-            &&
-            team != TFTeam_Spectator
-        )
-    )
-    {
-        return true;
-    }
-    return false;
-}
-
-bool HasValidAngles(int Cl)
-{
-    if
-    (
-        // ignore weird angle resets in mge / dm, ignore laggy players
-        (
-            IsNullVector(clangles[Cl][0])
-        )
-        ||
-        (
-            IsNullVector(clangles[Cl][1])
-        )
-        ||
-        (
-            IsNullVector(clangles[Cl][2])
-        )
-        ||
-        (
-            IsNullVector(clangles[Cl][3])
-        )
-        ||
-        (
-            IsNullVector(clangles[Cl][4])
-        )
-    )
-    {
-        return false;
-    }
-    return true;
-}
-
-// print colored chat to all server/sourcemod admins
-void PrintToImportant(const char[] format, any ...)
-{
-    char buffer[254];
-
-    for (int i = 1; i <= MaxClients; i++)
-    {
-        if (IsValidAdmin(i) || IsValidSrcTV(i))
-        {
-            SetGlobalTransTarget(i);
-            VFormat(buffer, sizeof(buffer), format, 2);
-            MC_PrintToChat(i, "%s", buffer);
-        }
-    }
-}
-
-// print to all server/sourcemod admin's consoles
-void PrintToConsoleAllAdmins(const char[] format, any ...)
-{
-    char buffer[254];
-
-    for (int i = 1; i <= MaxClients; i++)
-    {
-        if (IsValidAdmin(i) || IsValidSrcTV(i))
-        {
-            SetGlobalTransTarget(i);
-            VFormat(buffer, sizeof(buffer), format, 2);
-            PrintToConsole(i, "%s", buffer);
-        }
-    }
-}
-
-any abs(any x)
-{
-    return x > 0 ? x : -x;
-}
+/********** STEAM CHECKS **********/
 
 public void Steam_SteamServersDisconnected()
 {
@@ -4015,366 +4350,4 @@ bool shouldCheckAuth()
     return false;
 }
 
-bool IsHalloweenCond(TFCond condition)
-{
-    if
-    (
-           condition == TFCond_HalloweenKart
-        || condition == TFCond_HalloweenKartDash
-        || condition == TFCond_HalloweenThriller
-        || condition == TFCond_HalloweenBombHead
-        || condition == TFCond_HalloweenGiant
-        || condition == TFCond_HalloweenTiny
-        || condition == TFCond_HalloweenInHell
-        || condition == TFCond_HalloweenGhostMode
-        || condition == TFCond_HalloweenKartNoTurn
-        || condition == TFCond_HalloweenKartCage
-        || condition == TFCond_SwimmingCurse
-    )
-    {
-        return true;
-    }
-    return false;
-}
-
-// stolen from smlib
-int Math_Clamp(int value, int min, int max)
-{
-    value = Math_Min(value, min);
-    value = Math_Max(value, max);
-
-    return value;
-}
-
-int Math_Min(int value, int min)
-{
-    if (value < min)
-    {
-        value = min;
-    }
-
-    return value;
-}
-
-int Math_Max(int value, int max)
-{
-    if (value > max)
-    {
-        value = max;
-    }
-
-    return value;
-}
-
-float NormalizeAngleDiff(float aDiff)
-{
-    if (aDiff > 180.0)
-    {
-        aDiff = FloatAbs(aDiff - 360.0);
-    }
-    return aDiff;
-}
-
-void StacDetectionDiscordNotify(int userid, char[] type, int detections)
-{
-    if (!DISCORD)
-    {
-        return;
-    }
-
-    char msg[1024];
-
-    int Cl = GetClientOfUserId(userid);
-    char ClName[64];
-    GetClientName(Cl, ClName, sizeof(ClName));
-    Discord_EscapeString(ClName, sizeof(ClName));
-    GetDemoName();
-    // we technically store the url in this so it has to be bigger
-    char steamid[96];
-    // ok we store these on client connect & auth, this shouldn't be null
-    if (!IsActuallyNullString(SteamAuthFor[Cl]))
-    {
-        // make this a clickable link in discord
-        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
-    }
-    // if it is, that means the plugin reloaded or steam is being fussy.
-    else
-    {
-        steamid = "N/A";
-    }
-
-    Format
-    (
-        msg,
-        sizeof(msg),
-        detectionTemplate,
-        Cl,
-        steamid,
-        type,
-        detections,
-        hostname,
-        hostipandport,
-        demoname
-    );
-    SendMessageToDiscord(msg);
-}
-
-void StacGeneralPlayerDiscordNotify(int userid, char[] message)
-{
-    if (!DISCORD)
-    {
-        return;
-    }
-
-    char msg[1024];
-
-    int Cl = GetClientOfUserId(userid);
-    char ClName[64];
-    GetClientName(Cl, ClName, sizeof(ClName));
-    Discord_EscapeString(ClName, sizeof(ClName));
-    GetDemoName();
-    // we technically store the url in this so it has to be bigger
-    char steamid[96];
-    // ok we store these on client connect & auth, this shouldn't be null
-    if (!IsActuallyNullString(SteamAuthFor[Cl]))
-    {
-        // make this a clickable link in discord
-        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
-    }
-    // if it is, that means the plugin reloaded or steam is being fussy.
-    else
-    {
-        steamid = "N/A";
-    }
-    Format
-    (
-        msg,
-        sizeof(msg),
-        generalTemplate,
-        Cl,
-        steamid,
-        message,
-        hostname,
-        hostipandport,
-        demoname
-    );
-    SendMessageToDiscord(msg);
-}
-
-void SendMessageToDiscord(char[] message)
-{
-    char webhook[32] = "stac";
-    Discord_SendMessage(webhook, message);
-}
-
-void checkStatus()
-{
-    char status[2048];
-    ServerCommandEx(status, sizeof(status), "status");
-    char ipetc[128];
-    char ip[24];
-    if (MatchRegex(publicIPRegex, status) > 0)
-    {
-        if (GetRegexSubString(publicIPRegex, 0, ipetc, sizeof(ipetc)))
-        {
-            TrimString(ipetc);
-            if (MatchRegex(IPRegex, ipetc) > 0)
-            {
-                if (GetRegexSubString(IPRegex, 0, ip, sizeof(ip)))
-                {
-                    strcopy(hostipandport, sizeof(hostipandport), ip);
-                    StrCat(hostipandport, sizeof(hostipandport), ":");
-                    char hostport[6];
-                    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
-                    StrCat(hostipandport, sizeof(hostipandport), hostport);
-                }
-            }
-        }
-    }
-}
-
-bool GetDemoName()
-{
-    char tvStatus[512];
-    ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
-    char demoname_etc[128];
-    if (MatchRegex(demonameRegex, tvStatus) > 0)
-    {
-        if (GetRegexSubString(demonameRegex, 0, demoname_etc, sizeof(demoname_etc)))
-        {
-            TrimString(demoname_etc);
-            if (MatchRegex(demonameRegexFINAL, demoname_etc) > 0)
-            {
-                if (GetRegexSubString(demonameRegexFINAL, 0, demoname, sizeof(demoname)))
-                {
-                    TrimString(demoname);
-                    StripQuotes(demoname);
-                    return true;
-                }
-            }
-        }
-    }
-    demoname = "N/A";
-    return false;
-}
-
-bool isDefaultTickrate()
-{
-    if (tps > 60.0 && tps < 70.0)
-    {
-        return true;
-    }
-    return false;
-}
-
-bool isCmdnumSequential(int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-    if
-    (
-           clcmdnum[Cl][0] == clcmdnum[Cl][1] + 1
-        && clcmdnum[Cl][1] == clcmdnum[Cl][2] + 1
-        && clcmdnum[Cl][2] == clcmdnum[Cl][3] + 1
-        && clcmdnum[Cl][3] == clcmdnum[Cl][4] + 1
-        && clcmdnum[Cl][4] == clcmdnum[Cl][5] + 1
-    )
-    {
-        return true;
-    }
-    return false;
-}
-
-bool isTickcountInOrder(int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-    if
-    (
-        cltickcount[Cl][0] >=
-        cltickcount[Cl][1] >=
-        cltickcount[Cl][2] >=
-        cltickcount[Cl][3] >=
-        cltickcount[Cl][4] >=
-        cltickcount[Cl][5]
-    )
-    {
-        return true;
-    }
-    return false;
-}
-
-// sourcemod is fucking ridiculous, "IsNullString" only checks for a specific definition of nullstring
-bool IsActuallyNullString(char[] somestring)
-{
-    if (somestring[0] != '\0')
-    {
-        return false;
-    }
-    return true;
-}
-
-float RoundToPlace(float input, int decimalPlaces)
-{
-    float poweroften = Pow(10.0, float(decimalPlaces));
-    return RoundToNearest(input * poweroften) / (poweroften);
-}
-
-//float NormalizeAngleVector(float angles[3])
-//{
-//    if (angles[0] > 89.0)
-//    {
-//        angles[0] = 89.0;
-//    }
-//    if (angles[0] < -89.0)
-//    {
-//        angles[0] = -89.0;
-//    }
-//
-//    while (angles[1] > 180.0)
-//    {
-//        angles[1] -= 360.0;
-//    }
-//    while (angles[1] < -180.0)
-//    {
-//        angles[1] += 360.0;
-//    }
-//    if (angles[2] != 0.0)
-//    {
-//        angles[2] = 0.0;
-//    }
-//    return angles;
-//}
-
-//bool isClientAFK(int Cl)
-//{
-//    if
-//    (
-//           clmouse[Cl][0] == 0
-//        && clmouse[Cl][1] == 0
-//        && AreVectorsEqual(clpos[Cl][0], clpos[Cl][1])
-//        && clbuttons[Cl][0] == 0
-//        && clbuttons[Cl][1] == 0
-//        && clbuttons[Cl][2] == 0
-//        && clbuttons[Cl][3] == 0
-//        && clbuttons[Cl][4] == 0
-//        && clbuttons[Cl][5] == 0
-//        && AreVectorsEqual(clangles[Cl][0], clangles[Cl][1])
-//        && AreVectorsEqual(clangles[Cl][1], clangles[Cl][2])
-//        && AreVectorsEqual(clangles[Cl][2], clangles[Cl][3])
-//        && AreVectorsEqual(clangles[Cl][3], clangles[Cl][4])
-//    )
-//    {
-//        return true;
-//    }
-//
-//    return false;
-//}
-//
-//bool AreVectorsEqual(float vector1[3], float vector2[3])
-//{
-//    return (vector1[0] == vector2[0] && vector1[1] == vector2[1] && vector1[2] == vector2[2]);
-//}
-
-bool IsValidAdmin(int Cl)
-{
-    if (IsValidClient(Cl))
-    {
-        if (CheckCommandAccess(Cl, "sm_ban", ADMFLAG_GENERIC))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool IsValidSrcTV(int client)
-{
-    return
-    (
-        (0 < client <= MaxClients)
-        && IsClientInGame(client)
-        && IsClientSourceTV(client)
-    );
-}
-
-// stolen from ssac
-//void SendPanelMessage(int Cl, const char[] format, any ...)
-//{
-//    /* Bascially is the same thing as sm_msay. Thanks to " ferret " https://forums.alliedmods.net/member.php?u=14068 */
-//    /* Ied much rather use this due to the fact it give us more freedom to change values over the stock "menu" handler. */
-//
-//    char sBuffer[512];
-//    VFormat(sBuffer, sizeof(sBuffer), format, 3);
-//    Panel LiveFeedPanel = new Panel();
-//    LiveFeedPanel.SetTitle("");
-//    LiveFeedPanel.DrawText(sBuffer);
-//    LiveFeedPanel.DrawItem("", ITEMDRAW_SPACER);
-//    LiveFeedPanel.CurrentKey = 10;
-//    LiveFeedPanel.DrawItem("Exit", ITEMDRAW_CONTROL);
-//    LiveFeedPanel.Send(Cl, Handler_DoNothing, 1);
-//    delete LiveFeedPanel;
-//}
-//
-//public int Handler_DoNothing(Menu menu, MenuAction action, int param1, int param2)
-//{
-//    /* Do nothing */
-//}
+// hi
