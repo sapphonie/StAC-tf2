@@ -25,7 +25,8 @@ jobs:
         version: "1.10.x"
 
     - name: Compile plugins
-      run: cd ./scripting && find . -name "*.sp" -exec bash -c 'spcomp $(basename "$0" .sp) -o ../plugins/$(basename "$0" .sp).smx' {} \;
+      run: cd ./scripting && pwd && find . -name "*.sp" -exec bash -c './spcomp -i"./scripting/include/" "$0" -o ./plugins/$(basename "$0" .sp).smx' {} \;
+
 
     - name: Zip package
       # the package generation should probably be part of the ninja script itself
