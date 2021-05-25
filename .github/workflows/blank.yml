@@ -1,4 +1,4 @@
-name: Build Workflow
+name: StAC Autobuild
 
 on:
   push:
@@ -24,14 +24,16 @@ jobs:
       with:
         version: "1.10.x"
 
-    - name: Build Package
+    - name: Compile plugins
+      run: find . -name "*.sp" -exec bash -c './spcomp64 "$(basename "$0" .sp)" -o ../plugins/"$0".smx' {} \;
+
+    - name: Zip package
       # the package generation should probably be part of the ninja script itself
       run: |
         mkdir build
         pushd build
-        7za a -r package.zip scripting/ plugins/ gamedata/
+        7za a -r stac.zip scripting/ plugins/ gamedata/
         popd
-
     - name: Set Commit Hash
       id: commit_info
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
