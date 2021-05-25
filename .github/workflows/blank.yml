@@ -25,7 +25,7 @@ jobs:
         version: "1.10.x"
 
     - name: Compile plugins
-      run: cd ./scripting && pwd && find . -name "*.sp" -exec bash -c 'spcomp -i"./include/" "$0" -o ./plugins/$(basename "$0" .sp).smx' {} \;
+      run: cd ./scripting && pwd && find . -name "*.sp" -exec bash -c 'spcomp -i"./include/" "$0" -o ../plugins/$(basename "$0" .sp).smx' {} \;
 
 
     - name: Zip package
