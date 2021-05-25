@@ -1,0 +1,58 @@
+name: Build Workflow
+
+on:
+  push:
+    # you may need change this so it applies to the correct branch
+    # at the moment the template uses 'master' as the default branch
+    branches: [ master ]
+
+jobs:
+  run:
+    name: Run action
+    runs-on: ubuntu-20.04
+
+    # skip build on '[ci skip]'
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+
+    - name: Setup SourcePawn Compiler
+      uses: rumblefrog/setup-sp@master
+      with:
+        version: "1.10.x"
+
+    - name: Build Package
+      # the package generation should probably be part of the ninja script itself
+      run: |
+        pushd build
+        7za a -r package.zip scripting/ plugins/ gamedata/
+        popd
+
+    - name: Set Commit Hash
+      id: commit_info
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: workflow-build${{ github.run_number }}
+        release_name: Build ${{ steps.commit_info.outputs.sha_short  }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/package.zip
+        asset_name: package.zip
+        asset_content_type: application/zip
