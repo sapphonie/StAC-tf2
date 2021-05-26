@@ -46,7 +46,8 @@ public Action OnPlayerRunCmd
         {
             StacLog("[StAC] cmdnum %i, tickcount %i", cmdnum, tickcount);
             StacGeneralPlayerDiscordNotify(userid, "Client has invalid usercmd data!");
-            return Plugin_Handled;
+            // returning Plugin_Handled allows for airstuck to work again
+            return Plugin_Continue;
         }
         timeSinceNullCmd[Cl] = GetEngineTime();
         return Plugin_Continue;
@@ -64,32 +65,32 @@ public Action OnPlayerRunCmd
     bool islagging = IsUserLagging(userid);
     bool islossy   = IsUserLossy(userid);
 
-    // patch psilent
-    bool silentpatched;
-    float srvangles[3];
-    GetClientEyeAngles(Cl, srvangles);
+    //// patch psilent
+    //bool silentpatched;
+    //float srvangles[3];
+    //GetClientEyeAngles(Cl, srvangles);
 
-    float fakediff;
-    if (!(IsZeroVector(clangles[Cl][0])))
-    {
-        fakediff = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], srvangles));
-        if (islagging || islossy)
-        {
-            if (fakediff > 5.0)
-            {
-                angles = srvangles;
-                LogMessage("x y z %f %f %f", clangles[Cl][0][0], clangles[Cl][0][1], clangles[Cl][0][2]);
-                LogMessage("%f", fakediff);
-                silentpatched = true;
-            }
-        }
-        else if (fakediff >= 0.1)
-        {
-            angles = srvangles;
-            LogMessage("%f", fakediff);
-            silentpatched = true;
-        }
-    }
+    //float fakediff;
+    //if (!(IsZeroVector(clangles[Cl][0])))
+    //{
+    //    fakediff = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], srvangles));
+    //    if (islagging || islossy)
+    //    {
+    //        if (fakediff > 5.0)
+    //        {
+    //            angles = srvangles;
+    //            LogMessage("x y z %f %f %f", clangles[Cl][0][0], clangles[Cl][0][1], clangles[Cl][0][2]);
+    //            LogMessage("%f", fakediff);
+    //            silentpatched = true;
+    //        }
+    //    }
+    //    else if (fakediff >= 0.1)
+    //    {
+    //        angles = srvangles;
+    //        LogMessage("%f", fakediff);
+    //        silentpatched = true;
+    //    }
+    //}
 
 
     // grab angles
@@ -208,27 +209,15 @@ public Action OnPlayerRunCmd
         // make sure client isnt using a spin bind
         || buttons & IN_LEFT
         || buttons & IN_RIGHT
+        || islagging
+        || islossy
     )
     // if any of these things are true, don't check angles or cmdnum spikes or spinbot stuff
     {
         return Plugin_Continue;
     }
 
-    if (silentpatched)
-    {
-        psilentCheck(userid, true, fakediff);
-    }
-    else
-    {
-        psilentCheck(userid);
-    }
-
-    // psilent has better checks for lag, these funcs do not.
-    if (IsUserLagging(userid) || IsUserLossy(userid))
-    {
-        return Plugin_Continue;
-    }
-
+    psilentCheck(userid);
     fakechokeCheck(userid);
     spinbotCheck(userid);
     aimsnapCheck(userid);

@@ -393,7 +393,7 @@ void spinbotCheck(int userid)
      angles2: x 8.82 y 127.68
 */
 
-void psilentCheck(int userid, bool silent=false, float aDiffReal = 0.0)
+void psilentCheck(int userid)
 {
     int fuzzy = -1;
     bool norecoil;
@@ -412,24 +412,12 @@ void psilentCheck(int userid, bool silent=false, float aDiffReal = 0.0)
         )
     )
     {
-        // get difference between angles if we haven't already been passed them
-        if (aDiffReal == 0.0)
-        {
-            aDiffReal = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][1], clangles[Cl][2]));
-        }
+        float aDiffReal = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][1], clangles[Cl][2]));
 
         // not a big snap? it's probably norecoil. it could be something we have to throw away though if the client is laggy
-        if (aDiffReal < 5.0)
+        if (aDiffReal < 2.5 && !didHurtOnFrame[Cl][0])
         {
-            if (IsUserLagging(userid) || IsUserLossy(userid))
-            {
-                return;
-            }
-
-            if (!didHurtOnFrame[Cl][0])
-            {
-                norecoil = true;
-            }
+            norecoil = true;
         }
         if
         (
@@ -484,8 +472,6 @@ void psilentCheck(int userid, bool silent=false, float aDiffReal = 0.0)
         if
         (
             (aDiffReal >= 1.0 && fuzzy >= 0)
-            ||
-            (silent)
         )
         {
             pSilentDetects[Cl]++;
@@ -499,9 +485,9 @@ void psilentCheck(int userid, bool silent=false, float aDiffReal = 0.0)
                 (
                     "\
                     {hotpink}[StAC]{white} SilentAim detection of {yellow}%.2f{white}° on %N.\
-                    \nDetections so far: {palegreen}%i{white}. fuzzy = {blue}%s{white} silent = {red}%s{white} norecoil = {plum}%s",
+                    \nDetections so far: {palegreen}%i{white}. fuzzy = {blue}%s{white} norecoil = {plum}%s",
                     aDiffReal, Cl,
-                    pSilentDetects[Cl], fuzzy == 1 ? "yes" : "no", silent ? "yes" : "no", norecoil ? "yes" : "no"
+                    pSilentDetects[Cl], fuzzy == 1 ? "yes" : "no", norecoil ? "yes" : "no"
                 );
                 StacLogNetData(userid);
                 StacLogAngles(userid);
