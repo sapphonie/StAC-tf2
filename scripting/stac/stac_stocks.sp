@@ -281,6 +281,19 @@ float RoundToPlace(float input, int decimalPlaces)
     return RoundToNearest(input * poweroften) / (poweroften);
 }
 
+bool IsZeroVector(const float vec[3])
+{
+    if
+    (
+           vec[0] == 0.0
+        && vec[1] == 0.0
+        && vec[2] == 0.0
+    )
+    {
+        return true;
+    }
+    return false;
+}
 
 /********** UPDATER **********/
 

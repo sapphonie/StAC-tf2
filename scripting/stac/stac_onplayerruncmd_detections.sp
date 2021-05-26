@@ -412,57 +412,62 @@ void psilentCheck(int userid, bool silent=false, float aDiffReal = 0.0)
         )
     )
     {
-        if (!silent)
+        // get difference between angles if we haven't already been passed them
+        if (aDiffReal == 0.0)
         {
-            // get difference between angles if we haven't already been passed them
-            if (aDiffReal == 0.0)
+            aDiffReal = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][1], clangles[Cl][2]));
+        }
+
+        // not a big snap? it's probably norecoil. it could be something we have to throw away though if the client is laggy
+        if (aDiffReal < 5.0)
+        {
+            if (IsUserLagging(userid) || IsUserLossy(userid))
             {
-                NormalizeAngleDiff(CalcAngDeg(clangles[Cl][1], clangles[Cl][2]));
+                return;
             }
-            // not a big snap, and client didnt hurt anyone? it's probably norecoil
-            if (aDiffReal < 5.0 && !didHurtOnFrame[Cl][0])
+
+            if (!didHurtOnFrame[Cl][0])
             {
                 norecoil = true;
             }
-
-            if
+        }
+        if
+        (
+            // so the current and 2nd previous angles match...
             (
-                // so the current and 2nd previous angles match...
-                (
-                       clangles[Cl][0][0] == clangles[Cl][2][0]
-                    && clangles[Cl][0][1] == clangles[Cl][2][1]
-                )
-                &&
-                // BUT the 1st previous (in between) angle doesnt?
-                (
-                       clangles[Cl][1][0] != clangles[Cl][0][0]
-                    && clangles[Cl][1][1] != clangles[Cl][0][1]
-                    && clangles[Cl][1][0] != clangles[Cl][2][0]
-                    && clangles[Cl][1][1] != clangles[Cl][2][1]
-                )
+                   clangles[Cl][0][0] == clangles[Cl][2][0]
+                && clangles[Cl][0][1] == clangles[Cl][2][1]
             )
-            {
-                fuzzy = 0;
-            }
-            else if
+            &&
+            // BUT the 1st previous (in between) angle doesnt?
             (
-                // etc
-                (
-                       fuzzyClangles[Cl][0][0] == fuzzyClangles[Cl][2][0]
-                    && fuzzyClangles[Cl][0][1] == fuzzyClangles[Cl][2][1]
-                )
-                &&
-                // etc
-                (
-                       fuzzyClangles[Cl][1][0] != fuzzyClangles[Cl][0][0]
-                    && fuzzyClangles[Cl][1][1] != fuzzyClangles[Cl][0][1]
-                    && fuzzyClangles[Cl][1][0] != fuzzyClangles[Cl][2][0]
-                    && fuzzyClangles[Cl][1][1] != fuzzyClangles[Cl][2][1]
-                )
+                   clangles[Cl][1][0] != clangles[Cl][0][0]
+                && clangles[Cl][1][1] != clangles[Cl][0][1]
+                && clangles[Cl][1][0] != clangles[Cl][2][0]
+                && clangles[Cl][1][1] != clangles[Cl][2][1]
             )
-            {
-                fuzzy = 1;
-            }
+        )
+        {
+            fuzzy = 0;
+        }
+        else if
+        (
+            // etc
+            (
+                   fuzzyClangles[Cl][0][0] == fuzzyClangles[Cl][2][0]
+                && fuzzyClangles[Cl][0][1] == fuzzyClangles[Cl][2][1]
+            )
+            &&
+            // etc
+            (
+                   fuzzyClangles[Cl][1][0] != fuzzyClangles[Cl][0][0]
+                && fuzzyClangles[Cl][1][1] != fuzzyClangles[Cl][0][1]
+                && fuzzyClangles[Cl][1][0] != fuzzyClangles[Cl][2][0]
+                && fuzzyClangles[Cl][1][1] != fuzzyClangles[Cl][2][1]
+            )
+        )
+        {
+            fuzzy = 1;
         }
         //  ok - lets make sure there's a difference of at least 1 degree on either axis to avoid most fake detections
         //  these are probably caused by packets arriving out of order but i'm not a fucking network engineer (yet) so idk
@@ -785,6 +790,39 @@ void triggerbotCheck(int userid)
 
 /********** OnPlayerRunCmd based helper functions **********/
 
+bool IsUserLossy(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    // we don't want very much loss at all. this may be removed some day.
+    if (lossFor[Cl] >= 2.5)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool IsUserLagging(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    // check if we have sequential cmdnums
+    if
+    (
+           !isCmdnumSequential(userid)
+        // tickcount the same over 5 ticks, client is probably lagging
+        || isTickcountRepeated(userid)
+        // if it takes too long or too short to send 10 ticks on average, the client is not stable enough to check
+        // too short
+        || calcCmdrateFor[Cl] <= (tps * 0.75)
+        // too long
+        || calcCmdrateFor[Cl] >= (tps * 1.25)
+    )
+    {
+        return true;
+    }
+    return false;
+}
+
 // calc distance between snaps in degrees
 float CalcAngDeg(float array1[3], float array2[3])
 {
@@ -809,23 +847,23 @@ bool HasValidAngles(int Cl)
     (
         // ignore weird angle resets in mge / dm, ignore laggy players
         (
-            IsNullVector(clangles[Cl][0])
+            IsZeroVector(clangles[Cl][0])
         )
         ||
         (
-            IsNullVector(clangles[Cl][1])
+            IsZeroVector(clangles[Cl][1])
         )
         ||
         (
-            IsNullVector(clangles[Cl][2])
+            IsZeroVector(clangles[Cl][2])
         )
         ||
         (
-            IsNullVector(clangles[Cl][3])
+            IsZeroVector(clangles[Cl][3])
         )
         ||
         (
-            IsNullVector(clangles[Cl][4])
+            IsZeroVector(clangles[Cl][4])
         )
     )
     {

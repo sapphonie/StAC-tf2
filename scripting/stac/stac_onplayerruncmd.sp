@@ -59,16 +59,38 @@ public Action OnPlayerRunCmd
     }
     engineTime[Cl][0] = GetEngineTime();
 
+
+    // we use these later
+    bool islagging = IsUserLagging(userid);
+    bool islossy   = IsUserLossy(userid);
+
     // patch psilent
+    bool silentpatched;
     float srvangles[3];
     GetClientEyeAngles(Cl, srvangles);
 
-    float fakediff = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], srvangles));
-    if (fakediff)
+    float fakediff;
+    if (!(IsZeroVector(clangles[Cl][0])))
     {
-        angles = srvangles;
-        psilentCheck(userid, true, fakediff);
+        fakediff = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], srvangles));
+        if (islagging || islossy)
+        {
+            if (fakediff > 5.0)
+            {
+                angles = srvangles;
+                LogMessage("x y z %f %f %f", clangles[Cl][0][0], clangles[Cl][0][1], clangles[Cl][0][2]);
+                LogMessage("%f", fakediff);
+                silentpatched = true;
+            }
+        }
+        else if (fakediff >= 0.1)
+        {
+            angles = srvangles;
+            LogMessage("%f", fakediff);
+            silentpatched = true;
+        }
     }
+
 
     // grab angles
     // thanks to nosoop from the sm discord for some help with this
@@ -165,8 +187,6 @@ public Action OnPlayerRunCmd
         || IsClientTimingOut(Cl)
         // this is just for halloween shit - plenty of halloween effects can and will mess up all of these checks
         || playerInBadCond[Cl] != 0
-        // exp lag check - if the client is taking less than a tickinterval to send TEN ticks of information, that's bad news bears
-        || engineTime[Cl][0] - engineTime[Cl][10] < (tickinterv)
     )
     {
         return Plugin_Continue;
@@ -175,31 +195,10 @@ public Action OnPlayerRunCmd
     // not really lag dependant check
     fakeangCheck(userid);
 
-    // make sure client doesn't have 1.5% or more packet loss, can mess with cmdnumspikes
-    if (lossFor[Cl] >= 1.5)
-    {
-        return Plugin_Continue;
-    }
-
-    // tickcount the same over 5 ticks, client is probably lagging
-    if (isTickcountRepeated(userid))
-    {
-        return Plugin_Continue;
-    }
-
     // we don't want to check this if we're repeating tickcount a lot and/or if loss is high, but cmdnums and tickcounts DO NOT NEED TO BE PERFECT for this.
-    cmdnumspikeCheck(userid);
-
-    // check if we're lagging in other ways
-    // cmdnums need to be sequential and not repeated
-    // tickcount needs to be sequential and to not go downward - repeating is ok as long as its not too much
-    if
-    (
-           !isCmdnumSequential(userid)
-        || !isTickcountInOrder(userid)
-    )
+    if (!islagging && !islossy)
     {
-        return Plugin_Continue;
+        cmdnumspikeCheck(userid);
     }
 
     if
@@ -215,22 +214,26 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
-    //if (isClientAFK(Cl))
-    //{
-    //    LogMessage("AFK");
-    //}
-    //else
-    //{
-    //    LogMessage("NOTAFK");
-    //}
+    if (silentpatched)
+    {
+        psilentCheck(userid, true, fakediff);
+    }
+    else
+    {
+        psilentCheck(userid);
+    }
+
+    // psilent has better checks for lag, these funcs do not.
+    if (IsUserLagging(userid) || IsUserLossy(userid))
+    {
+        return Plugin_Continue;
+    }
 
     fakechokeCheck(userid);
     spinbotCheck(userid);
-    psilentCheck(userid);
     aimsnapCheck(userid);
     triggerbotCheck(userid);
 
-    //snapanglesCheck(userid);
     return Plugin_Continue;
 }
 

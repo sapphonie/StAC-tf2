@@ -89,7 +89,6 @@ void StacLogNetData(int userid)
         \nMore network:\
         \n Approx client cmdrate: ≈%.2f cmd/sec\
         \n Approx server tickrate: ≈%.2f tick/sec\
-        \n 10 tick time : %.4f\
         \n Failing lag check? %s\
         \n HasValidAngles? %s\
         \n SequentialCmdnum? %s\
@@ -97,8 +96,7 @@ void StacLogNetData(int userid)
         ",
         calcCmdrateFor[Cl],
         smoothedTPS,
-        engineTime[Cl][0] - engineTime[Cl][10],
-        engineTime[Cl][0] - engineTime[Cl][10] < (tickinterv) ? "yes" : "no",
+        IsUserLagging(userid) ? "yes" : "no",
         HasValidAngles(Cl) ? "yes" : "no",
         isCmdnumSequential(userid) ? "yes" : "no",
         isTickcountInOrder(userid) ? "yes" : "no"
