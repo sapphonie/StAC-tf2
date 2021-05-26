@@ -23,7 +23,7 @@
 
 #define CVAR_ENABLE 	0
 #define CVAR_TOLERANCE 	1
-#define CVAR_MAX 	2
+#define CVAR_MAX 		2
 
 
 int backtrack_ticks = 0;
@@ -32,20 +32,12 @@ int diff_tickcount[MAXPLAYERS + 1];
 float time_timeout[MAXPLAYERS + 1];
 float time_teleport[MAXPLAYERS + 1];
 
-Handle cvar[CVAR_MAX];
+Handle hcvar[CVAR_MAX];
 int icvar[CVAR_MAX];
 
 
-public Plugin myinfo = {
-	name = "Jay's Backtrack Patch",
-	author = "J_Tanzanite",
-	description = "Patches backtracking cheats (from Lilac).",
-	version = "1.1.0",
-	url = ""
-};
 
-
-public void OnPluginStart()
+void OnPluginStart_jaypatch()
 {
 	char gamefolder[16];
 
@@ -58,17 +50,17 @@ public void OnPluginStart()
 
 	HookEntityOutput("trigger_teleport", "OnEndTouch", map_teleport);
 
-	cvar[CVAR_ENABLE] = CreateConVar("jay_backtrack_enable", "1",
+	hcvar[CVAR_ENABLE] = CreateConVar("jay_backtrack_enable", "1",
 		"Enable Jay's Backtracking patch.",
 		FCVAR_PROTECTED, true, 0.0, true, 1.0);
-	cvar[CVAR_TOLERANCE] = CreateConVar("jay_backtrack_tolerance", "0",
+	hcvar[CVAR_TOLERANCE] = CreateConVar("jay_backtrack_tolerance", "0",
 		"Tolerance for tickcount changes.\n0 = Tickcount must increment.\nN+ = Tickcount can be off by N ticks (Don't go higher than 2).",
 		FCVAR_PROTECTED, true, 0.0, true, 3.0);
 
 	for (int i = 0; i < CVAR_MAX; i++) {
-		icvar[i] = GetConVarInt(cvar[i]);
+		icvar[i] = GetConVarInt(hcvar[i]);
 
-		HookConVarChange(cvar[i], cvar_change);
+		HookConVarChange(hcvar[i], cvar_change);
 	}
 
 	backtrack_ticks = time_to_ticks(0.2);
@@ -76,7 +68,7 @@ public void OnPluginStart()
 
 public void cvar_change(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (view_as<Handle>(convar) == cvar[CVAR_ENABLE]) {
+	if (view_as<Handle>(convar) == hcvar[CVAR_ENABLE]) {
 		icvar[CVAR_ENABLE] = StringToInt(newValue, 10);
 	}
 	else {
@@ -102,7 +94,7 @@ public void map_teleport(const char[] output, int caller, int activator, float d
 	time_teleport[activator] = GetGameTime();
 }
 
-public void OnClientPutInServer(int client)
+public void OnClientPutInServer_jaypatch(int client)
 {
 	prev_tickcount[client] = 0;
 	diff_tickcount[client] = 0;
@@ -110,7 +102,7 @@ public void OnClientPutInServer(int client)
 	time_teleport[client] = 0.0;
 }
 
-public Action OnPlayerRunCmd(int client, int& buttons, int& impulse,
+public Action OnPlayerRunCmd_jaypatch(int client, int& buttons, int& impulse,
 				float vel[3], float angles[3], int& weapon,
 				int& subtype, int& cmdnum, int& tickcount,
 				int& seed, int mouse[2])
@@ -142,7 +134,7 @@ void store_tickcount(int client, int tickcount)
 	static int tmp[MAXPLAYERS + 1];
 
 	prev_tickcount[client] = tmp[client];
-	tmp[client] = tickcount;	
+	tmp[client] = tickcount;
 }
 
 int correct_tickcount(int client, int tickcount)
