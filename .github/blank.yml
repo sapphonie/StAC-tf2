@@ -1,0 +1,65 @@
+name: StAC Autobuild
+# modified from https://github.com/nosoop/NinjaBuild-SMPlugin/blob/master/contrib/github-workflow/build-on-version-tag-push.yml
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  run:
+    name: Run action
+    runs-on: ubuntu-20.04
+
+    # skip build on '[ci skip]'
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+
+    - name: Setup SourcePawn Compiler
+      uses: rumblefrog/setup-sp@master
+      with:
+        version: "1.10.x"
+
+    # this is just futureproofing lol
+    - name: Compile plugins
+      run: |
+        cd ./scripting
+        pwd
+        find . -name "*.sp" -exec bash -c \
+        'spcomp -i"./include/" "$0" -o ../plugins/$(basename "$0" .sp).smx' {} +
+        ls -la
+    - name: Zip package
+      run: |
+        mkdir build
+        7za a -r build/stac.zip scripting/ plugins/ gamedata/ translations/
+        ls -la
+        pwd
+    - name: Set Commit Hash
+      id: commit_info
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+        asset_path: ./build/stac.zip
+        asset_name: stac.zip
+        asset_content_type: application/zip
