@@ -165,7 +165,7 @@ void CheckAndFixCmdrate(int Cl)
     // have this detection expire in 10 seconds!!! remember - this means that the amount of detects are ONLY in the last 10 seconds!
     // ncc caps out at 140ish
     CreateTimer(10.0, Timer_decr_cmdratespam, userid, TIMER_FLAG_NO_MAPCHANGE);
-    if (cmdrateSpamDetects[Cl] >= 10)
+    if (cmdrateSpamDetects[Cl] > 1)
     {
         PrintToImportant
         (
