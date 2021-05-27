@@ -162,16 +162,19 @@ public void OnPluginEnd()
     OnMapEnd();
 }
 
+
 /********** ONGAMEFRAME **********/
 
 // monitor server tickrate
 public void OnGameFrame()
 {
     static float realTPS[2];
+
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
         if (IsValidClient(Cl))
         {
+
             if (LiveFeedOn[Cl])
             {
                 LiveFeed_PlayerCmd(GetClientUserId(Cl));

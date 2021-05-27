@@ -60,39 +60,6 @@ public Action OnPlayerRunCmd
     }
     engineTime[Cl][0] = GetEngineTime();
 
-
-    // we use these later
-    bool islagging = IsUserLagging(userid);
-    bool islossy   = IsUserLossy(userid);
-
-    //// patch psilent
-    //bool silentpatched;
-    //float srvangles[3];
-    //GetClientEyeAngles(Cl, srvangles);
-
-    //float fakediff;
-    //if (!(IsZeroVector(clangles[Cl][0])))
-    //{
-    //    fakediff = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], srvangles));
-    //    if (islagging || islossy)
-    //    {
-    //        if (fakediff > 5.0)
-    //        {
-    //            angles = srvangles;
-    //            LogMessage("x y z %f %f %f", clangles[Cl][0][0], clangles[Cl][0][1], clangles[Cl][0][2]);
-    //            LogMessage("%f", fakediff);
-    //            silentpatched = true;
-    //        }
-    //    }
-    //    else if (fakediff >= 0.1)
-    //    {
-    //        angles = srvangles;
-    //        LogMessage("%f", fakediff);
-    //        silentpatched = true;
-    //    }
-    //}
-
-
     // grab angles
     // thanks to nosoop from the sm discord for some help with this
     clangles[Cl][4] = clangles[Cl][3];
@@ -196,8 +163,11 @@ public Action OnPlayerRunCmd
     // not really lag dependant check
     fakeangCheck(userid);
 
+    // we use these later too
+    bool islagging = IsUserLagging(userid);
+
     // we don't want to check this if we're repeating tickcount a lot and/or if loss is high, but cmdnums and tickcounts DO NOT NEED TO BE PERFECT for this.
-    if (!islagging && !islossy)
+    if (!islagging)
     {
         cmdnumspikeCheck(userid);
     }
@@ -210,7 +180,6 @@ public Action OnPlayerRunCmd
         || buttons & IN_LEFT
         || buttons & IN_RIGHT
         || islagging
-        || islossy
     )
     // if any of these things are true, don't check angles or cmdnum spikes or spinbot stuff
     {
@@ -224,26 +193,4 @@ public Action OnPlayerRunCmd
     triggerbotCheck(userid);
 
     return Plugin_Continue;
-}
-
-public void OnPlayerRunCmdPost
-(
-    int Cl,
-    int buttons,
-    int impulse,
-    const float vel[3],
-    const float angles[3],
-    int weapon,
-    int subtype,
-    int cmdnum,
-    int tickcount,
-    int seed,
-    const int mouse[2]
-)
-{
-    realclangles    [Cl] = angles;
-    realclcmdnum    [Cl] = cmdnum;
-    realcltickcount [Cl] = tickcount;
-    realclbuttons   [Cl] = buttons;
-    realclmouse     [Cl] = mouse;
 }

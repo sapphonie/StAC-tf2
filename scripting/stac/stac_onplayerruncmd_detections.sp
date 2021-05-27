@@ -395,11 +395,12 @@ void spinbotCheck(int userid)
 
 void psilentCheck(int userid)
 {
-    int fuzzy = -1;
-    bool norecoil;
-
     int Cl = GetClientOfUserId(userid);
+    // get difference between angles - used for psilent
+    float aDiffReal = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], clangles[Cl][1]));
 
+    // is this a fuzzy detect or not
+    int fuzzy = -1;
     // don't run this check if silent aim cvar is -1
     if
     (
@@ -412,13 +413,6 @@ void psilentCheck(int userid)
         )
     )
     {
-        float aDiffReal = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][1], clangles[Cl][2]));
-
-        // not a big snap? it's probably norecoil. it could be something we have to throw away though if the client is laggy
-        if (aDiffReal < 2.5 && !didHurtOnFrame[Cl][0])
-        {
-            norecoil = true;
-        }
         if
         (
             // so the current and 2nd previous angles match...
@@ -468,10 +462,9 @@ void psilentCheck(int userid)
         //      03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: prev1  angles: x 21.560007 y -140.943710
         //      03/25/2020 - 22:16:36: [stac.smx] [StAC] pSilent detection on [redacted2]: prev2  angles: x 21.516006 y -140.723709
         //  doing this might make it harder to detect legitcheaters but like. legitcheating in a 12 yr old dead game OMEGALUL who fucking cares
-
         if
         (
-            (aDiffReal >= 1.0 && fuzzy >= 0)
+            aDiffReal >= 1.0 && fuzzy >= 0
         )
         {
             pSilentDetects[Cl]++;
@@ -487,7 +480,7 @@ void psilentCheck(int userid)
                     {hotpink}[StAC]{white} SilentAim detection of {yellow}%.2f{white}° on %N.\
                     \nDetections so far: {palegreen}%i{white}. fuzzy = {blue}%s{white} norecoil = {plum}%s",
                     aDiffReal, Cl,
-                    pSilentDetects[Cl], fuzzy == 1 ? "yes" : "no", norecoil ? "yes" : "no"
+                    pSilentDetects[Cl], fuzzy == 1 ? "yes" : "no", aDiffReal <= 3.0 ? "yes" : "no"
                 );
                 StacLogNetData(userid);
                 StacLogAngles(userid);
@@ -515,6 +508,7 @@ void psilentCheck(int userid)
         }
     }
 }
+
 /*
     AIMSNAP DETECTION - BETA
 
@@ -776,32 +770,22 @@ void triggerbotCheck(int userid)
 
 /********** OnPlayerRunCmd based helper functions **********/
 
-bool IsUserLossy(int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-
-    // we don't want very much loss at all. this may be removed some day.
-    if (lossFor[Cl] >= 2.5)
-    {
-        return true;
-    }
-    return false;
-}
-
 bool IsUserLagging(int userid)
 {
     int Cl = GetClientOfUserId(userid);
     // check if we have sequential cmdnums
     if
     (
-           !isCmdnumSequential(userid)
+        // we don't want very much loss at all. this may be removed some day.
+            lossFor[Cl] >= 1.5
+        || !isCmdnumSequential(userid)
         // tickcount the same over 5 ticks, client is probably lagging
         || isTickcountRepeated(userid)
         // if it takes too long or too short to send 10 ticks on average, the client is not stable enough to check
         // too short
-        || calcCmdrateFor[Cl] <= (tps * 0.75)
+        || calcCmdrateFor[Cl] <= (40.0)
         // too long
-        || calcCmdrateFor[Cl] >= (tps * 1.25)
+        || calcCmdrateFor[Cl] >= (100.0)
     )
     {
         return true;
@@ -878,15 +862,7 @@ bool isCmdnumSequential(int userid)
 bool isTickcountInOrder(int userid)
 {
     int Cl = GetClientOfUserId(userid);
-    if
-    (
-        cltickcount[Cl][0] >=
-        cltickcount[Cl][1] >=
-        cltickcount[Cl][2] >=
-        cltickcount[Cl][3] >=
-        cltickcount[Cl][4] >=
-        cltickcount[Cl][5]
-    )
+    if (cltickcount[Cl][0] > cltickcount[Cl][1] > cltickcount[Cl][2] > cltickcount[Cl][3] > cltickcount[Cl][4] > cltickcount[Cl][5])
     {
         return true;
     }

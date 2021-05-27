@@ -525,7 +525,7 @@ void RunOptimizeCvars()
     // attempt to patch doubletap
     SetConVarInt(FindConVar("sv_maxusrcmdprocessticks"), 16);
     // force psilent to show up properly
-    SetConVarInt(FindConVar("sv_maxusrcmdprocessticks_holdaim"), 5);
+    SetConVarInt(FindConVar("sv_maxusrcmdprocessticks_holdaim"), 1);
     // limit fakelag abuse
     SetConVarFloat(FindConVar("sv_maxunlag"), 0.2);
     // fix backtracking

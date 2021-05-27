@@ -143,14 +143,6 @@ float fuzzyClangles         [TFMAXPLAYERS+1][5][2];
 float clpos                 [TFMAXPLAYERS+1][2][3];
 int   maxTickCountFor       [TFMAXPLAYERS+1];
 
-// OnPlayerRunCmd vars      [ client index ][history][ang/pos/etc]
-float realclangles          [TFMAXPLAYERS+1][3];
-int   realclcmdnum          [TFMAXPLAYERS+1];
-int   realcltickcount       [TFMAXPLAYERS+1];
-int   realclbuttons         [TFMAXPLAYERS+1];
-int   realclmouse           [TFMAXPLAYERS+1]   [2];
-
-
 // Misc stuff per client    [ client index ][char size]
 char SteamAuthFor           [TFMAXPLAYERS+1][64];
 

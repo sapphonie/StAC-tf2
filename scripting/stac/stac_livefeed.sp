@@ -4,6 +4,9 @@ void LiveFeed_PlayerCmd(int userid)
 {
     int Cl = GetClientOfUserId(userid);
 
+    float srvangles[3];
+    GetClientEyeAngles(Cl, srvangles);
+
     static char RareButtonNames[][] =
     {
         "",
@@ -112,6 +115,7 @@ void LiveFeed_PlayerCmd(int userid)
     }
     TrimString(strButtons);
 
+
     for (int LiveFeedViewer = 1; LiveFeedViewer <= MaxClients; LiveFeedViewer++)
     {
         if (IsValidAdmin(LiveFeedViewer) || IsValidSrcTV(LiveFeedViewer))
@@ -147,7 +151,7 @@ void LiveFeed_PlayerCmd(int userid)
                 \n mouse\
                 \n x %i\
                 \n y %i\
-                \n angles\
+                \n cl angs\
                 \n x %.2f \
                 \n y %.2f \
                 \n z %.2f \
@@ -161,7 +165,14 @@ void LiveFeed_PlayerCmd(int userid)
                 clbuttons[Cl][0],
                 clmouse[Cl][0], clmouse[Cl][1],
                 clangles[Cl][0][0], clangles[Cl][0][1], clangles[Cl][0][2]
+                //srvangles[0], srvangles[1], srvangles[2]
             );
+            /*
+                \n srv angs\
+                \n x %.2f \
+                \n y %.2f \
+                \n z %.2f \
+            */
 
             // OTHER STUFF
             SetHudTextParams
