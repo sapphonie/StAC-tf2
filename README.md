@@ -30,7 +30,7 @@ Of course, StAC is serverside, so that means it sucks, right? Wrong! Of course, 
 StAC is also fully configurable, and the current list of cvars is listed [here](cvars.md). The defaults should be good for most people, if you want to the plugin to autoban. If not, you can set any "detection" cvar to 0 to never ban, and to -1 to never even log or check in the first place.
 
 ### Installation & Configuration
-1) clone the repository from [here](https://github.com/sapphonie/StAC-tf2/archive/refs/heads/master.zip)
+1) download the latest release [here](https://github.com/sapphonie/StAC-tf2/releases/latest)
 2) drag the `translations`, `scripting`, and `plugins` folders into `/tf/addons/sourcemod/` on your tf2 server. Overwrite any files if prompted.
 3) restart your server
 
