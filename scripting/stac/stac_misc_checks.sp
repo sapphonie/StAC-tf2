@@ -99,15 +99,61 @@ public Action OnClientCommand(int Cl, int args)
 
 // ban for cmdrate value change spam.
 // cheats do this to fake their ping
+
+char userinfoToCheck[][] =
+{
+    "cl_interp_npcs",
+    "cl_flipviewmodels",
+    "cl_predict",
+    "cl_interp_ratio",
+    "cl_interp",
+    "cl_team",
+    "cl_class",
+    "hap_HasDevice",
+    "cl_showhelp",
+    "english",
+    "cl_predictweapons",
+    "cl_lagcompensation",
+    "hud_classautokill",
+    "cl_spec_mode",
+    "cl_autorezoom",
+    "tf_remember_activeweapon",
+    "tf_remember_lastswitched",
+    "cl_autoreload",
+    "fov_desired",
+    "hud_combattext",
+    "hud_combattext_healing",
+    "hud_combattext_batching",
+    "hud_combattext_doesnt_block_overhead_text",
+    "hud_combattext_green",
+    "hud_combattext_red",
+    "hud_combattext_blue",
+    "tf_medigun_autoheal",
+    "voice_loopback",
+    "name",
+    "tv_nochat",
+    "cl_language",
+    "rate",
+    "cl_cmdrate",
+    "cl_updaterate",
+    "closecaption",
+    "net_maxroutable"
+};
+
+//               [values][history][char size]
+
+//char clcmdrateFor[TFMAXPLAYERS+1][64];
+//char clupdaterateFor[TFMAXPLAYERS+1][64];
+
+bool justclamped[TFMAXPLAYERS+1];
+
 public void OnClientSettingsChanged(int Cl)
 {
-    CheckAndFixCmdrate(Cl);
-}
+    //                    [cvar][history][charsize]
+    static char userinfoValues[64][4][256];
 
-void CheckAndFixCmdrate(int Cl)
-{
-    // ignore invalid clients and dead / in spec clients
-    if (!IsValidClient(Cl) || !IsClientPlaying(Cl) || !fixpingmasking)
+    // ignore invalid clients
+    if (!IsValidClient(Cl))
     {
         return;
     }
@@ -115,116 +161,166 @@ void CheckAndFixCmdrate(int Cl)
     if
     (
         // command occured recently
-        engineTime[Cl][0] - 2.5 < timeSinceLastCommand[Cl]
+        engineTime[Cl][0] - 1.5 < timeSinceLastCommand[Cl]
         &&
-        // and it's a demorestart
-        StrEqual("demorestart", lastCommandFor[Cl])
+        (
+            // and it's a demorestart
+            StrEqual("demorestart", lastCommandFor[Cl])
+        )
     )
     {
         //StacLog("Ignoring demorestart settings change for %N", Cl);
         return;
     }
 
-    // get userid for timer
+
     int userid = GetClientUserId(Cl);
 
-    // pingreduce check only works if you are using fixpingmasking!
-    // buffer for cmdrate value
+    // hm
+    for (int cvar; cvar < sizeof(userinfoToCheck); cvar++)
+    {
+        GetClientInfo(Cl, userinfoToCheck[cvar], userinfoValues[cvar][0], sizeof(userinfoValues[][]));
+        if
+        (
+            !StrEqual(userinfoValues[cvar][1], userinfoValues[cvar][0])
+            && !IsActuallyNullString(userinfoValues[cvar][0])
+            && !IsActuallyNullString(userinfoValues[cvar][1])
+        )
+        {
+            StacLog("Client %N changed %s: old %s != new %s", Cl, userinfoToCheck[cvar], userinfoValues[cvar][1], userinfoValues[cvar][0]);
 
-    char scmdrate[16];
-    // get actual value of cl cmdrate
-    GetClientInfo(Cl, "cl_cmdrate", scmdrate, sizeof(scmdrate));
-    // convert it to int
-    int icmdrate = StringToInt(scmdrate);
+            // fixpingmasking stuff
+            if
+            (
+                StrEqual(userinfoToCheck[cvar], "cl_cmdrate")
+                ||
+                StrEqual(userinfoToCheck[cvar], "cl_updaterate")
+                ||
+                StrEqual(userinfoToCheck[cvar], "rate")
+            )
+            {
+                // we just clamped this client! don't count it as userinfo spam
+                if (justclamped[Cl] == true)
+                {
+                    justclamped[Cl] = false;
+                }
+                // this prevents against legit clients from purposefully messing with their cl_cmdrate/rate/etc trying to trigger stac
+                else if (!StrEqual(userinfoValues[cvar][3], userinfoValues[cvar][1]))
+                {
+                    userinfoSpamEtc(userid, userinfoToCheck[cvar], userinfoValues[cvar][1], userinfoValues[cvar][0]);
+                }
 
-    // clamp it
-    int iclamprate = clamp(icmdrate, imincmdrate, imaxcmdrate);
-    char sclamprate[4];
-    // convert it to string
-    IntToString(iclamprate, sclamprate, sizeof(sclamprate));
+                if (fixpingmasking)
+                {
+                    FixPingMasking(Cl, userinfoToCheck[cvar], userinfoValues[cvar][0]);
+                }
+            }
+            else
+            {
+                userinfoSpamEtc(userid, userinfoToCheck[cvar], userinfoValues[cvar][1], userinfoValues[cvar][0]);
+            }
+        }
+        strcopy(userinfoValues[cvar][1], sizeof(userinfoValues[][]), userinfoValues[cvar][0]);
+        strcopy(userinfoValues[cvar][2], sizeof(userinfoValues[][]), userinfoValues[cvar][1]);
+        strcopy(userinfoValues[cvar][3], sizeof(userinfoValues[][]), userinfoValues[cvar][2]);
+    }
+}
 
-    // do the same thing with updaterate
-    char supdaterate[4];
-    // get actual value of cl updaterate
-    GetClientInfo(Cl, "cl_updaterate", supdaterate, sizeof(supdaterate));
-    // convert it to int
-    int iupdaterate = StringToInt(supdaterate);
-
-    // clamp it
-    int iclampupdaterate = clamp(iupdaterate, iminupdaterate, imaxupdaterate);
-    char sclampupdaterate[4];
-    // convert it to string
-    IntToString(iclampupdaterate, sclampupdaterate, sizeof(sclampupdaterate));
-
-    /*
-        CMDRATE SPAM CHECK
-
-        technically this could be triggered by clients spam recording and stopping demos, but cheats do it infinitely faster
-    */
-    cmdrateSpamDetects[Cl]++;
+void userinfoSpamEtc(int userid, const char[] cvar, const char[] oldvalue, const char[] newvalue)
+{
+    int Cl = GetClientOfUserId(userid);
+    userinfoSpamDetects[Cl]++;
     // have this detection expire in 10 seconds!!! remember - this means that the amount of detects are ONLY in the last 10 seconds!
-    // ncc caps out at 140ish
-    CreateTimer(10.0, Timer_decr_cmdratespam, userid, TIMER_FLAG_NO_MAPCHANGE);
-    if (cmdrateSpamDetects[Cl] > 1)
+    CreateTimer(10.0, Timer_decr_userinfospam, userid, TIMER_FLAG_NO_MAPCHANGE);
+    if (userinfoSpamDetects[Cl] >= 5)
     {
         PrintToImportant
         (
-            "{hotpink}[StAC]{white} %N is suspected of ping-reducing or masking using a cheat.\nDetections within the last 10 seconds: {palegreen}%i{white}. Cmdrate value: {blue}%i",
-            Cl,
-            cmdrateSpamDetects[Cl],
-            icmdrate
+            "{hotpink}[StAC]{white} %N is spamming userinfo updates. Detections in the last 10 seconds: {palegreen}%i{white}.\
+            \n'{blue}%s{white}' changed, from '{blue}%s{white}' to '{blue}%s{white}'",
+            Cl, userinfoSpamDetects[Cl],
+            cvar, oldvalue, newvalue
         );
-        StacLog
-        (
-            "[StAC] %N is suspected of ping-reducing or masking using a cheat.\nDetections so far: %i.\nCmdrate: %i\nUpdaterate: %i",
-            Cl,
-            cmdrateSpamDetects[Cl],
-            icmdrate,
-            iupdaterate
-        );
-        if (cmdrateSpamDetects[Cl] % 5 == 0)
+        if (userinfoSpamDetects[Cl] % 5 == 0)
         {
-            StacDetectionDiscordNotify(userid, "cmdrate spam / ping modification", cmdrateSpamDetects[Cl]);
+            StacDetectionDiscordNotify(userid, "userinfo spam", userinfoSpamDetects[Cl]);
         }
-
         // BAN USER if they trigger too many detections
-        if (cmdrateSpamDetects[Cl] >= maxCmdrateSpamDetections && maxCmdrateSpamDetections > 0)
-        {
-            char reason[128];
-            Format(reason, sizeof(reason), "%t", "cmdrateSpamBanMsg", cmdrateSpamDetects[Cl]);
-            char pubreason[256];
-            Format(pubreason, sizeof(pubreason), "%t", "cmdrateSpamBanAllChat", Cl, cmdrateSpamDetects[Cl]);
-            BanUser(userid, reason, pubreason);
-            return;
-        }
-    }
-
-    if
-    (
-        // cmdrate is == to optimal clamped rate
-        icmdrate != iclamprate
-        ||
-        // client string is exactly equal to string of optimal cmdrate
-        !StrEqual(scmdrate, sclamprate)
-    )
-    {
-        SetClientInfo(Cl, "cl_cmdrate", sclamprate);
-        //LogMessage("clamping cmdrate to %s", sclamprate);
-    }
-
-    if
-    (
-        // cmdrate is == to optimal clamped rate
-        iupdaterate != iclampupdaterate
-        ||
-        // client string is exactly equal to string of optimal cmdrate
-        !StrEqual(supdaterate, sclampupdaterate)
-    )
-    {
-        SetClientInfo(Cl, "cl_updaterate", sclampupdaterate);
-        //LogMessage("clamping updaterate to %s", sclampupdaterate);
+        //if (userinfoSpamDetects[Cl] >= maxuserinfoSpamDetections && maxuserinfoSpamDetections > 0)
+        //{
+        //    char reason[128];
+        //    Format(reason, sizeof(reason), "%t", "userinfoSpamBanMsg", userinfoSpamDetects[Cl]);
+        //    char pubreason[256];
+        //    Format(pubreason, sizeof(pubreason), "%t", "userinfoSpamBanAllChat", Cl, userinfoSpamDetects[Cl]);
+        //    BanUser(userid, reason, pubreason);
+        //    return;
+        //}
     }
 }
+
+Action Timer_decr_userinfospam(Handle timer, any userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    if (IsValidClient(Cl))
+    {
+        if (userinfoSpamDetects[Cl] > 0)
+        {
+            userinfoSpamDetects[Cl]--;
+        }
+    }
+}
+
+void FixPingMasking(int Cl, const char[] cvar, const char[] value)
+{
+    //int userid = GetClientUserId(Cl);
+    int irate;
+    int ioptimalrate;
+    char soptimalrate[24];
+
+
+    // convert value to int
+    irate = StringToInt(value);
+    if (StrEqual("cl_cmdrate", cvar))
+    {
+        // clamp it
+        ioptimalrate = clamp(irate, imincmdrate, imaxcmdrate);
+    }
+    else if (StrEqual("cl_updaterate", cvar))
+    {
+        // clamp it
+        ioptimalrate = clamp(irate, iminupdaterate, imaxupdaterate);
+    }
+    else if (StrEqual("rate", cvar))
+    {
+        // clamp it
+        ioptimalrate = clamp(irate, iminrate, imaxrate);
+    }
+    // we shouldn't get here
+    else
+    {
+        return;
+    }
+    // convert it to string
+    IntToString(ioptimalrate, soptimalrate, sizeof(soptimalrate));
+
+    if
+    (
+        // cmdrate isnt == to optimal clamped rate
+        irate != ioptimalrate
+        ||
+        // client string isnt equal to string of optimal cmdrate
+        !StrEqual(value, soptimalrate)
+    )
+    {
+        SetClientInfo(Cl, cvar, soptimalrate);
+        LogMessage("---> CLAMPING %s to %s", cvar, soptimalrate);
+        justclamped[Cl] = true;
+        //CreateTimer(0.1, Timer_decr_userinfospam, userid);
+        //CreateTimer(0.1, Timer_decr_userinfospam, userid);
+    }
+}
+
 
 // no longer just for netprops!
 void MiscCheatsEtcsCheck(int userid)

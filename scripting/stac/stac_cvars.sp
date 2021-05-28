@@ -353,13 +353,13 @@ void initCvars()
     HookConVarChange(stac_fixpingmasking_enabled, setStacVars);
 
     // pingreduce
-    IntToString(maxCmdrateSpamDetections, buffer, sizeof(buffer));
+    IntToString(maxuserinfoSpamDetections, buffer, sizeof(buffer));
     stac_max_cmdrate_spam_detections =
     AutoExecConfig_CreateConVar
     (
-        "stac_max_cmdrate_spam_detections",
+        "stac_max_userinfo_spam_detections",
         buffer,
-        "[StAC] maximum number of times a client can consecutively spam cmdrate changes before getting banned - this is used by cheats for \"ping reducing\".\n(recommended 50+)",
+        "[StAC] maximum number of times a client can spam userinfo updates (over the course of 10 seconds) before getting banned.\n(recommended 10+)",
         FCVAR_NONE,
         true,
         -1.0,
@@ -451,7 +451,7 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     maxSpinbotDetections    = GetConVarInt(stac_max_spinbot_detections);
 
     // max ping reduce detections - clamp to -1 if 0
-    maxCmdrateSpamDetections   = GetConVarInt(stac_max_cmdrate_spam_detections);
+    maxuserinfoSpamDetections   = GetConVarInt(stac_max_cmdrate_spam_detections);
 
     // minterp var - clamp to -1 if 0
     min_interp_ms           = GetConVarInt(stac_min_interp_ms);
@@ -502,6 +502,8 @@ void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newVa
     }
 }
 
+#define MAX_RATE        (1024*1024)
+#define MIN_RATE        1000
 // update server rate settings for cmdrate spam check - i'd rather have one func do this lol
 void UpdateRates(ConVar convar, const char[] oldValue, const char[] newValue)
 {
@@ -509,7 +511,20 @@ void UpdateRates(ConVar convar, const char[] oldValue, const char[] newValue)
     imaxcmdrate    = GetConVarInt(FindConVar("sv_maxcmdrate"));
     iminupdaterate = GetConVarInt(FindConVar("sv_minupdaterate"));
     imaxupdaterate = GetConVarInt(FindConVar("sv_maxupdaterate"));
+    iminrate       = GetConVarInt(FindConVar("sv_minrate"));
+    imaxrate       = GetConVarInt(FindConVar("sv_maxrate"));
 
+    if (iminrate <= 0)
+    {
+        iminrate = MIN_RATE;
+    }
+
+    if (imaxrate <= 0)
+    {
+        imaxrate = MAX_RATE;
+    }
+
+    LogMessage("%i %i", iminrate, imaxrate);
     // update clients
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {

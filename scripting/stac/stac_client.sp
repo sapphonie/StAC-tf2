@@ -190,7 +190,9 @@ void ClearClBasedVars(int userid)
     tbotDetects             [Cl] = -1; // ignore first detect, it's prolly bunk
     spinbotDetects          [Cl] = 0;
     fakeChokeDetects        [Cl] = 0;
-    cmdrateSpamDetects      [Cl] = 0;
+    userinfoSpamDetects     [Cl] = 0;
+
+
 
     maxTickCountFor         [Cl] = 0;
 

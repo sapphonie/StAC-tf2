@@ -266,8 +266,8 @@ int max(int a, int b)
 
 int clamp(int num, int minnum, int maxnum)
 {
-    num  = min(num, minnum);
-    return max(num, maxnum);
+    num  = max(num, minnum);
+    return min(num, maxnum);
 }
 
 any abs(any x)

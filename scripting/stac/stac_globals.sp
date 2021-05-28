@@ -61,7 +61,7 @@ int maxBhopDetections           = 10;
 int maxCmdnumDetections         = 20;
 int maxTbotDetections           = 0;
 int maxSpinbotDetections        = 50;
-int maxCmdrateSpamDetections    = 25;
+int maxuserinfoSpamDetections    = 25;
 
 /***** Server based stuff *****/
 
@@ -85,6 +85,8 @@ int imaxcmdrate;
 int imincmdrate;
 int imaxupdaterate;
 int iminupdaterate;
+int imaxrate;
+int iminrate;
 
 // time since some server event happened
 // last time steam came online
@@ -115,7 +117,7 @@ int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = -1;
 int spinbotDetects          [TFMAXPLAYERS+1];
 int fakeChokeDetects        [TFMAXPLAYERS+1];
-int cmdrateSpamDetects      [TFMAXPLAYERS+1];
+int userinfoSpamDetects      [TFMAXPLAYERS+1];
 
 // frames since client "did something"
 //                          [ client index ][history]

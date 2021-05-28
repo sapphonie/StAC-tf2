@@ -37,7 +37,7 @@ Action ShowAllDetections(int callingCl, int args)
                 || pSilentDetects          [Cl] > 0
                 || cmdnumSpikeDetects      [Cl] > 0
                 || tbotDetects             [Cl] > 0
-                || cmdrateSpamDetects      [Cl] > 0
+                || userinfoSpamDetects     [Cl] > 0
             )
             {
                 PrintToConsole

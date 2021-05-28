@@ -947,16 +947,3 @@ Action Timer_decr_tbot(Handle timer, any userid)
         }
     }
 }
-
-Action Timer_decr_cmdratespam(Handle timer, any userid)
-{
-    int Cl = GetClientOfUserId(userid);
-
-    if (IsValidClient(Cl))
-    {
-        if (cmdrateSpamDetects[Cl] > 0)
-        {
-            cmdrateSpamDetects[Cl]--;
-        }
-    }
-}
