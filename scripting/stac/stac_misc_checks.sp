@@ -99,53 +99,55 @@ public Action OnClientCommand(int Cl, int args)
     }
     return Plugin_Continue;
 }
-char userinfoToCheck[][] =
-{
-    //"cl_interp_npcs",
-    //"cl_flipviewmodels",
-    //"cl_predict",
-    //"cl_interp_ratio",
-    //"cl_interp",
-    //"cl_team",
-    //"cl_class",
-    //"hap_HasDevice",
-    //"cl_showhelp",
-    //"english",
-    //"cl_predictweapons",
-    //"cl_lagcompensation",
-    //"hud_classautokill",
-    //"cl_spec_mode",
-    //"cl_autorezoom",
-    //"tf_remember_activeweapon",
-    //"tf_remember_lastswitched",
-    "cl_autoreload",
-    //"fov_desired",
-    //"hud_combattext",
-    //"hud_combattext_healing",
-    //"hud_combattext_batching",
-    //"hud_combattext_doesnt_block_overhead_text",
-    //"hud_combattext_green",
-    //"hud_combattext_red",
-    //"hud_combattext_blue",
-    //"tf_medigun_autoheal",
-    //"voice_loopback",
-    //"name",
-    //"tv_nochat",
-    //"cl_language",
-    "rate",
-    "cl_cmdrate",
-    "cl_updaterate"
-    //"closecaption",
-    //"net_maxroutable"
-};
 
-// for checking if we just fixed a client's network settings so we don't double detect
-bool justclamped    [TFMAXPLAYERS+1];
+//char userinfoToCheck[][] =
+//{
+//    "cl_interp_npcs",
+//    "cl_flipviewmodels",
+//    "cl_predict",
+//    "cl_interp_ratio",
+//    "cl_interp",
+//    "cl_team",
+//    "cl_class",
+//    "hap_HasDevice",
+//    "cl_showhelp",
+//    "english",
+//    "cl_predictweapons",
+//    "cl_lagcompensation",
+//    "hud_classautokill",
+//    "cl_spec_mode",
+//    "cl_autorezoom",
+//    "tf_remember_activeweapon",
+//    "tf_remember_lastswitched",
+//    "cl_autoreload",
+//    "fov_desired",
+//    "hud_combattext",
+//    "hud_combattext_healing",
+//    "hud_combattext_batching",
+//    "hud_combattext_doesnt_block_overhead_text",
+//    "hud_combattext_green",
+//    "hud_combattext_red",
+//    "hud_combattext_blue",
+//    "tf_medigun_autoheal",
+//    "voice_loopback",
+//    "name",
+//    "tv_nochat",
+//    "cl_language",
+//    "rate",
+//    "cl_cmdrate",
+//    "cl_updaterate",
+//    "closecaption",
+//    "net_maxroutable"
+//};
+
+//  [cvarvalue][history][charsize]
+//char userinfoValues[64][TFMAXPLAYERS+1][4][64];
+//
+//// for checking if we just fixed a client's network settings so we don't double detect
+//bool justclamped    [TFMAXPLAYERS+1];
 
 public void OnClientSettingsChanged(int Cl)
 {
-    //  [cvarvalue][history][charsize]
-    static char userinfoValues[64][4][64];
 
     // ignore invalid clients
     if (!IsValidClient(Cl))
@@ -176,17 +178,17 @@ public void OnClientSettingsChanged(int Cl)
         char cvarvalue[64];
         GetClientInfo(Cl, userinfoToCheck[cvar], cvarvalue, sizeof(cvarvalue));
 
-        if (!StrEqual(userinfoValues[cvar][0], cvarvalue))
+        if (!StrEqual(userinfoValues[cvar][Cl][0], cvarvalue))
         {
             // copy into history
-            strcopy(userinfoValues[cvar][3], sizeof(userinfoValues[][]), userinfoValues[cvar][2]);
-            strcopy(userinfoValues[cvar][2], sizeof(userinfoValues[][]), userinfoValues[cvar][1]);
-            strcopy(userinfoValues[cvar][1], sizeof(userinfoValues[][]), userinfoValues[cvar][0]);
-            strcopy(userinfoValues[cvar][0], sizeof(userinfoValues[][]), cvarvalue);
+            strcopy(userinfoValues[cvar][Cl][3], sizeof(userinfoValues[][][]), userinfoValues[cvar][Cl][2]);
+            strcopy(userinfoValues[cvar][Cl][2], sizeof(userinfoValues[][][]), userinfoValues[cvar][Cl][1]);
+            strcopy(userinfoValues[cvar][Cl][1], sizeof(userinfoValues[][][]), userinfoValues[cvar][Cl][0]);
+            strcopy(userinfoValues[cvar][Cl][0], sizeof(userinfoValues[][][]), cvarvalue);
 
-            if (!IsActuallyNullString(userinfoValues[cvar][0]) && !IsActuallyNullString(userinfoValues[cvar][1]))
+            if (!IsActuallyNullString(userinfoValues[cvar][Cl][0]) && !IsActuallyNullString(userinfoValues[cvar][Cl][1]))
             {
-                StacLog("Client %N changed %s: old %s != new %s", Cl, userinfoToCheck[cvar], userinfoValues[cvar][1], cvarvalue);
+                StacLog("Client %N changed %s: old %s new %s", Cl, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], cvarvalue);
                 if
                 (
                     StrEqual(userinfoToCheck[cvar], "cl_cmdrate")
@@ -238,22 +240,22 @@ public void OnClientSettingsChanged(int Cl)
                     // this prevents against legit clients from purposefully messing with their cl_cmdrate/rate/etc trying to trigger stac
                     else if
                     (
-                        !StrEqual(userinfoValues[cvar][3], userinfoValues[cvar][0])
+                        !StrEqual(userinfoValues[cvar][Cl][3], userinfoValues[cvar][Cl][0])
                         &&
-                        !StrEqual(userinfoValues[cvar][2], userinfoValues[cvar][0])
+                        !StrEqual(userinfoValues[cvar][Cl][2], userinfoValues[cvar][Cl][0])
                     )
                     {
-                        userinfoSpamEtc(userid, userinfoToCheck[cvar], userinfoValues[cvar][1], userinfoValues[cvar][0]);
+                        userinfoSpamEtc(userid, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], userinfoValues[cvar][Cl][0]);
                     }
 
                     if (fixpingmasking)
                     {
-                        FixPingMasking(Cl, userinfoToCheck[cvar], userinfoValues[cvar][0]);
+                        FixPingMasking(Cl, userinfoToCheck[cvar], userinfoValues[cvar][Cl][0]);
                     }
                 }
                 else
                 {
-                    userinfoSpamEtc(userid, userinfoToCheck[cvar], userinfoValues[cvar][1], userinfoValues[cvar][0]);
+                    userinfoSpamEtc(userid, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], userinfoValues[cvar][Cl][0]);
                 }
             }
         }

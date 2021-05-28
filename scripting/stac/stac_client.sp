@@ -214,4 +214,14 @@ void ClearClBasedVars(int userid)
     sensFor                 [Cl] = 0.0;
     // don't bother clearing arrays
     LiveFeedOn              [Cl] = false;
+
+
+    for (int cvar; cvar < sizeof(userinfoToCheck); cvar++)
+    {
+        userinfoValues[cvar][Cl][0][0] = '\0';
+        userinfoValues[cvar][Cl][1][0] = '\0';
+        userinfoValues[cvar][Cl][2][0] = '\0';
+        userinfoValues[cvar][Cl][3][0] = '\0';
+    }
+    justclamped             [Cl] = false;
 }
