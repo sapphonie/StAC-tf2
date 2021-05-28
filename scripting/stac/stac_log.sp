@@ -50,9 +50,13 @@ void StacLog(const char[] format, any ...)
     {
         LogToOpenFile(StacLogFile, buffer);
     }
-    else
+    else if (logtofile)
     {
         LogMessage("[StAC] File handle invalid!");
+        LogMessage("%s", buffer);
+    }
+    else
+    {
         LogMessage("%s", buffer);
     }
     PrintToConsoleAllAdmins("%s", buffer);

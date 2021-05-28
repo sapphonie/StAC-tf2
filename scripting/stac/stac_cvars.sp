@@ -490,7 +490,7 @@ void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newVa
     {
         if (StringToInt(newValue) != 0)
         {
-            //SetFailState("[StAC] sv_cheats set to 1! Aborting!");
+            SetFailState("[StAC] sv_cheats set to 1! Aborting!");
         }
     }
     if (convar == FindConVar("sv_allow_wait_command"))
@@ -524,7 +524,6 @@ void UpdateRates(ConVar convar, const char[] oldValue, const char[] newValue)
         imaxrate = MAX_RATE;
     }
 
-    LogMessage("%i %i", iminrate, imaxrate);
     // update clients
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {

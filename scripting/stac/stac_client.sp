@@ -20,7 +20,7 @@ public void OnClientPutInServer(int Cl)
         {
             StacLog("[StAC] %N joined. Checking cvars", Cl);
         }
-        QueryTimer[Cl] = CreateTimer(0.1, Timer_CheckClientConVars, userid);
+        QueryTimer[Cl] = CreateTimer(5.0, Timer_CheckClientConVars, userid);
 
         CreateTimer(2.5, CheckAuthOn, userid);
     }
@@ -73,10 +73,10 @@ Action CheckAuthOn(Handle timer, int userid)
 // cache this! we don't need to clear this because it gets overwritten when a new client connects with the same index
 public void OnClientAuthorized(int Cl, const char[] auth)
 {
-    if (IsValidClient(Cl))
+    if (!IsFakeClient(Cl))
     {
         strcopy(SteamAuthFor[Cl], sizeof(SteamAuthFor[]), auth);
-        LogMessage("auth %s for Cl %N", auth, Cl);
+        //StacLog("auth %s for Cl %N", auth, Cl);
     }
 }
 

@@ -3,10 +3,6 @@
 
 /********** GLOBAL VARS **********/
 
-/***** Discord Json *****/
-char detectionTemplate[1024] = "{ \"embeds\": [ { \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Detection type\", \"value\": \"%s\" }, { \"name\": \"Detection\", \"value\": \"%i\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
-
-char generalTemplate[1024] = "{ \"embeds\": [ { \"title\": \"StAC Message\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Message\", \"value\": \"%s\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
 
 /***** Cvar Handles *****/
 ConVar stac_enabled;
@@ -61,7 +57,7 @@ int maxBhopDetections           = 10;
 int maxCmdnumDetections         = 20;
 int maxTbotDetections           = 0;
 int maxSpinbotDetections        = 50;
-int maxuserinfoSpamDetections    = 25;
+int maxuserinfoSpamDetections   = 25;
 
 /***** Server based stuff *****/
 
@@ -117,7 +113,7 @@ int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = -1;
 int spinbotDetects          [TFMAXPLAYERS+1];
 int fakeChokeDetects        [TFMAXPLAYERS+1];
-int userinfoSpamDetects      [TFMAXPLAYERS+1];
+int userinfoSpamDetects     [TFMAXPLAYERS+1];
 
 // frames since client "did something"
 //                          [ client index ][history]

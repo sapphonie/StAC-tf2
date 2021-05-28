@@ -7,7 +7,7 @@ Action ForceCheckAll(int callingCl, int args)
 
     if (callingCl != 0)
     {
-        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to force-check all cvars");
+        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client %N attempted to force-check all cvars", callingCl);
     }
     QueryEverythingAllClients();
 }

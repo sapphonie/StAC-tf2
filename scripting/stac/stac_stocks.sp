@@ -61,6 +61,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         return;
     }
 
+    StacGeneralPlayerDiscordNotify(userid, reason);
     // make sure we dont detect on already banned players
     userBanQueued[Cl] = true;
 
@@ -307,14 +308,20 @@ public void OnLibraryAdded(const char[] name)
 
 /********** DISCORD **********/
 
-void StacGeneralPlayerDiscordNotify(int userid, char[] message)
+void StacGeneralPlayerDiscordNotify(int userid, const char[] format, any ...)
 {
+
+    static char generalTemplate[1024] = \
+    "{ \"embeds\": [ { \"title\": \"StAC Message\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Message\", \"value\": \"%s\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
+
     if (!DISCORD)
     {
         return;
     }
-
     char msg[1024];
+
+    char message[256];
+    VFormat(message, sizeof(message), format, 3);
 
     int Cl = GetClientOfUserId(userid);
     char ClName[64];
@@ -351,6 +358,9 @@ void StacGeneralPlayerDiscordNotify(int userid, char[] message)
 
 void StacDetectionDiscordNotify(int userid, char[] type, int detections)
 {
+    static char detectionTemplate[1024] = \
+    "{ \"embeds\": [ { \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Detection type\", \"value\": \"%s\" }, { \"name\": \"Detection\", \"value\": \"%i\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } , { \"name\": \"Unix timestamp of detection\", \"value\": \"%i\" } ] } ] }";
+
     if (!DISCORD)
     {
         return;
@@ -388,7 +398,8 @@ void StacDetectionDiscordNotify(int userid, char[] type, int detections)
         detections,
         hostname,
         hostipandport,
-        demoname
+        demoname,
+        GetTime()
     );
     SendMessageToDiscord(msg);
 }
