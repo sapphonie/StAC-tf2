@@ -24,7 +24,7 @@
 // we have to re pragma because sourcemod sucks lol
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.2.2a"
+#define PLUGIN_VERSION  "5.2.3a"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -39,7 +39,10 @@ public Plugin myinfo =
 
 /********** SUBPLUGINS **********/
 
+// globals
 #include "stac/stac_globals.sp"
+// misc funcs used around the plugin
+#include "stac/stac_stocks.sp"
 // stac cvars
 #include "stac/stac_cvars.sp"
 // admin commands
@@ -48,8 +51,6 @@ public Plugin myinfo =
 #include "stac/stac_mapchange.sp"
 // oprc
 #include "stac/stac_onplayerruncmd.sp"
-// oprc based detections
-#include "stac/stac_onplayerruncmd_detections.sp"
 // client stuff
 #include "stac/stac_client.sp"
 // client cvar checks
@@ -60,12 +61,8 @@ public Plugin myinfo =
 #include "stac/stac_misc_timers.sp"
 // stac livefeed
 #include "stac/stac_livefeed.sp"
-// stac logging functions
-#include "stac/stac_log.sp"
 // for kicking unauthorized clients
 #include "stac/stac_steamauth.sp"
-// misc funcs used around the plugin
-#include "stac/stac_stocks.sp"
 // if it ain't broke, don't fix it. jtanz has written a great backtrack patch.
 #include "stac/jay_backtrack_patch.sp"
 

@@ -32,26 +32,6 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         }
         return Plugin_Stop;
     }
-    /*
-    // MEGA DEBUG
-    if (StrContains(sArgs, "steamdown", false) != -1)
-    {
-        Steam_SteamServersDisconnected();
-        SteamWorks_SteamServersDisconnected(view_as<EResult>(1));
-        LogMessage("steamdown!");
-    }
-    if (StrContains(sArgs, "steamup", false) != -1)
-    {
-        Steam_SteamServersConnected();
-        SteamWorks_SteamServersConnected();
-        LogMessage("steamup!");
-    }
-
-    if (StrContains(sArgs, "checksteam", false) != -1)
-    {
-        LogMessage("%i", shouldCheckAuth());
-    }
-    */
     return Plugin_Continue;
 }
 
@@ -100,61 +80,14 @@ public Action OnClientCommand(int Cl, int args)
     return Plugin_Continue;
 }
 
-//char userinfoToCheck[][] =
-//{
-//    "cl_interp_npcs",
-//    "cl_flipviewmodels",
-//    "cl_predict",
-//    "cl_interp_ratio",
-//    "cl_interp",
-//    "cl_team",
-//    "cl_class",
-//    "hap_HasDevice",
-//    "cl_showhelp",
-//    "english",
-//    "cl_predictweapons",
-//    "cl_lagcompensation",
-//    "hud_classautokill",
-//    "cl_spec_mode",
-//    "cl_autorezoom",
-//    "tf_remember_activeweapon",
-//    "tf_remember_lastswitched",
-//    "cl_autoreload",
-//    "fov_desired",
-//    "hud_combattext",
-//    "hud_combattext_healing",
-//    "hud_combattext_batching",
-//    "hud_combattext_doesnt_block_overhead_text",
-//    "hud_combattext_green",
-//    "hud_combattext_red",
-//    "hud_combattext_blue",
-//    "tf_medigun_autoheal",
-//    "voice_loopback",
-//    "name",
-//    "tv_nochat",
-//    "cl_language",
-//    "rate",
-//    "cl_cmdrate",
-//    "cl_updaterate",
-//    "closecaption",
-//    "net_maxroutable"
-//};
-
-//  [cvarvalue][history][charsize]
-//char userinfoValues[64][TFMAXPLAYERS+1][4][64];
-//
-//// for checking if we just fixed a client's network settings so we don't double detect
-//bool justclamped    [TFMAXPLAYERS+1];
 
 public void OnClientSettingsChanged(int Cl)
 {
-
     // ignore invalid clients
     if (!IsValidClient(Cl))
     {
         return;
     }
-
     if
     (
         // command occured recently

@@ -185,7 +185,6 @@ Handle HudSyncNetwork;
 Handle QueryTimer           [TFMAXPLAYERS+1];
 Handle TriggerTimedStuffTimer;
 
-
 /*
     "cl_interp_npcs",
     "cl_flipviewmodels",
@@ -224,6 +223,7 @@ Handle TriggerTimedStuffTimer;
     "closecaption",
     "net_maxroutable"
 */
+
 char userinfoToCheck[][] =
 {
     "cl_cmdrate",       // for fixpingmasking, check for invalid values, check for spamming
