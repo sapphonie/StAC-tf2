@@ -29,8 +29,7 @@ jobs:
       run: |
         cd ./scripting
         pwd
-        find . -name "*.sp" -exec bash -c \
-        'spcomp -i"./include/" "$0" -o ../plugins/$(basename "$0" .sp).smx' {} +
+        spcomp -i"./include/" stac.sp -o ../plugins/$(basename "$0" .sp).smx'
         ls -la
 
     - name: Zip package
