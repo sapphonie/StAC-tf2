@@ -36,6 +36,8 @@
 
 - `stac_fixpingmasking_enabled` - `[StAC] enable clamping client cl_cmdrate and cl_updaterate values to values specified by their server side counterparts (sv_mincmdrate, sv_minupdaterate, sv_maxcmdrate, sv_maxupdaterate)? This also allows StAC to detect and even ban cheating clients attempting to "ping reduce".`
 
-- `stac_max_cmdrate_spam_detections` - `[StAC] maximum number of times a client can consecutively spam-change their cl_cmdrate before getting banned - this is used by cheats for "ping reducing" (recommended 25, though it is a somewhat beta check)`
+- `stac_max_userinfo_spam_detections` - `maximum number of times a client can spam userinfo updates (currently, only tracks cl_cmdrate) over the course of 10 seconds before getting banned. (recommended 10+)`
 
 - `stac_kick_unauthed_clients` - `[StAC] kick clients unauthorized with steam? This only kicks if steam has been stable and online for at least the past 300 seconds or more. (recommended 1)`
+
+- `stac_silent` - `[StAC] If this cvar is 0 (default), StAC will print detections to admins with sm_ban access and to SourceTV, if extant. If this cvar is 1, it will print only to SourceTV. If this cvar is 2, StAC never print anything in chat to anyone, ever. If this cvar is -1, StAC will print ALL detections to ALL players. (recommended 0)`
