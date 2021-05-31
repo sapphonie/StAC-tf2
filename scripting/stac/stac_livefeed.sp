@@ -192,15 +192,15 @@ void LiveFeed_PlayerCmd(int userid)
                 HudSyncRunCmdMisc,
                 "\
                 \nMisc Info:\
-                \n Approx client cmdrate: ≈%.2f cmd/sec\
-                \n Approx server tickrate: ≈%.2f tick/sec\
+                \n Approx client cmdrate: ≈%i cmd/sec\
+                \n Approx server tickrate: ≈%i tick/sec\
                 \n Failing lag check? %s\
                 \n HasValidAngles? %s\
                 \n SequentialCmdnum? %s\
                 \n OrderedTickcount? %s\
                 ",
-                calcCmdrateFor[Cl],
-                smoothedTPS,
+                tickspersec[Cl],
+                tickspersec[0],
                 IsUserLagging(userid) ? "yes" : "no",
                 HasValidAngles(Cl) ? "yes" : "no",
                 isCmdnumSequential(userid) ? "yes" : "no",

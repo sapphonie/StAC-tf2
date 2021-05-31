@@ -36,6 +36,15 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
+    //if (buttons & IN_ATTACK)
+    //{
+    //    LogMessage("----->");
+    //}
+    //else
+    //{
+    //    LogMessage("-----");
+    //}
+
     // need this basically no matter what
     int userid = GetClientUserId(Cl);
 
@@ -54,11 +63,17 @@ public Action OnPlayerRunCmd
     }
 
     // grab engine time
-    for (int i = 10; i > 0; --i)
+    for (int i = 2; i > 0; --i)
     {
         engineTime[Cl][i] = engineTime[Cl][i-1];
     }
     engineTime[Cl][0] = GetEngineTime();
+
+    calcTPSfor(Cl);
+
+    // avg'd over 10 ticks
+    //calcCmdrateFor[Cl] = 10.0 * Pow((engineTime[Cl][1] - engineTime[Cl][10]), -1.0);
+
 
     // grab angles
     // thanks to nosoop from the sm discord for some help with this
@@ -124,8 +139,6 @@ public Action OnPlayerRunCmd
     fuzzyClangles[Cl][0][0] = RoundToPlace(clangles[Cl][0][0], 1);
     fuzzyClangles[Cl][0][1] = RoundToPlace(clangles[Cl][0][1], 1);
 
-    // avg'd over 10 ticks
-    calcCmdrateFor[Cl] = 10.0 * Pow((engineTime[Cl][0] - engineTime[Cl][10]), -1.0);
 
     // neither of these tests need fancy checks, so we do them first
     bhopCheck(userid);
@@ -163,11 +176,8 @@ public Action OnPlayerRunCmd
     // not really lag dependant check
     fakeangCheck(userid);
 
-    // we use these later too
-    bool islagging = IsUserLagging(userid);
-
     // we don't want to check this if we're repeating tickcount a lot and/or if loss is high, but cmdnums and tickcounts DO NOT NEED TO BE PERFECT for this.
-    if (!islagging)
+    if (!IsUserLagging(userid))
     {
         cmdnumspikeCheck(userid);
     }
@@ -179,7 +189,8 @@ public Action OnPlayerRunCmd
         // make sure client isnt using a spin bind
         || buttons & IN_LEFT
         || buttons & IN_RIGHT
-        || islagging
+        // make sure we're not lagging and that cmdnums are normal
+        || IsUserLagging(userid)
     )
     // if any of these things are true, don't check angles or cmdnum spikes or spinbot stuff
     {
@@ -360,8 +371,9 @@ void fakechokeCheck(int userid)
     {
         return;
     }
+
     // detect fakechoke ( BETA )
-    if (engineTime[Cl][0] - engineTime[Cl][1] > tickinterv * 8)
+    if (engineTime[Cl][0] - engineTime[Cl][1] > tickinterv * 5)
     {
         // off by one from what ncc says
         int amt = clcmdnum[Cl][0] - lastChokeCmdnum[Cl];
@@ -372,11 +384,11 @@ void fakechokeCheck(int userid)
                 fakeChokeDetects[Cl]++;
                 if (fakeChokeDetects[Cl] >= 5)
                 {
-                    PrintToImportant("{hotpink}[StAC]{white} Player %N is repeatedly choking {mediumpurple}%i{white} ticks.\nThey may be fake-choking.\nDetections so far: {palegreen}%i" , Cl, amt, fakeChokeDetects[Cl]);
+                    PrintToImportant("{hotpink}[StAC]{white} Player %N is repeatedly choking exactly {mediumpurple}%i{white} ticks.\nThey may be fake-lagging.\nDetections so far: {palegreen}%i" , Cl, amt, fakeChokeDetects[Cl]);
                     StacLogNetData(userid);
                     StacLogCmdnums(userid);
                     StacLogTickcounts(userid);
-                    if (fakeChokeDetects[Cl] % 20 == 0)
+                    if (fakeChokeDetects[Cl] % 10 == 0)
                     {
                         StacDetectionDiscordNotify(userid, "fake choke [ BETA ]", fakeChokeDetects[Cl]);
                     }
@@ -384,7 +396,7 @@ void fakechokeCheck(int userid)
             }
             else
             {
-                fakeChokeDetects[Cl] = 0;
+                fakeChokeDetects[Cl]--;
             }
         }
         lastChokeAmt[Cl]    = amt;
@@ -975,14 +987,15 @@ bool IsUserLagging(int userid)
     (
         // we don't want very much loss at all. this may be removed some day.
             lossFor[Cl] >= 1.5
-        || !isCmdnumSequential(userid)
+        // 
+        || (!isCmdnumSequential(userid) && !isTickcountInOrder(userid))
         // tickcount the same over 5 ticks, client is probably lagging
         || isTickcountRepeated(userid)
         // if it takes too long or too short to send 10 ticks on average, the client is not stable enough to check
         // too short
-        || calcCmdrateFor[Cl] <= (40.0)
+        || tickspersec[Cl] <= (40)
         // too long
-        || calcCmdrateFor[Cl] >= (100.0)
+        || tickspersec[Cl] >= (100)
     )
     {
         return true;

@@ -63,11 +63,11 @@ public Action OnClientCommand(int Cl, int args)
         // clean it up ( PROBABLY NOT NEEDED )
         // TrimString(ClientCommandChar);
 
-        if (DEBUG)
-        {
-            StacLog("[StAC] '%L' issued client side command with %i length:", Cl, strlen(ClientCommandChar));
-            StacLog("%s", ClientCommandChar);
-        }
+        //if (DEBUG)
+        //{
+        //    StacLog("[StAC] '%L' issued client side command with %i length:", Cl, strlen(ClientCommandChar));
+        //    StacLog("%s", ClientCommandChar);
+        //}
         if (strlen(ClientCommandChar) > 255)
         {
             StacGeneralPlayerDiscordNotify(userid, "Client sent a very large command - length %i - to the server! Next message is the command.", strlen(ClientCommandChar));
@@ -88,6 +88,7 @@ public void OnClientSettingsChanged(int Cl)
     {
         return;
     }
+    int userid = GetClientUserId(Cl);
     if
     (
         // command occured recently
@@ -96,6 +97,8 @@ public void OnClientSettingsChanged(int Cl)
         (
             // and it's a demorestart
             StrEqual("demorestart", lastCommandFor[Cl])
+            ||
+            StrContains("107", lastCommandFor[Cl]) != -1
         )
     )
     {
@@ -103,14 +106,13 @@ public void OnClientSettingsChanged(int Cl)
         return;
     }
 
-    int userid = GetClientUserId(Cl);
-
     // hm
     for (int cvar; cvar < sizeof(userinfoToCheck); cvar++)
     {
         char cvarvalue[64];
         GetClientInfo(Cl, userinfoToCheck[cvar], cvarvalue, sizeof(cvarvalue));
 
+        // one of our monitored cvars changed!
         if (!StrEqual(userinfoValues[cvar][Cl][0], cvarvalue))
         {
             // copy into history
@@ -119,9 +121,23 @@ public void OnClientSettingsChanged(int Cl)
             strcopy(userinfoValues[cvar][Cl][1], sizeof(userinfoValues[][][]), userinfoValues[cvar][Cl][0]);
             strcopy(userinfoValues[cvar][Cl][0], sizeof(userinfoValues[][][]), cvarvalue);
 
+            // we have at least some history
             if (!IsActuallyNullString(userinfoValues[cvar][Cl][0]) && !IsActuallyNullString(userinfoValues[cvar][Cl][1]))
             {
                 StacLog("Client %N changed %s: old %s new %s", Cl, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], cvarvalue);
+                // check interp
+                if
+                (
+                    StrEqual(userinfoToCheck[cvar], "cl_interp_ratio")
+                    ||
+                    StrEqual(userinfoToCheck[cvar], "cl_interp")
+                    ||
+                    StrEqual(userinfoToCheck[cvar], "cl_updaterate")
+                )
+                {
+                    checkInterp(userid);
+                }
+                // fix pingmasking
                 if
                 (
                     StrEqual(userinfoToCheck[cvar], "cl_cmdrate")
@@ -131,64 +147,65 @@ public void OnClientSettingsChanged(int Cl)
                     StrEqual(userinfoToCheck[cvar], "rate")
                 )
                 {
-                    if (StrEqual(userinfoToCheck[cvar], "cl_cmdrate"))
-                    {
-                        int cmdrate = StringToInt(cvarvalue);
-                        if (cmdrate < 10)
-                        {
-                            // repeated code lol
-                            StacLog("%N had cl_cmdrate value of %s", Cl, cvarvalue);
-                            if (banForMiscCheats)
-                            {
-                                char reason[128];
-                                Format(reason, sizeof(reason), "%t", "illegalCmdrateBanMsg");
-                                char pubreason[256];
-                                Format(pubreason, sizeof(pubreason), "%t", "illegalCmdrateBanAllChat", Cl);
-                                // we have to do extra bullshit here so we don't crash when banning clients out of this callback
-                                // make a pack
-                                DataPack pack = CreateDataPack();
-                                // prepare pack
-                                WritePackCell(pack, userid);
-                                WritePackString(pack, reason);
-                                WritePackString(pack, pubreason);
-                                ResetPack(pack, false);
-                                // make data timer
-                                CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
-                                return;
-                            }
-                            else
-                            {
-                                PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L has an illegal {blue}cl_cmdrate{white} value = {red}%s{white}!", Cl, cvarvalue);
-                                char msg[128];
-                                Format(msg, sizeof(msg), "Illegal cl_cmdrate value of '%s'!", cvarvalue);
-                                StacDetectionDiscordNotify(userid, msg, 1);
-                            }
-                        }
-                    }
-                    // we just clamped this client! don't count it as userinfo spam
-                    if (justclamped[Cl])
-                    {
-                        justclamped[Cl] = false;
-                    }
-                    // this prevents against legit clients from purposefully messing with their cl_cmdrate/rate/etc trying to trigger stac
-                    else if
-                    (
-                        !StrEqual(userinfoValues[cvar][Cl][3], userinfoValues[cvar][Cl][0])
-                        &&
-                        !StrEqual(userinfoValues[cvar][Cl][2], userinfoValues[cvar][Cl][0])
-                    )
-                    {
-                        userinfoSpamEtc(userid, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], userinfoValues[cvar][Cl][0]);
-                    }
-
                     if (fixpingmasking)
                     {
                         FixPingMasking(Cl, userinfoToCheck[cvar], userinfoValues[cvar][Cl][0]);
                     }
                 }
-                else
+                if
+                (
+                    StrEqual(userinfoToCheck[cvar], "cl_cmdrate")
+                )
                 {
-                    userinfoSpamEtc(userid, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], userinfoValues[cvar][Cl][0]);
+                    // ban for illegal values
+                    int cmdrate = StringToInt(cvarvalue);
+                    if (cmdrate < 10)
+                    {
+                        // repeated code lol
+                        StacLog("%N had cl_cmdrate value of %s", Cl, cvarvalue);
+                        if (banForMiscCheats)
+                        {
+                            char reason[128];
+                            Format(reason, sizeof(reason), "%t", "illegalCmdrateBanMsg");
+                            char pubreason[256];
+                            Format(pubreason, sizeof(pubreason), "%t", "illegalCmdrateBanAllChat", Cl);
+                            // we have to do extra bullshit here so we don't crash when banning clients out of this callback
+                            // make a pack
+                            DataPack pack = CreateDataPack();
+                            // prepare pack
+                            WritePackCell(pack, userid);
+                            WritePackString(pack, reason);
+                            WritePackString(pack, pubreason);
+                            ResetPack(pack, false);
+                            // make data timer
+                            CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
+                            return;
+                        }
+                        else
+                        {
+                            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L has an illegal {blue}cl_cmdrate{white} value = {red}%s{white}!", Cl, cvarvalue);
+                            char msg[128];
+                            Format(msg, sizeof(msg), "Illegal cl_cmdrate value of '%s'!", cvarvalue);
+                            StacDetectionDiscordNotify(userid, msg, 1);
+                        }
+                    }
+                    // userinfo spam
+                    // prevent clients from purposefully trying to trigger stac
+                    if
+                    (
+                        !StrEqual(userinfoValues[cvar][Cl][3], userinfoValues[cvar][Cl][0])
+                        &&
+                        !StrEqual(userinfoValues[cvar][Cl][2], userinfoValues[cvar][Cl][0])
+                        &&
+                        !justclamped[Cl]
+                    )
+                    {
+                        userinfoSpamEtc(userid, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], userinfoValues[cvar][Cl][0]);
+                    }
+                    if (justclamped[Cl])
+                    {
+                        justclamped[Cl] = false;
+                    }
                 }
             }
         }
@@ -304,46 +321,54 @@ void MiscCheatsEtcsCheck(int userid)
         {
             StacLog("[StAC] Executed firstperson command on Player %N", Cl);
         }
+        checkInterp(userid);
+    }
+}
 
-        // lerp check - we check the netprop
-        // don't check if not default tickrate
-        if (isDefaultTickrate())
+void checkInterp(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    // lerp check - we check the netprop
+    // don't check if not default tickrate
+    if (isDefaultTickrate())
+    {
+
+        float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
+        if (DEBUG)
         {
-            float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
-            if (DEBUG)
+            StacLog("%.2f ms interp on %N", lerp, Cl);
+        }
+        //SetEntPropFloat(Cl, Prop_Data, "m_fLerpTime", 0.010);
+
+        if (lerp == 0.0)
+        {
+            // repeated code lol
+            if (banForMiscCheats)
             {
-                StacLog("%.2f ms interp on %N", lerp, Cl);
+                char reason[128];
+                Format(reason, sizeof(reason), "%t", "nolerpBanMsg");
+                char pubreason[256];
+                Format(pubreason, sizeof(pubreason), "%t", "nolerpBanAllChat", Cl);
             }
-            if (lerp == 0.0)
+            else
             {
-                // repeated code lol
-                if (banForMiscCheats)
-                {
-                    char reason[128];
-                    Format(reason, sizeof(reason), "%t", "nolerpBanMsg");
-                    char pubreason[256];
-                    Format(pubreason, sizeof(pubreason), "%t", "nolerpBanAllChat", Cl);
-                }
-                else
-                {
-                    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is using NoLerp! {blue}m_fLerpTime{white} value = {blue}%f", Cl, lerp);
-                    StacDetectionDiscordNotify(userid, "nolerp [netprop]", 1);
-                }
+                PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is using NoLerp! {blue}m_fLerpTime{white} value = {blue}%f", Cl, lerp);
+                StacDetectionDiscordNotify(userid, "nolerp [netprop]", 1);
             }
-            if
-            (
-                lerp < min_interp_ms && min_interp_ms != -1
-                ||
-                lerp > max_interp_ms && max_interp_ms != -1
-            )
-            {
-                char message[256];
-                Format(message, sizeof(message), "Client was kicked for attempted interp exploitation. Their interp: %.2fms", lerp);
-                StacGeneralPlayerDiscordNotify(userid, message);
-                KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
-                MC_PrintToChatAll("%t", "interpAllChat", Cl, lerp);
-                StacLog("%t", "interpAllChat", Cl, lerp);
-            }
+        }
+        if
+        (
+            lerp < min_interp_ms && min_interp_ms != -1
+            ||
+            lerp > max_interp_ms && max_interp_ms != -1
+        )
+        {
+            char message[256];
+            Format(message, sizeof(message), "Client was kicked for attempted interp exploitation. Their interp: %.2fms", lerp);
+            StacGeneralPlayerDiscordNotify(userid, message);
+            KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
+            MC_PrintToChatAll("%t", "interpAllChat", Cl, lerp);
+            StacLog("%t", "interpAllChat", Cl, lerp);
         }
     }
 }

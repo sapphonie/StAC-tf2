@@ -91,15 +91,15 @@ void StacLogNetData(int userid)
     (
         "\
         \nMore network:\
-        \n Approx client cmdrate: ≈%.2f cmd/sec\
-        \n Approx server tickrate: ≈%.2f tick/sec\
+        \n Approx client cmdrate: ≈%i cmd/sec\
+        \n Approx server tickrate: ≈%i tick/sec\
         \n Failing lag check? %s\
         \n HasValidAngles? %s\
         \n SequentialCmdnum? %s\
         \n OrderedTickcount? %s\
         ",
-        calcCmdrateFor[Cl],
-        smoothedTPS,
+        tickspersec[Cl],
+        tickspersec[0],
         IsUserLagging(userid) ? "yes" : "no",
         HasValidAngles(Cl) ? "yes" : "no",
         isCmdnumSequential(userid) ? "yes" : "no",
@@ -378,6 +378,17 @@ bool isDefaultTickrate()
     return false;
 }
 
+void calcTPSfor(int Cl)
+{
+    t[Cl]++;
+    if (GetEngineTime() - 1.0 >= secTime[Cl])
+    {
+        secTime[Cl] = GetEngineTime();
+        tickspersec[Cl] = t[Cl];
+        t[Cl] = 0;
+    }
+}
+
 // sourcemod is fucking ridiculous, "IsNullString" only checks for a specific definition of nullstring
 bool IsActuallyNullString(char[] somestring)
 {
@@ -439,18 +450,32 @@ void PrintToImportant(const char[] format, any ...)
 {
     char buffer[254];
 
+    if (StrContains(buffer, "detect", false) != -1)
+    {
+        StacLog("%s", buffer);
+    }
+
+    if (silent == 2)
+    {
+        return;
+    }
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (IsValidAdmin(i) || IsValidSrcTV(i))
+        //         "[StAC] If this cvar is 0 (default), StAC will print detections to admins with sm_ban access and to SourceTV, if extant. If this cvar is 1, it will print only to SourceTV. If this cvar is 2, StAC never print anything in chat to anyone, ever. If this cvar is -1, StAC will print ALL detections to ALL players. \n(recommended 0)",
+
+        if
+        (
+            (silent == -1 && (IsValidClient(i) || IsValidSrcTV(i)))
+            ||
+            (silent == 0 && (IsValidAdmin(i) || IsValidSrcTV(i)))
+            ||
+            (silent == 1 && IsValidSrcTV(i))
+        )
         {
             SetGlobalTransTarget(i);
             VFormat(buffer, sizeof(buffer), format, 2);
             MC_PrintToChat(i, "%s", buffer);
         }
-    }
-    if (StrContains(buffer, "detect", false) != -1)
-    {
-        StacLog("%s", buffer);
     }
 }
 

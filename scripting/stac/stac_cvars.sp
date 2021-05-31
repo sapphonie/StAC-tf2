@@ -392,6 +392,22 @@ void initCvars()
     );
     HookConVarChange(stac_kick_unauthed_clients, setStacVars);
 
+    // shut up!
+    IntToString(silent, buffer, sizeof(buffer));
+    stac_silent =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_silent",
+        buffer,
+        "[StAC] If this cvar is 0 (default), StAC will print detections to admins with sm_ban access and to SourceTV, if extant. If this cvar is 1, it will print only to SourceTV. If this cvar is 2, StAC never print anything in chat to anyone, ever. If this cvar is -1, StAC will print ALL detections to ALL players. \n(recommended 0)",
+        FCVAR_NONE,
+        true,
+        -1.0,
+        true,
+        2.0
+    );
+    HookConVarChange(stac_silent, setStacVars);
+
     // actually exec the cfg after initing cvars lol
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
@@ -481,6 +497,9 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
 
     // kick unauthed clients
     kickUnauth              = GetConVarBool(stac_kick_unauthed_clients);
+
+    // silent mode
+    silent                  = GetConVarInt(stac_silent);
 }
 
 void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)

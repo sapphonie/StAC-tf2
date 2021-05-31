@@ -1,28 +1,79 @@
 /********** STAC COMMANDS FOR ADMINS **********/
 
-// sm_stac_checkall
-Action ForceCheckAll(int callingCl, int args)
+Action checkAdmin(int callingCl, int args)
 {
-    ReplyToCommand(callingCl, "[StAC] Checking cvars on all clients.");
-
-    if (callingCl != 0)
-    {
-        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client %N attempted to force-check all cvars", callingCl);
-    }
-    QueryEverythingAllClients();
-}
-
-// sm_stac_detections
-Action ShowAllDetections(int callingCl, int args)
-{
-    if (callingCl != 0)
-    {
-        ReplyToCommand(callingCl, "Check your console!");
-    }
-
+    char arg0[32];
+    GetCmdArg(0, arg0, sizeof(arg0));
     char arg1[32];
     GetCmdArg(1, arg1, sizeof(arg1));
 
+    if (callingCl != 0)
+    {
+        bool isAdmin;
+        AdminId clAdmin = GetUserAdmin(callingCl);
+        if (GetAdminFlag(clAdmin, Admin_Ban))
+        {
+            isAdmin = true;
+        }
+        if (!isAdmin)
+        {
+            StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
+            PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
+            return Plugin_Handled;
+        }
+        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Admin %N used %s", callingCl, arg0);
+    }
+
+    if (StrEqual(arg0, "sm_stac_checkall"))
+    {
+        ForceCheckAll(callingCl);
+        return Plugin_Handled;
+    }
+
+    if (StrEqual(arg0, "sm_stac_detections"))
+    {
+        ShowAllDetections(callingCl);
+        return Plugin_Handled;
+    }
+
+    if (StrEqual(arg0, "sm_stac_getauth"))
+    {
+        if (args != 1)
+        {
+            ReplyToCommand(callingCl, "[StAC] Invalid number of arguments for command.");
+        }
+
+        StacTargetCommand(callingCl, arg0, arg1);
+        return Plugin_Handled;
+    }
+    if (StrEqual(arg0, "sm_stac_livefeed"))
+    {
+        if (args != 1)
+        {
+            ReplyToCommand(callingCl, "[StAC] Invalid number of arguments for command.");
+        }
+
+        StacTargetCommand(callingCl, arg0, arg1);
+        return Plugin_Handled;
+    }
+    return Plugin_Handled;
+}
+
+// sm_stac_checkall
+void ForceCheckAll(int callingCl)
+{
+    ReplyToCommand(callingCl, "[StAC] Checking cvars on all clients.");
+    QueryEverythingAllClients();
+    return;
+}
+
+// sm_stac_detections
+void ShowAllDetections(int callingCl)
+{
+    if (callingCl != 0)
+    {
+        ReplyToCommand(callingCl, "[StAC] Check your console!");
+    }
     PrintToConsole(callingCl, "[StAC] === Printing current detections ===");
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
@@ -63,28 +114,15 @@ Action ShowAllDetections(int callingCl, int args)
             }
         }
     }
+    PrintToConsole(callingCl, "[StAC] === Done ===");
 
-    if (callingCl != 0)
-    {
-        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to check StAC detections");
-    }
-    return Plugin_Handled;
+    return;
 }
 
 // sm_stac_getauth  <client/s>
 // sm_stac_livefeed <single client>
-Action StacTargetCommand(int callingCl, int args)
+void StacTargetCommand(int callingCl, const char[] arg0, const char[] arg1)
 {
-    if (args != 1)
-    {
-        ReplyToCommand(callingCl, "[StAC] Invalid number of arguments for command.");
-    }
-    char arg0[32];
-    GetCmdArg(0, arg0, sizeof(arg0));
-
-    char arg1[32];
-    GetCmdArg(1, arg1, sizeof(arg1));
-
     int flags = COMMAND_FILTER_NO_BOTS;
 
     bool getauth;
@@ -124,7 +162,7 @@ Action StacTargetCommand(int callingCl, int args)
     )
     {
         ReplyToTargetError(callingCl, target_count);
-        return Plugin_Handled;
+        return;
     }
 
     for (int i = 0; i < target_count; i++)
@@ -153,19 +191,5 @@ Action StacTargetCommand(int callingCl, int args)
         }
     }
 
-    if (callingCl == 0)
-    {
-        return Plugin_Handled;
-    }
-
-    if (getauth)
-    {
-        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to use StAC getauth");
-    }
-    if (livefeed)
-    {
-        StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client attempted to use StAC Livefeed");
-    }
-
-    return Plugin_Handled;
+    return;
 }

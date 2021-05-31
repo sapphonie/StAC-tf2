@@ -26,6 +26,7 @@ ConVar stac_include_demoname_in_banreason;
 ConVar stac_log_to_file;
 ConVar stac_fixpingmasking_enabled;
 ConVar stac_kick_unauthed_clients;
+ConVar stac_silent;
 
 /***** Misc cheat defaults *****/
 // verbose mode
@@ -48,6 +49,7 @@ bool kickUnauth                 = true;
 float maxAllowedTurnSecs        = -1.0;
 bool banForMiscCheats           = true;
 bool optimizeCvars              = true;
+int silent                      = 0;
 
 /***** Detection based cheat defaults *****/
 int maxAimsnapDetections        = 20;
@@ -65,8 +67,6 @@ int maxuserinfoSpamDetections   = 25;
 float tickinterv;
 float tps;
 
-// approx calculated server tickrate
-float smoothedTPS;
 // time to wait after server "stutters"
 float stutterWaitLength = 5.0;
 
@@ -136,7 +136,7 @@ int   cltickcount           [TFMAXPLAYERS+1][6];
 int   clbuttons             [TFMAXPLAYERS+1][6];
 int   clmouse               [TFMAXPLAYERS+1]   [2];
 // OnPlayerRunCmd misc
-float engineTime            [TFMAXPLAYERS+1][11];
+float engineTime            [TFMAXPLAYERS+1][3];
 float fuzzyClangles         [TFMAXPLAYERS+1][5][2];
 float clpos                 [TFMAXPLAYERS+1][2][3];
 int   maxTickCountFor       [TFMAXPLAYERS+1];
@@ -162,8 +162,6 @@ float outchokeFor           [TFMAXPLAYERS+1];
 float pingFor               [TFMAXPLAYERS+1];
 float rateFor               [TFMAXPLAYERS+1];
 float ppsFor                [TFMAXPLAYERS+1];
-// approx calculated cmdrate for client
-float calcCmdrateFor        [TFMAXPLAYERS+1];
 
 /***** Misc other handles *****/
 
@@ -227,13 +225,22 @@ Handle TriggerTimedStuffTimer;
 char userinfoToCheck[][] =
 {
     "cl_cmdrate",       // for fixpingmasking, check for invalid values, check for spamming
-    "cl_updaterate",    // for fixpingmasking
+    "cl_updaterate",    // for fixpingmasking, for interp check
     "rate",             // for fixpingmasking
-    "cl_autoreload"     // check for spamming
+    //"cl_autoreload",     // check for spamming
+    "cl_interp",        // for interp check
+    "cl_interp_ratio"   // for interp check
 };
 
 //  [cvarvalue][history][charsize]
 char userinfoValues[64][TFMAXPLAYERS+1][4][64];
 
 // for checking if we just fixed a client's network settings so we don't double detect
-bool justclamped    [TFMAXPLAYERS+1];
+bool justclamped        [TFMAXPLAYERS+1];
+
+// tps etc
+int tickspersec        [TFMAXPLAYERS+1];
+int t                  [TFMAXPLAYERS+1];
+
+float secTime          [TFMAXPLAYERS+1];
+

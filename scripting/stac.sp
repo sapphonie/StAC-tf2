@@ -24,7 +24,7 @@
 // we have to re pragma because sourcemod sucks lol
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.2.3a"
+#define PLUGIN_VERSION  "5.2.4a"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -92,10 +92,10 @@ public void OnPluginStart()
 
     // reg admin commands
     // TODO: make these invisible for non admins
-    RegAdminCmd("sm_stac_checkall", ForceCheckAll,          ADMFLAG_GENERIC, "Force check all client convars (ALL CLIENTS) for anticheat stuff");
-    RegAdminCmd("sm_stac_detections", ShowAllDetections,    ADMFLAG_GENERIC, "Show all current detections on all connected clients");
-    RegAdminCmd("sm_stac_getauth", StacTargetCommand,       ADMFLAG_GENERIC, "Print StAC's cached auth for a client");
-    RegAdminCmd("sm_stac_livefeed", StacTargetCommand,      ADMFLAG_GENERIC, "Show live feed (debug info etc) for a client. This gets printed to SourceTV if available.");
+    RegConsoleCmd("sm_stac_checkall",   checkAdmin, "Force check all client convars (ALL CLIENTS) for anticheat stuff");
+    RegConsoleCmd("sm_stac_detections", checkAdmin, "Show all current detections on all connected clients");
+    RegConsoleCmd("sm_stac_getauth",    checkAdmin, "Print StAC's cached auth for a client");
+    RegConsoleCmd("sm_stac_livefeed",   checkAdmin, "Show live feed (debug info etc) for a client. This gets printed to SourceTV if available.");
 
 
     // setup regex - "Recording to ".*""
@@ -165,13 +165,11 @@ public void OnPluginEnd()
 // monitor server tickrate
 public void OnGameFrame()
 {
-    static float realTPS[2];
-
+    // LIVEFEED
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
         if (IsValidClient(Cl))
         {
-
             if (LiveFeedOn[Cl])
             {
                 LiveFeed_PlayerCmd(GetClientUserId(Cl));
@@ -179,28 +177,30 @@ public void OnGameFrame()
         }
     }
 
-    engineTime[0][1] = engineTime[0][0];
-    engineTime[0][0] = GetEngineTime();
+    calcTPSfor(0);
 
-    realTPS[1] = realTPS[0];
-    realTPS[0] = 1/(engineTime[0][0] - engineTime[0][1]);
-
-    smoothedTPS = ((realTPS[0] + realTPS[1]) / 2);
-
-    if (GetEngineTime() - 30.0 < timeSinceMapStart)
+    if (GetEngineTime() - 15.0 < timeSinceMapStart)
     {
         return;
     }
-
     if (isDefaultTickrate())
     {
-        if (smoothedTPS < (tps / 2.0))
+        if (tickspersec[0] < (tps / 2.0))
         {
+            // don't bother printing again lol
+            if (GetEngineTime() - stutterWaitLength < timeSinceLagSpike)
+            {
+                // silently refresh this var
+                timeSinceLagSpike = GetEngineTime();
+                return;
+            }
             timeSinceLagSpike = GetEngineTime();
-            StacLog("[StAC] Server framerate stuttered. Expected: %f, got %f.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, realTPS[0], stutterWaitLength);
+
+            StacLog("[StAC] Server framerate stuttered. Expected: %.1f, got %i.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, tickspersec[0], stutterWaitLength);
             if (DEBUG)
             {
-                PrintToImportant("{hotpink}[StAC]{white} Server framerate stuttered. Expected: {palegreen}%f{white}, got {fullred}%f{white}.\nDisabling OnPlayerRunCmd checks for %f seconds.", tps, smoothedTPS, stutterWaitLength);
+                PrintToImportant("{hotpink}[StAC]{white} Server framerate stuttered. Expected: {palegreen}%.1f{white}, got {fullred}%i{white}.\nDisabling OnPlayerRunCmd checks for %f seconds.",
+                tps, tickspersec[0], stutterWaitLength);
             }
         }
     }
