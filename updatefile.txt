@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "5.0.0"
+            "Latest"    "5.0.3"
         }
 
-        "Notes" "Changes in 5.0.0-"
-        "Notes" "- Public release."
+        "Notes" "Changes in 5.0.3"
+        "Notes" "- Public release etc."
     }
 
     "Files"
