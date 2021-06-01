@@ -71,17 +71,30 @@ Though I wrote StAC to throw as few false positives as possible, I can't guarant
 
 ### Special Thanks etc.
 
-LilAC: https://forums.alliedmods.net/showthread.php?t=321480
+LilAC: https://forums.alliedmods.net/showthread.php?t=321480 - JTanz rocks!
 
 SMAC: https://github.com/Silenci0/SMAC
 
 SSaC: Private - [AS] Nacho Replay, dog, and Miggy - RIP
 
-Backwards
-Asherkin
-Addie
-JoinedSenses
+Backwards - coding
+
+Asherkin - coding
+
+Addie - coding
+
+JoinedSenses - coding
+
 Everyone else in the sourcemod discord who had to put up with my asinine questions
-dog
-elektro
-Miggy
+
+Aad
+
+dog - beta testing
+
+elektro - beta testing
+
+Creators.TF Community - beta testing
+
+Nanochip - rare code audits
+
+Miggy - this one's for you, bud.
