@@ -28,3 +28,16 @@ Action Timer_TriggerTimedStuff(Handle timer)
 {
     ActuallySetRandomSeed();
 }
+
+
+Action Timer_Sens(Handle timer)
+{
+    // reset all client based vars on plugin reload
+    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    {
+        if (IsValidClient(Cl))
+        {
+            //QueryClientConVar(Cl, "sensitivity", ConVarCheck);
+        }
+    }
+}

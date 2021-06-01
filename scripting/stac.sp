@@ -24,7 +24,7 @@
 // we have to re pragma because sourcemod sucks lol
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.0.3"
+#define PLUGIN_VERSION  "5.2.5a"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -97,7 +97,6 @@ public void OnPluginStart()
     RegConsoleCmd("sm_stac_getauth",    checkAdmin, "Print StAC's cached auth for a client");
     RegConsoleCmd("sm_stac_livefeed",   checkAdmin, "Show live feed (debug info etc) for a client. This gets printed to SourceTV if available.");
 
-
     // setup regex - "Recording to ".*""
     demonameRegex       = CompileRegex("Recording to \".*\"");
     demonameRegexFINAL  = CompileRegex("\".*\"");
@@ -141,6 +140,9 @@ public void OnPluginStart()
 
     // create global timer running every half second for getting all clients' network info
     CreateTimer(0.5, Timer_GetNetInfo, _, TIMER_REPEAT);
+
+    // create global timer running every half second for getting all clients' network info
+    CreateTimer(1.0, Timer_Sens, _, TIMER_REPEAT);
 
     // init hud sync stuff for livefeed
     HudSyncRunCmd       = CreateHudSynchronizer();

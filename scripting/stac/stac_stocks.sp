@@ -110,18 +110,18 @@ void StacLogNetData(int userid)
 void StacLogMouse(int userid)
 {
     int Cl = GetClientOfUserId(userid);
-    //if (GetRandomInt(1, 5) == 1)
-    //{
-    //    QueryClientConVar(Cl, "sensitivity", ConVarCheck);
-    //}
+    if (sensFor[Cl] == 0.0)
+    {
+        QueryClientConVar(Cl, "sensitivity", ConVarCheck);
+    }
     // init vars for mouse movement - weightedx and weightedy
     int wx;
     int wy;
     // scale mouse movement to sensitivity
     if (sensFor[Cl] != 0.0)
     {
-        wx = abs(RoundFloat(clmouse[Cl][0] * ( 1 / sensFor[Cl])));
-        wy = abs(RoundFloat(clmouse[Cl][1] * ( 1 / sensFor[Cl])));
+        wx = abs(RoundFloat(clmouse[Cl][0][0] * ( 1 / sensFor[Cl])));
+        wy = abs(RoundFloat(clmouse[Cl][0][1] * ( 1 / sensFor[Cl])));
     }
     StacLog
     (
@@ -132,13 +132,23 @@ void StacLogMouse(int userid)
         \nMouse Movement (unweighted):\
         \n x: %i\
         \n y: %i\
+        \n 1:\
+        \n x: %i\
+        \n y: %i\
+        \n 2:\
+        \n x: %i\
+        \n y: %i\
         \nClient Sens:\
         \n %f\
         ",
         wx,
         wy,
-        clmouse[Cl][0],
-        clmouse[Cl][1],
+        clmouse[Cl][0][0],
+        clmouse[Cl][0][1],
+        clmouse[Cl][1][0],
+        clmouse[Cl][1][1],
+        clmouse[Cl][2][0],
+        clmouse[Cl][2][1],
         sensFor[Cl]
     );
 }

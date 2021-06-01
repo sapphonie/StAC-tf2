@@ -134,7 +134,7 @@ float clangles              [TFMAXPLAYERS+1][5][3];
 int   clcmdnum              [TFMAXPLAYERS+1][6];
 int   cltickcount           [TFMAXPLAYERS+1][6];
 int   clbuttons             [TFMAXPLAYERS+1][6];
-int   clmouse               [TFMAXPLAYERS+1]   [2];
+int   clmouse               [TFMAXPLAYERS+1][6][2];
 // OnPlayerRunCmd misc
 float engineTime            [TFMAXPLAYERS+1][3];
 float fuzzyClangles         [TFMAXPLAYERS+1][5][2];

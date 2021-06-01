@@ -63,6 +63,11 @@ public Action OnClientCommand(int Cl, int args)
         // clean it up ( PROBABLY NOT NEEDED )
         // TrimString(ClientCommandChar);
 
+        //if (DEBUG)
+        //{
+        //    StacLog("[StAC] '%L' issued client side command with %i length:", Cl, strlen(ClientCommandChar));
+        //    StacLog("%s", ClientCommandChar);
+        //}
         if (strlen(ClientCommandChar) > 255)
         {
             StacGeneralPlayerDiscordNotify(userid, "Client sent a very large command - length %i - to the server! Next message is the command.", strlen(ClientCommandChar));
@@ -92,13 +97,12 @@ public void OnClientSettingsChanged(int Cl)
         (
             // and it's a demorestart
             StrEqual("demorestart", lastCommandFor[Cl])
+            ||
+            StrContains("107", lastCommandFor[Cl]) != -1
         )
     )
     {
-        if (DEBUG)
-        {
-            StacLog("Ignoring demorestart settings change for %N", Cl);
-        }
+        //StacLog("Ignoring demorestart settings change for %N", Cl);
         return;
     }
 
@@ -120,11 +124,7 @@ public void OnClientSettingsChanged(int Cl)
             // we have at least some history
             if (!IsActuallyNullString(userinfoValues[cvar][Cl][0]) && !IsActuallyNullString(userinfoValues[cvar][Cl][1]))
             {
-                if (DEBUG)
-                {
-                    StacLog("Client %N changed %s: old %s new %s", Cl, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], cvarvalue);
-                }
-
+                StacLog("Client %N changed %s: old %s new %s", Cl, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], cvarvalue);
                 // check interp
                 if
                 (
@@ -232,15 +232,15 @@ void userinfoSpamEtc(int userid, const char[] cvar, const char[] oldvalue, const
             StacDetectionDiscordNotify(userid, "userinfo spam", userinfoSpamDetects[Cl]);
         }
         // BAN USER if they trigger too many detections
-        if (userinfoSpamDetects[Cl] >= maxuserinfoSpamDetections && maxuserinfoSpamDetections > 0)
-        {
-            char reason[128];
-            Format(reason, sizeof(reason), "%t", "userinfoSpamBanMsg", userinfoSpamDetects[Cl]);
-            char pubreason[256];
-            Format(pubreason, sizeof(pubreason), "%t", "userinfoSpamBanAllChat", Cl, userinfoSpamDetects[Cl]);
-            BanUser(userid, reason, pubreason);
-            return;
-        }
+        //if (userinfoSpamDetects[Cl] >= maxuserinfoSpamDetections && maxuserinfoSpamDetections > 0)
+        //{
+        //    char reason[128];
+        //    Format(reason, sizeof(reason), "%t", "userinfoSpamBanMsg", userinfoSpamDetects[Cl]);
+        //    char pubreason[256];
+        //    Format(pubreason, sizeof(pubreason), "%t", "userinfoSpamBanAllChat", Cl, userinfoSpamDetects[Cl]);
+        //    BanUser(userid, reason, pubreason);
+        //    return;
+        //}
     }
 }
 
@@ -338,6 +338,7 @@ void checkInterp(int userid)
         {
             StacLog("%.2f ms interp on %N", lerp, Cl);
         }
+        //SetEntPropFloat(Cl, Prop_Data, "m_fLerpTime", 0.010);
 
         if (lerp == 0.0)
         {

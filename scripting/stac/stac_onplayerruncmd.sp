@@ -8,6 +8,11 @@
     - FAKE ANGLES
     - TURN BINDS
 */
+#define pitch   0
+#define yaw     1
+#define roll    2
+#define x       0
+#define y       1
 public Action OnPlayerRunCmd
 (
     int Cl,
@@ -23,6 +28,7 @@ public Action OnPlayerRunCmd
     int mouse[2]
 )
 {
+    // backtrack patch
     OnPlayerRunCmd_jaypatch(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
     // sanity check, don't let banned clients do anything!
     if (userBanQueued[Cl])
@@ -60,7 +66,7 @@ public Action OnPlayerRunCmd
     }
     engineTime[Cl][0] = GetEngineTime();
 
-    // calc client cmdrate
+    // calculate client cmdrate
     calcTPSfor(Cl);
 
     // grab angles
@@ -93,7 +99,11 @@ public Action OnPlayerRunCmd
     clbuttons[Cl][0] = buttons;
 
     // grab mouse
-    clmouse[Cl] = mouse;
+    for (int i = 5; i > 0; --i)
+    {
+        clmouse[Cl][i] = clmouse[Cl][i-1];
+    }
+    clmouse[Cl][0] = mouse;
 
     // grab position
     clpos[Cl][1] = clpos[Cl][0];
@@ -161,8 +171,10 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
-    // not really lag dependant check
+    // not really a lag dependant check
     fakeangCheck(userid);
+    //validateVel(userid, vel);
+
 
     // we don't want to check this if we're repeating tickcount a lot and/or if loss is high, but cmdnums and tickcounts DO NOT NEED TO BE PERFECT for this.
     if (!IsUserLagging(userid, false, false) && isCmdnumInOrder(userid))
@@ -178,17 +190,19 @@ public Action OnPlayerRunCmd
         // make sure client isnt using a spin bind
         || buttons & IN_LEFT
         || buttons & IN_RIGHT
-        // make sure we're not lagging and that cmdnum
+        // make sure we're not lagging and that cmdnum / tickrate is normal
         || IsUserLagging(userid, true, false)
     )
     // if any of these things are true, don't check angles etc
     {
         return Plugin_Continue;
     }
+    psilentCheck(userid);
     spinbotCheck(userid);
     aimsnapCheck(userid);
     triggerbotCheck(userid);
-    psilentCheck(userid);
+
+    mouseCheck(userid);
 
     return Plugin_Continue;
 }
@@ -259,6 +273,8 @@ void bhopCheck(int userid)
 
                 if (bhopDetects[Cl] >= maxBhopDetections)
                 {
+                    StacDetectionDiscordNotify(userid, "frame perfect bhops", bhopDetects[Cl]);
+
                     // punish on maxBhopDetections + 2 (for the extra TWO tick perfect bhops at 8x grav with no warning - no human can do this!)
                     if
                     (
@@ -429,7 +445,7 @@ void fakeangCheck(int userid)
             clangles[Cl][0][2],
             fakeAngDetects[Cl]
         );
-        if (fakeAngDetects[Cl] % 20 == 0)
+        if (fakeAngDetects[Cl] % 5 == 0)
         {
             StacDetectionDiscordNotify(userid, "fake angles", fakeAngDetects[Cl]);
         }
@@ -511,19 +527,24 @@ void spinbotCheck(int userid)
         // AND it isn't a moronicly high amt of mouse movement / sensitivity
         if
         (
-            clmouse[Cl][0] < 5000
+            clmouse[Cl][0][0] < 5000
             &&
-            clmouse[Cl][1] < 5000
+            clmouse[Cl][0][1] < 5000
             &&
             (
                 FloatAbs(spinDiff[Cl][0]) >= 10.0
                 &&
                 (spinDiff[Cl][0] == spinDiff[Cl][1])
             )
+            && sensFor[Cl] <= 10.0
         )
         {
             spinbotDetects[Cl]++;
-
+            // smac lol
+            if (spinbotDetects[Cl] == 1)
+            {
+                QueryClientConVar(Cl, "sensitivity", ConVarCheck);
+            }
             // this can trigger on normal players, only care about if it happens 10 times in a row at least!
             if (spinbotDetects[Cl] >= 10)
             {
@@ -734,7 +755,7 @@ void aimsnapCheck(int userid)
         // 0.000000, 91.355995, 0.000000, 0.000000
         // 0.018540, 0.000000, 91.355995, 0.000000
 
-        // only check if we actually did hitscan dmg in the current frame
+        // only check if we actually did hitscan dmg in the previous frame
         if
         (
             didHurtOnFrame[Cl][1]
@@ -963,6 +984,171 @@ void triggerbotCheck(int userid)
         }
     }
 }
+
+//public void OnPlayerRunCmdPost(int client, int buttons, int impulse, const float vel[3], const float angles[3], int weapon, int subtype, int cmdnum, int tickcount, int seed, const int mouse[2])
+//{
+//    if (!IsFakeClient(client)) LogMessage("%i %i", mouse[0], mouse[1]);
+//}
+
+////  vel[3] = {sp_ftoc(ucmd->forwardmove), sp_ftoc(ucmd->sidemove), sp_ftoc(ucmd->upmove)};
+//void validateVel(int userid, float vel[3])
+//{
+//    LogMessage("%.1f %.1f %.1f", vel[0], vel[1], vel[2]);
+//    if (!IsValidMove(vel[0]))
+//    {
+//        LogMessage("not valid");
+//    }
+//}
+//
+//bool IsValidMove(float num)
+//{
+//    num = FloatAbs(num);
+//
+//    float speed = 450.0;
+//
+//    return (num == 0.0 || num == speed || num == (speed * 0.75) || num == (speed * 0.50) || num == (speed * 0.25));
+//}
+
+#define history 1024
+
+void mouseCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    //if (sensFor[Cl] >= 10.0)
+    //{
+    //    return;
+    //}
+
+    //static float srvangles[TFMAXPLAYERS+1][2][3];
+    //srvangles[Cl][1] = srvangles[Cl][0];
+    //GetClientEyeAngles(Cl, srvangles[Cl][0]);
+    //static float expectedAngFor[TFMAXPLAYERS+1][3];
+    //expectedAngFor[Cl][pitch]   = clangles[Cl][1][pitch];
+    //expectedAngFor[Cl][yaw]     = clangles[Cl][1][yaw];
+    //expectedAngFor[Cl][roll]    = 0.0;
+    ////viewangles[YAW]   -=   ( m_yaw->GetFloat() * mouse_x );
+    ////viewangles[PITCH] +=   ( m_pitch->GetFloat() * mouse_y );
+    //expectedAngFor[Cl][yaw]   -= ( 0.022 * clmouse[Cl][2][x] );
+    //expectedAngFor[Cl][pitch] += ( 0.022 * clmouse[Cl][2][y] );
+    ////LogMessage("%f", realDiff);
+    ////LogMessage("%f %f", expectedAngFor[Cl][pitch], expectedAngFor[Cl][yaw]);
+
+    //float realDiff = NormalizeAngleDiff(CalcAngDeg(srvangles[Cl][0], expectedAngFor[Cl]));
+
+
+    static float mx[TFMAXPLAYERS+1][history];
+    static float my[TFMAXPLAYERS+1][history];
+    static float mc[TFMAXPLAYERS+1][history];
+
+    if (clmouse[Cl][0][x] == 0 && clmouse[Cl][0][y] == 0)
+    {
+        return;
+    }
+    float mc_temp = GetDist(float(clmouse[Cl][0][x]), float(clmouse[Cl][0][y]));
+
+    //// iterate
+    for (int i = history - 1; i > 0; --i)
+    {
+        mx[Cl][i] = mx[Cl][i-1];
+        my[Cl][i] = my[Cl][i-1];
+        mc[Cl][i] = mc[Cl][i-1];
+    }
+    mx[Cl][0] = float(clmouse[Cl][0][x]);
+    my[Cl][0] = float(clmouse[Cl][0][y]);
+    mc[Cl][0] = mc_temp;
+
+
+    //float stdx  = getStdDev(mx[Cl][0], history);
+    //float meanx = getMean(mx[Cl][0], history);
+    //float stdy  = getStdDev(my[Cl][0], history);
+    float stdc  = getStdDev(mc[Cl][0], history);
+    float meanc = getMean(mc[Cl][0], history);
+    SendPanelMessage(Cl, "cmean %.2f csigma %.2f", meanc, stdc);
+
+    float sevenstd = 7 * stdc;
+    if (mc[Cl][history-1] != 0.0 && mc[Cl][history-1] != 0.0)
+    {
+        if
+        (
+            (mx[Cl][0] > (meanc + sevenstd))
+            ||
+            (mx[Cl][0] < (meanc - sevenstd))
+        )
+        {
+            MC_PrintToChat(Cl, "[StAC] %.1f is +/- 7 STD DEVIATIONS (%.1f) AWAY FROM MEAN %.1f", mc[Cl][0], sevenstd, meanc);
+        }
+    }
+}
+
+/**
+ * Sends a raw message on a menu panel.
+ *
+ * @param int:client            Index of the target to send the panel.
+ * @param char[]:title          Buffer to store the title of the panel.
+ * @param char[]:format         Buffer to store the message body of the panel.
+ * @param any:...               Format table.
+ * @noreturn
+ */
+public void SendPanelMessage(int client, const char[] format, any ...)
+{
+    /* Bascially is the same thing as sm_msay. Thanks to " ferret " https://forums.alliedmods.net/member.php?u=14068 */
+    /* Ied much rather use this due to the fact it give us more freedom to change values over the stock "menu" handler. */
+    if (!(1 <= client <= MaxClients) ||
+    !IsClientConnected(client) ||
+    IsClientInKickQueue(client) ||
+    !IsClientInGame(client)) {
+        return;
+    }
+
+    char sBuffer[512];
+    VFormat(sBuffer, sizeof(sBuffer), format, 3);
+    Panel g_hPanel = new Panel();
+    //g_hPanel.SetTitle(title);
+    //g_hPanel.DrawItem("", ITEMDRAW_SPACER);
+    g_hPanel.DrawText(sBuffer);
+    g_hPanel.DrawItem("", ITEMDRAW_SPACER);
+    g_hPanel.CurrentKey = 10;
+    g_hPanel.DrawItem("Exit", ITEMDRAW_CONTROL);
+    g_hPanel.Send(client, Handler_DoNothing, 60);
+    delete g_hPanel;
+}
+
+
+public int Handler_DoNothing(Menu menu, MenuAction action, int param1, int param2) {
+    /* Do nothing */
+}
+
+float GetDist(float xx, float yy)
+{
+    return SquareRoot(xx * xx + yy * yy);
+}
+
+float getMean(float[] data, int size)
+{
+    float sum;
+
+    for (int i = 0; i < size; ++i)
+    {
+        sum += data[i];
+    }
+
+    return sum/size;
+}
+
+
+float getStdDev(float[] data, int size)
+{
+    float standardDeviation;
+
+    float mean = getMean(data, size);
+    for (int i = 0; i < size; ++i)
+    {
+        standardDeviation += Pow(data[i] - mean, 2.0);
+    }
+    return SquareRoot(standardDeviation / size);
+}
+
+
 
 /********** OnPlayerRunCmd based helper functions **********/
 
