@@ -36,15 +36,6 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
-    //if (buttons & IN_ATTACK)
-    //{
-    //    LogMessage("----->");
-    //}
-    //else
-    //{
-    //    LogMessage("-----");
-    //}
-
     // need this basically no matter what
     int userid = GetClientUserId(Cl);
 
@@ -69,11 +60,8 @@ public Action OnPlayerRunCmd
     }
     engineTime[Cl][0] = GetEngineTime();
 
+    // calc client cmdrate
     calcTPSfor(Cl);
-
-    // avg'd over 10 ticks
-    //calcCmdrateFor[Cl] = 10.0 * Pow((engineTime[Cl][1] - engineTime[Cl][10]), -1.0);
-
 
     // grab angles
     // thanks to nosoop from the sm discord for some help with this
@@ -177,9 +165,10 @@ public Action OnPlayerRunCmd
     fakeangCheck(userid);
 
     // we don't want to check this if we're repeating tickcount a lot and/or if loss is high, but cmdnums and tickcounts DO NOT NEED TO BE PERFECT for this.
-    if (!IsUserLagging(userid))
+    if (!IsUserLagging(userid, false, false) && isCmdnumInOrder(userid))
     {
         cmdnumspikeCheck(userid);
+        fakechokeCheck(userid);
     }
 
     if
@@ -189,19 +178,17 @@ public Action OnPlayerRunCmd
         // make sure client isnt using a spin bind
         || buttons & IN_LEFT
         || buttons & IN_RIGHT
-        // make sure we're not lagging and that cmdnums are normal
-        || IsUserLagging(userid)
+        // make sure we're not lagging and that cmdnum
+        || IsUserLagging(userid, true, false)
     )
-    // if any of these things are true, don't check angles or cmdnum spikes or spinbot stuff
+    // if any of these things are true, don't check angles etc
     {
         return Plugin_Continue;
     }
-
-    psilentCheck(userid);
-    fakechokeCheck(userid);
     spinbotCheck(userid);
     aimsnapCheck(userid);
     triggerbotCheck(userid);
+    psilentCheck(userid);
 
     return Plugin_Continue;
 }
@@ -979,7 +966,7 @@ void triggerbotCheck(int userid)
 
 /********** OnPlayerRunCmd based helper functions **********/
 
-bool IsUserLagging(int userid)
+bool IsUserLagging(int userid, bool checkcmdnum = true, bool checktickcount = true)
 {
     int Cl = GetClientOfUserId(userid);
     // check if we have sequential cmdnums
@@ -987,9 +974,9 @@ bool IsUserLagging(int userid)
     (
         // we don't want very much loss at all. this may be removed some day.
             lossFor[Cl] >= 1.5
-        // 
-        || (!isCmdnumSequential(userid) && !isTickcountInOrder(userid))
-        // tickcount the same over 5 ticks, client is probably lagging
+        || !isCmdnumSequential(userid) && checkcmdnum
+        || !isTickcountInOrder(userid) && checktickcount
+        // tickcount the same over 6 ticks, client is probably lagging
         || isTickcountRepeated(userid)
         // if it takes too long or too short to send 10 ticks on average, the client is not stable enough to check
         // too short
@@ -1063,6 +1050,17 @@ bool isCmdnumSequential(int userid)
         && clcmdnum[Cl][3] == clcmdnum[Cl][4] + 1
         && clcmdnum[Cl][4] == clcmdnum[Cl][5] + 1
     )
+    {
+        return true;
+    }
+    return false;
+}
+
+// check if the current cmdnum is greater than the last value etc
+bool isCmdnumInOrder(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if (clcmdnum[Cl][0] > clcmdnum[Cl][1] > clcmdnum[Cl][2] > clcmdnum[Cl][3] > clcmdnum[Cl][4] > clcmdnum[Cl][5])
     {
         return true;
     }
