@@ -4,17 +4,16 @@
     {
         "Version"
         {
-            "Latest"    "4.5.1"
+            "Latest"    "5.0.0"
         }
 
-        "Notes" "Changes in 4.5.1"
-        "Notes" "- Check the github - new detection methods!"
+        "Notes" "Changes in 5.0.0-"
+        "Notes" "- Public release."
     }
 
     "Files"
     {
         "Plugin"    "Path_SM/plugins/stac.smx"
-        "Plugin"    "Path_SM/plugins/jay_backtrack_patch.smx"
         "Plugin"    "Path_SM/translations/stac.phrases.txt"
     }
 }
