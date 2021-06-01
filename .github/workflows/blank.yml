@@ -24,12 +24,11 @@ jobs:
       with:
         version: "1.10.x"
 
-    # this is just futureproofing lol
     - name: Compile plugins
       run: |
         cd ./scripting
         pwd
-        spcomp -i"./include/" stac.sp -o ../plugins/$(basename "$0" .sp).smx'
+        spcomp -i"./include/" stac.sp -o ../plugins/stac.smx
         ls -la
 
     - name: Zip package
