@@ -69,11 +69,19 @@ This plugin prints detections to any clients on the server with the `sm_ban` per
 Though I wrote StAC to throw as few false positives as possible, I can't guarantee perfection. I also can't guarantee that everything will always work how it's supposed to. Please submit a bug report if you can reproduce a way to trigger false positives, or for any bug or feature request. If you're more comfortable talking to me personally about it, join the development discord for StAC here: https://discord.gg/tUGgCByZVJ
 
 
-### Other AC plugins that I took inspiration from / lifted a few lines of code from
+### Special Thanks etc.
 
 LilAC: https://forums.alliedmods.net/showthread.php?t=321480
 
 SMAC: https://github.com/Silenci0/SMAC
 
-SSaC: Private. Thank you [AS] Nacho Replay, dog, and Miggy.
+SSaC: Private - [AS] Nacho Replay, dog, and Miggy - RIP
 
+Backwards
+Asherkin
+Addie
+JoinedSenses
+Everyone else in the sourcemod discord who had to put up with my asinine questions
+dog
+elektro
+Miggy
