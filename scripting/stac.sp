@@ -147,6 +147,9 @@ public void OnPluginStart()
     HudSyncRunCmdMisc   = CreateHudSynchronizer();
     HudSyncNetwork      = CreateHudSynchronizer();
 
+    // set up our array we'll use for checking cvars
+    InitCvarArray();
+
     StacLog("[StAC] Plugin vers. ---- %s ---- loaded", PLUGIN_VERSION);
 
     OnPluginStart_jaypatch();

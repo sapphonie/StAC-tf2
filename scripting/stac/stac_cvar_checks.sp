@@ -1,6 +1,6 @@
 /********** CLIENT CONVAR BASED STUFF **********/
 
-char cvarsToCheck[][] =
+char miscVars[][] =
 {
     // misc vars
     "sensitivity",
@@ -10,7 +10,52 @@ char cvarsToCheck[][] =
     "fov_desired",
     //
     "cl_cmdrate",
+    // DEFINITE cheat vars get appended to this array
 };
+
+char cheatVars[][] =
+{
+    // lith
+    "lithium_disable_party_bypass",
+    // rijin
+    "rijin_load",
+    "rijin_save",
+    // lmaobox apparently uses this? haven't seen it
+    "setcvar",
+    // ncc doesn't have any that i can find lol
+    // "",
+    // cathook
+    "cat",
+    "get",
+    "set",
+    // ...melancholy? maybe? lol
+    "caramelldansen",
+    "SetCursor",
+    "melancholy",
+    // general
+    "hook",
+    // test
+    //"cl_interp"
+};
+
+
+// set in InitCvarArray which is called in OnPluginLoad
+char cvarsToCheck[sizeof(miscVars) + sizeof(cheatVars)][64];
+
+
+void InitCvarArray()
+{
+    int miscvars = sizeof(miscVars);
+    int cheatvars = sizeof(cheatVars);
+    for (int numofvars = 0; numofvars < miscvars; numofvars++)
+    {
+        strcopy(cvarsToCheck[numofvars], 32, miscVars[numofvars]);
+    }
+    for (int numofvars = 0; numofvars < cheatvars; numofvars++)
+    {
+        strcopy(cvarsToCheck[numofvars+miscvars], 32, cheatVars[numofvars]);
+    }
+}
 
 void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
 {
@@ -26,13 +71,6 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
         StacLog("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
     }
 
-    // log something about cvar errors
-    if (result != ConVarQuery_Okay)
-    {
-        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", Cl);
-        StacLog("[StAC] Could not query cvar %s on player %N", cvarName, Cl);
-        return;
-    }
 
     if (StrEqual(cvarName, "sensitivity"))
     {
@@ -67,13 +105,13 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
 
                 // make data timer
                 CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
-                return;
             }
             else
             {
                 StacDetectionDiscordNotify(userid, "nolerp [cvar]", 1);
             }
         }
+        return;
     }
     // fov check #1 - if u get banned by this you are a clown
     else if (StrEqual(cvarName, "fov_desired"))
@@ -107,13 +145,13 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
 
                 // make data timer
                 CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
-                return;
             }
             else
             {
                 BadCvarsDiscordNotify(userid, cvarName, cvarValue);
             }
         }
+        return;
     }
     // cmdrate check
     else if (StrEqual(cvarName, "cl_cmdrate"))
@@ -152,13 +190,72 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
                 BadCvarsDiscordNotify(userid, cvarName, cvarValue);
             }
         }
+        return;
+    }
+
+
+    if (result != ConVarQuery_NotFound && IsCheatOnlyVar(cvarName))
+    {
+        PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is cheating - detected known cvar/concommand {blue}%s{white}!", Cl, cvarName);
+        if (banForMiscCheats)
+        {
+            CheatOnlyCvarsDiscordNotify(userid, cvarName);
+            // later
+            //char reason[128];
+            //Format(reason, sizeof(reason), "%t", "illegalCmdrateBanMsg");
+            //char pubreason[256];
+            //Format(pubreason, sizeof(pubreason), "%t", "illegalCmdrateBanAllChat", Cl);
+            //// we have to do extra bullshit here so we don't crash when banning clients out of this callback
+            //// make a pack
+            //DataPack pack = CreateDataPack();
+            //// prepare pack
+            //WritePackCell(pack, userid);
+            //WritePackString(pack, reason);
+            //WritePackString(pack, pubreason);
+            //ResetPack(pack, false);
+            //// make data timer
+            //CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
+            //return;
+        }
+        else
+        {
+            CheatOnlyCvarsDiscordNotify(userid, cvarName);
+        }
+    }
+    // log something about cvar errors
+    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
+    {
+        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", cvarName, Cl);
+        StacLog("[StAC] Could not query cvar %s on player %N", cvarName, Cl);
+        return;
     }
 }
 
+bool IsCheatOnlyVar(const char[] cvarName)
+{
+    for (int i = 0; i < sizeof(cheatVars); i++)
+    {
+        if (StrEqual(cvarName, cheatVars[i]))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+// oob cvar values
 void BadCvarsDiscordNotify(int userid, const char[] cvarName, const char[] cvarValue)
 {
     char msg[128];
     Format(msg, sizeof(msg), "Illegal cvar value - %s = '%s'!", cvarName, cvarValue);
+    StacDetectionDiscordNotify(userid, msg, 1);
+}
+
+// cheatonly cvars/concmds/etc
+void CheatOnlyCvarsDiscordNotify(int userid, const char[] cvarName)
+{
+    char msg[128];
+    Format(msg, sizeof(msg), "Known cheat cvar %s exists on client!", cvarName);
     StacDetectionDiscordNotify(userid, msg, 1);
 }
 
