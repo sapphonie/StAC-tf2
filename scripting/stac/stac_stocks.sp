@@ -141,6 +141,8 @@ void StacLogMouse(int userid)
         clmouse[Cl][1],
         sensFor[Cl]
     );
+    // log buttons whenever we log mouse
+    StacLogButtons(userid);
 }
 
 void StacLogAngles(int userid)
@@ -212,6 +214,30 @@ void StacLogTickcounts(int userid)
         cltickcount[Cl][3],
         cltickcount[Cl][4],
         cltickcount[Cl][5]
+    );
+}
+
+void StacLogButtons(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    StacLog
+    (
+        "\
+        \nPrevious buttons - use https://sapphonie.github.io/flags.html to convert to readable input\
+        \n0 %i\
+        \n1 %i\
+        \n2 %i\
+        \n3 %i\
+        \n4 %i\
+        \n5 %i\
+        ",
+        clbuttons[Cl][0],
+        clbuttons[Cl][1],
+        clbuttons[Cl][2],
+        clbuttons[Cl][3],
+        clbuttons[Cl][4],
+        clbuttons[Cl][5]
     );
 }
 

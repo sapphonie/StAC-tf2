@@ -903,6 +903,7 @@ void triggerbotCheck(int userid)
         }
         if
         (
+            // thinking about removing this...
             (
                    didBangOnFrame[Cl][0]
                 || didHurtOnFrame[Cl][0]
