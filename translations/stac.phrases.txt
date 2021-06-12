@@ -241,62 +241,35 @@
                                                                     /____/
 
     */
-    // nolerp
-    "nolerpBanAllChat"
+    // out of bounds cvars
+    "oobCvarBanAllChat"
     {
         "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was using {mediumpurple}NoLerp{white}! {palegreen}BANNED from server."
-        "da"        "{hotpink}[StAC]{white} Spiller {1} brugte {mediumpurple}NoLerp{white}! {palegreen}BANNED fra serveren."
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}NoLerp{white}! {palegreen}Выдана БЛОКИРОВКА на сервере."
+        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}cvar values that were out of bounds{white}! {palegreen}BANNED from server."
+        //"da"        ""
+        //"ru"        ""
     }
-    "nolerpBanMsg"
+    "oobCvarBanMsg"
     {
-        "en"        "[StAC] Banned for NoLerp"
-        "da"        "[StAC] Banned for NoLerp"
-        "ru"        "[StAC] Заблокирован за NoLerp"
+        "en"        "[StAC] Banned for OOB cvar values"
+        //"da"        ""
+        //"ru"        ""
     }
-    // fov
-    "fovBanAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}fov cheating{white}! {palegreen}BANNED from server."
-        "da"        "{hotpink}[StAC]{white} Spiller {1} brugte {mediumpurple}fov cheat{white}! {palegreen}BANNED fra serveren."
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}читы поля зрения{white}! {palegreen}Выдана БЛОКИРОВКА на сервере."
-    }
-    "fovBanMsg"
-    {
-        "en"        "[StAC] Banned for fov cheating"
-        "da"        "[StAC] Banned for fov cheating"
-        "ru"        "[StAC] Заблокирован за читы поля зрения"
-    }
-    // newline prints
-    "newlineBanAllChat"
+    // misc known cheat cvars
+    "cheatVarBanAllChat"
     {
         "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} attempted to {mediumpurple}print a newline character{white}! {palegreen}BANNED from server."
-        "da"        "{hotpink}[StAC]{white} Spiller {1} forsøgte at {mediumpurple}printe en newline karakter{white}! {palegreen}BANNED fra serveren."
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} попытался {mediumpurple}напечатать символ новой строки{white}! {palegreen}Выдана БЛОКИРОВКА на сервере."
+        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}a known cheat cvar{white}! {palegreen}BANNED from server."
+        //"da"        ""
+        //"ru"        ""
     }
-    "newlineBanMsg"
+    "cheatVarBanMsg"
     {
-        "en"        "[StAC] Banned for newline chars in chat"
-        "da"        "[StAC] Banned for newline karakterer i chatten"
-        "ru"        "[StAC] Заблокирован за символы новой строки в чате"
+        "en"        "[StAC] Banned for having known cheat cvars."
+        //"da"        ""
+        //"ru"        ""
     }
-    // illegal cmdrate
-    "illegalCmdrateBanAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}an illegal cl_cmdrate value{white}! {palegreen}BANNED from server."
-        "da"        "{hotpink}[StAC]{white} Spiller {1} havde {mediumpurple}en ugyldig cl_cmdrate værdi{white}! {palegreen}BANNED fra serveren."
-        "ru"        "{hotpink}[StAC]{white} У игрока {1} было {mediumpurple}незаконное значение cl_cmdrate{white}! {palegreen}Выдана БЛОКИРОВКА на сервере."
-    }
-    "illegalCmdrateBanMsg"
-    {
-        "en"        "[StAC] Banned for cheating with illegal cl_cmdrate values"
-        "da"        "[StAC] Banned for at snyde med ugyldige cl_cmdrate værdier"
-        "ru"        "[StAC] Заблокирован за злоупотребление с незаконными значениями cl_cmdrate"
-    }
+
 
     /*
         __   _      __
