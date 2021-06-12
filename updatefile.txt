@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "5.0.3"
+            "Latest"    "5.0.4"
         }
 
-        "Notes" "Changes in 5.0.3"
-        "Notes" "- Public release etc."
+        "Notes" "Changes in 5.0.4"
+        "Notes" "- Add more cheat cvars to check, log buttons on detection, fix translations"
     }
 
     "Files"
