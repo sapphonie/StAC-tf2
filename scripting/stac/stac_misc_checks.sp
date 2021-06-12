@@ -166,9 +166,9 @@ public void OnClientSettingsChanged(int Cl)
                         if (banForMiscCheats)
                         {
                             char reason[128];
-                            Format(reason, sizeof(reason), "%t", "illegalCmdrateBanMsg");
+                            Format(reason, sizeof(reason), "%t", "oobCvarBanMsg");
                             char pubreason[256];
-                            Format(pubreason, sizeof(pubreason), "%t", "illegalCmdrateBanAllChat", Cl);
+                            Format(pubreason, sizeof(pubreason), "%t", "oobCvarBanAllChat", Cl);
                             // we have to do extra bullshit here so we don't crash when banning clients out of this callback
                             // make a pack
                             DataPack pack = CreateDataPack();
@@ -345,9 +345,9 @@ void checkInterp(int userid)
             if (banForMiscCheats)
             {
                 char reason[128];
-                Format(reason, sizeof(reason), "%t", "nolerpBanMsg");
+                Format(reason, sizeof(reason), "%t", "oobCvarBanMsg");
                 char pubreason[256];
-                Format(pubreason, sizeof(pubreason), "%t", "nolerpBanAllChat", Cl);
+                Format(pubreason, sizeof(pubreason), "%t", "oobCvarBanAllChat", Cl);
             }
             else
             {

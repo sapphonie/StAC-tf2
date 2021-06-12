@@ -147,7 +147,7 @@
     {
         "#format"   "{1:i}"
         "en"        "[StAC] Banned for triggerbotting after {1} detections"
-        "da2        "[StAC] Banned for triggerbotting efter {1} opfangelser"
+        "da"        "[StAC] Banned for triggerbotting efter {1} opfangelser"
         "ru"        "[StAC] Заблокирован за триггерботтинг после {1} обнаружений"
     }
     /*
@@ -222,7 +222,7 @@
     "turnbindWarnPlayer"
     {
         "en"        "{hotpink}[StAC]{white} Turn binds and spin binds are not allowed on this server. If you continue to use them you will be autokicked!"
-        "da         "{hotpink}[StAC]{white} Turn bind og spin bind er ikke tilladt på denne server. Hvis du fortsat benytter disse, bliver du autokicked!"
+        "da"        "{hotpink}[StAC]{white} Turn bind og spin bind er ikke tilladt på denne server. Hvis du fortsat benytter disse, bliver du autokicked!"
         "ru"        "{hotpink}[StAC]{white} На этом сервере не разрешены привязки клавиш поворота и вращения. Если вы продолжите использовать их, вы будете автоизгнанны с сервера!"
     }
     "turnbindAllChat"

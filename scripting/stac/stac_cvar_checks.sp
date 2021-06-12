@@ -87,7 +87,7 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
     {
         if (StringToInt(cvarValue) != 1)
         {
-            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is cheating with illegal cvar values - Cvar {blue}%s{white} = {blue}%s", Cl, cvarName, cvarValue);
+            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is cheating with OOB cvar values - Cvar {blue}%s{white} = {blue}%s", Cl, cvarName, cvarValue);
             BadCvarsDiscordNotify(userid, cvarName, cvarValue);
             if (banForMiscCheats)
             {
@@ -102,7 +102,7 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
         // check just in case
         if (fovDesired < 20 || fovDesired > 90)
         {
-            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is cheating with illegal cvar values - Cvar {blue}%s{white} = {blue}%s", Cl, cvarName, cvarValue);
+            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is cheating with OOB cvar values - Cvar {blue}%s{white} = {blue}%s", Cl, cvarName, cvarValue);
             BadCvarsDiscordNotify(userid, cvarName, cvarValue);
             if (banForMiscCheats)
             {
@@ -125,7 +125,7 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
             clcmdrate < 10
         )
         {
-            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is cheating with illegal cvar values - Cvar {blue}%s{white} = {blue}%s", Cl, cvarName, cvarValue);
+            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is cheating with OOB cvar values - Cvar {blue}%s{white} = {blue}%s", Cl, cvarName, cvarValue);
             BadCvarsDiscordNotify(userid, cvarName, cvarValue);
             if (banForMiscCheats)
             {
