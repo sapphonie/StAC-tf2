@@ -242,16 +242,16 @@
 
     */
     // out of bounds cvars
-    "oobCvarBanAllChat"
+    "oobVarBanAllChat"
     {
         "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}cvar values that were out of bounds{white}! {palegreen}BANNED from server."
+        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}cvar/netvar values that were out of bounds{white}! {palegreen}BANNED from server."
         //"da"        ""
         //"ru"        ""
     }
-    "oobCvarBanMsg"
+    "oobVarBanMsg"
     {
-        "en"        "[StAC] Banned for OOB cvar values"
+        "en"        "[StAC] Banned for OOB cvar/netvar values"
         //"da"        ""
         //"ru"        ""
     }

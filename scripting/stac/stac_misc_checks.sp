@@ -161,32 +161,10 @@ public void OnClientSettingsChanged(int Cl)
                     int cmdrate = StringToInt(cvarvalue);
                     if (cmdrate < 10)
                     {
-                        // repeated code lol
-                        StacLog("%N had cl_cmdrate value of %s", Cl, cvarvalue);
+                        oobVarsNotify(userid, userinfoToCheck[cvar], cvarvalue);
                         if (banForMiscCheats)
                         {
-                            char reason[128];
-                            Format(reason, sizeof(reason), "%t", "oobCvarBanMsg");
-                            char pubreason[256];
-                            Format(pubreason, sizeof(pubreason), "%t", "oobCvarBanAllChat", Cl);
-                            // we have to do extra bullshit here so we don't crash when banning clients out of this callback
-                            // make a pack
-                            DataPack pack = CreateDataPack();
-                            // prepare pack
-                            WritePackCell(pack, userid);
-                            WritePackString(pack, reason);
-                            WritePackString(pack, pubreason);
-                            ResetPack(pack, false);
-                            // make data timer
-                            CreateTimer(0.1, Timer_BanUser, pack, TIMER_DATA_HNDL_CLOSE);
-                            return;
-                        }
-                        else
-                        {
-                            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L has an illegal {blue}cl_cmdrate{white} value = {red}%s{white}!", Cl, cvarvalue);
-                            char msg[128];
-                            Format(msg, sizeof(msg), "Illegal cl_cmdrate value of '%s'!", cvarvalue);
-                            StacDetectionDiscordNotify(userid, msg, 1);
+                            oobVarBan(userid);
                         }
                     }
                     // userinfo spam
@@ -339,23 +317,18 @@ void checkInterp(int userid)
             StacLog("%.2f ms interp on %N", lerp, Cl);
         }
 
-        if (lerp == 0.0)
+        // nolerp
+        if (lerp <= 0.1)
         {
-            // repeated code lol
+            char lerpStr[16];
+            FloatToString(lerp, lerpStr, sizeof(lerpStr));
+            oobVarsNotify(userid, "m_fLerpTime", lerpStr);
             if (banForMiscCheats)
             {
-                char reason[128];
-                Format(reason, sizeof(reason), "%t", "oobCvarBanMsg");
-                char pubreason[256];
-                Format(pubreason, sizeof(pubreason), "%t", "oobCvarBanAllChat", Cl);
-            }
-            else
-            {
-                PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is using NoLerp! {blue}m_fLerpTime{white} value = {blue}%f", Cl, lerp);
-                StacDetectionDiscordNotify(userid, "nolerp [netprop]", 1);
+                oobVarBan(userid);
             }
         }
-        if
+        else if
         (
             lerp < min_interp_ms && min_interp_ms != -1
             ||

@@ -256,6 +256,10 @@ void bhopCheck(int userid)
             )
             {
                 PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , Cl, bhopDetects[Cl]);
+                if (bhopDetects[Cl] % 5 == 0)
+                {
+                    StacDetectionDiscordNotify(userid, "consecutive tick perfect bhops", bhopDetects[Cl]);
+                }
 
                 if (bhopDetects[Cl] >= maxBhopDetections)
                 {
@@ -429,7 +433,7 @@ void fakeangCheck(int userid)
             clangles[Cl][0][2],
             fakeAngDetects[Cl]
         );
-        if (fakeAngDetects[Cl] % 20 == 0)
+        if (fakeAngDetects[Cl] == 1 || fakeAngDetects[Cl] % 5 == 0)
         {
             StacDetectionDiscordNotify(userid, "fake angles", fakeAngDetects[Cl]);
         }
