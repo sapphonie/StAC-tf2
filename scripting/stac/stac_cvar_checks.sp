@@ -139,7 +139,7 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
         illegalVarsNotify(userid, cvarName);
         if (banForMiscCheats)
         {
-            illegalCvarBan(userid);
+            illegalVarBan(userid);
         }
     }
     // log something about cvar errors
@@ -170,7 +170,7 @@ void oobVarBan(int userid)
     return;
 }
 
-void illegalCvarBan(int userid)
+void illegalVarBan(int userid)
 {
     int Cl = GetClientOfUserId(userid);
     char reason[128];
