@@ -4,11 +4,12 @@
     {
         "Version"
         {
-            "Latest"    "5.0.4"
+            "Latest"    "5.0.5"
         }
 
-        "Notes" "Changes in 5.0.4"
+        "Notes" "Changes in 5.0.5"
         "Notes" "- Add more cheat cvars to check, log buttons on detection, fix translations"
+        "Notes" "- Add more logging on playerruncmd checks, optimize cvar/netprop banning a bit more"
     }
 
     "Files"
