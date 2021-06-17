@@ -17,3 +17,4 @@
         "Plugin"    "Path_SM/translations/stac.phrases.txt"
     }
 }
+
