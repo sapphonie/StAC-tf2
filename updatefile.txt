@@ -4,11 +4,12 @@
     {
         "Version"
         {
-            "Latest"    "5.0.6"
+            "Latest"    "5.0.7"
         }
 
-        "Notes" "Changes in 5.0.6"
+        "Notes" "Changes in 5.0.6/7"
         "Notes" "- Remove fakechoke check"
+        "Notes" "- Remove firstperson exec tomfoolery"
     }
 
     "Files"
