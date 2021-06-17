@@ -168,7 +168,6 @@ public Action OnPlayerRunCmd
     if (!IsUserLagging(userid, false, false) && isCmdnumInOrder(userid))
     {
         cmdnumspikeCheck(userid);
-        fakechokeCheck(userid);
     }
 
     if
@@ -346,52 +345,6 @@ void turnbindCheck(int userid)
             MC_PrintToChatAll("%t", "turnbindAllChat", Cl);
             StacLog("%t", "turnbindAllChat", Cl);
         }
-    }
-}
-
-/*
-    FAKECHOKE TEST
-*/
-void fakechokeCheck(int userid)
-{
-    static int lastChokeAmt            [TFMAXPLAYERS+1];
-    static int lastChokeCmdnum         [TFMAXPLAYERS+1];
-
-    int Cl = GetClientOfUserId(userid);
-    if (!isDefaultTickrate())
-    {
-        return;
-    }
-
-    // detect fakechoke ( BETA )
-    if (engineTime[Cl][0] - engineTime[Cl][1] > tickinterv * 5)
-    {
-        // off by one from what ncc says
-        int amt = clcmdnum[Cl][0] - lastChokeCmdnum[Cl];
-        if (amt >= 8)
-        {
-            if (amt == lastChokeAmt[Cl])
-            {
-                fakeChokeDetects[Cl]++;
-                if (fakeChokeDetects[Cl] >= 5)
-                {
-                    PrintToImportant("{hotpink}[StAC]{white} Player %N is repeatedly choking exactly {mediumpurple}%i{white} ticks.\nThey may be fake-lagging.\nDetections so far: {palegreen}%i" , Cl, amt, fakeChokeDetects[Cl]);
-                    StacLogNetData(userid);
-                    StacLogCmdnums(userid);
-                    StacLogTickcounts(userid);
-                    if (fakeChokeDetects[Cl] % 10 == 0)
-                    {
-                        StacDetectionDiscordNotify(userid, "fake choke [ BETA ]", fakeChokeDetects[Cl]);
-                    }
-                }
-            }
-            else
-            {
-                fakeChokeDetects[Cl]--;
-            }
-        }
-        lastChokeAmt[Cl]    = amt;
-        lastChokeCmdnum[Cl] = clcmdnum[Cl][0];
     }
 }
 

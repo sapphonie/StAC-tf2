@@ -112,7 +112,6 @@ int bhopDetects             [TFMAXPLAYERS+1] = -1; // set to -1 to ignore single
 int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = -1;
 int spinbotDetects          [TFMAXPLAYERS+1];
-int fakeChokeDetects        [TFMAXPLAYERS+1];
 int userinfoSpamDetects     [TFMAXPLAYERS+1];
 
 // frames since client "did something"
