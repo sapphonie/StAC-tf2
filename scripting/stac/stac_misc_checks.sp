@@ -294,11 +294,13 @@ void MiscCheatsEtcsCheck(int userid)
         // sorry!
 
         // forcibly disables thirdperson with some cheats
+        /* There is no reason to do this. It does nothing but alert cheaters that something is fucky.
         ClientCommand(Cl, "firstperson");
         if (DEBUG)
         {
             StacLog("[StAC] Executed firstperson command on Player %N", Cl);
         }
+        */
         checkInterp(userid);
     }
 }
