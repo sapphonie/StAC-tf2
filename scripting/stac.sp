@@ -24,7 +24,7 @@
 // we have to re pragma because sourcemod sucks lol
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.0.6"
+#define PLUGIN_VERSION  "5.0.7"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
