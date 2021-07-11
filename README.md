@@ -60,7 +60,7 @@ This plugin prints detections to any clients on the server with the `sm_ban` per
 {
     "stac"
     {
-        "url"   "Your discord url"
+        "url"   "discord webhook url"
     }
 }
 ```
