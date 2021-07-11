@@ -27,7 +27,7 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         else
         {
             PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Blocked newline print from player %L", Cl);
-            StacDetectionDiscordNotify(userid, "client tried to print a newline character", 1);
+            StacDetectionNotify(userid, "client tried to print a newline character", 1);
             StacLog("[StAC] [Detection] Blocked newline print from player %L", Cl);
         }
         return Plugin_Stop;
@@ -65,8 +65,8 @@ public Action OnClientCommand(int Cl, int args)
 
         if (strlen(ClientCommandChar) > 255)
         {
-            StacGeneralPlayerDiscordNotify(userid, "Client sent a very large command - length %i - to the server! Next message is the command.", strlen(ClientCommandChar));
-            StacGeneralPlayerDiscordNotify(userid, "%s", ClientCommandChar);
+            StacGeneralPlayerNotify(userid, "Client sent a very large command - length %i - to the server! Next message is the command.", strlen(ClientCommandChar));
+            StacGeneralPlayerNotify(userid, "%s", ClientCommandChar);
             StacLog("Client sent a very large command - length %i - to the server! Next message is the command.", strlen(ClientCommandChar));
             StacLog("%s", ClientCommandChar);
             return Plugin_Stop;
@@ -207,7 +207,7 @@ void userinfoSpamEtc(int userid, const char[] cvar, const char[] oldvalue, const
         );
         if (userinfoSpamDetects[Cl] % 5 == 0)
         {
-            StacDetectionDiscordNotify(userid, "userinfo spam", userinfoSpamDetects[Cl]);
+            StacDetectionNotify(userid, "userinfo spam", userinfoSpamDetects[Cl]);
         }
         // BAN USER if they trigger too many detections
         if (userinfoSpamDetects[Cl] >= maxuserinfoSpamDetections && maxuserinfoSpamDetections > 0)
@@ -339,7 +339,7 @@ void checkInterp(int userid)
         {
             char message[256];
             Format(message, sizeof(message), "Client was kicked for attempted interp exploitation. Their interp: %.2fms", lerp);
-            StacGeneralPlayerDiscordNotify(userid, message);
+            StacGeneralPlayerNotify(userid, message);
             KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
             MC_PrintToChatAll("%t", "interpAllChat", Cl, lerp);
             StacLog("%t", "interpAllChat", Cl, lerp);

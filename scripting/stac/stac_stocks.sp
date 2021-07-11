@@ -312,7 +312,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         return;
     }
 
-    StacGeneralPlayerDiscordNotify(userid, reason);
+    StacGeneralPlayerNotify(userid, reason);
     // make sure we dont detect on already banned players
     userBanQueued[Cl] = true;
 

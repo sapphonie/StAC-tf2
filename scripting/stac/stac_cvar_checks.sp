@@ -210,7 +210,7 @@ void oobVarsNotify(int userid, const char[] name, const char[] value)
 
     char msg[128];
     Format(msg, sizeof(msg), "Client has OOB value %s for var %s!", value, name);
-    StacDetectionDiscordNotify(userid, msg, 1);
+    StacDetectionNotify(userid, msg, 1);
 }
 
 
@@ -222,7 +222,7 @@ void illegalVarsNotify(int userid, const char[] name)
 
     char msg[128];
     Format(msg, sizeof(msg), "Known cheat var %s exists on client!", name);
-    StacDetectionDiscordNotify(userid, msg, 1);
+    StacDetectionNotify(userid, msg, 1);
 }
 
 
