@@ -41,13 +41,13 @@ Action CheckAuthOn(Handle timer, int userid)
                 SteamAuthFor[Cl][0] = '\0';
                 if (kickUnauth)
                 {
-                    StacGeneralPlayerDiscordNotify(userid, "Kicked for being unauthorized w/ Steam");
+                    StacGeneralPlayerNotify(userid, "Kicked for being unauthorized w/ Steam");
                     StacLog("[StAC] Kicking %N for not being authorized with Steam.", Cl);
                     KickClient(Cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
                 }
                 else
                 {
-                    StacGeneralPlayerDiscordNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
+                    StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
                     StacLog("[StAC] Client %N failed to authorize w/ Steam in a timely manner.", Cl);
                 }
             }

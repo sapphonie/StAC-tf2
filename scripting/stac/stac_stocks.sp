@@ -62,6 +62,14 @@ void StacLog(const char[] format, any ...)
     PrintToConsoleAllAdmins("%s", buffer);
 }
 
+void StacLogDemo()
+{
+    if (GetDemoName())
+    {
+        StacLog("Demo file: %s", demoname);
+    }
+}
+
 void StacLogNetData(int userid)
 {
     int Cl = GetClientOfUserId(userid);
@@ -304,7 +312,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         return;
     }
 
-    StacGeneralPlayerDiscordNotify(userid, reason);
+    StacGeneralPlayerNotify(userid, reason);
     // make sure we dont detect on already banned players
     userBanQueued[Cl] = true;
 
@@ -372,6 +380,8 @@ void BanUser(int userid, char[] reason, char[] pubreason)
 
 bool GetDemoName()
 {
+    // TODO: SourceTVManager
+    // TODO: Demoticks
     char tvStatus[512];
     ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
     char demoname_etc[128];
@@ -573,18 +583,19 @@ public void OnLibraryAdded(const char[] name)
     }
 }
 
-/********** DISCORD **********/
+/********** DETECTIONS & DISCORD **********/
 
-void StacGeneralPlayerDiscordNotify(int userid, const char[] format, any ...)
+void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
 {
-
-    static char generalTemplate[1024] = \
-    "{ \"embeds\": [ { \"title\": \"StAC Message\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Message\", \"value\": \"%s\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
+    StacLogDemo();
 
     if (!DISCORD)
     {
         return;
     }
+    static char generalTemplate[1024] = \
+    "{ \"embeds\": [ { \"title\": \"StAC Message\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Message\", \"value\": \"%s\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
+
     char msg[1024];
 
     char message[256];
@@ -594,7 +605,7 @@ void StacGeneralPlayerDiscordNotify(int userid, const char[] format, any ...)
     char ClName[64];
     GetClientName(Cl, ClName, sizeof(ClName));
     Discord_EscapeString(ClName, sizeof(ClName));
-    GetDemoName();
+
     // we technically store the url in this so it has to be bigger
     char steamid[96];
     // ok we store these on client connect & auth, this shouldn't be null
@@ -623,15 +634,17 @@ void StacGeneralPlayerDiscordNotify(int userid, const char[] format, any ...)
     SendMessageToDiscord(msg);
 }
 
-void StacDetectionDiscordNotify(int userid, char[] type, int detections)
+void StacDetectionNotify(int userid, char[] type, int detections)
 {
-    static char detectionTemplate[1024] = \
-    "{ \"embeds\": [ { \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Detection type\", \"value\": \"%s\" }, { \"name\": \"Detection\", \"value\": \"%i\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } , { \"name\": \"Unix timestamp of detection\", \"value\": \"%i\" } ] } ] }";
+    StacLogDemo();
 
     if (!DISCORD)
     {
         return;
     }
+
+    static char detectionTemplate[1024] = \
+    "{ \"embeds\": [ { \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Detection type\", \"value\": \"%s\" }, { \"name\": \"Detection\", \"value\": \"%i\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } , { \"name\": \"Unix timestamp of detection\", \"value\": \"%i\" } ] } ] }";
 
     char msg[1024];
 
@@ -639,7 +652,7 @@ void StacDetectionDiscordNotify(int userid, char[] type, int detections)
     char ClName[64];
     GetClientName(Cl, ClName, sizeof(ClName));
     Discord_EscapeString(ClName, sizeof(ClName));
-    GetDemoName();
+
     // we technically store the url in this so it has to be bigger
     char steamid[96];
     // ok we store these on client connect & auth, this shouldn't be null
