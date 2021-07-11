@@ -26,9 +26,9 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         }
         else
         {
-            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Blocked newline print from player %L", Cl);
+            StacLogSteam(userid);
+            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Blocked newline print from player %N", Cl);
             StacDetectionDiscordNotify(userid, "client tried to print a newline character", 1);
-            StacLog("[StAC] [Detection] Blocked newline print from player %L", Cl);
         }
         return Plugin_Stop;
     }
@@ -198,6 +198,7 @@ void userinfoSpamEtc(int userid, const char[] cvar, const char[] oldvalue, const
     CreateTimer(10.0, Timer_decr_userinfospam, userid, TIMER_FLAG_NO_MAPCHANGE);
     if (userinfoSpamDetects[Cl] >= 5)
     {
+        StacLogSteam(userid);
         PrintToImportant
         (
             "{hotpink}[StAC]{white} %N is spamming userinfo updates. Detections in the last 10 seconds: {palegreen}%i{white}.\

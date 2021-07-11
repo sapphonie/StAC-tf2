@@ -18,6 +18,7 @@ Action checkAdmin(int callingCl, int args)
         if (!isAdmin)
         {
             StacGeneralPlayerDiscordNotify(GetClientUserId(callingCl), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
+            StacLogSteam(GetClientUserId(callingCl));
             PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
             return Plugin_Handled;
         }

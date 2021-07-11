@@ -254,6 +254,7 @@ void bhopCheck(int userid)
                 )
             )
             {
+                StacLogSteam(userid);
                 PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , Cl, bhopDetects[Cl]);
                 if (bhopDetects[Cl] % 5 == 0)
                 {
@@ -332,6 +333,7 @@ void turnbindCheck(int userid)
     {
         turnTimes[Cl]++;
         float turnSec = turnTimes[Cl] * tickinterv;
+        StacLogSteam(userid);
         PrintToImportant("%t", "turnbindAdminMsg", Cl, turnSec);
 
         if (turnSec < maxAllowedTurnSecs)
@@ -377,6 +379,7 @@ void fakeangCheck(int userid)
     )
     {
         fakeAngDetects[Cl]++;
+        StacLogSteam(userid);
         PrintToImportant
         (
             "{hotpink}[StAC]{white} Player %N has {mediumpurple}invalid eye angles{white}!\nCurrent angles: {mediumpurple}%.2f %.2f %.2f{white}.\nDetections so far: {palegreen}%i",
@@ -418,6 +421,7 @@ void cmdnumspikeCheck(int userid)
             GetClientWeapon(Cl, heldWeapon, sizeof(heldWeapon));
 
             cmdnumSpikeDetects[Cl]++;
+            StacLogSteam(userid);
             PrintToImportant
             (
                 "{hotpink}[StAC]{white} Cmdnum SPIKE of {yellow}%i{white} on %N.\nDetections so far: {palegreen}%i{white}.",
@@ -484,6 +488,7 @@ void spinbotCheck(int userid)
             // this can trigger on normal players, only care about if it happens 10 times in a row at least!
             if (spinbotDetects[Cl] >= 10)
             {
+                StacLogSteam(userid);
                 PrintToImportant
                 (
                     "{hotpink}[StAC]{white} Spinbot detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i{white}.",
@@ -626,6 +631,7 @@ void psilentCheck(int userid)
             // first detection is LIKELY bullshit
             if (pSilentDetects[Cl] > 0)
             {
+                StacLogSteam(userid);
                 // only print a bit in chat, rest goes to console (stv and admin and also the stac log)
                 PrintToImportant
                 (
@@ -756,6 +762,7 @@ void aimsnapCheck(int userid)
                 // first detection is likely bullshit
                 if (aimsnapDetects[Cl] > 0)
                 {
+                    StacLogSteam(userid);
                     PrintToImportant
                     (
                         "{hotpink}[StAC]{white} Aimsnap detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i{white}.",
@@ -882,6 +889,7 @@ void triggerbotCheck(int userid)
 
             if (tbotDetects[Cl] > 0)
             {
+                StacLogSteam(userid);
                 PrintToImportant
                 (
                     "{hotpink}[StAC]{white} Triggerbot detection on %N.\nDetections so far: {palegreen}%i{white}. Type: +attack{blue}%i",

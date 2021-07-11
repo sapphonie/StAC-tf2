@@ -62,6 +62,22 @@ void StacLog(const char[] format, any ...)
     PrintToConsoleAllAdmins("%s", buffer);
 }
 
+void StacLogSteam(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    StacLog
+    ("\
+        [StAC] SteamID for %N:\
+        \n %L\
+        \n StAC cached value: %s\
+        ",
+        Cl,
+        Cl,
+        SteamAuthFor[Cl]
+    );
+}
+
 void StacLogNetData(int userid)
 {
     int Cl = GetClientOfUserId(userid);
@@ -577,7 +593,6 @@ public void OnLibraryAdded(const char[] name)
 
 void StacGeneralPlayerDiscordNotify(int userid, const char[] format, any ...)
 {
-
     static char generalTemplate[1024] = \
     "{ \"embeds\": [ { \"title\": \"StAC Message\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Message\", \"value\": \"%s\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
 
