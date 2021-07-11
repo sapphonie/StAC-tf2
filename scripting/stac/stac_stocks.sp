@@ -68,6 +68,21 @@ void StacLogDemo()
     {
         StacLog("Demo file: %s", demoname);
     }
+
+void StacLogSteam(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    StacLog
+    ("\
+        [StAC] SteamID for %N:\
+        \n %L\
+        \n StAC cached value: %s\
+        ",
+        Cl,
+        Cl,
+        SteamAuthFor[Cl]
+    );
 }
 
 void StacLogNetData(int userid)
