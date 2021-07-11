@@ -68,6 +68,7 @@ void StacLogDemo()
     {
         StacLog("Demo file: %s", demoname);
     }
+}
 
 void StacLogSteam(int userid)
 {

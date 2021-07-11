@@ -28,7 +28,7 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         {
             StacLogSteam(userid);
             PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Blocked newline print from player %N", Cl);
-            StacDetectionDiscordNotify(userid, "client tried to print a newline character", 1);
+            StacDetectionNotify(userid, "client tried to print a newline character", 1);
         }
         return Plugin_Stop;
     }
