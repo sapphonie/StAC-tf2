@@ -26,8 +26,8 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         }
         else
         {
-            StacLogSteam(userid);
             PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Blocked newline print from player %N", Cl);
+            StacLogSteam(userid);
             StacDetectionNotify(userid, "client tried to print a newline character", 1);
         }
         return Plugin_Stop;
@@ -198,7 +198,6 @@ void userinfoSpamEtc(int userid, const char[] cvar, const char[] oldvalue, const
     CreateTimer(10.0, Timer_decr_userinfospam, userid, TIMER_FLAG_NO_MAPCHANGE);
     if (userinfoSpamDetects[Cl] >= 5)
     {
-        StacLogSteam(userid);
         PrintToImportant
         (
             "{hotpink}[StAC]{white} %N is spamming userinfo updates. Detections in the last 10 seconds: {palegreen}%i{white}.\
@@ -210,6 +209,7 @@ void userinfoSpamEtc(int userid, const char[] cvar, const char[] oldvalue, const
         {
             StacDetectionNotify(userid, "userinfo spam", userinfoSpamDetects[Cl]);
         }
+        StacLogSteam(userid);
         // BAN USER if they trigger too many detections
         if (userinfoSpamDetects[Cl] >= maxuserinfoSpamDetections && maxuserinfoSpamDetections > 0)
         {

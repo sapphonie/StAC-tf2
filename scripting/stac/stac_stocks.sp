@@ -76,11 +76,9 @@ void StacLogSteam(int userid)
 
     StacLog
     ("\
-        [StAC] SteamID for %N:\
-        \n %L\
-        \n StAC cached value: %s\
+        \n Player: %L\
+        \n StAC cached SteamID: %s\
         ",
-        Cl,
         Cl,
         SteamAuthFor[Cl]
     );
@@ -502,11 +500,15 @@ void PrintToImportant(const char[] format, any ...)
 {
     char buffer[254];
 
+    // print translations in the servers lang first
     SetGlobalTransTarget(LANG_SERVER);
+    // format it properly
     VFormat(buffer, sizeof(buffer), format, 2);
+    // print detections to staclog as well
     if (StrContains(buffer, "detect", false) != -1)
     {
-        StacLog("%s", buffer);
+        // seperate detections with a lotta whitespace for easier readability
+        StacLog("\n\n----------\n\n%s", buffer);
     }
     buffer[0] = '\0';
 

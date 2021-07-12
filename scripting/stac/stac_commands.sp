@@ -17,9 +17,9 @@ Action checkAdmin(int callingCl, int args)
         }
         if (!isAdmin)
         {
+            PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
             StacLogSteam(GetClientUserId(callingCl));
             StacGeneralPlayerNotify(GetClientUserId(callingCl), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
-            PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
             return Plugin_Handled;
         }
         StacGeneralPlayerNotify(GetClientUserId(callingCl), "Admin %N used %s", callingCl, arg0);

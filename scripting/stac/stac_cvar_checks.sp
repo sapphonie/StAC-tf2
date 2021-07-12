@@ -206,8 +206,8 @@ bool IsCheatOnlyVar(const char[] cvarName)
 void oobVarsNotify(int userid, const char[] name, const char[] value)
 {
     int Cl = GetClientOfUserId(userid);
-    StacLogSteam(userid);
     PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N is cheating - OOB cvar/netvar value {blue}%s{white} on var {blue}%s{white}!", Cl, value, name);
+    StacLogSteam(userid);
     char msg[128];
     Format(msg, sizeof(msg), "Client has OOB value %s for var %s!", value, name);
     StacDetectionNotify(userid, msg, 1);
@@ -218,9 +218,8 @@ void oobVarsNotify(int userid, const char[] name, const char[] value)
 void illegalVarsNotify(int userid, const char[] name)
 {
     int Cl = GetClientOfUserId(userid);
-    StacLogSteam(userid);
     PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N is cheating - detected known cheat var/concommand {blue}%s{white}!", Cl, name);
-
+    StacLogSteam(userid);
     char msg[128];
     Format(msg, sizeof(msg), "Known cheat var %s exists on client!", name);
     StacDetectionNotify(userid, msg, 1);

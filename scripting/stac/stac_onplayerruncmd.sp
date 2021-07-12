@@ -254,12 +254,12 @@ void bhopCheck(int userid)
                 )
             )
             {
-                StacLogSteam(userid);
                 PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , Cl, bhopDetects[Cl]);
                 if (bhopDetects[Cl] % 5 == 0)
                 {
                     StacDetectionNotify(userid, "consecutive tick perfect bhops", bhopDetects[Cl]);
                 }
+                StacLogSteam(userid);
 
                 if (bhopDetects[Cl] >= maxBhopDetections)
                 {
@@ -333,8 +333,8 @@ void turnbindCheck(int userid)
     {
         turnTimes[Cl]++;
         float turnSec = turnTimes[Cl] * tickinterv;
-        StacLogSteam(userid);
         PrintToImportant("%t", "turnbindAdminMsg", Cl, turnSec);
+        StacLogSteam(userid);
 
         if (turnSec < maxAllowedTurnSecs)
         {
@@ -379,7 +379,6 @@ void fakeangCheck(int userid)
     )
     {
         fakeAngDetects[Cl]++;
-        StacLogSteam(userid);
         PrintToImportant
         (
             "{hotpink}[StAC]{white} Player %N has {mediumpurple}invalid eye angles{white}!\nCurrent angles: {mediumpurple}%.2f %.2f %.2f{white}.\nDetections so far: {palegreen}%i",
@@ -389,6 +388,7 @@ void fakeangCheck(int userid)
             clangles[Cl][0][2],
             fakeAngDetects[Cl]
         );
+        StacLogSteam(userid);
         if (fakeAngDetects[Cl] == 1 || fakeAngDetects[Cl] % 5 == 0)
         {
             StacDetectionNotify(userid, "fake angles", fakeAngDetects[Cl]);
@@ -421,7 +421,6 @@ void cmdnumspikeCheck(int userid)
             GetClientWeapon(Cl, heldWeapon, sizeof(heldWeapon));
 
             cmdnumSpikeDetects[Cl]++;
-            StacLogSteam(userid);
             PrintToImportant
             (
                 "{hotpink}[StAC]{white} Cmdnum SPIKE of {yellow}%i{white} on %N.\nDetections so far: {palegreen}%i{white}.",
@@ -429,6 +428,7 @@ void cmdnumspikeCheck(int userid)
                 Cl,
                 cmdnumSpikeDetects[Cl]
             );
+            StacLogSteam(userid);
             StacLogNetData(userid);
             StacLogCmdnums(userid);
             StacLogTickcounts(userid);
@@ -488,7 +488,6 @@ void spinbotCheck(int userid)
             // this can trigger on normal players, only care about if it happens 10 times in a row at least!
             if (spinbotDetects[Cl] >= 10)
             {
-                StacLogSteam(userid);
                 PrintToImportant
                 (
                     "{hotpink}[StAC]{white} Spinbot detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i{white}.",
@@ -496,6 +495,7 @@ void spinbotCheck(int userid)
                     Cl,
                     spinbotDetects[Cl]
                 );
+                StacLogSteam(userid);
                 StacLogNetData(userid);
                 StacLogAngles(userid);
                 StacLogCmdnums(userid);
@@ -631,7 +631,6 @@ void psilentCheck(int userid)
             // first detection is LIKELY bullshit
             if (pSilentDetects[Cl] > 0)
             {
-                StacLogSteam(userid);
                 // only print a bit in chat, rest goes to console (stv and admin and also the stac log)
                 PrintToImportant
                 (
@@ -641,6 +640,7 @@ void psilentCheck(int userid)
                     aDiffReal, Cl,
                     pSilentDetects[Cl], fuzzy == 1 ? "yes" : "no", aDiffReal <= 3.0 ? "yes" : "no"
                 );
+                StacLogSteam(userid);
                 StacLogNetData(userid);
                 StacLogAngles(userid);
                 StacLogCmdnums(userid);
@@ -762,7 +762,6 @@ void aimsnapCheck(int userid)
                 // first detection is likely bullshit
                 if (aimsnapDetects[Cl] > 0)
                 {
-                    StacLogSteam(userid);
                     PrintToImportant
                     (
                         "{hotpink}[StAC]{white} Aimsnap detection of {yellow}%.2f{white}° on %N.\nDetections so far: {palegreen}%i{white}.",
@@ -770,6 +769,7 @@ void aimsnapCheck(int userid)
                         Cl,
                         aimsnapDetects[Cl]
                     );
+                    StacLogSteam(userid);
                     StacLogNetData(userid);
                     StacLogAngles(userid);
                     StacLogCmdnums(userid);
@@ -889,7 +889,6 @@ void triggerbotCheck(int userid)
 
             if (tbotDetects[Cl] > 0)
             {
-                StacLogSteam(userid);
                 PrintToImportant
                 (
                     "{hotpink}[StAC]{white} Triggerbot detection on %N.\nDetections so far: {palegreen}%i{white}. Type: +attack{blue}%i",
@@ -897,6 +896,7 @@ void triggerbotCheck(int userid)
                     tbotDetects[Cl],
                     attack
                 );
+                StacLogSteam(userid);
                 StacLogNetData(userid);
                 StacLogAngles(userid);
                 StacLogCmdnums(userid);
