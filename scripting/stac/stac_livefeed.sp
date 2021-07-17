@@ -118,7 +118,18 @@ void LiveFeed_PlayerCmd(int userid)
 
     for (int LiveFeedViewer = 1; LiveFeedViewer <= MaxClients; LiveFeedViewer++)
     {
-        if (IsValidAdmin(LiveFeedViewer) || IsValidSrcTV(LiveFeedViewer))
+        if
+        (
+            // only show to admins in spec
+            (
+                IsValidAdmin(LiveFeedViewer)
+                &&
+                GetClientTeam(LiveFeedViewer) < 2
+            )
+            // and sourcetv
+            ||
+            IsValidSrcTV(LiveFeedViewer)
+        )
         {
             // ONPLAYERRUNCMD
             SetHudTextParams

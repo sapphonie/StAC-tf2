@@ -146,7 +146,7 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
     else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
     {
         PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", cvarName, Cl);
-        StacLog("[StAC] Could not query cvar %s on player %N", cvarName, Cl);
+        StacLog("[StAC] Could not query cvar %s on player %L", cvarName, Cl);
     }
 }
 
@@ -206,11 +206,11 @@ bool IsCheatOnlyVar(const char[] cvarName)
 void oobVarsNotify(int userid, const char[] name, const char[] value)
 {
     int Cl = GetClientOfUserId(userid);
-    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is cheating - OOB cvar/netvar value {blue}%s{white} on var {blue}%s{white}!", Cl, value, name);
-
+    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N is cheating - OOB cvar/netvar value {blue}%s{white} on var {blue}%s{white}!", Cl, value, name);
+    StacLogSteam(userid);
     char msg[128];
     Format(msg, sizeof(msg), "Client has OOB value %s for var %s!", value, name);
-    StacDetectionDiscordNotify(userid, msg, 1);
+    StacDetectionNotify(userid, msg, 1);
 }
 
 
@@ -218,11 +218,11 @@ void oobVarsNotify(int userid, const char[] name, const char[] value)
 void illegalVarsNotify(int userid, const char[] name)
 {
     int Cl = GetClientOfUserId(userid);
-    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %L is cheating - detected known cheat var/concommand {blue}%s{white}!", Cl, name);
-
+    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N is cheating - detected known cheat var/concommand {blue}%s{white}!", Cl, name);
+    StacLogSteam(userid);
     char msg[128];
     Format(msg, sizeof(msg), "Known cheat var %s exists on client!", name);
-    StacDetectionDiscordNotify(userid, msg, 1);
+    StacDetectionNotify(userid, msg, 1);
 }
 
 
@@ -256,7 +256,7 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
     {
         if (DEBUG)
         {
-            StacLog("[StAC] Checking client id, %i, %N", Cl, Cl);
+            StacLog("[StAC] Checking client id, %i, %L", Cl, Cl);
         }
         // init variable to pass to QueryCvarsEtc
         int i;

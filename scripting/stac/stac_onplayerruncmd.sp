@@ -45,7 +45,7 @@ public Action OnPlayerRunCmd
         if (cmdnum < 0 || tickcount < 0)
         {
             StacLog("[StAC] cmdnum %i, tickcount %i", cmdnum, tickcount);
-            StacGeneralPlayerDiscordNotify(userid, "Client has invalid usercmd data!");
+            StacGeneralPlayerNotify(userid, "Client has invalid usercmd data!");
             // returning Plugin_Handled allows for airstuck to work again
             return Plugin_Continue;
         }
@@ -257,8 +257,9 @@ void bhopCheck(int userid)
                 PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , Cl, bhopDetects[Cl]);
                 if (bhopDetects[Cl] % 5 == 0)
                 {
-                    StacDetectionDiscordNotify(userid, "consecutive tick perfect bhops", bhopDetects[Cl]);
+                    StacDetectionNotify(userid, "consecutive tick perfect bhops", bhopDetects[Cl]);
                 }
+                StacLogSteam(userid);
 
                 if (bhopDetects[Cl] >= maxBhopDetections)
                 {
@@ -333,6 +334,7 @@ void turnbindCheck(int userid)
         turnTimes[Cl]++;
         float turnSec = turnTimes[Cl] * tickinterv;
         PrintToImportant("%t", "turnbindAdminMsg", Cl, turnSec);
+        StacLogSteam(userid);
 
         if (turnSec < maxAllowedTurnSecs)
         {
@@ -340,7 +342,7 @@ void turnbindCheck(int userid)
         }
         else if (turnSec >= maxAllowedTurnSecs)
         {
-            StacGeneralPlayerDiscordNotify(userid, "Client was kicked for turn binds");
+            StacGeneralPlayerNotify(userid, "Client was kicked for turn binds");
             KickClient(Cl, "%t", "turnbindKickMsg");
             MC_PrintToChatAll("%t", "turnbindAllChat", Cl);
             StacLog("%t", "turnbindAllChat", Cl);
@@ -386,9 +388,10 @@ void fakeangCheck(int userid)
             clangles[Cl][0][2],
             fakeAngDetects[Cl]
         );
+        StacLogSteam(userid);
         if (fakeAngDetects[Cl] == 1 || fakeAngDetects[Cl] % 5 == 0)
         {
-            StacDetectionDiscordNotify(userid, "fake angles", fakeAngDetects[Cl]);
+            StacDetectionNotify(userid, "fake angles", fakeAngDetects[Cl]);
         }
         if (fakeAngDetects[Cl] >= maxFakeAngDetections && maxFakeAngDetections > 0)
         {
@@ -425,13 +428,14 @@ void cmdnumspikeCheck(int userid)
                 Cl,
                 cmdnumSpikeDetects[Cl]
             );
+            StacLogSteam(userid);
             StacLogNetData(userid);
             StacLogCmdnums(userid);
             StacLogTickcounts(userid);
 
             if (cmdnumSpikeDetects[Cl] % 5 == 0)
             {
-                StacDetectionDiscordNotify(userid, "cmdnum spike", cmdnumSpikeDetects[Cl]);
+                StacDetectionNotify(userid, "cmdnum spike", cmdnumSpikeDetects[Cl]);
             }
 
             // punish if we reach limit set by cvar
@@ -491,6 +495,7 @@ void spinbotCheck(int userid)
                     Cl,
                     spinbotDetects[Cl]
                 );
+                StacLogSteam(userid);
                 StacLogNetData(userid);
                 StacLogAngles(userid);
                 StacLogCmdnums(userid);
@@ -498,7 +503,7 @@ void spinbotCheck(int userid)
                 StacLogMouse(userid);
                 if (spinbotDetects[Cl] % 20 == 0)
                 {
-                    StacDetectionDiscordNotify(userid, "spinbot", spinbotDetects[Cl]);
+                    StacDetectionNotify(userid, "spinbot", spinbotDetects[Cl]);
                 }
                 if (spinbotDetects[Cl] >= maxSpinbotDetections && maxSpinbotDetections > 0)
                 {
@@ -635,6 +640,7 @@ void psilentCheck(int userid)
                     aDiffReal, Cl,
                     pSilentDetects[Cl], fuzzy == 1 ? "yes" : "no", aDiffReal <= 3.0 ? "yes" : "no"
                 );
+                StacLogSteam(userid);
                 StacLogNetData(userid);
                 StacLogAngles(userid);
                 StacLogCmdnums(userid);
@@ -646,7 +652,7 @@ void psilentCheck(int userid)
                 }
                 if (pSilentDetects[Cl] % 5 == 0)
                 {
-                    StacDetectionDiscordNotify(userid, "psilent", pSilentDetects[Cl]);
+                    StacDetectionNotify(userid, "psilent", pSilentDetects[Cl]);
                 }
                 // BAN USER if they trigger too many detections
                 if (pSilentDetects[Cl] >= maxPsilentDetections && maxPsilentDetections > 0)
@@ -763,6 +769,7 @@ void aimsnapCheck(int userid)
                         Cl,
                         aimsnapDetects[Cl]
                     );
+                    StacLogSteam(userid);
                     StacLogNetData(userid);
                     StacLogAngles(userid);
                     StacLogCmdnums(userid);
@@ -784,7 +791,7 @@ void aimsnapCheck(int userid)
 
                     if (aimsnapDetects[Cl] % 5 == 0)
                     {
-                        StacDetectionDiscordNotify(userid, "aimsnap", aimsnapDetects[Cl]);
+                        StacDetectionNotify(userid, "aimsnap", aimsnapDetects[Cl]);
                     }
 
                     // BAN USER if they trigger too many detections
@@ -889,6 +896,7 @@ void triggerbotCheck(int userid)
                     tbotDetects[Cl],
                     attack
                 );
+                StacLogSteam(userid);
                 StacLogNetData(userid);
                 StacLogAngles(userid);
                 StacLogCmdnums(userid);
@@ -906,7 +914,7 @@ void triggerbotCheck(int userid)
                 }
                 if (tbotDetects[Cl] % 5 == 0)
                 {
-                    StacDetectionDiscordNotify(userid, "triggerbot", tbotDetects[Cl]);
+                    StacDetectionNotify(userid, "triggerbot", tbotDetects[Cl]);
                 }
                 // BAN USER if they trigger too many detections
                 if (tbotDetects[Cl] >= maxTbotDetections && maxTbotDetections > 0)
