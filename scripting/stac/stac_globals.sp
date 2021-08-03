@@ -67,8 +67,10 @@ int maxuserinfoSpamDetections   = 25;
 float tickinterv;
 float tps;
 
-// time to wait after server "stutters"
-float stutterWaitLength = 5.0;
+// time to wait after server lags before checking all client's OnPlayerRunCmd
+float ServerLagWaitLength = 5.0;
+// time to wait after player lags before checking single client's OnPlayerRunCmd
+float PlayerLagWaitLength = 1.0;
 
 // misc server info
 char hostname[64];
@@ -89,8 +91,8 @@ int iminrate;
 float steamLastOnlineTime;
 // time since the map started
 float timeSinceMapStart;
-// time since the last server stutter occurred
-float timeSinceLagSpike;
+// time since the last stutter/lag spike occurred per client
+float timeSinceLagSpikeFor[TFMAXPLAYERS + 1];
 
 // native/gamemode/plugin etc bools
 bool SOURCEBANS;
