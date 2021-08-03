@@ -4,12 +4,12 @@
     {
         "Version"
         {
-            "Latest"    "5.0.7"
+            "Latest"    "5.1.0"
         }
 
-        "Notes" "Changes in 5.0.6/7"
-        "Notes" "- Remove fakechoke check"
-        "Notes" "- Remove firstperson exec tomfoolery"
+        "Notes" "Changes in 5.1.0"
+        "Notes" "- Translations update"
+        "Notes" "- Better SteamID and demoname logging on detection"
     }
 
     "Files"
