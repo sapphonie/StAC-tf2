@@ -13,6 +13,8 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         StrContains(sArgs, "\n", false) != -1
         ||
         StrContains(sArgs, "\r", false) != -1
+        ||
+        StrContains(sArgs, "\t", false) != -1
     )
     {
         int userid = GetClientUserId(Cl);
@@ -28,11 +30,86 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         {
             PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Blocked newline print from player %N", Cl);
             StacLogSteam(userid);
-            StacDetectionNotify(userid, "client tried to print a newline character", 1);
         }
+        StacDetectionNotify(userid, "Client tried to print a newline character", 1);
         return Plugin_Stop;
     }
     return Plugin_Continue;
+}
+
+void NameCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if (IsValidClient(Cl))
+    {
+        char curName[64];
+        GetClientName(Cl, curName, sizeof(curName));
+        // ban for invalid characters in names
+        if
+        (
+            StrContains(curName, "\n")  != -1
+            ||
+            StrContains(curName, "\r")  != -1
+            ||
+            StrContains(curName, "\t")  != -1
+        )
+        {
+            SaniNameAndBan(userid, curName);
+        }
+    }
+}
+
+bool SaniNameAndBan(int userid, char name[64])
+{
+    int Cl = GetClientOfUserId(userid);
+
+    hasBadName[Cl] = true;
+
+    int newlines;
+    int returns;
+    int tabs;
+
+    // todo: implement C style iscntrl
+    newlines    = ReplaceString(name, sizeof(name), "\n", "");
+    returns     = ReplaceString(name, sizeof(name), "\r", "");
+    tabs        = ReplaceString(name, sizeof(name), "\t", "");
+
+    SetClientName(Cl, name);
+
+    StacLog
+    (
+        "Client had:\
+        \n%i newline chars,\
+        \n%i return chars,\
+        \n%i tab chars",
+        newlines,
+        returns,
+        tabs
+    );
+
+    CreateTimer(0.5, BanName, userid);
+}
+
+Action BanName(Handle timer, int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    StacDetectionNotify(userid, "Client has illegal chars in their name!", 1);
+
+    if (banForMiscCheats)
+    {
+        char reason[128];
+        Format(reason, sizeof(reason), "%t", "illegalNameBanMsg");
+        char pubreason[256];
+        Format(pubreason, sizeof(pubreason), "%t", "illegalNameBanMsg", Cl);
+        BanUser(userid, reason, pubreason);
+    }
+    else
+    {
+        PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N has illegal chars in their name!", Cl);
+        StacLogSteam(userid);
+        StacLog("[StAC] [Detection] Player %N has illegal chars in their name!", Cl);
+    }
 }
 
 // block long commands - i don't know if this actually does anything but it makes me feel better

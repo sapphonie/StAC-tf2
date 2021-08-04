@@ -140,7 +140,6 @@ int   clmouse               [TFMAXPLAYERS+1]   [2];
 float engineTime            [TFMAXPLAYERS+1][3];
 float fuzzyClangles         [TFMAXPLAYERS+1][5][2];
 float clpos                 [TFMAXPLAYERS+1][2][3];
-int   maxTickCountFor       [TFMAXPLAYERS+1];
 
 // Misc stuff per client    [ client index ][char size]
 char SteamAuthFor           [TFMAXPLAYERS+1][64];
@@ -154,6 +153,7 @@ float sensFor               [TFMAXPLAYERS+1];
 char hurtWeapon             [TFMAXPLAYERS+1][256];
 char lastCommandFor         [TFMAXPLAYERS+1][256];
 bool LiveFeedOn             [TFMAXPLAYERS+1];
+bool hasBadName             [TFMAXPLAYERS+1];
 
 // network info
 float lossFor               [TFMAXPLAYERS+1];
@@ -241,6 +241,7 @@ bool justclamped        [TFMAXPLAYERS+1];
 
 // tps etc
 int tickspersec        [TFMAXPLAYERS+1];
+// iterated tick num per client
 int t                  [TFMAXPLAYERS+1];
 
 float secTime          [TFMAXPLAYERS+1];
