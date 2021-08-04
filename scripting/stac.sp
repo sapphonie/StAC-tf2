@@ -110,6 +110,8 @@ public void OnPluginStart()
     HookEvent("player_spawn", ePlayerSpawned);
     // hook real player disconnects
     HookEvent("player_disconnect", ePlayerDisconnect);
+    // grab player name changes
+    HookEvent("player_changename", ePlayerChangedName, EventHookMode_Pre);
 
     // hook sv_cheats so we can instantly unload if cheats get turned on
     HookConVarChange(FindConVar("sv_cheats"), GenericCvarChanged);

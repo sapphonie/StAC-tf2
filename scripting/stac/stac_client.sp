@@ -179,6 +179,21 @@ public void TF2_OnConditionRemoved(int Cl, TFCond condition)
     }
 }
 
+public Action ePlayerChangedName(Handle event, char[] name, bool dontBroadcast)
+{
+    int userid = GetEventInt(event, "userid");
+
+    int Cl = GetClientOfUserId(userid);
+
+    if (hasBadName[Cl])
+    {
+        hasBadName[Cl] = false;
+        return Plugin_Continue;
+    }
+    NameCheck(userid);
+    return Plugin_Continue;
+}
+
 void ClearClBasedVars(int userid)
 {
     // get fresh cli id
@@ -194,9 +209,6 @@ void ClearClBasedVars(int userid)
     spinbotDetects          [Cl] = 0;
     userinfoSpamDetects     [Cl] = 0;
 
-
-
-    maxTickCountFor         [Cl] = 0;
 
     // TIME SINCE LAST ACTION PER CLIENT
     timeSinceSpawn          [Cl] = 0.0;
@@ -216,6 +228,9 @@ void ClearClBasedVars(int userid)
     sensFor                 [Cl] = 0.0;
     // don't bother clearing arrays
     LiveFeedOn              [Cl] = false;
+
+    // reset namechanging var
+    hasBadName              [Cl] = false;
 
 
     for (int cvar; cvar < sizeof(userinfoToCheck); cvar++)
