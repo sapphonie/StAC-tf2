@@ -348,12 +348,16 @@ void BanUser(int userid, char[] reason, char[] pubreason)
             StacLog("[StAC] No STV demo is being recorded, no demo name will be printed to the ban reason!");
         }
     }
-    if (isAuthed)
+    if (isAuthed) // TODO: Remove hardcoded ban duration (0)
     {
         if (SOURCEBANS)
         {
             SBPP_BanPlayer(0, Cl, 0, reason);
             // there's no return value for that native, so we have to just assume it worked lol
+            return;
+        }
+        if (MATERIALADMIN && MABanPlayer(0, Cl, MA_BAN_STEAM, 0, reason))
+        {
             return;
         }
         if (GBANS)

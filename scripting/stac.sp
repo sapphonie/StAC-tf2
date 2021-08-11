@@ -15,7 +15,8 @@
 #include <autoexecconfig>
 #undef REQUIRE_PLUGIN
 #include <updater>
-#include <sourcebanspp>
+#tryinclude <sourcebanspp>
+#tryinclude <materialadmin>
 #include <discord>
 #undef REQUIRE_EXTENSIONS
 #include <steamtools>
