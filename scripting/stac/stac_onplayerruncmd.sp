@@ -962,8 +962,10 @@ bool IsUserLagging(int userid, bool checkcmdnum = true, bool checktickcount = tr
         )
     )
     {
-        LogMessage("[StAC] player %N is lagging - last lag %f, cur time %f", Cl, timeSinceLagSpikeFor[Cl], engineTime[Cl][0]);
-        timeSinceLagSpikeFor[Cl] = engineTime[Cl][0];
+        if (checkcmdnum && !checktickcount)
+        {
+            timeSinceLagSpikeFor[Cl] = engineTime[Cl][0];
+        }
         return true;
     }
     return false;
