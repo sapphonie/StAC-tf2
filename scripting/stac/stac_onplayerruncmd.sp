@@ -150,8 +150,12 @@ public Action OnPlayerRunCmd
         || engineTime[Cl][0] - 0.5 < timeSinceNullCmd[Cl]
         // don't touch if map or plugin just started - let the server framerate stabilize a bit
         || engineTime[Cl][0] - 2.5 < timeSinceMapStart
-        // lets wait a bit if we had a lag spike in the last 5 seconds
-        || engineTime[Cl][0] - stutterWaitLength < timeSinceLagSpike
+        // lets wait a bit if we had a server lag spike in the last 5 seconds
+        || engineTime[Cl][0] - ServerLagWaitLength < timeSinceLagSpikeFor[0]
+
+        // lets also wait a bit if we had a lag spike in the last 5 seconds on this specific client
+        || engineTime[Cl][0] - PlayerLagWaitLength < timeSinceLagSpikeFor[Cl]
+
         // make sure client isn't timing out - duh
         || IsClientTimingOut(Cl)
         // this is just for halloween shit - plenty of halloween effects can and will mess up all of these checks
@@ -939,18 +943,29 @@ bool IsUserLagging(int userid, bool checkcmdnum = true, bool checktickcount = tr
     if
     (
         // we don't want very much loss at all. this may be removed some day.
-            lossFor[Cl] >= 1.5
+            lossFor[Cl] >= 1.0
         || !isCmdnumSequential(userid) && checkcmdnum
         || !isTickcountInOrder(userid) && checktickcount
-        // tickcount the same over 6 ticks, client is probably lagging
+        // tickcount the same over 6 ticks, client is *definitely* lagging
         || isTickcountRepeated(userid)
-        // if it takes too long or too short to send 10 ticks on average, the client is not stable enough to check
-        // too short
-        || tickspersec[Cl] <= (40)
-        // too long
-        || tickspersec[Cl] >= (100)
+        ||
+        (
+            isDefaultTickrate()
+            &&
+            (
+                // too short
+                tickspersec[Cl] <= (40)
+                ||
+                // too long
+                tickspersec[Cl] >= (100)
+            )
+        )
     )
     {
+        if (checkcmdnum && !checktickcount)
+        {
+            timeSinceLagSpikeFor[Cl] = engineTime[Cl][0];
+        }
         return true;
     }
     return false;

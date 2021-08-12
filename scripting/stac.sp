@@ -24,7 +24,7 @@
 // we have to re pragma because sourcemod sucks lol
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.1.0"
+#define PLUGIN_VERSION  "5.1.1b"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -110,6 +110,8 @@ public void OnPluginStart()
     HookEvent("player_spawn", ePlayerSpawned);
     // hook real player disconnects
     HookEvent("player_disconnect", ePlayerDisconnect);
+    // grab player name changes
+    HookEvent("player_changename", ePlayerChangedName, EventHookMode_Pre);
 
     // hook sv_cheats so we can instantly unload if cheats get turned on
     HookConVarChange(FindConVar("sv_cheats"), GenericCvarChanged);
@@ -191,19 +193,19 @@ public void OnGameFrame()
         if (tickspersec[0] < (tps / 2.0))
         {
             // don't bother printing again lol
-            if (GetEngineTime() - stutterWaitLength < timeSinceLagSpike)
+            if (GetEngineTime() - ServerLagWaitLength < timeSinceLagSpikeFor[0])
             {
                 // silently refresh this var
-                timeSinceLagSpike = GetEngineTime();
+                timeSinceLagSpikeFor[0] = GetEngineTime();
                 return;
             }
-            timeSinceLagSpike = GetEngineTime();
+            timeSinceLagSpikeFor[0] = GetEngineTime();
 
-            StacLog("[StAC] Server framerate stuttered. Expected: %.1f, got %i.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, tickspersec[0], stutterWaitLength);
+            StacLog("[StAC] Server framerate stuttered. Expected: ~%.1f, got %i.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, tickspersec[0], ServerLagWaitLength);
             if (DEBUG)
             {
-                PrintToImportant("{hotpink}[StAC]{white} Server framerate stuttered. Expected: {palegreen}%.1f{white}, got {fullred}%i{white}.\nDisabling OnPlayerRunCmd checks for %f seconds.",
-                tps, tickspersec[0], stutterWaitLength);
+                PrintToImportant("{hotpink}[StAC]{white} Server framerate stuttered. Expected: {palegreen}~%.1f{white}, got {fullred}%i{white}.\nDisabling OnPlayerRunCmd checks for %f seconds.",
+                tps, tickspersec[0], ServerLagWaitLength);
             }
         }
     }
