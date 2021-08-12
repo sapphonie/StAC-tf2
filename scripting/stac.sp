@@ -14,7 +14,7 @@
 #include <morecolors>
 #include <autoexecconfig>
 #undef REQUIRE_PLUGIN
-#include <updater>
+#tryinclude <updater>
 #tryinclude <sourcebanspp>
 #tryinclude <materialadmin>
 #tryinclude <discord>
