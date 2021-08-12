@@ -6,6 +6,7 @@
 
 /***** Cvar Handles *****/
 ConVar stac_enabled;
+ConVar stac_ban_duration;
 ConVar stac_verbose_info;
 ConVar stac_max_allowed_turn_secs;
 ConVar stac_ban_for_misccheats;
@@ -29,6 +30,8 @@ ConVar stac_kick_unauthed_clients;
 ConVar stac_silent;
 
 /***** Misc cheat defaults *****/
+// ban duration
+int banDuration                 = 0;
 // verbose mode
 bool DEBUG                      = false;
 // interp

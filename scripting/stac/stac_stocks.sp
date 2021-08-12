@@ -348,26 +348,26 @@ void BanUser(int userid, char[] reason, char[] pubreason)
             StacLog("[StAC] No STV demo is being recorded, no demo name will be printed to the ban reason!");
         }
     }
-    if (isAuthed) // TODO: Remove hardcoded ban duration (0)
+    if (isAuthed)
     {
         if (SOURCEBANS)
         {
-            SBPP_BanPlayer(0, Cl, 0, reason);
+            SBPP_BanPlayer(0, Cl, banDuration, reason);
             // there's no return value for that native, so we have to just assume it worked lol
             return;
         }
-        if (MATERIALADMIN && MABanPlayer(0, Cl, MA_BAN_STEAM, 0, reason))
+        if (MATERIALADMIN && MABanPlayer(0, Cl, MA_BAN_STEAM, banDuration, reason))
         {
             return;
         }
         if (GBANS)
         {
-            ServerCommand("gb_ban %i, 0, %s", userid, reason);
+            ServerCommand("gb_ban %i, %i, %s", userid, banDuration, reason);
             // there's no return value nor a native for gbans bans (YET), so we have to just assume it worked lol
             return;
         }
         // stock tf2, no ext ban system. if we somehow fail here, keep going.
-        if (BanClient(Cl, 0, BANFLAG_AUTO, reason, reason, _, _))
+        if (BanClient(Cl, banDuration, BANFLAG_AUTO, reason, reason, _, _))
         {
             return;
         }
@@ -377,7 +377,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
     // if this returns true, we can still ban the client with their steamid in a roundabout and annoying way.
     if (!IsActuallyNullString(SteamAuthFor[Cl]))
     {
-        ServerCommand("sm_addban 0 \"%s\" %s", SteamAuthFor[Cl], reason);
+        ServerCommand("sm_addban %i \"%s\" %s", banDuration, SteamAuthFor[Cl], reason);
         KickClient(Cl, "%s", reason);
     }
     // if the above returns false, we can only do ip :/
@@ -386,8 +386,8 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         char ip[16];
         GetClientIP(Cl, ip, sizeof(ip));
 
-        StacLog("[StAC] No cached SteamID for %N! Banning with IP %s...", Cl, ip);
-        ServerCommand("sm_banip %s 0 %s", ip, reason);
+        StacLog("[StAC] No cached SteamID for% N! Banning with IP %s...", Cl, ip);
+        ServerCommand("sm_banip %s %i %s", ip, banDuration, reason);
         // this kick client might not be needed - you get kicked by "being added to ban list"
         // KickClient(Cl, "%s", reason);
     }
