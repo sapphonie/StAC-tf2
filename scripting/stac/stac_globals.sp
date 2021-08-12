@@ -96,6 +96,7 @@ float timeSinceLagSpikeFor[TFMAXPLAYERS + 1];
 
 // native/gamemode/plugin etc bools
 bool SOURCEBANS;
+bool MATERIALADMIN;
 bool GBANS;
 bool STEAMTOOLS;
 bool STEAMWORKS;

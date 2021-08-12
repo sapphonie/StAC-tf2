@@ -72,6 +72,11 @@ Action checkNativesEtc(Handle timer)
     {
         SOURCEBANS = true;
     }
+    // materialadmin
+    if (GetFeatureStatus(FeatureType_Native, "MABanPlayer") == FeatureStatus_Available)
+    {
+        MATERIALADMIN = true;
+    }
     // gbans
     if (CommandExists("gb_ban"))
     {
