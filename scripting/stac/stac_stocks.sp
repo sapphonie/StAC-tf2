@@ -362,7 +362,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         }
         if (GBANS)
         {
-            ServerCommand("gb_ban %i, banDuration, %s", userid, reason);
+            ServerCommand("gb_ban %i, %i, %s", userid, banDuration, reason);
             // there's no return value nor a native for gbans bans (YET), so we have to just assume it worked lol
             return;
         }
@@ -386,7 +386,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         char ip[16];
         GetClientIP(Cl, ip, sizeof(ip));
 
-        StacLog("[StAC] No cached SteamID for %N! Banning with IP %s...", Cl, ip);
+        StacLog("[StAC] No cached SteamID for% N! Banning with IP %s...", Cl, ip);
         ServerCommand("sm_banip %s %i %s", ip, banDuration, reason);
         // this kick client might not be needed - you get kicked by "being added to ban list"
         // KickClient(Cl, "%s", reason);
