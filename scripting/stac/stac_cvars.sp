@@ -45,6 +45,22 @@ void initCvars()
     );
     HookConVarChange(stac_verbose_info, setStacVars);
 
+    // ban duration
+    IntToString(banDuration, buffer, sizeof(buffer));
+    stac_ban_duration =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_ban_duration",
+        buffer,
+        "[StAC] ban duration that StAC will use upon banning cheating clients. 0 = permanent.",
+        FCVAR_NONE,
+        true,
+        0.0,
+        false,
+        _
+    );
+    HookConVarChange(stac_verbose_info, setStacVars);
+
     // turn seconds
     FloatToString(maxAllowedTurnSecs, buffer, sizeof(buffer));
     stac_max_allowed_turn_secs =
@@ -424,6 +440,9 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     {
         SetFailState("[StAC] stac_enabled is set to 0 - aborting!");
     }
+
+    // ban duration var
+    banDuration             = GetConVarInt(stac_ban_duration);
 
     // verbose info var
     DEBUG                   = GetConVarBool(stac_verbose_info);

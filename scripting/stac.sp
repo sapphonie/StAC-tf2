@@ -17,10 +17,10 @@
 #include <updater>
 #tryinclude <sourcebanspp>
 #tryinclude <materialadmin>
-#include <discord>
+#tryinclude <discord>
 #undef REQUIRE_EXTENSIONS
-#include <steamtools>
-#include <SteamWorks>
+#tryinclude <steamtools>
+#tryinclude <SteamWorks>
 
 // we have to re pragma because sourcemod sucks lol
 #pragma newdecls required
