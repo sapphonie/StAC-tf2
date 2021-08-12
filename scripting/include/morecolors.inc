@@ -990,6 +990,6 @@ stock StringMap MC_InitColorTrie() {
 	hTrie.SetValue("whitesmoke", 0xF5F5F5);
 	hTrie.SetValue("yellow", 0xFFFF00);
 	hTrie.SetValue("yellowgreen", 0x9ACD32);
-	
+
 	return hTrie;
 }
