@@ -112,17 +112,20 @@ Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
 
 Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
 {
-    // get ent classname AKA the weapon name
+    // get ent classname AKA the weapon name, ignore if it's a mvm robot weapon or an mvm robot or the world doing damage
     if (!IsValidEntity(weapon) || weapon <= 0 || !IsValidClient(attacker))
     {
         return Plugin_Continue;
     }
 
-    GetEntityClassname(weapon, hurtWeapon[attacker], 256);
+    GetEntityClassname(weapon, hurtWeapon[attacker], sizeof(hurtWeapon[]));
     if
     (
         // player didn't hurt self
-           victim != attacker
+        victim != attacker
+        &&
+        // not fire
+        !(damagetype & DMG_BURN)
     )
     {
         didHurtThisFrame[attacker] = true;

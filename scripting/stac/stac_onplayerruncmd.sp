@@ -317,7 +317,6 @@ void bhopCheck(int userid)
     }
 }
 
-
 /*
     TURN BIND TEST
 */
@@ -419,7 +418,8 @@ void cmdnumspikeCheck(int userid)
     if (maxCmdnumDetections != -1)
     {
         int spikeamt = clcmdnum[Cl][0] - clcmdnum[Cl][1];
-        if (spikeamt >= 64 || spikeamt < 0)
+        // https://github.com/sapphonie/StAC-tf2/issues/74
+        if (spikeamt >= 8 || spikeamt < 0)
         {
             char heldWeapon[256];
             GetClientWeapon(Cl, heldWeapon, sizeof(heldWeapon));
@@ -555,6 +555,17 @@ void spinbotCheck(int userid)
      angles2: x 8.82 y 127.68
 */
 
+// todo: https://github.com/sapphonie/StAC-tf2/issues/74
+// check angle diff from clangles[Cl][1] to clangles[Cl][0] and clangles[Cl][2] , count if they "match" up to an epsilon of 1.0 deg (ish?)
+// my foolishly =='ing floats must unfortunately come to an end
+/*
+
+bool floatcmpreal( float a, float b, float precision = 0.001 )
+{
+    return FloatAbs( a - b ) <= precision;
+}
+
+*/
 void psilentCheck(int userid)
 {
     int Cl = GetClientOfUserId(userid);
@@ -569,9 +580,10 @@ void psilentCheck(int userid)
         maxPsilentDetections != -1
         &&
         (
-            clbuttons[Cl][0] & IN_ATTACK
-            ||
-            clbuttons[Cl][1] & IN_ATTACK
+               clbuttons[Cl][0] & IN_ATTACK
+            || clbuttons[Cl][2] & IN_ATTACK
+            || clbuttons[Cl][3] & IN_ATTACK
+            || clbuttons[Cl][4] & IN_ATTACK
         )
     )
     {
@@ -581,6 +593,8 @@ void psilentCheck(int userid)
             (
                    clangles[Cl][0][0] == clangles[Cl][2][0]
                 && clangles[Cl][0][1] == clangles[Cl][2][1]
+                // floatcmpreal(clangles[Cl][0][0], clangles[Cl][2][0], 1.0);
+                // floatcmpreal(clangles[Cl][0][0], clangles[Cl][2][0], 1.0);
             )
             &&
             // BUT the 1st previous (in between) angle doesnt?
@@ -688,8 +702,22 @@ void psilentCheck(int userid)
 void aimsnapCheck(int userid)
 {
     int Cl = GetClientOfUserId(userid);
-    // for some reason this just does not behave well in mvm
-    if (maxAimsnapDetections != -1 && !MVM)
+
+    if
+    (
+        // for some reason this just does not behave well in mvm
+        !MVM
+        // only check if we have this check enabled
+        &&  maxAimsnapDetections != -1
+        // only check if we pressed attack recently
+        &&
+        (
+               clbuttons[Cl][0] & IN_ATTACK
+            || clbuttons[Cl][1] & IN_ATTACK
+            || clbuttons[Cl][2] & IN_ATTACK
+            || clbuttons[Cl][3] & IN_ATTACK
+        )
+    )
     {
         float aDiff[4];
         aDiff[0] = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], clangles[Cl][1]));
@@ -702,11 +730,13 @@ void aimsnapCheck(int userid)
         // 0.018540, 0.000000, 91.355995, 0.000000
 
         // only check if we actually did hitscan dmg in the current frame
+        // thinking about removing this...
         if
         (
-            didHurtOnFrame[Cl][1]
-            &&
-            didBangOnFrame[Cl][1]
+               didBangOnFrame[Cl][1]
+            || didHurtOnFrame[Cl][1]
+            || didBangOnFrame[Cl][2]
+            || didHurtOnFrame[Cl][2]
         )
         {
             float snapsize = 15.0;
@@ -830,17 +860,11 @@ void triggerbotCheck(int userid)
 
         if
         (
-            !(
-                clbuttons[Cl][2] & IN_ATTACK
-            )
+            !(clbuttons[Cl][2] & IN_ATTACK)
             &&
-            (
-                clbuttons[Cl][1] & IN_ATTACK
-            )
+            (clbuttons[Cl][1] & IN_ATTACK)
             &&
-            !(
-                clbuttons[Cl][0] & IN_ATTACK
-            )
+            !(clbuttons[Cl][0] & IN_ATTACK)
         )
         {
             attack = 1;
@@ -854,36 +878,31 @@ void triggerbotCheck(int userid)
 
         else if
         (
-            !(
-                clbuttons[Cl][2] & IN_ATTACK2
-            )
+            !(clbuttons[Cl][2] & IN_ATTACK2)
             &&
-            (
-                clbuttons[Cl][1] & IN_ATTACK2
-            )
+            (clbuttons[Cl][1] & IN_ATTACK2)
             &&
-            !(
-                clbuttons[Cl][0] & IN_ATTACK2
-            )
+            !(clbuttons[Cl][0] & IN_ATTACK2)
         )
         {
             attack = 2;
         }
         if
         (
+            // count all attack2 single inputs
+            (
+                attack == 2
+            )
+            ||
             // thinking about removing this...
             (
                    didBangOnFrame[Cl][0]
-                || didHurtOnFrame[Cl][0]
                 || didBangOnFrame[Cl][1]
-                || didHurtOnFrame[Cl][1]
                 || didBangOnFrame[Cl][2]
-                || didHurtOnFrame[Cl][2]
-            )
-            &&
-            // count all attack2 single inputs
-            (
-                attack > 0
+                // either we ignore nonhitscan or we ignore certain weapons
+                //|| didHurtOnFrame[Cl][0]
+                //|| didHurtOnFrame[Cl][1]
+                //|| didHurtOnFrame[Cl][2]
             )
         )
         {
