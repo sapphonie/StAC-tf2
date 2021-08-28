@@ -889,20 +889,26 @@ void triggerbotCheck(int userid)
         }
         if
         (
+            // attack > 0
+            // &&
+            // thinking about removing this...
+            (
+                (
+                       didBangOnFrame[Cl][0]
+                    || didBangOnFrame[Cl][1]
+                    || didBangOnFrame[Cl][2]
+                    // either we ignore nonhitscan or we ignore certain weapons
+                    //|| didHurtOnFrame[Cl][0]
+                    //|| didHurtOnFrame[Cl][1]
+                    //|| didHurtOnFrame[Cl][2]
+                )
+                &&
+                attack == 1
+            )
+            ||
             // count all attack2 single inputs
             (
                 attack == 2
-            )
-            ||
-            // thinking about removing this...
-            (
-                   didBangOnFrame[Cl][0]
-                || didBangOnFrame[Cl][1]
-                || didBangOnFrame[Cl][2]
-                // either we ignore nonhitscan or we ignore certain weapons
-                //|| didHurtOnFrame[Cl][0]
-                //|| didHurtOnFrame[Cl][1]
-                //|| didHurtOnFrame[Cl][2]
             )
         )
         {
