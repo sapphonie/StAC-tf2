@@ -715,7 +715,6 @@ void aimsnapCheck(int userid)
                clbuttons[Cl][0] & IN_ATTACK
             || clbuttons[Cl][1] & IN_ATTACK
             || clbuttons[Cl][2] & IN_ATTACK
-            || clbuttons[Cl][3] & IN_ATTACK
         )
     )
     {
