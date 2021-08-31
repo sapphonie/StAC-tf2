@@ -46,6 +46,9 @@ void StacLog(const char[] format, any ...)
     // clear color tags
     MC_RemoveTags(buffer, sizeof(buffer));
 
+    // add colored tags :D
+    Format(buffer, sizeof(buffer), ansi_bright_magenta ... "[StAC]" ... ansi_reset ... " %s", buffer);
+
     if (StacLogFile != null)
     {
         LogToOpenFile(StacLogFile, buffer);
@@ -345,7 +348,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         }
         else
         {
-            StacLog("[StAC] No STV demo is being recorded, no demo name will be printed to the ban reason!");
+            StacLog("No STV demo is being recorded, no demo name will be printed to the ban reason!");
         }
     }
     if (isAuthed)
@@ -386,7 +389,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         char ip[16];
         GetClientIP(Cl, ip, sizeof(ip));
 
-        StacLog("[StAC] No cached SteamID for% N! Banning with IP %s...", Cl, ip);
+        StacLog("No cached SteamID for% N! Banning with IP %s...", Cl, ip);
         ServerCommand("sm_banip %s %i %s", ip, banDuration, reason);
         // this kick client might not be needed - you get kicked by "being added to ban list"
         // KickClient(Cl, "%s", reason);

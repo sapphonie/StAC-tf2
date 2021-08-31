@@ -121,7 +121,7 @@ void ResetTimers()
 
             if (DEBUG)
             {
-                StacLog("[StAC] Creating timer for %L", Cl);
+                StacLog("Creating timer for %L", Cl);
             }
             // lets make a timer with a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
             QueryTimer[Cl] =
@@ -148,7 +148,7 @@ void ActuallySetRandomSeed()
     int seed = GetURandomInt();
     if (DEBUG)
     {
-        StacLog("[StAC] setting random server seed to %i", seed);
+        StacLog("setting random server seed to %i", seed);
     }
     SetRandomSeed(seed);
 }

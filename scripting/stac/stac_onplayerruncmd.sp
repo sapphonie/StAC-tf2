@@ -44,7 +44,7 @@ public Action OnPlayerRunCmd
     {
         if (cmdnum < 0 || tickcount < 0)
         {
-            StacLog("[StAC] cmdnum %i, tickcount %i", cmdnum, tickcount);
+            StacLog("cmdnum %i, tickcount %i", cmdnum, tickcount);
             StacGeneralPlayerNotify(userid, "Client has invalid usercmd data!");
             // returning Plugin_Handled allows for airstuck to work again
             return Plugin_Continue;

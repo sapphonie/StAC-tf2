@@ -108,7 +108,7 @@ Action BanName(Handle timer, int userid)
     {
         PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N has illegal chars in their name!", Cl);
         StacLogSteam(userid);
-        StacLog("[StAC] [Detection] Player %N has illegal chars in their name!", Cl);
+        StacLog("[Detection] Player %N has illegal chars in their name!", Cl);
     }
 }
 
@@ -376,7 +376,7 @@ void MiscCheatsEtcsCheck(int userid)
         ClientCommand(Cl, "firstperson");
         if (DEBUG)
         {
-            StacLog("[StAC] Executed firstperson command on Player %N", Cl);
+            StacLog("Executed firstperson command on Player %N", Cl);
         }
         */
         checkInterp(userid);
