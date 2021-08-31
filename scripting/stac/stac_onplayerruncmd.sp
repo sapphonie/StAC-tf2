@@ -419,7 +419,7 @@ void cmdnumspikeCheck(int userid)
     {
         int spikeamt = clcmdnum[Cl][0] - clcmdnum[Cl][1];
         // https://github.com/sapphonie/StAC-tf2/issues/74
-        if (spikeamt >= 8 || spikeamt < 0)
+        if (spikeamt >= 12 || spikeamt < 0)
         {
             char heldWeapon[256];
             GetClientWeapon(Cl, heldWeapon, sizeof(heldWeapon));
