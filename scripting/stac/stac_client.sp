@@ -125,7 +125,7 @@ Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, i
         victim != attacker
         &&
         // not fire
-        !(dmaagetype & DMG_IGNITE)
+        !(damagetype & DMG_IGNITE)
     )
     {
         didHurtThisFrame[attacker] = true;
