@@ -3,6 +3,11 @@
 // Open log file for StAC
 void OpenStacLog()
 {
+    if (StacLogFile != null)
+    {
+        FlushFile(StacLogFile);
+        return;
+    }
     // current date for log file (gets updated on map change to not spread out maps across files on date changes)
     char curDate[32];
 
@@ -35,33 +40,61 @@ void OpenStacLog()
 // Close log file for StAC
 void CloseStacLog()
 {
+    FlushFile(StacLogFile);
     delete StacLogFile;
 }
 
 // log to StAC log file
 void StacLog(const char[] format, any ...)
 {
+    // crutch for reloading the plugin and still printing to our log file
+    if (StacLogFile == null)
+    {
+        ConVar temp_staclogtofile = FindConVar("stac_log_to_file");
+        if (temp_staclogtofile != null)
+        {
+            if (GetConVarBool(temp_staclogtofile))
+            {
+                OpenStacLog();
+            }
+        }
+    }
+
     char buffer[254];
-    VFormat(buffer, sizeof(buffer), format, 2);
+    VFormat(buffer,         sizeof(buffer),         format, 2);
     // clear color tags
     MC_RemoveTags(buffer, sizeof(buffer));
 
+    char nowtime[64];
+    int int_nowtime = GetTime();
+
+    FormatTime(nowtime, sizeof(nowtime), "%H:%M:%S", int_nowtime);
+
+    char file_buffer[254];
+    strcopy(file_buffer,    sizeof(file_buffer),    buffer);
+    // add newlines
+    Format(file_buffer, sizeof(file_buffer), "<%s> %s\n", nowtime, file_buffer);
+
+    char colored_buffer[254];
+    strcopy(colored_buffer, sizeof(colored_buffer), buffer);
     // add colored tags :D
-    Format(buffer, sizeof(buffer), ansi_bright_magenta ... "[StAC]" ... ansi_reset ... " %s", buffer);
+    Format(colored_buffer, sizeof(colored_buffer), ansi_bright_magenta ... "[StAC]" ... ansi_reset ... " %s", colored_buffer);
+
+    // add the tag to the normal thing
+    Format(buffer, sizeof(buffer), "[StAC] %s", buffer);
+
 
     if (StacLogFile != null)
     {
-        LogToOpenFile(StacLogFile, buffer);
+        WriteFileString(StacLogFile, file_buffer, false);
     }
     else if (logtofile)
     {
         LogMessage("[StAC] File handle invalid!");
-        LogMessage("%s", buffer);
     }
-    else
-    {
-        LogMessage("%s", buffer);
-    }
+
+    LogMessage("%s", colored_buffer);
+
     PrintToConsoleAllAdmins("%s", buffer);
 }
 

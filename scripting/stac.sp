@@ -72,6 +72,7 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+    StacLog("\n\n----> StAC version [%s] loaded\n", PLUGIN_VERSION);
     // check if tf2, unload if not
     if (GetEngineVersion() != Engine_TF2)
     {
@@ -154,14 +155,13 @@ public void OnPluginStart()
     // set up our array we'll use for checking cvars
     InitCvarArray();
 
-    StacLog("Plugin vers. ---- %s ---- loaded", PLUGIN_VERSION);
-
+    // jaypatch
     OnPluginStart_jaypatch();
 }
 
 public void OnPluginEnd()
 {
-    StacLog("Plugin vers. ---- %s ---- unloaded", PLUGIN_VERSION);
+    StacLog("\n\n----> StAC version [%s] unloaded\n", PLUGIN_VERSION);
     NukeTimers();
     OnMapEnd();
 }
