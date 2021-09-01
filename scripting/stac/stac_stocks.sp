@@ -93,7 +93,7 @@ void StacLog(const char[] format, any ...)
         LogMessage("[StAC] File handle invalid!");
     }
 
-    LogMessage("%s", colored_buffer);
+    PrintToServer("%s", colored_buffer);
 
     PrintToConsoleAllAdmins("%s", buffer);
 }
