@@ -4,12 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "5.1.0"
+            "Latest"    "5.1.1"
         }
 
-        "Notes" "Changes in 5.1.0"
-        "Notes" "- Translations update"
-        "Notes" "- Better SteamID and demoname logging on detection"
+        "Notes" "Changes in 5.1.1"
+        "Notes" "- misc fixes"
     }
 
     "Files"
