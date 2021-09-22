@@ -759,8 +759,8 @@ void SendMessageToDiscord(char[] message)
 
 void checkOS()
 {
-    // not a native
-    char cmdline[256];
+    // only need the beginning of this
+    char cmdline[32];
     GetCommandLine(cmdline, sizeof(cmdline));
 
     if (StrContains(cmdline, "./srcds_linux ", false) != -1)
