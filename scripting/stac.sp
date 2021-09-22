@@ -104,7 +104,7 @@ public void OnPluginStart()
     // setup regex - "Recording to ".*""
     demonameRegex       = CompileRegex("Recording to \".*\"");
     demonameRegexFINAL  = CompileRegex("\".*\"");
-    publicIPRegex       = CompileRegex("public ip: \\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b");
+    publicIPRegex       = CompileRegex("(ip  : .*)\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b");
     IPRegex             = CompileRegex("\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b");
 
     // grab round start events for calculating tps
@@ -157,6 +157,8 @@ public void OnPluginStart()
 
     // jaypatch
     OnPluginStart_jaypatch();
+
+    checkOS();
 }
 
 public void OnPluginEnd()

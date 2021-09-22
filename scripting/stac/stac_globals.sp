@@ -250,3 +250,4 @@ int t                  [TFMAXPLAYERS+1];
 
 float secTime          [TFMAXPLAYERS+1];
 
+char os                [16];

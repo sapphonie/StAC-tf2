@@ -77,8 +77,15 @@ void StacLog(const char[] format, any ...)
 
     char colored_buffer[254];
     strcopy(colored_buffer, sizeof(colored_buffer), buffer);
-    // add colored tags :D
-    Format(colored_buffer, sizeof(colored_buffer), ansi_bright_magenta ... "[StAC]" ... ansi_reset ... " %s", colored_buffer);
+    if (StrEqual(os, "linux"))
+    {
+        // add colored tags :D
+        Format(colored_buffer, sizeof(colored_buffer), ansi_bright_magenta ... "[StAC]" ... ansi_reset ... " %s", colored_buffer);
+    }
+    else
+    {
+        Format(colored_buffer, sizeof(colored_buffer), "[StAC] %s", colored_buffer);
+    }
 
     // add the tag to the normal thing
     Format(buffer, sizeof(buffer), "[StAC] %s", buffer);
@@ -422,7 +429,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         char ip[16];
         GetClientIP(Cl, ip, sizeof(ip));
 
-        StacLog("No cached SteamID for% N! Banning with IP %s...", Cl, ip);
+        StacLog("No cached SteamID for %N! Banning with IP %s...", Cl, ip);
         ServerCommand("sm_banip %s %i %s", ip, banDuration, reason);
         // this kick client might not be needed - you get kicked by "being added to ban list"
         // KickClient(Cl, "%s", reason);
@@ -746,4 +753,21 @@ void SendMessageToDiscord(char[] message)
 {
     char webhook[32] = "stac";
     Discord_SendMessage(webhook, message);
+}
+
+void checkOS()
+{
+    // not a native
+    char cmdline[256];
+    GetCommandLine(cmdline, sizeof(cmdline));
+    StacLog("CMDLINE = %s", cmdline);
+
+    if (StrContains(cmdline, ".", false) != -1)
+    {
+        os = "linux";
+    }
+    else if (StrContains(cmdline, ".exe", false) != -1)
+    {
+        os = "windows";
+    }
 }

@@ -580,10 +580,9 @@ void psilentCheck(int userid)
         maxPsilentDetections != -1
         &&
         (
-               clbuttons[Cl][0] & IN_ATTACK
-            || clbuttons[Cl][2] & IN_ATTACK
-            || clbuttons[Cl][3] & IN_ATTACK
-            || clbuttons[Cl][4] & IN_ATTACK
+            clbuttons[Cl][0] & IN_ATTACK
+            ||
+            clbuttons[Cl][1] & IN_ATTACK
         )
     )
     {
@@ -732,10 +731,9 @@ void aimsnapCheck(int userid)
         // thinking about removing this...
         if
         (
-               didBangOnFrame[Cl][1]
-            || didHurtOnFrame[Cl][1]
-            || didBangOnFrame[Cl][2]
-            || didHurtOnFrame[Cl][2]
+            didHurtOnFrame[Cl][1]
+            &&
+            didBangOnFrame[Cl][1]
         )
         {
             float snapsize = 15.0;
@@ -888,26 +886,19 @@ void triggerbotCheck(int userid)
         }
         if
         (
-            // attack > 0
-            // &&
             // thinking about removing this...
             (
-                (
-                       didBangOnFrame[Cl][0]
-                    || didBangOnFrame[Cl][1]
-                    || didBangOnFrame[Cl][2]
-                    // either we ignore nonhitscan or we ignore certain weapons
-                    //|| didHurtOnFrame[Cl][0]
-                    //|| didHurtOnFrame[Cl][1]
-                    //|| didHurtOnFrame[Cl][2]
-                )
-                &&
-                attack == 1
+                   didBangOnFrame[Cl][0]
+                || didHurtOnFrame[Cl][0]
+                || didBangOnFrame[Cl][1]
+                || didHurtOnFrame[Cl][1]
+                || didBangOnFrame[Cl][2]
+                || didHurtOnFrame[Cl][2]
             )
-            ||
+            &&
             // count all attack2 single inputs
             (
-                attack == 2
+                attack > 0
             )
         )
         {
