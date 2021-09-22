@@ -38,7 +38,7 @@ Action checkNativesEtc(Handle timer)
     // check sv cheats
     if (GetConVarBool(FindConVar("sv_cheats")))
     {
-        //SetFailState("sv_cheats set to 1! Aborting!");
+        //SetFailState("[StAC] sv_cheats set to 1! Aborting!");
     }
     // check wait command
     if (GetConVarBool(FindConVar("sv_allow_wait_command")))
@@ -121,7 +121,7 @@ void ResetTimers()
 
             if (DEBUG)
             {
-                StacLog("Creating timer for %L", Cl);
+                StacLog("[StAC] Creating timer for %L", Cl);
             }
             // lets make a timer with a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
             QueryTimer[Cl] =
@@ -148,24 +148,17 @@ void ActuallySetRandomSeed()
     int seed = GetURandomInt();
     if (DEBUG)
     {
-        StacLog("setting random server seed to %i", seed);
+        StacLog("[StAC] setting random server seed to %i", seed);
     }
     SetRandomSeed(seed);
 }
 
-// jesus this is ugly
 void checkStatus()
 {
     char status[2048];
     ServerCommandEx(status, sizeof(status), "status");
     char ipetc[128];
     char ip[24];
-
-    char hostport[8];
-    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
-
-    Format(hostipandport, sizeof(hostipandport), "un.known.ip.addr:%s", hostport);
-
     if (MatchRegex(publicIPRegex, status) > 0)
     {
         if (GetRegexSubString(publicIPRegex, 0, ipetc, sizeof(ipetc)))
@@ -175,12 +168,15 @@ void checkStatus()
             {
                 if (GetRegexSubString(IPRegex, 0, ip, sizeof(ip)))
                 {
-                    Format(hostipandport, sizeof(hostipandport), "%s:%s", ip, hostport);
+                    strcopy(hostipandport, sizeof(hostipandport), ip);
+                    StrCat(hostipandport, sizeof(hostipandport), ":");
+                    char hostport[6];
+                    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
+                    StrCat(hostipandport, sizeof(hostipandport), hostport);
                 }
             }
         }
     }
-    StacLog("Server IP + Port = %s", hostipandport);
 }
 
 void DoTPSMath()
@@ -193,5 +189,4 @@ void DoTPSMath()
         StacLog("tickinterv %f, tps %f", tickinterv, tps);
     }
 }
-
 

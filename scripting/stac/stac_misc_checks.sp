@@ -424,3 +424,21 @@ void checkInterp(int userid)
         }
     }
 }
+
+
+// IDENTIFY   = 0xCA7;
+// REPLY      = 0xCA8;
+int C_ID      = 3239;
+int C_RPLY    = 3240;
+void cheevCheck(int Cl, int id)
+{
+    int userid = GetClientUserId(Cl);
+
+    LogMessage("user %N earned ach %i", Cl, id);
+
+    if (id == C_ID || id == C_RPLY)
+    {
+        StacGeneralPlayerNotify(userid, "USER IS USING CHEAT W/ CALL/RESP");
+    }
+}
+

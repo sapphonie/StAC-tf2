@@ -8,6 +8,9 @@
     - FAKE ANGLES
     - TURN BINDS
 */
+
+// float srvClangles[TFMAXPLAYERS+1][3][3];
+
 public Action OnPlayerRunCmd
 (
     int Cl,
@@ -70,6 +73,21 @@ public Action OnPlayerRunCmd
     clangles[Cl][2] = clangles[Cl][1];
     clangles[Cl][1] = clangles[Cl][0];
     clangles[Cl][0] = angles;
+    // GetClientEyeAngles( Cl, clangles[Cl][0] );
+
+
+/*
+    srvClangles[Cl][2] = srvClangles[Cl][1];
+    srvClangles[Cl][1] = srvClangles[Cl][0];
+    GetClientEyeAngles( Cl, srvClangles[Cl][0] );
+
+    LogMessage(
+        "real angles = %f %f %f",
+        srvClangles[Cl][0][0],
+        srvClangles[Cl][1][0],
+        srvClangles[Cl][2][0]
+    );
+*/
 
     // grab cmdnum
     for (int i = 5; i > 0; --i)

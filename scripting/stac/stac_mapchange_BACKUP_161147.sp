@@ -161,11 +161,18 @@ void checkStatus()
     char ipetc[128];
     char ip[24];
 
+
+<<<<<<< HEAD
     char hostport[8];
     GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
 
     Format(hostipandport, sizeof(hostipandport), "un.known.ip.addr:%s", hostport);
 
+=======
+    char hostport[6];
+    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
+
+>>>>>>> hotfix/fixup-ip-and-add-cheev-test
     if (MatchRegex(publicIPRegex, status) > 0)
     {
         if (GetRegexSubString(publicIPRegex, 0, ipetc, sizeof(ipetc)))
@@ -180,7 +187,11 @@ void checkStatus()
             }
         }
     }
+<<<<<<< HEAD
     StacLog("Server IP + Port = %s", hostipandport);
+=======
+    StacLog("[StAC] Server IP + Port = %s", hostipandport);
+>>>>>>> hotfix/fixup-ip-and-add-cheev-test
 }
 
 void DoTPSMath()

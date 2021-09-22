@@ -161,6 +161,7 @@ void checkStatus()
     char ipetc[128];
     char ip[24];
 
+
     char hostport[8];
     GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
 

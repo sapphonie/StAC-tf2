@@ -104,7 +104,10 @@ public void OnPluginStart()
     // setup regex - "Recording to ".*""
     demonameRegex       = CompileRegex("Recording to \".*\"");
     demonameRegexFINAL  = CompileRegex("\".*\"");
+<<<<<<< HEAD
+=======
     // this is fucking disgusting
+>>>>>>> hotfix/fixup-ip-and-add-cheev-test
     publicIPRegex       = CompileRegex("(ip  : .*)\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b");
     IPRegex             = CompileRegex("\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b");
 

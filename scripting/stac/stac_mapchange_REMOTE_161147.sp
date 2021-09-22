@@ -38,7 +38,7 @@ Action checkNativesEtc(Handle timer)
     // check sv cheats
     if (GetConVarBool(FindConVar("sv_cheats")))
     {
-        //SetFailState("sv_cheats set to 1! Aborting!");
+        //SetFailState("[StAC] sv_cheats set to 1! Aborting!");
     }
     // check wait command
     if (GetConVarBool(FindConVar("sv_allow_wait_command")))
@@ -121,7 +121,7 @@ void ResetTimers()
 
             if (DEBUG)
             {
-                StacLog("Creating timer for %L", Cl);
+                StacLog("[StAC] Creating timer for %L", Cl);
             }
             // lets make a timer with a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
             QueryTimer[Cl] =
@@ -148,7 +148,7 @@ void ActuallySetRandomSeed()
     int seed = GetURandomInt();
     if (DEBUG)
     {
-        StacLog("setting random server seed to %i", seed);
+        StacLog("[StAC] setting random server seed to %i", seed);
     }
     SetRandomSeed(seed);
 }
@@ -161,10 +161,9 @@ void checkStatus()
     char ipetc[128];
     char ip[24];
 
-    char hostport[8];
-    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
 
-    Format(hostipandport, sizeof(hostipandport), "un.known.ip.addr:%s", hostport);
+    char hostport[6];
+    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
 
     if (MatchRegex(publicIPRegex, status) > 0)
     {
@@ -180,7 +179,7 @@ void checkStatus()
             }
         }
     }
-    StacLog("Server IP + Port = %s", hostipandport);
+    StacLog("[StAC] Server IP + Port = %s", hostipandport);
 }
 
 void DoTPSMath()
