@@ -68,7 +68,7 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
 
     if (DEBUG)
     {
-        StacLog("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
+        StacLog("Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
     }
 
     if (StrEqual(cvarName, "sensitivity"))
@@ -146,7 +146,7 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
     else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
     {
         PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", cvarName, Cl);
-        StacLog("[StAC] Could not query cvar %s on player %L", cvarName, Cl);
+        StacLog("Could not query cvar %s on player %L", cvarName, Cl);
     }
 }
 
@@ -256,7 +256,7 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
     {
         if (DEBUG)
         {
-            StacLog("[StAC] Checking client id, %i, %L", Cl, Cl);
+            StacLog("Checking client id, %i, %L", Cl, Cl);
         }
         // init variable to pass to QueryCvarsEtc
         int i;
@@ -331,7 +331,7 @@ void QueryEverythingAllClients()
 {
     if (DEBUG)
     {
-        StacLog("[StAC] Querying all clients");
+        StacLog("Querying all clients");
     }
     // loop thru all clients
     for (int Cl = 1; Cl <= MaxClients; Cl++)

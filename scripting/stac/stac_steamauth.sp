@@ -39,7 +39,7 @@ bool isSteamStable()
         return false;
     }
 
-    StacLog("[StAC] GetEngineTime() - steamLastOnlineTime = %f >? 300.0", GetEngineTime() - steamLastOnlineTime);
+    StacLog("GetEngineTime() - steamLastOnlineTime = %f >? 300.0", GetEngineTime() - steamLastOnlineTime);
 
     // time since steam last came online must be greater than 300
     if (GetEngineTime() - steamLastOnlineTime >= 300.0)

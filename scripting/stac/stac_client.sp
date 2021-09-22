@@ -18,7 +18,7 @@ public void OnClientPutInServer(int Cl)
         // query convars on player connect
         if (DEBUG)
         {
-            StacLog("[StAC] %N joined. Checking cvars", Cl);
+            StacLog("%N joined. Checking cvars", Cl);
         }
         QueryTimer[Cl] = CreateTimer(5.0, Timer_CheckClientConVars, userid);
 
@@ -42,13 +42,13 @@ Action CheckAuthOn(Handle timer, int userid)
                 if (kickUnauth)
                 {
                     StacGeneralPlayerNotify(userid, "Kicked for being unauthorized w/ Steam");
-                    StacLog("[StAC] Kicking %N for not being authorized with Steam.", Cl);
+                    StacLog("Kicking %N for not being authorized with Steam.", Cl);
                     KickClient(Cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
                 }
                 else
                 {
                     StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
-                    StacLog("[StAC] Client %N failed to authorize w/ Steam in a timely manner.", Cl);
+                    StacLog("Client %N failed to authorize w/ Steam in a timely manner.", Cl);
                 }
             }
         }
@@ -78,7 +78,7 @@ public void OnClientAuthorized(int Cl, const char[] auth)
         strcopy(SteamAuthFor[Cl], sizeof(SteamAuthFor[]), auth);
         if (DEBUG)
         {
-            StacLog("[StAC] auth %s for Cl %N", auth, Cl);
+            StacLog("auth %s for Cl %N", auth, Cl);
         }
     }
 }
@@ -112,20 +112,22 @@ Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
 
 Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
 {
-    // get ent classname AKA the weapon name, ignore if it's a mvm robot weapon or an mvm robot or the world doing damage
+    // ignore if it's a mvm robot weapon or an mvm robot or the world doing damage
     if (!IsValidEntity(weapon) || weapon <= 0 || !IsValidClient(attacker))
     {
         return Plugin_Continue;
     }
 
+    // get ent classname AKA the weapon name
     GetEntityClassname(weapon, hurtWeapon[attacker], sizeof(hurtWeapon[]));
     if
     (
         // player didn't hurt self
         victim != attacker
-        &&
         // not fire
-        !(damagetype & DMG_IGNITE)
+        && !(damagetype & DMG_IGNITE)
+        && !(damagetype & TF_CUSTOM_BURNING_FLARE)
+        && !(damagetype & TF_CUSTOM_BURNING)
     )
     {
         didHurtThisFrame[attacker] = true;
