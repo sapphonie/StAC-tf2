@@ -194,6 +194,16 @@ public Action ePlayerChangedName(Handle event, char[] name, bool dontBroadcast)
     return Plugin_Continue;
 }
 
+public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
+{
+    int Cl              = GetEventInt(event, "player");
+    int achieve_id      = GetEventInt(event, "achievementID");
+
+    cheevCheck(Cl, achieve_id);
+
+    return Plugin_Continue;
+}
+
 void ClearClBasedVars(int userid)
 {
     // get fresh cli id

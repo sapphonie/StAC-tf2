@@ -153,12 +153,18 @@ void ActuallySetRandomSeed()
     SetRandomSeed(seed);
 }
 
+// jesus this is ugly
 void checkStatus()
 {
     char status[2048];
     ServerCommandEx(status, sizeof(status), "status");
     char ipetc[128];
     char ip[24];
+
+
+    char hostport[6];
+    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
+
     if (MatchRegex(publicIPRegex, status) > 0)
     {
         if (GetRegexSubString(publicIPRegex, 0, ipetc, sizeof(ipetc)))
@@ -168,15 +174,12 @@ void checkStatus()
             {
                 if (GetRegexSubString(IPRegex, 0, ip, sizeof(ip)))
                 {
-                    strcopy(hostipandport, sizeof(hostipandport), ip);
-                    StrCat(hostipandport, sizeof(hostipandport), ":");
-                    char hostport[6];
-                    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
-                    StrCat(hostipandport, sizeof(hostipandport), hostport);
+                    Format(hostipandport, sizeof(hostipandport), "%s:%s", ip, hostport);
                 }
             }
         }
     }
+    StacLog("[StAC] Server IP + Port = %s", hostipandport);
 }
 
 void DoTPSMath()
@@ -189,4 +192,5 @@ void DoTPSMath()
         StacLog("tickinterv %f, tps %f", tickinterv, tps);
     }
 }
+
 
