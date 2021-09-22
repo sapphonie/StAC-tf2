@@ -77,6 +77,8 @@ void StacLog(const char[] format, any ...)
 
     char colored_buffer[254];
     strcopy(colored_buffer, sizeof(colored_buffer), buffer);
+
+
     if (StrEqual(os, "linux"))
     {
         // add colored tags :D
@@ -760,14 +762,17 @@ void checkOS()
     // not a native
     char cmdline[256];
     GetCommandLine(cmdline, sizeof(cmdline));
-    StacLog("CMDLINE = %s", cmdline);
 
-    if (StrContains(cmdline, ".", false) != -1)
+    if (StrContains(cmdline, "./srcds_linux ", false) != -1)
     {
         os = "linux";
     }
     else if (StrContains(cmdline, ".exe", false) != -1)
     {
         os = "windows";
+    }
+    else
+    {
+        os = "unknown";
     }
 }

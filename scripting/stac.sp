@@ -87,6 +87,8 @@ public void OnPluginStart()
     LoadTranslations("common.phrases");
     LoadTranslations("stac.phrases.txt");
 
+    checkOS();
+
     // updater
     if (LibraryExists("updater"))
     {
@@ -160,8 +162,6 @@ public void OnPluginStart()
 
     // jaypatch
     OnPluginStart_jaypatch();
-
-    checkOS();
 }
 
 public void OnPluginEnd()
