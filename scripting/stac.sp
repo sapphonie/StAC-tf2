@@ -12,6 +12,7 @@
 #include <tf2_stocks>
 // external incs
 #include <morecolors>
+#include <concolors>
 #include <autoexecconfig>
 #undef REQUIRE_PLUGIN
 #tryinclude <updater>
@@ -71,6 +72,7 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+    StacLog("\n\n----> StAC version [%s] loaded\n", PLUGIN_VERSION);
     // check if tf2, unload if not
     if (GetEngineVersion() != Engine_TF2)
     {
@@ -153,14 +155,13 @@ public void OnPluginStart()
     // set up our array we'll use for checking cvars
     InitCvarArray();
 
-    StacLog("[StAC] Plugin vers. ---- %s ---- loaded", PLUGIN_VERSION);
-
+    // jaypatch
     OnPluginStart_jaypatch();
 }
 
 public void OnPluginEnd()
 {
-    StacLog("[StAC] Plugin vers. ---- %s ---- unloaded", PLUGIN_VERSION);
+    StacLog("\n\n----> StAC version [%s] unloaded\n", PLUGIN_VERSION);
     NukeTimers();
     OnMapEnd();
 }
@@ -202,7 +203,7 @@ public void OnGameFrame()
             }
             timeSinceLagSpikeFor[0] = GetEngineTime();
 
-            StacLog("[StAC] Server framerate stuttered. Expected: ~%.1f, got %i.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, tickspersec[0], ServerLagWaitLength);
+            StacLog("Server framerate stuttered. Expected: ~%.1f, got %i.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, tickspersec[0], ServerLagWaitLength);
             if (DEBUG)
             {
                 PrintToImportant("{hotpink}[StAC]{white} Server framerate stuttered. Expected: {palegreen}~%.1f{white}, got {fullred}%i{white}.\nDisabling OnPlayerRunCmd checks for %f seconds.",
