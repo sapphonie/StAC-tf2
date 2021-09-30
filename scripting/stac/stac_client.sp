@@ -41,7 +41,10 @@ Action CheckAuthOn(Handle timer, int userid)
             {
                 StacGeneralPlayerNotify(userid, "Reconnecting player for being unauthorized w/ Steam");
                 StacLog("Reconnecting %N for not being authorized with Steam.", Cl);
+                PrintToChat(Cl, "You are being reconnected to the server in an attempt to reauthorize you with the Steam network.");
                 ClientCommand(Cl, "retry");
+                // Force clients who ignore the retry to do it anyway.
+                CreateTimer(1.0, Reconn, userid);
                 // TODO: detect clients that ignore this
                 // KickClient(Cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
             }
@@ -67,6 +70,17 @@ Action CheckAuthOn(Handle timer, int userid)
                 SteamAuthFor[Cl][0] = '\0';
             }
         }
+    }
+}
+
+Action Reconn(Handle timer, int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if (IsValidClient(Cl))
+    {
+        StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam AND ignored a retry command?? Suspicious! Forcing a reconnection.");
+        // If we got this far they're probably cheating, but I need to verify that. Force them in the meantime.
+        ReconnectClient(Cl);
     }
 }
 
