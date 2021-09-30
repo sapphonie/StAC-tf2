@@ -82,7 +82,7 @@ Action checkNativesEtc(Handle timer)
     {
         DISCORD = true;
     }
-    // discord functionality
+    // srctvmgr functionality, for demo ticks
     if (GetFeatureStatus(FeatureType_Native, "SourceTV_GetDemoFileName") == FeatureStatus_Available)
     {
         SOURCETVMGR = true;
