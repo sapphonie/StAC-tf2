@@ -111,7 +111,7 @@ void StacLogDemo()
 {
     if (GetDemoName())
     {
-        StacLog("Demo file: %s", demoname);
+        StacLog("Demo file: %s. Demo tick: %i", demoname, demotick);
     }
 }
 
@@ -446,7 +446,6 @@ bool GetDemoName()
     if (SOURCETVMGR)
     {
         demotick = SourceTV_GetRecordingTick();
-        LogMessage("Found SRCTVMGR - %i", demotick);
         if (!SourceTV_GetDemoFileName(demoname, sizeof(demoname)))
         {
             demoname = "N/A";
