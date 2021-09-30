@@ -43,12 +43,12 @@ But StAC is written so that it has as few false detections as possible, because 
 Even better, this plugin is set up to be as easy to use and install as possible, so you don't have to be a sourcemod guru to get rid of cheaters on your nfoserver. 
 
 ### Installation & Configuration
+
+0) Install the recommended extensions and plugins:
+- [Discord API](https://forums.alliedmods.net/showthread.php?t=292663) for Discord Webhook logging
+- [My fork of SourceTVManager](https://github.com/sapphonie/sourcetvmanager/releases/tag/v1.2s) for stv demo tick logging
+
 1) download the latest release (called `stac.zip`) from [here](https://github.com/sapphonie/StAC-tf2/releases/latest)
-1b) Install the recommended extensions and plugins:
-    [Discord API](https://forums.alliedmods.net/showthread.php?t=292663) for Discord Webhook logging
-    [My fork of SourceTVManager](https://github.com/sapphonie/sourcetvmanager/releases/tag/v1.2s) for stv demo tick logging
-
-
 2) extract the downloaded zip, and copy all the folders inside of it into `/tf/addons/sourcemod/` on your tf2 server. Overwrite any files if prompted.
 3) restart your server
 
