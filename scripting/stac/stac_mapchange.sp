@@ -57,16 +57,6 @@ Action checkNativesEtc(Handle timer)
 
     // check natives!
 
-    // steamtools
-    if (GetFeatureStatus(FeatureType_Native, "Steam_IsConnected") == FeatureStatus_Available)
-    {
-        STEAMTOOLS = true;
-    }
-    // steamworks
-    if (GetFeatureStatus(FeatureType_Native, "SteamWorks_IsConnected") == FeatureStatus_Available)
-    {
-        STEAMWORKS = true;
-    }
     // sourcebans
     if (GetFeatureStatus(FeatureType_Native, "SBPP_BanPlayer") == FeatureStatus_Available)
     {
@@ -92,11 +82,11 @@ Action checkNativesEtc(Handle timer)
     {
         DISCORD = true;
     }
-
-    // check steam status real quick
-    if (isSteamAlive == -1)
+    // srctvmgr functionality, for demo ticks
+    if (GetFeatureStatus(FeatureType_Native, "SourceTV_GetDemoFileName") == FeatureStatus_Available)
     {
-        checkSteam();
+        SOURCETVMGR = true;
+        LogMessage("SrctvManager found");
     }
 }
 
