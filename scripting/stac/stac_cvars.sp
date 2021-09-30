@@ -399,7 +399,7 @@ void initCvars()
     (
         "stac_kick_unauthed_clients",
         buffer,
-        "[StAC] kick clients unauthorized with steam? This only checks if steam has been stable and online for at least the past 300 seconds or more.\n(recommended 1)",
+        "[StAC] Forcibly reconnect clients unauthorized with steam? This may reconnect players when Steam is down.\n(recommended 1)",
         FCVAR_NONE,
         true,
         0.0,
