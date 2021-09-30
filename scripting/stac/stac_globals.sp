@@ -46,8 +46,6 @@ bool demonameInBanReason        = true;
 bool logtofile                  = true;
 // fix pingmasking - required for pingreduce check
 bool fixpingmasking             = true;
-// bool that gets set by steamtools/steamworks forwards - used to kick clients that dont auth
-int isSteamAlive                = -1;
 bool kickUnauth                 = true;
 float maxAllowedTurnSecs        = -1.0;
 bool banForMiscCheats           = true;
@@ -79,6 +77,7 @@ float PlayerLagWaitLength = 1.0;
 char hostname[64];
 char hostipandport[24];
 char demoname[128];
+int demotick = -1;
 
 // server cvar values
 bool waitStatus;
@@ -90,8 +89,6 @@ int imaxrate;
 int iminrate;
 
 // time since some server event happened
-// last time steam came online
-float steamLastOnlineTime;
 // time since the map started
 float timeSinceMapStart;
 // time since the last stutter/lag spike occurred per client
@@ -101,11 +98,10 @@ float timeSinceLagSpikeFor[TFMAXPLAYERS + 1];
 bool SOURCEBANS;
 bool MATERIALADMIN;
 bool GBANS;
-bool STEAMTOOLS;
-bool STEAMWORKS;
 bool AIMPLOTTER;
 bool DISCORD;
 bool MVM;
+bool SOURCETVMGR;
 
 /***** client based stuff *****/
 

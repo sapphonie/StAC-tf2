@@ -20,13 +20,12 @@
 #tryinclude <materialadmin>
 #tryinclude <discord>
 #undef REQUIRE_EXTENSIONS
-#tryinclude <steamtools>
-#tryinclude <SteamWorks>
+#tryinclude <sourcetvmanager>
 
 // we have to re pragma because sourcemod sucks lol
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.1.4b"
+#define PLUGIN_VERSION  "5.1.5b"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -63,8 +62,6 @@ public Plugin myinfo =
 #include "stac/stac_misc_timers.sp"
 // stac livefeed
 #include "stac/stac_livefeed.sp"
-// for kicking unauthorized clients
-#include "stac/stac_steamauth.sp"
 // if it ain't broke, don't fix it. jtanz has written a great backtrack patch.
 #include "stac/jay_backtrack_patch.sp"
 
