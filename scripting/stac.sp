@@ -18,11 +18,9 @@
 #tryinclude <updater>
 #tryinclude <sourcebanspp>
 #tryinclude <materialadmin>
-#include <discord>
-#include <sourcetvmanager>
+#tryinclude <discord>
 #undef REQUIRE_EXTENSIONS
-// #tryinclude <steamtools>
-// #tryinclude <SteamWorks>
+#tryinclude <sourcetvmanager>
 
 // we have to re pragma because sourcemod sucks lol
 #pragma newdecls required
