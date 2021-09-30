@@ -443,29 +443,45 @@ void BanUser(int userid, char[] reason, char[] pubreason)
 
 bool GetDemoName()
 {
-    // TODO: SourceTVManager
-    // TODO: Demoticks
-    char tvStatus[512];
-    ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
-    char demoname_etc[128];
-    if (MatchRegex(demonameRegex, tvStatus) > 0)
+    if (SOURCETVMGR)
     {
-        if (GetRegexSubString(demonameRegex, 0, demoname_etc, sizeof(demoname_etc)))
+        demotick = SourceTV_GetRecordingTick();
+        LogMessage("Found SRCTVMGR - %i", demotick);
+        if (!SourceTV_GetDemoFileName(demoname, sizeof(demoname)))
         {
-            TrimString(demoname_etc);
-            if (MatchRegex(demonameRegexFINAL, demoname_etc) > 0)
+            demoname = "N/A";
+            return false;
+        }
+
+        return true;
+    }
+
+    else
+    {
+        char tvStatus[512];
+        ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
+        char demoname_etc[128];
+        if (MatchRegex(demonameRegex, tvStatus) > 0)
+        {
+            if (GetRegexSubString(demonameRegex, 0, demoname_etc, sizeof(demoname_etc)))
             {
-                if (GetRegexSubString(demonameRegexFINAL, 0, demoname, sizeof(demoname)))
+                TrimString(demoname_etc);
+                if (MatchRegex(demonameRegexFINAL, demoname_etc) > 0)
                 {
-                    TrimString(demoname);
-                    StripQuotes(demoname);
-                    return true;
+                    if (GetRegexSubString(demonameRegexFINAL, 0, demoname, sizeof(demoname)))
+                    {
+                        TrimString(demoname);
+                        StripQuotes(demoname);
+                        return true;
+                    }
                 }
             }
         }
+        demoname = "N/A";
+        demotick = -1;
+
+        return false;
     }
-    demoname = "N/A";
-    return false;
 }
 
 bool isDefaultTickrate()
@@ -660,8 +676,23 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
     {
         return;
     }
-    static char generalTemplate[1024] = \
-    "{ \"embeds\": [ { \"title\": \"StAC Message\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Message\", \"value\": \"%s\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
+
+    static char generalTemplate[2048] = \
+    "{ \"embeds\": \
+        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
+            [\
+                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
+                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
+                { \"name\": \"Message\",        \"value\": \"%s\" } ,\
+                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
+                { \"name\": \"IP\",             \"value\": \"%s\" } ,\
+                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
+                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
+                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
+            ]\
+        }],\
+        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
+    }";
 
     char msg[1024];
 
@@ -696,8 +727,11 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         message,
         hostname,
         hostipandport,
-        demoname
+        demoname,
+        demotick,
+        GetTime()
     );
+
     SendMessageToDiscord(msg);
 }
 
@@ -710,8 +744,23 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         return;
     }
 
-    static char detectionTemplate[1024] = \
-    "{ \"embeds\": [ { \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Detection type\", \"value\": \"%s\" }, { \"name\": \"Detection\", \"value\": \"%i\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } , { \"name\": \"Unix timestamp of detection\", \"value\": \"%i\" } ] } ] }";
+    static char detectionTemplate[2048] = \
+    "{ \"embeds\": \
+        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
+            [\
+                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
+                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
+                { \"name\": \"Detection type\", \"value\": \"%s\" } ,\
+                { \"name\": \"Detection\",      \"value\": \"%i\" } ,\
+                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
+                { \"name\": \"IP\",             \"value\": \"%s\" } ,\
+                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
+                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
+                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
+            ]\
+        }],\
+        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
+    }";
 
     char msg[1024];
 
@@ -746,8 +795,10 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         hostname,
         hostipandport,
         demoname,
+        demotick,
         GetTime()
     );
+
     SendMessageToDiscord(msg);
 }
 

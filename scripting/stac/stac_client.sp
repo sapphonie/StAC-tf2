@@ -20,9 +20,9 @@ public void OnClientPutInServer(int Cl)
         {
             StacLog("%N joined. Checking cvars", Cl);
         }
-        QueryTimer[Cl] = CreateTimer(5.0, Timer_CheckClientConVars, userid);
+        QueryTimer[Cl] = CreateTimer(15.0, Timer_CheckClientConVars, userid);
 
-        CreateTimer(2.5, CheckAuthOn, userid);
+        CreateTimer(10.0, CheckAuthOn, userid);
     }
     OnClientPutInServer_jaypatch(Cl);
 }
@@ -33,30 +33,30 @@ Action CheckAuthOn(Handle timer, int userid)
 
     if (IsValidClient(Cl))
     {
-        // don't bother checking if already authed and DEFINITELY don't check if steam is down or there's no way to do so thru an ext
+        // don't bother checking if already authed
         if (!IsClientAuthorized(Cl))
         {
-            if (shouldCheckAuth())
+            SteamAuthFor[Cl][0] = '\0';
+            if (kickUnauth)
             {
-                SteamAuthFor[Cl][0] = '\0';
-                if (kickUnauth)
-                {
-                    StacGeneralPlayerNotify(userid, "Kicked for being unauthorized w/ Steam");
-                    StacLog("Kicking %N for not being authorized with Steam.", Cl);
-                    KickClient(Cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
-                }
-                else
-                {
-                    StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
-                    StacLog("Client %N failed to authorize w/ Steam in a timely manner.", Cl);
-                }
+                StacGeneralPlayerNotify(userid, "Reconnecting player for being unauthorized w/ Steam");
+                StacLog("Reconnecting %N for not being authorized with Steam.", Cl);
+                ClientCommand(Cl, "retry");
+                // TODO: detect clients that ignore this
+                // KickClient(Cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
+            }
+            else
+            {
+                StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
+                StacLog("Client %N failed to authorize w/ Steam in a timely manner.", Cl);
+                // SteamAuthFor[Cl][0] = '\0'; ?
             }
         }
         else
         {
             char steamid[64];
 
-            // let's try to get their auth anyway
+            // let's try to get their auth
             if (GetClientAuthId(Cl, AuthId_Steam2, steamid, sizeof(steamid)))
             {
                 // if we get it, copy to our global list
@@ -76,13 +76,11 @@ public void OnClientAuthorized(int Cl, const char[] auth)
     if (!IsFakeClient(Cl))
     {
         strcopy(SteamAuthFor[Cl], sizeof(SteamAuthFor[]), auth);
-        if (DEBUG)
-        {
-            StacLog("auth %s for Cl %N", auth, Cl);
-        }
+        StacLog("Client %N authorized with auth %s.", Cl, auth);
     }
 }
 
+// player left and mapchanges
 public void OnClientDisconnect(int Cl)
 {
     int userid = GetClientUserId(Cl);
