@@ -10,6 +10,7 @@
 #include <sdktools>
 #include <sdkhooks>
 #include <tf2_stocks>
+#include <achievements>
 // external incs
 #include <morecolors>
 #include <concolors>

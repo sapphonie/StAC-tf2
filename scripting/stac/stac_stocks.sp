@@ -485,6 +485,8 @@ bool GetDemoName()
 
 bool isDefaultTickrate()
 {
+    // Hack! Sometimes tps is set as default when it really isn't
+    DoTPSMath();
     if (tps > 60.0 && tps < 70.0)
     {
         return true;

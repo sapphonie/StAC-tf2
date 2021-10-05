@@ -213,11 +213,44 @@ public Action ePlayerChangedName(Handle event, char[] name, bool dontBroadcast)
 
 public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
 {
+    // ent index of achievement earner
     int Cl              = GetEventInt(event, "player");
-    int achieve_id      = GetEventInt(event, "achievementID");
 
-    cheevCheck(Cl, achieve_id);
+    // id of our achievement
+    int achieve_id      = GetEventInt(event, "achievement");
 
+    StacLog("Player %L earned achievement ID %i", Cl, achieve_id);
+
+    // we can't sdkcall CAchievementMgr::GetAchievementByIndex(int) here because the server will never have a valid CAchievementMgr*
+    // this is because achievements are all client side (because Valve just trusts clients fsr?)
+    // we have to (use other peoples') hardcode, in this case nosoop's achievements.inc.
+
+    // achievment number is bogus:
+    if
+    (
+        // it's too low
+        achieve_id < view_as<int>(Achievement_GetTurretKills)
+        ||
+        // it's too high
+        achieve_id > view_as<int>(Achievement_MapsPowerhouseKillEnemyInWater)
+    )
+    {
+        // uid for passing to GenPlayerNotify
+        int userid = GetClientUserId(Cl);
+
+        // tell an admin, don't ban yet
+        char message[256];
+        Format(message, sizeof(message), "Client is (prolly) cheating with bogus AchievementID %i", achieve_id);
+        StacGeneralPlayerNotify(userid, message);
+
+        PrintToImportant("[debug] User %N earned BOGUS achievement ID %i", Cl, achieve_id);
+        // Handle it for now, should we though? cheats could just send bogus acheivement ids and detect stac
+        // but shouldn't we ban instantly for bogus achievement ids?
+        // Hrmm.
+        return Plugin_Handled;
+    }
+
+    PrintToImportant("[debug] User %N earned achievement ID %i", Cl, achieve_id);
     return Plugin_Continue;
 }
 
