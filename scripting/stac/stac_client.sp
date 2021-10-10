@@ -219,8 +219,6 @@ public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
     // id of our achievement
     int achieve_id      = GetEventInt(event, "achievement");
 
-    StacLog("Player %L earned achievement ID %i", Cl, achieve_id);
-
     // we can't sdkcall CAchievementMgr::GetAchievementByIndex(int) here because the server will never have a valid CAchievementMgr*
     // this is because achievements are all client side (because Valve just trusts clients fsr?)
     // we have to (use other peoples') hardcode, in this case nosoop's achievements.inc.
@@ -238,19 +236,27 @@ public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
         // uid for passing to GenPlayerNotify
         int userid = GetClientUserId(Cl);
 
-        // tell an admin, don't ban yet
+        if (banForMiscCheats)
+        {
+            char reason[128];
+            Format(reason, sizeof(reason), "%t", "bogusAchieveBanMsg");
+            char pubreason[256];
+            Format(pubreason, sizeof(pubreason), "%t", "bogusAchieveBanAllChat", Cl);
+            BanUser(userid, reason, pubreason);
+        }
+        else
+        {
+            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} User %N earned BOGUS achievement ID %i (hex %X)", Cl, achieve_id, achieve_id);
+            StacLogSteam(userid);
+        }
+
         char message[256];
-        Format(message, sizeof(message), "Client is (prolly) cheating with bogus AchievementID %i", achieve_id);
-        StacGeneralPlayerNotify(userid, message);
+        Format(message, sizeof(message), "Client is cheating with bogus AchievementID %i (hex %X)", achieve_id, achieve_id);
+        StacDetectionNotify(userid, message, 1);
 
-        PrintToImportant("[debug] User %N earned BOGUS achievement ID %i", Cl, achieve_id);
-        // Handle it for now, should we though? cheats could just send bogus acheivement ids and detect stac
-        // but shouldn't we ban instantly for bogus achievement ids?
-        // Hrmm.
-        return Plugin_Handled;
+        // let other idiots get banned with their call-response identify cheats lolz 
+        return Plugin_Continue;
     }
-
-    PrintToImportant("[debug] User %N earned achievement ID %i", Cl, achieve_id);
     return Plugin_Continue;
 }
 

@@ -277,8 +277,16 @@
         //"da"        ""
         "ru"        "[StAC] Забанен за наличие известных чит-переменных."
     }
-
-
+    // cheevs
+    "bogusAchieveBanAllChat"
+    {
+        "#format"   "{1:N}"
+        "en"        "{hotpink}[StAC]{white} Player {1} unlocked {mediumpurple}a non-valid achievement{white}! {palegreen}BANNED from server."
+    }
+    "bogusAchieveBanMsg"
+    {
+        "en"        "[StAC] Banned for bogus achievement values."
+    }
     /*
         __   _      __
        / /__(_)____/ /__   ____ ___  _________ ______

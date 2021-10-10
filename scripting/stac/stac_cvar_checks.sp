@@ -25,17 +25,15 @@ char cheatVars[][] =
     // ncc doesn't have any that i can find lol
     // "",
     // cathook
-    "cat",
-    "get",
-    "set",
+    // "cat",
+    // the devs are smart enough to properly hide cat, but not smart enough to hide anything else
+    "cat_load",
     // ...melancholy? maybe? lol
     "caramelldansen",
     "SetCursor",
     "melancholy",
     // general
     "hook",
-    // test
-    //"cl_interp"
 };
 
 
