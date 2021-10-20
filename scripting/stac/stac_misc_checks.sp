@@ -52,6 +52,12 @@ void NameCheck(int userid)
             StrContains(curName, "\r")  != -1
             ||
             StrContains(curName, "\t")  != -1
+            ||
+            // right to left char
+            StrContains(curName, "\xE2\x80\x8F") != -1
+            ||
+            // left to right char
+            StrContains(curName, "\xE2\x80\x8E") != -1
         )
         {
             SaniNameAndBan(userid, curName);
@@ -68,11 +74,15 @@ bool SaniNameAndBan(int userid, char name[64])
     int newlines;
     int returns;
     int tabs;
+    int rtl;
+    int ltr;
 
     // todo: implement C style iscntrl
-    newlines    = ReplaceString(name, sizeof(name), "\n", "");
-    returns     = ReplaceString(name, sizeof(name), "\r", "");
-    tabs        = ReplaceString(name, sizeof(name), "\t", "");
+    newlines    = ReplaceString(name, sizeof(name), "\n",           "");
+    returns     = ReplaceString(name, sizeof(name), "\r",           "");
+    tabs        = ReplaceString(name, sizeof(name), "\t",           "");
+    rtl         = ReplaceString(name, sizeof(name), "\xE2\x80\x8F", "");
+    ltr         = ReplaceString(name, sizeof(name), "\xE2\x80\x8E", "");
 
     SetClientName(Cl, name);
 
@@ -81,10 +91,14 @@ bool SaniNameAndBan(int userid, char name[64])
         "Client had:\
         \n%i newline chars,\
         \n%i return chars,\
-        \n%i tab chars",
+        \n%i tab chars,\
+        \n%i right2left chars,\
+        \n%i left2right chars",
         newlines,
         returns,
-        tabs
+        tabs,
+        rtl,
+        ltr
     );
 
     CreateTimer(0.5, BanName, userid);
@@ -179,7 +193,7 @@ public void OnClientSettingsChanged(int Cl)
         return;
     }
 
-    // hm
+    // horrific
     for (int cvar; cvar < sizeof(userinfoToCheck); cvar++)
     {
         char cvarvalue[64];
@@ -315,7 +329,6 @@ Action Timer_decr_userinfospam(Handle timer, any userid)
 
 void FixPingMasking(int Cl, const char[] cvar, const char[] value)
 {
-    //int userid = GetClientUserId(Cl);
     int irate;
     int ioptimalrate;
     char soptimalrate[24];
@@ -371,14 +384,6 @@ void MiscCheatsEtcsCheck(int userid)
         // there used to be an fov check here - but there's odd behavior that i don't want to work around regarding the m_iFov netprop.
         // sorry!
 
-        // forcibly disables thirdperson with some cheats
-        /* There is no reason to do this. It does nothing but alert cheaters that something is fucky.
-        ClientCommand(Cl, "firstperson");
-        if (DEBUG)
-        {
-            StacLog("Executed firstperson command on Player %N", Cl);
-        }
-        */
         checkInterp(userid);
     }
 }
