@@ -90,7 +90,10 @@ public void OnClientAuthorized(int Cl, const char[] auth)
     if (!IsFakeClient(Cl))
     {
         strcopy(SteamAuthFor[Cl], sizeof(SteamAuthFor[]), auth);
-        StacLog("Client %N authorized with auth %s.", Cl, auth);
+        if (DEBUG)
+        {
+            StacLog("Client %N authorized with auth %s.", Cl, auth);
+        }
     }
 }
 

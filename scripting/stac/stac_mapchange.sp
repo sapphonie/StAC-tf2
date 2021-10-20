@@ -86,7 +86,6 @@ Action checkNativesEtc(Handle timer)
     if (GetFeatureStatus(FeatureType_Native, "SourceTV_GetDemoFileName") == FeatureStatus_Available)
     {
         SOURCETVMGR = true;
-        LogMessage("SrctvManager found");
     }
 }
 
@@ -170,7 +169,11 @@ void checkStatus()
             }
         }
     }
-    StacLog("Server IP + Port = %s", hostipandport);
+    if (DEBUG)
+    {
+        StacLog("Server IP + Port = %s", hostipandport);
+    }
+
 }
 
 void DoTPSMath()
