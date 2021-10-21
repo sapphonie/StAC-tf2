@@ -273,9 +273,9 @@
     }
     "cheatVarBanMsg"
     {
-        "en"        "[StAC] Banned for having known cheat cvars."
+        "en"        "[StAC] Banned for having known cheat cvars"
         //"da"        ""
-        "ru"        "[StAC] Забанен за наличие известных чит-переменных."
+        "ru"        "[StAC] Забанен за наличие известных чит-переменных"
     }
     // cheevs
     "bogusAchieveBanAllChat"
@@ -285,7 +285,7 @@
     }
     "bogusAchieveBanMsg"
     {
-        "en"        "[StAC] Banned for bogus achievement values."
+        "en"        "[StAC] Banned for bogus achievement values"
     }
     /*
         __   _      __

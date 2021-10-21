@@ -241,6 +241,7 @@ public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
 
         if (banForMiscCheats)
         {
+            PrintToImportant("{hotpink}[StAC] {white} User %N earned BOGUS achievement ID %i (hex %X)", Cl, achieve_id, achieve_id);
             char reason[128];
             Format(reason, sizeof(reason), "%t", "bogusAchieveBanMsg");
             char pubreason[256];
