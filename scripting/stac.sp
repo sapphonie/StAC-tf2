@@ -22,11 +22,10 @@
 #tryinclude <discord>
 #undef REQUIRE_EXTENSIONS
 #tryinclude <sourcetvmanager>
-
 // we have to re pragma because sourcemod sucks lol
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.1.6b"
+#define PLUGIN_VERSION  "5.1.7b"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
