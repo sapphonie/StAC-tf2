@@ -218,50 +218,11 @@ public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
 {
     // ent index of achievement earner
     int Cl              = GetEventInt(event, "player");
+    int userid          = GetClientUserId(Cl);
 
     // id of our achievement
     int achieve_id      = GetEventInt(event, "achievement");
-
-    // we can't sdkcall CAchievementMgr::GetAchievementByIndex(int) here because the server will never have a valid CAchievementMgr*
-    // this is because achievements are all client side (because Valve just trusts clients fsr?)
-    // we have to (use other peoples') hardcode, in this case nosoop's achievements.inc.
-
-    // achievment number is bogus:
-    if
-    (
-        // it's too low
-        achieve_id < view_as<int>(Achievement_GetTurretKills)
-        ||
-        // it's too high
-        achieve_id > view_as<int>(Achievement_MapsPowerhouseKillEnemyInWater)
-    )
-    {
-        // uid for passing to GenPlayerNotify
-        int userid = GetClientUserId(Cl);
-
-        if (banForMiscCheats)
-        {
-            PrintToImportant("{hotpink}[StAC] {white} User %N earned BOGUS achievement ID %i (hex %X)", Cl, achieve_id, achieve_id);
-            char reason[128];
-            Format(reason, sizeof(reason), "%t", "bogusAchieveBanMsg");
-            char pubreason[256];
-            Format(pubreason, sizeof(pubreason), "%t", "bogusAchieveBanAllChat", Cl);
-            BanUser(userid, reason, pubreason);
-        }
-        else
-        {
-            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} User %N earned BOGUS achievement ID %i (hex %X)", Cl, achieve_id, achieve_id);
-            StacLogSteam(userid);
-        }
-
-        char message[256];
-        Format(message, sizeof(message), "Client is cheating with bogus AchievementID %i (hex %X)", achieve_id, achieve_id);
-        StacDetectionNotify(userid, message, 1);
-
-        // let other idiots get banned with their call-response identify cheats lolz 
-        return Plugin_Continue;
-    }
-    return Plugin_Continue;
+    cheevCheck(userid, achieve_id);
 }
 
 void ClearClBasedVars(int userid)

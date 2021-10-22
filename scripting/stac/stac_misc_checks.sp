@@ -147,6 +147,7 @@ public Action OnClientCommand(int Cl, int args)
             GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
         }
 
+
         strcopy(lastCommandFor[Cl], sizeof(lastCommandFor[]), ClientCommandChar);
         timeSinceLastCommand[Cl] = engineTime[Cl][0];
 
@@ -165,6 +166,31 @@ public Action OnClientCommand(int Cl, int args)
     }
     return Plugin_Continue;
 }
+
+// for achievement checking, because chook tries to be s n e a k y
+// if there are upgrades to the call/response bullshit in chook i can and will make this iterate thru every single kv
+public Action OnClientCommandKeyValues(int Cl, KeyValues kv)
+{
+    if (IsValidClient(Cl))
+    {
+        if (KvJumpToKey(kv, "achievementID", false))
+        {
+            if (KvGetDataType(kv, NULL_STRING) == KvData_Int)
+            {
+                // hack because KvGetNum doesn't just return a bool with an int&
+                int id = KvGetNum(kv, NULL_STRING, -123456789);
+                if (id != -123456789)
+                {
+                    int userid = GetClientUserId(Cl);
+                    cheevCheck(userid, id);
+                }
+            }
+        }
+    }
+
+    return Plugin_Continue;
+}
+
 
 
 public void OnClientSettingsChanged(int Cl)
@@ -427,4 +453,48 @@ void checkInterp(int userid)
             StacLog("%t", "interpAllChat", Cl, lerp);
         }
     }
+}
+
+void cheevCheck(int userid, int achieve_id)
+{
+    // ent index of achievement earner
+    int Cl              = GetClientOfUserId(userid);
+
+    // we can't sdkcall CAchievementMgr::GetAchievementByIndex(int) here because the server will never have a valid CAchievementMgr*
+    // this is because achievements are all client side (because Valve just trusts clients fsr?)
+    // we have to (use other peoples') hardcode, in this case nosoop's achievements.inc.
+
+    // achievment number is bogus:
+    if
+    (
+        // it's too low
+        achieve_id < view_as<int>(Achievement_GetTurretKills)
+        ||
+        // it's too high
+        achieve_id > view_as<int>(Achievement_MapsPowerhouseKillEnemyInWater)
+    )
+    {
+        // uid for passing to GenPlayerNotify
+        StacLogSteam(userid);
+
+        if (banForMiscCheats)
+        {
+            PrintToImportant("{hotpink}[StAC] {white} User %N earned BOGUS achievement ID %i (hex %X)", Cl, achieve_id, achieve_id);
+            char reason[128];
+            Format(reason, sizeof(reason), "%t", "bogusAchieveBanMsg");
+            char pubreason[256];
+            Format(pubreason, sizeof(pubreason), "%t", "bogusAchieveBanAllChat", Cl);
+            BanUser(userid, reason, pubreason);
+        }
+        else
+        {
+            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} User %N earned BOGUS achievement ID %i (hex %X)", Cl, achieve_id, achieve_id);
+        }
+
+        char message[256];
+        Format(message, sizeof(message), "Client is cheating with bogus AchievementID %i (hex %X)", achieve_id, achieve_id);
+        StacDetectionNotify(userid, message, 1);
+
+    }
+
 }
