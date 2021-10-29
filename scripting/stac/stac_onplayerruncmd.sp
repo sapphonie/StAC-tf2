@@ -242,20 +242,12 @@ void bhopCheck(int userid)
 
         if
         (
-            // last input didn't have a jump - include to prevent legits holding spacebar from triggering detections
-            !(
-                clbuttons[Cl][1] & IN_JUMP
-            )
-            &&
+            // last input didn't have a jump
+            !(clbuttons[Cl][1] & IN_JUMP)
             // player pressed jump
-            (
-                clbuttons[Cl][0] & IN_JUMP
-            )
-            // they were on the ground when they pressed space
-            &&
-            (
-                flags & FL_ONGROUND
-            )
+            && (clbuttons[Cl][0] & IN_JUMP)
+            // they were on the ground when they jumped
+            && (flags & FL_ONGROUND)
         )
         {
             // increment bhops
@@ -828,22 +820,14 @@ void triggerbotCheck(int userid)
         {
             attack = 2;
         }
+
         if
         (
-            // thinking about removing this...
-            (
-                   didBangOnFrame[Cl][0]
-                || didHurtOnFrame[Cl][0]
-                || didBangOnFrame[Cl][1]
-                || didHurtOnFrame[Cl][1]
-                || didBangOnFrame[Cl][2]
-                || didHurtOnFrame[Cl][2]
-            )
+            // did dmg on this tick
+            didHurtOnFrame[Cl][0]
             &&
-            // count all attack2 single inputs
-            (
-                attack > 0
-            )
+            // single tick input
+            attack > 0
         )
         {
             tbotDetects[Cl]++;
@@ -952,26 +936,12 @@ bool HasValidAngles(int Cl)
 {
     if
     (
-        // ignore weird angle resets in mge / dm, ignore laggy players
-        (
-            IsZeroVector(clangles[Cl][0])
-        )
-        ||
-        (
-            IsZeroVector(clangles[Cl][1])
-        )
-        ||
-        (
-            IsZeroVector(clangles[Cl][2])
-        )
-        ||
-        (
-            IsZeroVector(clangles[Cl][3])
-        )
-        ||
-        (
-            IsZeroVector(clangles[Cl][4])
-        )
+        // ignore weird angle resets in mge / dm && ignore laggy players
+           IsZeroVector(clangles[Cl][0])
+        || IsZeroVector(clangles[Cl][1])
+        || IsZeroVector(clangles[Cl][2])
+        || IsZeroVector(clangles[Cl][3])
+        || IsZeroVector(clangles[Cl][4])
     )
     {
         return false;
