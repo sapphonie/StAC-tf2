@@ -2,19 +2,21 @@
 
 /********** CLIENT CONVAR BASED STUFF **********/
 
+// Cvars that cheats tend to use to be out of bounds (or ones we need to check anyway) get appended to this array
 char miscVars[][] =
 {
     // misc vars
     "sensitivity",
     // possible cheat vars
+    // must be == 1
     "cl_interpolate",
     // this is a useless check but we check it anyway
     "fov_desired",
-    //
+    // must be > 10
     "cl_cmdrate",
-    // DEFINITE cheat vars get appended to this array
 };
 
+// DEFINITE cheat vars get appended to this array
 char cheatVars[][] =
 {
     // lith
@@ -25,24 +27,21 @@ char cheatVars[][] =
     // lmaobox apparently uses this? haven't seen it
     "setcvar",
     // ncc doesn't have any that i can find lol
-    // "",
     // cathook
-    // "cat",
-    // the devs are smart enough to properly hide cat, but not smart enough to hide anything else
     "cat_load",
     // ...melancholy? maybe? lol
     "caramelldansen",
     "SetCursor",
     "melancholy",
     // general
-    "hook",
+    "hook"
 };
 
 
 // set in InitCvarArray which is called in OnPluginLoad
 char cvarsToCheck[sizeof(miscVars) + sizeof(cheatVars)][64];
 
-
+// oh man this is ugly
 void InitCvarArray()
 {
     int miscvars = sizeof(miscVars);

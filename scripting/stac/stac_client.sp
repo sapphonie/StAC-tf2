@@ -252,7 +252,6 @@ void ClearClBasedVars(int userid)
     bhopDetects             [Cl] = -1; // set to -1 to ignore single jumps
     cmdnumSpikeDetects      [Cl] = 0;
     tbotDetects             [Cl] = -1; // ignore first detect, it's prolly bunk
-    spinbotDetects          [Cl] = 0;
     userinfoSpamDetects     [Cl] = 0;
 
 

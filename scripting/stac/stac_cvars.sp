@@ -221,22 +221,6 @@ void initCvars()
     );
     HookConVarChange(stac_max_tbot_detections, setStacVars);
 
-    // spinbot detections
-    IntToString(maxSpinbotDetections, buffer, sizeof(buffer));
-    stac_max_spinbot_detections =
-    AutoExecConfig_CreateConVar
-    (
-        "stac_max_spinbot_detections",
-        buffer,
-        "[StAC] maximum spinbot detections before banning a client. \n(recommended 50 or higher)",
-        FCVAR_NONE,
-        true,
-        -1.0,
-        false,
-        _
-    );
-    HookConVarChange(stac_max_spinbot_detections, setStacVars);
-
     // min interp
     IntToString(min_interp_ms, buffer, sizeof(buffer));
     stac_min_interp_ms =
@@ -483,9 +467,6 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
 
     // tbot var
     maxTbotDetections       = GetConVarInt(stac_max_tbot_detections);
-
-    // spinbot var
-    maxSpinbotDetections    = GetConVarInt(stac_max_spinbot_detections);
 
     // max ping reduce detections - clamp to -1 if 0
     maxuserinfoSpamDetections   = GetConVarInt(stac_max_cmdrate_spam_detections);

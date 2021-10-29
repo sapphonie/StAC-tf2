@@ -19,7 +19,6 @@ ConVar stac_max_bhop_detections;
 ConVar stac_max_fakeang_detections;
 ConVar stac_max_cmdnum_detections;
 ConVar stac_max_tbot_detections;
-ConVar stac_max_spinbot_detections;
 ConVar stac_max_cmdrate_spam_detections;
 ConVar stac_min_interp_ms;
 ConVar stac_max_interp_ms;
@@ -61,7 +60,6 @@ int maxFakeAngDetections        = 10;
 int maxBhopDetections           = 10;
 int maxCmdnumDetections         = 20;
 int maxTbotDetections           = 0;
-int maxSpinbotDetections        = 50;
 int maxuserinfoSpamDetections   = 25;
 
 /***** Server based stuff *****/
@@ -115,7 +113,6 @@ int pSilentDetects          [TFMAXPLAYERS+1] = {-1, ...}; // ^
 int bhopDetects             [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore single jumps
 int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = {-1, ...};
-int spinbotDetects          [TFMAXPLAYERS+1];
 int userinfoSpamDetects     [TFMAXPLAYERS+1];
 
 // frames since client "did something"
