@@ -18,7 +18,7 @@ public void OnMapStart()
     GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
 }
 
-Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
+public Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
 {
     DoTPSMath();
     // might as well do this here!

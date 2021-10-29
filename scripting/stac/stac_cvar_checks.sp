@@ -57,7 +57,7 @@ void InitCvarArray()
     }
 }
 
-void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
+public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
 {
     // make sure client is valid
     if (!IsValidClient(Cl))

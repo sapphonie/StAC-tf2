@@ -113,7 +113,7 @@ public void OnClientDisconnect(int Cl)
 }
 
 // player is OUT of the server
-void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
+public void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
 {
     int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
     SteamAuthFor[Cl][0] = '\0';
@@ -121,7 +121,7 @@ void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
 
 /********** CLIENT BASED EVENTS **********/
 
-Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
+public Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
 {
     int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
     //int userid = GetEventInt(event, "userid");
@@ -133,7 +133,7 @@ Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
     return Plugin_Continue;
 }
 
-Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
+public Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
 {
     // ignore if it's a mvm robot weapon or an mvm robot or the world doing damage
     if (!IsValidEntity(weapon) || weapon <= 0 || !IsValidClient(attacker))
@@ -158,7 +158,7 @@ Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, i
     return Plugin_Continue;
 }
 
-Action Hook_TEFireBullets(const char[] te_name, const int[] players, int numClients, float delay)
+public Action Hook_TEFireBullets(const char[] te_name, const int[] players, int numClients, float delay)
 {
     int Cl = TE_ReadNum("m_iPlayer") + 1;
     // this user fired a bullet this frame!
@@ -291,7 +291,7 @@ void ClearClBasedVars(int userid)
 
 /********** TIMER FOR NETINFO **********/
 
-Action Timer_GetNetInfo(Handle timer)
+public Action Timer_GetNetInfo(Handle timer)
 {
     // reset all client based vars on plugin reload
     for (int Cl = 1; Cl <= MaxClients; Cl++)

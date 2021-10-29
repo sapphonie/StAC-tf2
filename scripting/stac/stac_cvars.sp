@@ -523,7 +523,7 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     silent                  = GetConVarInt(stac_silent);
 }
 
-void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
     // IMMEDIATELY unload if we enable sv cheats
     if (convar == FindConVar("sv_cheats"))
@@ -545,7 +545,7 @@ void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newVa
 #define MAX_RATE        (1024*1024)
 #define MIN_RATE        1000
 // update server rate settings for cmdrate spam check - i'd rather have one func do this lol
-void UpdateRates(ConVar convar, const char[] oldValue, const char[] newValue)
+public void UpdateRates(ConVar convar, const char[] oldValue, const char[] newValue)
 {
     imincmdrate    = GetConVarInt(FindConVar("sv_mincmdrate"));
     imaxcmdrate    = GetConVarInt(FindConVar("sv_maxcmdrate"));
