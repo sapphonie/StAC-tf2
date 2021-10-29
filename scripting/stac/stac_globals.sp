@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 // we don't need 64 maxplayers because this is only for tf2. saves some memory.
 #define TFMAXPLAYERS 33
 
@@ -108,11 +110,11 @@ bool SOURCETVMGR;
 // cheat detections per client
 int turnTimes               [TFMAXPLAYERS+1];
 int fakeAngDetects          [TFMAXPLAYERS+1];
-int aimsnapDetects          [TFMAXPLAYERS+1] = -1; // set to -1 to ignore first detections, as theyre most likely junk
-int pSilentDetects          [TFMAXPLAYERS+1] = -1; // ^
-int bhopDetects             [TFMAXPLAYERS+1] = -1; // set to -1 to ignore single jumps
+int aimsnapDetects          [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore first detections, as theyre most likely junk
+int pSilentDetects          [TFMAXPLAYERS+1] = {-1, ...}; // ^
+int bhopDetects             [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore single jumps
 int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
-int tbotDetects             [TFMAXPLAYERS+1] = -1;
+int tbotDetects             [TFMAXPLAYERS+1] = {-1, ...};
 int spinbotDetects          [TFMAXPLAYERS+1];
 int userinfoSpamDetects     [TFMAXPLAYERS+1];
 

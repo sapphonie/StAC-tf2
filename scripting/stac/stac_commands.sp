@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** STAC COMMANDS FOR ADMINS **********/
 
 Action checkAdmin(int callingCl, int args)

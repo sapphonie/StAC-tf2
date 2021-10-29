@@ -22,18 +22,19 @@
 #tryinclude <discord>
 #undef REQUIRE_EXTENSIONS
 #tryinclude <sourcetvmanager>
-// we have to re pragma because sourcemod sucks lol
+
+#pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.1.7b"
+#define PLUGIN_VERSION  "5.1.8b"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
 {
-    name             =  "Steph's AntiCheat (StAC)",
-    author           =  "steph&nie",
-    description      =  "TF2 AntiCheat plugin written by Stephanie. Originally forked from IntegriTF2 by Miggy (RIP)",
+    name             =  "Steph's AntiCheat [StAC]",
+    author           =  "https://sappho.io",
+    description      =  "AntiCheat plugin for TF2 written by https://sappho.io . Originally forked from IntegriTF2 by Miggy, RIP",
     version          =   PLUGIN_VERSION,
     url              =  "https://sappho.io"
 }
@@ -58,8 +59,6 @@ public Plugin myinfo =
 #include "stac/stac_cvar_checks.sp"
 // client netprop etc checks
 #include "stac/stac_misc_checks.sp"
-// server repeating timers
-#include "stac/stac_misc_timers.sp"
 // stac livefeed
 #include "stac/stac_livefeed.sp"
 // if it ain't broke, don't fix it. jtanz has written a great backtrack patch.
@@ -213,4 +212,10 @@ public void OnGameFrame()
             }
         }
     }
+}
+
+Action Timer_TriggerTimedStuff(Handle timer)
+{
+    ActuallySetRandomSeed();
+    return Plugin_Continue;
 }

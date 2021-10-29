@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** MAP CHANGE / STARTUP RELATED STUFF **********/
 
 public void OnMapStart()
@@ -23,6 +25,8 @@ Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
     ActuallySetRandomSeed();
     // this counts
     timeSinceMapStart = GetEngineTime();
+
+    return Plugin_Continue;
 }
 
 public void OnMapEnd()
@@ -87,6 +91,8 @@ Action checkNativesEtc(Handle timer)
     {
         SOURCETVMGR = true;
     }
+
+    return Plugin_Continue;
 }
 
 // NUKE the client timers from orbit on plugin and map reload
@@ -186,5 +192,3 @@ void DoTPSMath()
         StacLog("tickinterv %f, tps %f", tickinterv, tps);
     }
 }
-
-

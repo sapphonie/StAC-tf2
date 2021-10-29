@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** CLIENT CONVAR BASED STUFF **********/
 
 char miscVars[][] =
@@ -241,6 +243,8 @@ Action Timer_BanUser(Handle timer, DataPack pack)
     {
         BanUser(userid, reason, pubreason);
     }
+
+    return Plugin_Continue;
 }
 
 // timer for (re)checking ALL cvars and net props and everything else
@@ -270,6 +274,8 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
             userid
         );
     }
+
+    return Plugin_Continue;
 }
 
 // query all cvars and netprops for userid
@@ -322,6 +328,8 @@ Action Timer_QueryNextCvar(Handle timer, DataPack pack)
     {
         QueryCvarsEtc(userid, i);
     }
+
+    return Plugin_Continue;
 }
 
 // expensive!

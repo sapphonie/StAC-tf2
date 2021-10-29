@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** STAC CONVAR RELATED STUFF **********/
 
 void initCvars()

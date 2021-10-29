@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** MISC CLIENT JOIN/LEAVE **********/
 
 // client join
@@ -71,6 +73,8 @@ Action CheckAuthOn(Handle timer, int userid)
             }
         }
     }
+
+    return Plugin_Continue;
 }
 
 Action Reconn(Handle timer, int userid)
@@ -82,6 +86,8 @@ Action Reconn(Handle timer, int userid)
         // If we got this far they're probably cheating, but I need to verify that. Force them in the meantime.
         ReconnectClient(Cl);
     }
+
+    return Plugin_Continue;
 }
 
 // cache this! we don't need to clear this because it gets overwritten when a new client connects with the same index
@@ -123,6 +129,8 @@ Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
     {
         timeSinceSpawn[Cl] = GetEngineTime();
     }
+
+    return Plugin_Continue;
 }
 
 Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
@@ -155,6 +163,8 @@ Action Hook_TEFireBullets(const char[] te_name, const int[] players, int numClie
     int Cl = TE_ReadNum("m_iPlayer") + 1;
     // this user fired a bullet this frame!
     didBangThisFrame[Cl] = true;
+
+    return Plugin_Continue;
 }
 
 public Action TF2_OnPlayerTeleport(int Cl, int teleporter, bool& result)
@@ -163,6 +173,8 @@ public Action TF2_OnPlayerTeleport(int Cl, int teleporter, bool& result)
     {
         timeSinceTeled[Cl] = GetEngineTime();
     }
+
+    return Plugin_Continue;
 }
 
 public void TF2_OnConditionAdded(int Cl, TFCond condition)
@@ -211,6 +223,7 @@ public Action ePlayerChangedName(Handle event, char[] name, bool dontBroadcast)
         return Plugin_Continue;
     }
     NameCheck(userid);
+
     return Plugin_Continue;
 }
 
@@ -223,6 +236,8 @@ public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
     // id of our achievement
     int achieve_id      = GetEventInt(event, "achievement");
     cheevCheck(userid, achieve_id);
+
+    return Plugin_Continue;
 }
 
 void ClearClBasedVars(int userid)
@@ -272,4 +287,31 @@ void ClearClBasedVars(int userid)
         userinfoValues[cvar][Cl][3][0] = '\0';
     }
     justclamped             [Cl] = false;
+}
+
+/********** TIMER FOR NETINFO **********/
+
+Action Timer_GetNetInfo(Handle timer)
+{
+    // reset all client based vars on plugin reload
+    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    {
+        if (IsValidClient(Cl))
+        {
+            // convert to percentages
+            lossFor[Cl]      = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
+            chokeFor[Cl]     = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
+            inchokeFor[Cl]   = GetClientAvgChoke(Cl, NetFlow_Incoming) * 100.0;
+            outchokeFor[Cl]  = GetClientAvgChoke(Cl, NetFlow_Outgoing) * 100.0;
+            // convert to ms
+            pingFor[Cl]      = GetClientLatency(Cl, NetFlow_Both) * 1000.0;
+            rateFor[Cl]      = GetClientAvgData(Cl, NetFlow_Both) / 125.0;
+            ppsFor[Cl]       = GetClientAvgPackets(Cl, NetFlow_Both);
+            if (LiveFeedOn[Cl])
+            {
+                LiveFeed_NetInfo(GetClientUserId(Cl));
+            }
+        }
+    }
+    return Plugin_Continue;
 }

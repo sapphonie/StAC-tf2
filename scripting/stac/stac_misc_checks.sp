@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** MISC CHEAT DETECTIONS / PATCHES *********/
 
 // ban on invalid characters (newlines, carriage returns, etc)
@@ -65,7 +67,7 @@ void NameCheck(int userid)
     }
 }
 
-bool SaniNameAndBan(int userid, char name[64])
+void SaniNameAndBan(int userid, char name[64])
 {
     int Cl = GetClientOfUserId(userid);
 
@@ -124,6 +126,7 @@ Action BanName(Handle timer, int userid)
         StacLogSteam(userid);
         StacLog("[Detection] Player %N has illegal chars in their name!", Cl);
     }
+    return Plugin_Continue;
 }
 
 // block long commands - i don't know if this actually does anything but it makes me feel better
@@ -351,6 +354,7 @@ Action Timer_decr_userinfospam(Handle timer, any userid)
             userinfoSpamDetects[Cl]--;
         }
     }
+    return Plugin_Continue;
 }
 
 void FixPingMasking(int Cl, const char[] cvar, const char[] value)

@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** StacLog functions **********/
 
 // Open log file for StAC
@@ -312,19 +314,23 @@ void StacLogButtons(int userid)
 
 bool IsValidClient(int client)
 {
-    return
+    if
     (
         (0 < client <= MaxClients)
         && IsClientInGame(client)
         && !IsClientInKickQueue(client)
         && !userBanQueued[client]
         && !IsFakeClient(client)
-    );
+    )
+    {
+        return true;
+    }
+    return false;
 }
 
 bool IsValidClientOrBot(int client)
 {
-    return
+    if
     (
         (0 < client <= MaxClients)
         && IsClientInGame(client)
@@ -333,7 +339,11 @@ bool IsValidClientOrBot(int client)
         // don't bother sdkhooking stv or replay bots lol
         && !IsClientSourceTV(client)
         && !IsClientReplay(client)
-    );
+    )
+    {
+        return true;
+    }
+    return false;
 }
 
 bool IsValidAdmin(int Cl)
@@ -350,12 +360,16 @@ bool IsValidAdmin(int Cl)
 
 bool IsValidSrcTV(int client)
 {
-    return
+    if
     (
-        (0 < client <= MaxClients)
+        0 < client <= MaxClients
         && IsClientInGame(client)
         && IsClientSourceTV(client)
-    );
+    )
+    {
+        return true;
+    }
+    return false;
 }
 
 /********** MISC FUNCS **********/

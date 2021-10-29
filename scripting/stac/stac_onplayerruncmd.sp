@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** OnPlayerRunCmd Detections **********/
 
 /*
@@ -1128,6 +1130,8 @@ Action Timer_decr_aimsnaps(Handle timer, any userid)
             }
         }
     }
+
+    return Plugin_Continue;
 }
 
 Action Timer_decr_pSilent(Handle timer, any userid)
@@ -1148,6 +1152,8 @@ Action Timer_decr_pSilent(Handle timer, any userid)
             }
         }
     }
+
+    return Plugin_Continue;
 }
 
 Action Timer_decr_tbot(Handle timer, any userid)
@@ -1168,4 +1174,6 @@ Action Timer_decr_tbot(Handle timer, any userid)
             }
         }
     }
+
+    return Plugin_Continue;
 }
