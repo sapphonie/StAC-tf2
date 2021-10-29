@@ -115,10 +115,10 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         if
         (
             // ncc
-            //StrEqual("-9999", cvarValue)
-            //||
+            //      StrEqual("-9999", cvarValue)
+            //      ||
             // chook
-            //StrEqual("-1", cvarValue)
+            //      StrEqual("-1", cvarValue)
             // everything lol
             clcmdrate < 10
         )
