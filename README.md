@@ -19,7 +19,6 @@
 - Fake eye angle cheats
 - NoLerp cheats
 - Some FoV cheats
-- Spinbot cheats
 ### It also prevents and/or detects:
 - Newlines/invalid characters in chat messages
 - Cmdnum manipulation (clientside nospread)
@@ -28,6 +27,7 @@
 - Clients using +right/+left inputs
 - "Ping reducing" cheats (and patches "pingmasking" by legit clients as well)
 - Clients purposefully not authorizing with Steam
+- Cheat to cheat communication
 
 ##
 I hate cheaters. Everyone does. But you know what I hate more? Taking the sweet time out of my day to catch them. A lot of TF2 cheats do a lot of the same things, and if you know what to look for, you can detect their patterns and ban them ***automatically***!
