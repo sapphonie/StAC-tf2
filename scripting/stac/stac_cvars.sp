@@ -371,7 +371,7 @@ void initCvars()
     HookConVarChange(stac_max_cmdrate_spam_detections, setStacVars);
 
 
-    // kick unauthed clients
+    // reconnect unauthed clients
     if (kickUnauth)
     {
         buffer = "1";
@@ -385,7 +385,7 @@ void initCvars()
     (
         "stac_kick_unauthed_clients",
         buffer,
-        "[StAC] Forcibly reconnect clients unauthorized with steam? This may reconnect players when Steam is down.\n(recommended 1)",
+        "[StAC] Forcibly reconnect clients unauthorized with steam - this protects against cheat clients not setting steamids, at the cost of making your server inaccessible when Steam is down.\n(recommended 1)",
         FCVAR_NONE,
         true,
         0.0,
