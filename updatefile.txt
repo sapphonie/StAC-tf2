@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "5.1.1"
+            "Latest"    "5.2.0"
         }
 
-        "Notes" "Changes in 5.1.1"
-        "Notes" "- misc fixes"
+        "Notes" "Changes in 5.2.0"
+        "Notes" "- Console colors! New detection methods! Bugs squashed!"
     }
 
     "Files"
