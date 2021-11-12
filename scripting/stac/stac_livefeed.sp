@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** LIVEFEED **********/
 
 void LiveFeed_PlayerCmd(int userid)

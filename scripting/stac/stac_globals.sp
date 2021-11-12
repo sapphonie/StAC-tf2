@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 // we don't need 64 maxplayers because this is only for tf2. saves some memory.
 #define TFMAXPLAYERS 33
 
@@ -17,7 +19,6 @@ ConVar stac_max_bhop_detections;
 ConVar stac_max_fakeang_detections;
 ConVar stac_max_cmdnum_detections;
 ConVar stac_max_tbot_detections;
-ConVar stac_max_spinbot_detections;
 ConVar stac_max_cmdrate_spam_detections;
 ConVar stac_min_interp_ms;
 ConVar stac_max_interp_ms;
@@ -46,8 +47,6 @@ bool demonameInBanReason        = true;
 bool logtofile                  = true;
 // fix pingmasking - required for pingreduce check
 bool fixpingmasking             = true;
-// bool that gets set by steamtools/steamworks forwards - used to kick clients that dont auth
-int isSteamAlive                = -1;
 bool kickUnauth                 = true;
 float maxAllowedTurnSecs        = -1.0;
 bool banForMiscCheats           = true;
@@ -61,7 +60,6 @@ int maxFakeAngDetections        = 10;
 int maxBhopDetections           = 10;
 int maxCmdnumDetections         = 20;
 int maxTbotDetections           = 0;
-int maxSpinbotDetections        = 50;
 int maxuserinfoSpamDetections   = 25;
 
 /***** Server based stuff *****/
@@ -79,6 +77,7 @@ float PlayerLagWaitLength = 1.0;
 char hostname[64];
 char hostipandport[24];
 char demoname[128];
+int demotick = -1;
 
 // server cvar values
 bool waitStatus;
@@ -90,8 +89,6 @@ int imaxrate;
 int iminrate;
 
 // time since some server event happened
-// last time steam came online
-float steamLastOnlineTime;
 // time since the map started
 float timeSinceMapStart;
 // time since the last stutter/lag spike occurred per client
@@ -101,23 +98,21 @@ float timeSinceLagSpikeFor[TFMAXPLAYERS + 1];
 bool SOURCEBANS;
 bool MATERIALADMIN;
 bool GBANS;
-bool STEAMTOOLS;
-bool STEAMWORKS;
 bool AIMPLOTTER;
 bool DISCORD;
 bool MVM;
+bool SOURCETVMGR;
 
 /***** client based stuff *****/
 
 // cheat detections per client
 int turnTimes               [TFMAXPLAYERS+1];
 int fakeAngDetects          [TFMAXPLAYERS+1];
-int aimsnapDetects          [TFMAXPLAYERS+1] = -1; // set to -1 to ignore first detections, as theyre most likely junk
-int pSilentDetects          [TFMAXPLAYERS+1] = -1; // ^
-int bhopDetects             [TFMAXPLAYERS+1] = -1; // set to -1 to ignore single jumps
+int aimsnapDetects          [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore first detections, as theyre most likely junk
+int pSilentDetects          [TFMAXPLAYERS+1] = {-1, ...}; // ^
+int bhopDetects             [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore single jumps
 int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
-int tbotDetects             [TFMAXPLAYERS+1] = -1;
-int spinbotDetects          [TFMAXPLAYERS+1];
+int tbotDetects             [TFMAXPLAYERS+1] = {-1, ...};
 int userinfoSpamDetects     [TFMAXPLAYERS+1];
 
 // frames since client "did something"
@@ -250,3 +245,4 @@ int t                  [TFMAXPLAYERS+1];
 
 float secTime          [TFMAXPLAYERS+1];
 
+char os                [16];

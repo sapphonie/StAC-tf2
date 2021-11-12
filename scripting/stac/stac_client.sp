@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** MISC CLIENT JOIN/LEAVE **********/
 
 // client join
@@ -18,11 +20,11 @@ public void OnClientPutInServer(int Cl)
         // query convars on player connect
         if (DEBUG)
         {
-            StacLog("[StAC] %N joined. Checking cvars", Cl);
+            StacLog("%N joined. Checking cvars", Cl);
         }
-        QueryTimer[Cl] = CreateTimer(5.0, Timer_CheckClientConVars, userid);
+        QueryTimer[Cl] = CreateTimer(15.0, Timer_CheckClientConVars, userid);
 
-        CreateTimer(2.5, CheckAuthOn, userid);
+        CreateTimer(10.0, CheckAuthOn, userid);
     }
     OnClientPutInServer_jaypatch(Cl);
 }
@@ -33,30 +35,33 @@ Action CheckAuthOn(Handle timer, int userid)
 
     if (IsValidClient(Cl))
     {
-        // don't bother checking if already authed and DEFINITELY don't check if steam is down or there's no way to do so thru an ext
+        // don't bother checking if already authed
         if (!IsClientAuthorized(Cl))
         {
-            if (shouldCheckAuth())
+            SteamAuthFor[Cl][0] = '\0';
+            if (kickUnauth)
             {
-                SteamAuthFor[Cl][0] = '\0';
-                if (kickUnauth)
-                {
-                    StacGeneralPlayerNotify(userid, "Kicked for being unauthorized w/ Steam");
-                    StacLog("[StAC] Kicking %N for not being authorized with Steam.", Cl);
-                    KickClient(Cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
-                }
-                else
-                {
-                    StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
-                    StacLog("[StAC] Client %N failed to authorize w/ Steam in a timely manner.", Cl);
-                }
+                StacGeneralPlayerNotify(userid, "Reconnecting player for being unauthorized w/ Steam");
+                StacLog("Reconnecting %N for not being authorized with Steam.", Cl);
+                PrintToChat(Cl, "You are being reconnected to the server in an attempt to reauthorize you with the Steam network.");
+                ClientCommand(Cl, "retry");
+                // Force clients who ignore the retry to do it anyway.
+                CreateTimer(1.0, Reconn, userid);
+                // TODO: detect clients that ignore this
+                // KickClient(Cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
+            }
+            else
+            {
+                StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
+                StacLog("Client %N failed to authorize w/ Steam in a timely manner.", Cl);
+                // SteamAuthFor[Cl][0] = '\0'; ?
             }
         }
         else
         {
             char steamid[64];
 
-            // let's try to get their auth anyway
+            // let's try to get their auth
             if (GetClientAuthId(Cl, AuthId_Steam2, steamid, sizeof(steamid)))
             {
                 // if we get it, copy to our global list
@@ -68,6 +73,21 @@ Action CheckAuthOn(Handle timer, int userid)
             }
         }
     }
+
+    return Plugin_Continue;
+}
+
+Action Reconn(Handle timer, int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    if (IsValidClient(Cl))
+    {
+        StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam AND ignored a retry command?? Suspicious! Forcing a reconnection.");
+        // If we got this far they're probably cheating, but I need to verify that. Force them in the meantime.
+        ReconnectClient(Cl);
+    }
+
+    return Plugin_Continue;
 }
 
 // cache this! we don't need to clear this because it gets overwritten when a new client connects with the same index
@@ -78,11 +98,12 @@ public void OnClientAuthorized(int Cl, const char[] auth)
         strcopy(SteamAuthFor[Cl], sizeof(SteamAuthFor[]), auth);
         if (DEBUG)
         {
-            StacLog("[StAC] auth %s for Cl %N", auth, Cl);
+            StacLog("Client %N authorized with auth %s.", Cl, auth);
         }
     }
 }
 
+// player left and mapchanges
 public void OnClientDisconnect(int Cl)
 {
     int userid = GetClientUserId(Cl);
@@ -92,7 +113,7 @@ public void OnClientDisconnect(int Cl)
 }
 
 // player is OUT of the server
-void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
+public void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
 {
     int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
     SteamAuthFor[Cl][0] = '\0';
@@ -100,7 +121,7 @@ void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
 
 /********** CLIENT BASED EVENTS **********/
 
-Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
+public Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
 {
     int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
     //int userid = GetEventInt(event, "userid");
@@ -108,21 +129,28 @@ Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
     {
         timeSinceSpawn[Cl] = GetEngineTime();
     }
+
+    return Plugin_Continue;
 }
 
-Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
+public Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
 {
-    // get ent classname AKA the weapon name
+    // ignore if it's a mvm robot weapon or an mvm robot or the world doing damage
     if (!IsValidEntity(weapon) || weapon <= 0 || !IsValidClient(attacker))
     {
         return Plugin_Continue;
     }
 
-    GetEntityClassname(weapon, hurtWeapon[attacker], 256);
+    // get ent classname AKA the weapon name
+    GetEntityClassname(weapon, hurtWeapon[attacker], sizeof(hurtWeapon[]));
     if
     (
         // player didn't hurt self
-           victim != attacker
+        victim != attacker
+        // not fire
+        && !(damagetype & DMG_IGNITE)
+        && !(damagetype & TF_CUSTOM_BURNING_FLARE)
+        && !(damagetype & TF_CUSTOM_BURNING)
     )
     {
         didHurtThisFrame[attacker] = true;
@@ -130,11 +158,13 @@ Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, i
     return Plugin_Continue;
 }
 
-Action Hook_TEFireBullets(const char[] te_name, const int[] players, int numClients, float delay)
+public Action Hook_TEFireBullets(const char[] te_name, const int[] players, int numClients, float delay)
 {
     int Cl = TE_ReadNum("m_iPlayer") + 1;
     // this user fired a bullet this frame!
     didBangThisFrame[Cl] = true;
+
+    return Plugin_Continue;
 }
 
 public Action TF2_OnPlayerTeleport(int Cl, int teleporter, bool& result)
@@ -143,6 +173,8 @@ public Action TF2_OnPlayerTeleport(int Cl, int teleporter, bool& result)
     {
         timeSinceTeled[Cl] = GetEngineTime();
     }
+
+    return Plugin_Continue;
 }
 
 public void TF2_OnConditionAdded(int Cl, TFCond condition)
@@ -191,6 +223,20 @@ public Action ePlayerChangedName(Handle event, char[] name, bool dontBroadcast)
         return Plugin_Continue;
     }
     NameCheck(userid);
+
+    return Plugin_Continue;
+}
+
+public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
+{
+    // ent index of achievement earner
+    int Cl              = GetEventInt(event, "player");
+    int userid          = GetClientUserId(Cl);
+
+    // id of our achievement
+    int achieve_id      = GetEventInt(event, "achievement");
+    cheevCheck(userid, achieve_id);
+
     return Plugin_Continue;
 }
 
@@ -206,7 +252,6 @@ void ClearClBasedVars(int userid)
     bhopDetects             [Cl] = -1; // set to -1 to ignore single jumps
     cmdnumSpikeDetects      [Cl] = 0;
     tbotDetects             [Cl] = -1; // ignore first detect, it's prolly bunk
-    spinbotDetects          [Cl] = 0;
     userinfoSpamDetects     [Cl] = 0;
 
 
@@ -241,4 +286,31 @@ void ClearClBasedVars(int userid)
         userinfoValues[cvar][Cl][3][0] = '\0';
     }
     justclamped             [Cl] = false;
+}
+
+/********** TIMER FOR NETINFO **********/
+
+public Action Timer_GetNetInfo(Handle timer)
+{
+    // reset all client based vars on plugin reload
+    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    {
+        if (IsValidClient(Cl))
+        {
+            // convert to percentages
+            lossFor[Cl]      = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
+            chokeFor[Cl]     = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
+            inchokeFor[Cl]   = GetClientAvgChoke(Cl, NetFlow_Incoming) * 100.0;
+            outchokeFor[Cl]  = GetClientAvgChoke(Cl, NetFlow_Outgoing) * 100.0;
+            // convert to ms
+            pingFor[Cl]      = GetClientLatency(Cl, NetFlow_Both) * 1000.0;
+            rateFor[Cl]      = GetClientAvgData(Cl, NetFlow_Both) / 125.0;
+            ppsFor[Cl]       = GetClientAvgPackets(Cl, NetFlow_Both);
+            if (LiveFeedOn[Cl])
+            {
+                LiveFeed_NetInfo(GetClientUserId(Cl));
+            }
+        }
+    }
+    return Plugin_Continue;
 }

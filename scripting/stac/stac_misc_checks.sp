@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** MISC CHEAT DETECTIONS / PATCHES *********/
 
 // ban on invalid characters (newlines, carriage returns, etc)
@@ -52,6 +54,12 @@ void NameCheck(int userid)
             StrContains(curName, "\r")  != -1
             ||
             StrContains(curName, "\t")  != -1
+            ||
+            // right to left char
+            StrContains(curName, "\xE2\x80\x8F") != -1
+            ||
+            // left to right char
+            StrContains(curName, "\xE2\x80\x8E") != -1
         )
         {
             SaniNameAndBan(userid, curName);
@@ -59,7 +67,7 @@ void NameCheck(int userid)
     }
 }
 
-bool SaniNameAndBan(int userid, char name[64])
+void SaniNameAndBan(int userid, char name[64])
 {
     int Cl = GetClientOfUserId(userid);
 
@@ -68,11 +76,15 @@ bool SaniNameAndBan(int userid, char name[64])
     int newlines;
     int returns;
     int tabs;
+    int rtl;
+    int ltr;
 
     // todo: implement C style iscntrl
-    newlines    = ReplaceString(name, sizeof(name), "\n", "");
-    returns     = ReplaceString(name, sizeof(name), "\r", "");
-    tabs        = ReplaceString(name, sizeof(name), "\t", "");
+    newlines    = ReplaceString(name, sizeof(name), "\n",           "");
+    returns     = ReplaceString(name, sizeof(name), "\r",           "");
+    tabs        = ReplaceString(name, sizeof(name), "\t",           "");
+    rtl         = ReplaceString(name, sizeof(name), "\xE2\x80\x8F", "");
+    ltr         = ReplaceString(name, sizeof(name), "\xE2\x80\x8E", "");
 
     SetClientName(Cl, name);
 
@@ -81,10 +93,14 @@ bool SaniNameAndBan(int userid, char name[64])
         "Client had:\
         \n%i newline chars,\
         \n%i return chars,\
-        \n%i tab chars",
+        \n%i tab chars,\
+        \n%i right2left chars,\
+        \n%i left2right chars",
         newlines,
         returns,
-        tabs
+        tabs,
+        rtl,
+        ltr
     );
 
     CreateTimer(0.5, BanName, userid);
@@ -108,8 +124,9 @@ Action BanName(Handle timer, int userid)
     {
         PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N has illegal chars in their name!", Cl);
         StacLogSteam(userid);
-        StacLog("[StAC] [Detection] Player %N has illegal chars in their name!", Cl);
+        StacLog("[Detection] Player %N has illegal chars in their name!", Cl);
     }
+    return Plugin_Continue;
 }
 
 // block long commands - i don't know if this actually does anything but it makes me feel better
@@ -133,6 +150,7 @@ public Action OnClientCommand(int Cl, int args)
             GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
         }
 
+
         strcopy(lastCommandFor[Cl], sizeof(lastCommandFor[]), ClientCommandChar);
         timeSinceLastCommand[Cl] = engineTime[Cl][0];
 
@@ -151,6 +169,31 @@ public Action OnClientCommand(int Cl, int args)
     }
     return Plugin_Continue;
 }
+
+// for achievement checking, because chook tries to be s n e a k y
+// if there are upgrades to the call/response bullshit in chook i can and will make this iterate thru every single kv
+public Action OnClientCommandKeyValues(int Cl, KeyValues kv)
+{
+    if (IsValidClient(Cl))
+    {
+        if (KvJumpToKey(kv, "achievementID", false))
+        {
+            if (KvGetDataType(kv, NULL_STRING) == KvData_Int)
+            {
+                // hack because KvGetNum doesn't just return a bool with an int&
+                int id = KvGetNum(kv, NULL_STRING, -123456789);
+                if (id != -123456789)
+                {
+                    int userid = GetClientUserId(Cl);
+                    cheevCheck(userid, id);
+                }
+            }
+        }
+    }
+
+    return Plugin_Continue;
+}
+
 
 
 public void OnClientSettingsChanged(int Cl)
@@ -179,7 +222,7 @@ public void OnClientSettingsChanged(int Cl)
         return;
     }
 
-    // hm
+    // horrific
     for (int cvar; cvar < sizeof(userinfoToCheck); cvar++)
     {
         char cvarvalue[64];
@@ -311,11 +354,11 @@ Action Timer_decr_userinfospam(Handle timer, any userid)
             userinfoSpamDetects[Cl]--;
         }
     }
+    return Plugin_Continue;
 }
 
 void FixPingMasking(int Cl, const char[] cvar, const char[] value)
 {
-    //int userid = GetClientUserId(Cl);
     int irate;
     int ioptimalrate;
     char soptimalrate[24];
@@ -371,14 +414,6 @@ void MiscCheatsEtcsCheck(int userid)
         // there used to be an fov check here - but there's odd behavior that i don't want to work around regarding the m_iFov netprop.
         // sorry!
 
-        // forcibly disables thirdperson with some cheats
-        /* There is no reason to do this. It does nothing but alert cheaters that something is fucky.
-        ClientCommand(Cl, "firstperson");
-        if (DEBUG)
-        {
-            StacLog("[StAC] Executed firstperson command on Player %N", Cl);
-        }
-        */
         checkInterp(userid);
     }
 }
@@ -390,7 +425,6 @@ void checkInterp(int userid)
     // don't check if not default tickrate
     if (isDefaultTickrate())
     {
-
         float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
         if (DEBUG)
         {
@@ -423,4 +457,48 @@ void checkInterp(int userid)
             StacLog("%t", "interpAllChat", Cl, lerp);
         }
     }
+}
+
+void cheevCheck(int userid, int achieve_id)
+{
+    // ent index of achievement earner
+    int Cl              = GetClientOfUserId(userid);
+
+    // we can't sdkcall CAchievementMgr::GetAchievementByIndex(int) here because the server will never have a valid CAchievementMgr*
+    // this is because achievements are all client side (because Valve just trusts clients fsr?)
+    // we have to (use other peoples') hardcode, in this case nosoop's achievements.inc.
+
+    // achievment number is bogus:
+    if
+    (
+        // it's too low
+        achieve_id < view_as<int>(Achievement_GetTurretKills)
+        ||
+        // it's too high
+        achieve_id > view_as<int>(Achievement_MapsPowerhouseKillEnemyInWater)
+    )
+    {
+        // uid for passing to GenPlayerNotify
+        StacLogSteam(userid);
+
+        if (banForMiscCheats)
+        {
+            PrintToImportant("{hotpink}[StAC] {white} User %N earned BOGUS achievement ID %i (hex %X)", Cl, achieve_id, achieve_id);
+            char reason[128];
+            Format(reason, sizeof(reason), "%t", "bogusAchieveBanMsg");
+            char pubreason[256];
+            Format(pubreason, sizeof(pubreason), "%t", "bogusAchieveBanAllChat", Cl);
+            BanUser(userid, reason, pubreason);
+        }
+        else
+        {
+            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} User %N earned BOGUS achievement ID %i (hex %X)", Cl, achieve_id, achieve_id);
+        }
+
+        char message[256];
+        Format(message, sizeof(message), "Client is cheating with bogus AchievementID %i (hex %X)", achieve_id, achieve_id);
+        StacDetectionNotify(userid, message, 1);
+
+    }
+
 }

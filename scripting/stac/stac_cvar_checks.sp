@@ -1,18 +1,22 @@
+#pragma semicolon 1
+
 /********** CLIENT CONVAR BASED STUFF **********/
 
+// Cvars that cheats tend to use to be out of bounds (or ones we need to check anyway) get appended to this array
 char miscVars[][] =
 {
     // misc vars
     "sensitivity",
     // possible cheat vars
+    // must be == 1
     "cl_interpolate",
     // this is a useless check but we check it anyway
     "fov_desired",
-    //
+    // must be > 10
     "cl_cmdrate",
-    // DEFINITE cheat vars get appended to this array
 };
 
+// DEFINITE cheat vars get appended to this array
 char cheatVars[][] =
 {
     // lith
@@ -23,26 +27,21 @@ char cheatVars[][] =
     // lmaobox apparently uses this? haven't seen it
     "setcvar",
     // ncc doesn't have any that i can find lol
-    // "",
     // cathook
-    "cat",
-    "get",
-    "set",
+    "cat_load",
     // ...melancholy? maybe? lol
     "caramelldansen",
     "SetCursor",
     "melancholy",
     // general
-    "hook",
-    // test
-    //"cl_interp"
+    "hook"
 };
 
 
 // set in InitCvarArray which is called in OnPluginLoad
 char cvarsToCheck[sizeof(miscVars) + sizeof(cheatVars)][64];
 
-
+// oh man this is ugly
 void InitCvarArray()
 {
     int miscvars = sizeof(miscVars);
@@ -57,7 +56,7 @@ void InitCvarArray()
     }
 }
 
-void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
+public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
 {
     // make sure client is valid
     if (!IsValidClient(Cl))
@@ -68,7 +67,7 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
 
     if (DEBUG)
     {
-        StacLog("[StAC] Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
+        StacLog("Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
     }
 
     if (StrEqual(cvarName, "sensitivity"))
@@ -115,10 +114,10 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
         if
         (
             // ncc
-            //StrEqual("-9999", cvarValue)
-            //||
+            //      StrEqual("-9999", cvarValue)
+            //      ||
             // chook
-            //StrEqual("-1", cvarValue)
+            //      StrEqual("-1", cvarValue)
             // everything lol
             clcmdrate < 10
         )
@@ -146,7 +145,7 @@ void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const cha
     else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
     {
         PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", cvarName, Cl);
-        StacLog("[StAC] Could not query cvar %s on player %L", cvarName, Cl);
+        StacLog("Could not query cvar %s on player %L", cvarName, Cl);
     }
 }
 
@@ -243,6 +242,8 @@ Action Timer_BanUser(Handle timer, DataPack pack)
     {
         BanUser(userid, reason, pubreason);
     }
+
+    return Plugin_Continue;
 }
 
 // timer for (re)checking ALL cvars and net props and everything else
@@ -256,7 +257,7 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
     {
         if (DEBUG)
         {
-            StacLog("[StAC] Checking client id, %i, %L", Cl, Cl);
+            StacLog("Checking client id, %i, %L", Cl, Cl);
         }
         // init variable to pass to QueryCvarsEtc
         int i;
@@ -272,6 +273,8 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
             userid
         );
     }
+
+    return Plugin_Continue;
 }
 
 // query all cvars and netprops for userid
@@ -324,6 +327,8 @@ Action Timer_QueryNextCvar(Handle timer, DataPack pack)
     {
         QueryCvarsEtc(userid, i);
     }
+
+    return Plugin_Continue;
 }
 
 // expensive!
@@ -331,7 +336,7 @@ void QueryEverythingAllClients()
 {
     if (DEBUG)
     {
-        StacLog("[StAC] Querying all clients");
+        StacLog("Querying all clients");
     }
     // loop thru all clients
     for (int Cl = 1; Cl <= MaxClients; Cl++)

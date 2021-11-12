@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** STAC CONVAR RELATED STUFF **********/
 
 void initCvars()
@@ -219,22 +221,6 @@ void initCvars()
     );
     HookConVarChange(stac_max_tbot_detections, setStacVars);
 
-    // spinbot detections
-    IntToString(maxSpinbotDetections, buffer, sizeof(buffer));
-    stac_max_spinbot_detections =
-    AutoExecConfig_CreateConVar
-    (
-        "stac_max_spinbot_detections",
-        buffer,
-        "[StAC] maximum spinbot detections before banning a client. \n(recommended 50 or higher)",
-        FCVAR_NONE,
-        true,
-        -1.0,
-        false,
-        _
-    );
-    HookConVarChange(stac_max_spinbot_detections, setStacVars);
-
     // min interp
     IntToString(min_interp_ms, buffer, sizeof(buffer));
     stac_min_interp_ms =
@@ -385,7 +371,7 @@ void initCvars()
     HookConVarChange(stac_max_cmdrate_spam_detections, setStacVars);
 
 
-    // kick unauthed clients
+    // reconnect unauthed clients
     if (kickUnauth)
     {
         buffer = "1";
@@ -399,7 +385,7 @@ void initCvars()
     (
         "stac_kick_unauthed_clients",
         buffer,
-        "[StAC] kick clients unauthorized with steam? This only checks if steam has been stable and online for at least the past 300 seconds or more.\n(recommended 1)",
+        "[StAC] Forcibly reconnect clients unauthorized with steam - this protects against cheat clients not setting steamids, at the cost of making your server inaccessible when Steam is down.\n(recommended 1)",
         FCVAR_NONE,
         true,
         0.0,
@@ -482,9 +468,6 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     // tbot var
     maxTbotDetections       = GetConVarInt(stac_max_tbot_detections);
 
-    // spinbot var
-    maxSpinbotDetections    = GetConVarInt(stac_max_spinbot_detections);
-
     // max ping reduce detections - clamp to -1 if 0
     maxuserinfoSpamDetections   = GetConVarInt(stac_max_cmdrate_spam_detections);
 
@@ -521,7 +504,7 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     silent                  = GetConVarInt(stac_silent);
 }
 
-void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
     // IMMEDIATELY unload if we enable sv cheats
     if (convar == FindConVar("sv_cheats"))
@@ -543,7 +526,7 @@ void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newVa
 #define MAX_RATE        (1024*1024)
 #define MIN_RATE        1000
 // update server rate settings for cmdrate spam check - i'd rather have one func do this lol
-void UpdateRates(ConVar convar, const char[] oldValue, const char[] newValue)
+public void UpdateRates(ConVar convar, const char[] oldValue, const char[] newValue)
 {
     imincmdrate    = GetConVarInt(FindConVar("sv_mincmdrate"));
     imaxcmdrate    = GetConVarInt(FindConVar("sv_maxcmdrate"));

@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 /********** MAP CHANGE / STARTUP RELATED STUFF **********/
 
 public void OnMapStart()
@@ -16,13 +18,15 @@ public void OnMapStart()
     GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
 }
 
-Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
+public Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
 {
     DoTPSMath();
     // might as well do this here!
     ActuallySetRandomSeed();
     // this counts
     timeSinceMapStart = GetEngineTime();
+
+    return Plugin_Continue;
 }
 
 public void OnMapEnd()
@@ -38,7 +42,7 @@ Action checkNativesEtc(Handle timer)
     // check sv cheats
     if (GetConVarBool(FindConVar("sv_cheats")))
     {
-        //SetFailState("[StAC] sv_cheats set to 1! Aborting!");
+        SetFailState("sv_cheats set to 1! Aborting!");
     }
     // check wait command
     if (GetConVarBool(FindConVar("sv_allow_wait_command")))
@@ -57,16 +61,6 @@ Action checkNativesEtc(Handle timer)
 
     // check natives!
 
-    // steamtools
-    if (GetFeatureStatus(FeatureType_Native, "Steam_IsConnected") == FeatureStatus_Available)
-    {
-        STEAMTOOLS = true;
-    }
-    // steamworks
-    if (GetFeatureStatus(FeatureType_Native, "SteamWorks_IsConnected") == FeatureStatus_Available)
-    {
-        STEAMWORKS = true;
-    }
     // sourcebans
     if (GetFeatureStatus(FeatureType_Native, "SBPP_BanPlayer") == FeatureStatus_Available)
     {
@@ -92,12 +86,13 @@ Action checkNativesEtc(Handle timer)
     {
         DISCORD = true;
     }
-
-    // check steam status real quick
-    if (isSteamAlive == -1)
+    // srctvmgr functionality, for demo ticks
+    if (GetFeatureStatus(FeatureType_Native, "SourceTV_GetDemoFileName") == FeatureStatus_Available)
     {
-        checkSteam();
+        SOURCETVMGR = true;
     }
+
+    return Plugin_Continue;
 }
 
 // NUKE the client timers from orbit on plugin and map reload
@@ -121,7 +116,7 @@ void ResetTimers()
 
             if (DEBUG)
             {
-                StacLog("[StAC] Creating timer for %L", Cl);
+                StacLog("Creating timer for %L", Cl);
             }
             // lets make a timer with a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
             QueryTimer[Cl] =
@@ -148,17 +143,24 @@ void ActuallySetRandomSeed()
     int seed = GetURandomInt();
     if (DEBUG)
     {
-        StacLog("[StAC] setting random server seed to %i", seed);
+        StacLog("setting random server seed to %i", seed);
     }
     SetRandomSeed(seed);
 }
 
+// jesus this is ugly
 void checkStatus()
 {
     char status[2048];
     ServerCommandEx(status, sizeof(status), "status");
     char ipetc[128];
     char ip[24];
+
+    char hostport[8];
+    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
+
+    Format(hostipandport, sizeof(hostipandport), "un.known.ip.addr:%s", hostport);
+
     if (MatchRegex(publicIPRegex, status) > 0)
     {
         if (GetRegexSubString(publicIPRegex, 0, ipetc, sizeof(ipetc)))
@@ -168,15 +170,16 @@ void checkStatus()
             {
                 if (GetRegexSubString(IPRegex, 0, ip, sizeof(ip)))
                 {
-                    strcopy(hostipandport, sizeof(hostipandport), ip);
-                    StrCat(hostipandport, sizeof(hostipandport), ":");
-                    char hostport[6];
-                    GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
-                    StrCat(hostipandport, sizeof(hostipandport), hostport);
+                    Format(hostipandport, sizeof(hostipandport), "%s:%s", ip, hostport);
                 }
             }
         }
     }
+    if (DEBUG)
+    {
+        StacLog("Server IP + Port = %s", hostipandport);
+    }
+
 }
 
 void DoTPSMath()
@@ -189,4 +192,3 @@ void DoTPSMath()
         StacLog("tickinterv %f, tps %f", tickinterv, tps);
     }
 }
-

@@ -10,8 +10,10 @@
 #include <sdktools>
 #include <sdkhooks>
 #include <tf2_stocks>
+#include <achievements>
 // external incs
 #include <morecolors>
+#include <concolors>
 #include <autoexecconfig>
 #undef REQUIRE_PLUGIN
 #tryinclude <updater>
@@ -19,21 +21,20 @@
 #tryinclude <materialadmin>
 #tryinclude <discord>
 #undef REQUIRE_EXTENSIONS
-#tryinclude <steamtools>
-#tryinclude <SteamWorks>
+#tryinclude <sourcetvmanager>
 
-// we have to re pragma because sourcemod sucks lol
+#pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.1.1"
+#define PLUGIN_VERSION  "5.2.0"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
 public Plugin myinfo =
 {
-    name             =  "Steph's AntiCheat (StAC)",
-    author           =  "steph&nie",
-    description      =  "TF2 AntiCheat plugin written by Stephanie. Originally forked from IntegriTF2 by Miggy (RIP)",
+    name             =  "Steph's AntiCheat [StAC]",
+    author           =  "https://sappho.io",
+    description      =  "AntiCheat plugin for TF2 written by https://sappho.io . Originally forked from IntegriTF2 by Miggy, RIP",
     version          =   PLUGIN_VERSION,
     url              =  "https://sappho.io"
 }
@@ -58,12 +59,8 @@ public Plugin myinfo =
 #include "stac/stac_cvar_checks.sp"
 // client netprop etc checks
 #include "stac/stac_misc_checks.sp"
-// server repeating timers
-#include "stac/stac_misc_timers.sp"
 // stac livefeed
 #include "stac/stac_livefeed.sp"
-// for kicking unauthorized clients
-#include "stac/stac_steamauth.sp"
 // if it ain't broke, don't fix it. jtanz has written a great backtrack patch.
 #include "stac/jay_backtrack_patch.sp"
 
@@ -71,6 +68,7 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+    StacLog("\n\n----> StAC version [%s] loaded\n", PLUGIN_VERSION);
     // check if tf2, unload if not
     if (GetEngineVersion() != Engine_TF2)
     {
@@ -84,6 +82,8 @@ public void OnPluginStart()
 
     LoadTranslations("common.phrases");
     LoadTranslations("stac.phrases.txt");
+
+    checkOS();
 
     // updater
     if (LibraryExists("updater"))
@@ -102,7 +102,8 @@ public void OnPluginStart()
     // setup regex - "Recording to ".*""
     demonameRegex       = CompileRegex("Recording to \".*\"");
     demonameRegexFINAL  = CompileRegex("\".*\"");
-    publicIPRegex       = CompileRegex("public ip: \\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b");
+    // this is fucking disgusting
+    publicIPRegex       = CompileRegex("(ip  : .*)\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b");
     IPRegex             = CompileRegex("\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b");
 
     // grab round start events for calculating tps
@@ -113,6 +114,8 @@ public void OnPluginStart()
     HookEvent("player_disconnect", ePlayerDisconnect);
     // grab player name changes
     HookEvent("player_changename", ePlayerChangedName, EventHookMode_Pre);
+    // grab player cheevs
+    HookEvent("achievement_earned", ePlayerAchievement, EventHookMode_Post);
 
     // hook sv_cheats so we can instantly unload if cheats get turned on
     HookConVarChange(FindConVar("sv_cheats"), GenericCvarChanged);
@@ -153,14 +156,13 @@ public void OnPluginStart()
     // set up our array we'll use for checking cvars
     InitCvarArray();
 
-    StacLog("[StAC] Plugin vers. ---- %s ---- loaded", PLUGIN_VERSION);
-
+    // jaypatch
     OnPluginStart_jaypatch();
 }
 
 public void OnPluginEnd()
 {
-    StacLog("[StAC] Plugin vers. ---- %s ---- unloaded", PLUGIN_VERSION);
+    StacLog("\n\n----> StAC version [%s] unloaded\n", PLUGIN_VERSION);
     NukeTimers();
     OnMapEnd();
 }
@@ -202,7 +204,7 @@ public void OnGameFrame()
             }
             timeSinceLagSpikeFor[0] = GetEngineTime();
 
-            StacLog("[StAC] Server framerate stuttered. Expected: ~%.1f, got %i.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, tickspersec[0], ServerLagWaitLength);
+            StacLog("Server framerate stuttered. Expected: ~%.1f, got %i.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, tickspersec[0], ServerLagWaitLength);
             if (DEBUG)
             {
                 PrintToImportant("{hotpink}[StAC]{white} Server framerate stuttered. Expected: {palegreen}~%.1f{white}, got {fullred}%i{white}.\nDisabling OnPlayerRunCmd checks for %f seconds.",
@@ -210,4 +212,10 @@ public void OnGameFrame()
             }
         }
     }
+}
+
+Action Timer_TriggerTimedStuff(Handle timer)
+{
+    ActuallySetRandomSeed();
+    return Plugin_Continue;
 }

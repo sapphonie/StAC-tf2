@@ -1,6 +1,9 @@
+#pragma semicolon 1
+#pragma newdecls required
+
 /*
 	Jay's Backtrack Patch
-	Copyright (C) 2020 J_Tanzanite
+	Copyright (C) 2021 J_Tanzanite
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -15,7 +18,6 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-
 
 #include <sourcemod>
 #include <sdktools_entoutput>
@@ -84,6 +86,8 @@ public Action event_teleported(Event event, const char[] name, bool dontBroadcas
 
 	if (is_player_valid(client))
 		time_teleport[client] = GetGameTime();
+
+	return Plugin_Continue;
 }
 
 public void map_teleport(const char[] output, int caller, int activator, float delay)
@@ -154,7 +158,7 @@ int correct_tickcount(int client, int tickcount)
 	return tickcount;
 }
 
-bool set_in_timeout(int client)
+void set_in_timeout(int client)
 {
 	int ping;
 	int tick;
@@ -183,6 +187,7 @@ bool set_in_timeout(int client)
 		diff_tickcount[client] = backtrack_ticks - 3;
 	else if (diff_tickcount[client] < ((backtrack_ticks * -1) + 3))
 		diff_tickcount[client] = (backtrack_ticks * -1) + 3;
+
 }
 
 // Simulate the players tickcount as if it incremented normally

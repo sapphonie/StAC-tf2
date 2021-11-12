@@ -1,8 +1,15 @@
+#pragma semicolon 1
+
 /********** StacLog functions **********/
 
 // Open log file for StAC
 void OpenStacLog()
 {
+    if (StacLogFile != null)
+    {
+        FlushFile(StacLogFile);
+        return;
+    }
     // current date for log file (gets updated on map change to not spread out maps across files on date changes)
     char curDate[32];
 
@@ -35,30 +42,70 @@ void OpenStacLog()
 // Close log file for StAC
 void CloseStacLog()
 {
+    FlushFile(StacLogFile);
     delete StacLogFile;
 }
 
 // log to StAC log file
 void StacLog(const char[] format, any ...)
 {
+    // crutch for reloading the plugin and still printing to our log file
+    if (StacLogFile == null)
+    {
+        ConVar temp_staclogtofile = FindConVar("stac_log_to_file");
+        if (temp_staclogtofile != null)
+        {
+            if (GetConVarBool(temp_staclogtofile))
+            {
+                OpenStacLog();
+            }
+        }
+    }
+
     char buffer[254];
-    VFormat(buffer, sizeof(buffer), format, 2);
+    VFormat(buffer,         sizeof(buffer),         format, 2);
     // clear color tags
     MC_RemoveTags(buffer, sizeof(buffer));
 
+    char nowtime[64];
+    int int_nowtime = GetTime();
+
+    FormatTime(nowtime, sizeof(nowtime), "%H:%M:%S", int_nowtime);
+
+    char file_buffer[254];
+    strcopy(file_buffer,    sizeof(file_buffer),    buffer);
+    // add newlines
+    Format(file_buffer, sizeof(file_buffer), "<%s> %s\n", nowtime, file_buffer);
+
+    char colored_buffer[254];
+    strcopy(colored_buffer, sizeof(colored_buffer), buffer);
+
+
+    if (StrEqual(os, "linux"))
+    {
+        // add colored tags :D
+        Format(colored_buffer, sizeof(colored_buffer), ansi_bright_magenta ... "[StAC]" ... ansi_reset ... " %s", colored_buffer);
+    }
+    else
+    {
+        Format(colored_buffer, sizeof(colored_buffer), "[StAC] %s", colored_buffer);
+    }
+
+    // add the tag to the normal thing
+    Format(buffer, sizeof(buffer), "[StAC] %s", buffer);
+
+
     if (StacLogFile != null)
     {
-        LogToOpenFile(StacLogFile, buffer);
+        WriteFileString(StacLogFile, file_buffer, false);
     }
     else if (logtofile)
     {
         LogMessage("[StAC] File handle invalid!");
-        LogMessage("%s", buffer);
     }
-    else
-    {
-        LogMessage("%s", buffer);
-    }
+
+    PrintToServer("%s", colored_buffer);
+
     PrintToConsoleAllAdmins("%s", buffer);
 }
 
@@ -66,7 +113,7 @@ void StacLogDemo()
 {
     if (GetDemoName())
     {
-        StacLog("Demo file: %s", demoname);
+        StacLog("Demo file: %s. Demo tick: %i", demoname, demotick);
     }
 }
 
@@ -267,19 +314,23 @@ void StacLogButtons(int userid)
 
 bool IsValidClient(int client)
 {
-    return
+    if
     (
         (0 < client <= MaxClients)
         && IsClientInGame(client)
         && !IsClientInKickQueue(client)
         && !userBanQueued[client]
         && !IsFakeClient(client)
-    );
+    )
+    {
+        return true;
+    }
+    return false;
 }
 
 bool IsValidClientOrBot(int client)
 {
-    return
+    if
     (
         (0 < client <= MaxClients)
         && IsClientInGame(client)
@@ -288,7 +339,11 @@ bool IsValidClientOrBot(int client)
         // don't bother sdkhooking stv or replay bots lol
         && !IsClientSourceTV(client)
         && !IsClientReplay(client)
-    );
+    )
+    {
+        return true;
+    }
+    return false;
 }
 
 bool IsValidAdmin(int Cl)
@@ -305,12 +360,16 @@ bool IsValidAdmin(int Cl)
 
 bool IsValidSrcTV(int client)
 {
-    return
+    if
     (
-        (0 < client <= MaxClients)
+        0 < client <= MaxClients
         && IsClientInGame(client)
         && IsClientSourceTV(client)
-    );
+    )
+    {
+        return true;
+    }
+    return false;
 }
 
 /********** MISC FUNCS **********/
@@ -345,7 +404,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         }
         else
         {
-            StacLog("[StAC] No STV demo is being recorded, no demo name will be printed to the ban reason!");
+            StacLog("No STV demo is being recorded, no demo name will be printed to the ban reason!");
         }
     }
     if (isAuthed)
@@ -386,7 +445,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         char ip[16];
         GetClientIP(Cl, ip, sizeof(ip));
 
-        StacLog("[StAC] No cached SteamID for% N! Banning with IP %s...", Cl, ip);
+        StacLog("No cached SteamID for %N! Banning with IP %s...", Cl, ip);
         ServerCommand("sm_banip %s %i %s", ip, banDuration, reason);
         // this kick client might not be needed - you get kicked by "being added to ban list"
         // KickClient(Cl, "%s", reason);
@@ -398,33 +457,50 @@ void BanUser(int userid, char[] reason, char[] pubreason)
 
 bool GetDemoName()
 {
-    // TODO: SourceTVManager
-    // TODO: Demoticks
-    char tvStatus[512];
-    ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
-    char demoname_etc[128];
-    if (MatchRegex(demonameRegex, tvStatus) > 0)
+    if (SOURCETVMGR)
     {
-        if (GetRegexSubString(demonameRegex, 0, demoname_etc, sizeof(demoname_etc)))
+        demotick = SourceTV_GetRecordingTick();
+        if (!SourceTV_GetDemoFileName(demoname, sizeof(demoname)))
         {
-            TrimString(demoname_etc);
-            if (MatchRegex(demonameRegexFINAL, demoname_etc) > 0)
+            demoname = "N/A";
+            return false;
+        }
+
+        return true;
+    }
+
+    else
+    {
+        char tvStatus[512];
+        ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
+        char demoname_etc[128];
+        if (MatchRegex(demonameRegex, tvStatus) > 0)
+        {
+            if (GetRegexSubString(demonameRegex, 0, demoname_etc, sizeof(demoname_etc)))
             {
-                if (GetRegexSubString(demonameRegexFINAL, 0, demoname, sizeof(demoname)))
+                TrimString(demoname_etc);
+                if (MatchRegex(demonameRegexFINAL, demoname_etc) > 0)
                 {
-                    TrimString(demoname);
-                    StripQuotes(demoname);
-                    return true;
+                    if (GetRegexSubString(demonameRegexFINAL, 0, demoname, sizeof(demoname)))
+                    {
+                        TrimString(demoname);
+                        StripQuotes(demoname);
+                        return true;
+                    }
                 }
             }
         }
+        demoname = "N/A";
+        demotick = -1;
+
+        return false;
     }
-    demoname = "N/A";
-    return false;
 }
 
 bool isDefaultTickrate()
 {
+    // Hack! Sometimes tps is set as default when it really isn't
+    DoTPSMath();
     if (tps > 60.0 && tps < 70.0)
     {
         return true;
@@ -615,8 +691,23 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
     {
         return;
     }
-    static char generalTemplate[1024] = \
-    "{ \"embeds\": [ { \"title\": \"StAC Message\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Message\", \"value\": \"%s\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } ] } ] }";
+
+    static char generalTemplate[2048] = \
+    "{ \"embeds\": \
+        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
+            [\
+                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
+                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
+                { \"name\": \"Message\",        \"value\": \"%s\" } ,\
+                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
+                { \"name\": \"IP\",             \"value\": \"%s\" } ,\
+                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
+                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
+                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
+            ]\
+        }],\
+        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
+    }";
 
     char msg[1024];
 
@@ -651,8 +742,11 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         message,
         hostname,
         hostipandport,
-        demoname
+        demoname,
+        demotick,
+        GetTime()
     );
+
     SendMessageToDiscord(msg);
 }
 
@@ -665,8 +759,23 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         return;
     }
 
-    static char detectionTemplate[1024] = \
-    "{ \"embeds\": [ { \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\": [ { \"name\": \"Player\", \"value\": \"%N\" } , { \"name\": \"SteamID\", \"value\": \"%s\" }, { \"name\": \"Detection type\", \"value\": \"%s\" }, { \"name\": \"Detection\", \"value\": \"%i\" }, { \"name\": \"Hostname\", \"value\": \"%s\" }, { \"name\": \"IP\", \"value\": \"%s\" } , { \"name\": \"Current Demo Recording\", \"value\": \"%s\" } , { \"name\": \"Unix timestamp of detection\", \"value\": \"%i\" } ] } ] }";
+    static char detectionTemplate[2048] = \
+    "{ \"embeds\": \
+        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
+            [\
+                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
+                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
+                { \"name\": \"Detection type\", \"value\": \"%s\" } ,\
+                { \"name\": \"Detection\",      \"value\": \"%i\" } ,\
+                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
+                { \"name\": \"IP\",             \"value\": \"%s\" } ,\
+                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
+                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
+                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
+            ]\
+        }],\
+        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
+    }";
 
     char msg[1024];
 
@@ -701,8 +810,10 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         hostname,
         hostipandport,
         demoname,
+        demotick,
         GetTime()
     );
+
     SendMessageToDiscord(msg);
 }
 
@@ -710,4 +821,24 @@ void SendMessageToDiscord(char[] message)
 {
     char webhook[32] = "stac";
     Discord_SendMessage(webhook, message);
+}
+
+void checkOS()
+{
+    // only need the beginning of this
+    char cmdline[32];
+    GetCommandLine(cmdline, sizeof(cmdline));
+
+    if (StrContains(cmdline, "./srcds_linux ", false) != -1)
+    {
+        os = "linux";
+    }
+    else if (StrContains(cmdline, ".exe", false) != -1)
+    {
+        os = "windows";
+    }
+    else
+    {
+        os = "unknown";
+    }
 }
