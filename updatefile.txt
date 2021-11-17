@@ -4,10 +4,10 @@
     {
         "Version"
         {
-            "Latest"    "5.2.0"
+            "Latest"    "5.2.1"
         }
 
-        "Notes" "Changes in 5.2.0"
+        "Notes" "Changes in 5.2.1"
         "Notes" "- Console colors! New detection methods! Bugs squashed!"
     }
 
