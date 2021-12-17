@@ -132,7 +132,7 @@ void initCvars()
     (
         "stac_max_aimsnap_detections",
         buffer,
-        "[StAC] maximum aimsnap detections before banning a client.\n-1 to disable even checking angles (saves cpu), 0 to print to admins/stv but never ban\n(recommended 25 or higher)",
+        "[StAC] maximum aimsnap detections before banning a client.\n-1 to disable even checking angles (saves cpu), 0 to print to admins/stv but never ban\n(recommended 20 or higher)",
         FCVAR_NONE,
         true,
         -1.0,
