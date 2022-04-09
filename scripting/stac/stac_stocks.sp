@@ -500,7 +500,11 @@ bool GetDemoName()
 bool isDefaultTickrate()
 {
     // Hack! Sometimes tps is set as default when it really isn't
-    DoTPSMath();
+    if (tps == 0)
+    {
+        DoTPSMath();
+        LogMessage("redoing tps math");
+    }
     if (tps > 60.0 && tps < 70.0)
     {
         return true;
@@ -520,6 +524,7 @@ void calcTPSfor(int Cl)
 }
 
 // sourcemod is fucking ridiculous, "IsNullString" only checks for a specific definition of nullstring
+// sorry asherkin i didnt mean it
 bool IsActuallyNullString(char[] somestring)
 {
     if (somestring[0] != '\0')
