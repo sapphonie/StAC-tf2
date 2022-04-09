@@ -8,6 +8,8 @@ char miscVars[][] =
     // misc vars
     "sensitivity",
     // possible cheat vars
+    // must be == 0
+    "sv_cheats",
     // must be == 1
     "cl_interpolate",
     // this is a useless check but we check it anyway
@@ -26,7 +28,7 @@ char miscVars[][] =
     "cl_thirdperson",
     // must be == 0
     "r_portalsopenall",
-    // "sv_force_transmit_ents" ?
+    // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
     // tf_showspeed ?
     // tf_tauntcam_* for third person ?
@@ -98,6 +100,21 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     /*
         non cheat client cvars, but we check if they have oob values or not
     */
+
+    // sv_cheats
+    // you know what this does and what it should be. 0.
+    else if (StrEqual(cvarName, "sv_cheats"))
+    {
+        if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (banForMiscCheats)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
     // cl_interpolate (hidden cvar! should NEVER not be 1)
     // used for disabling client side interpolation wholesale
     else if (StrEqual(cvarName, "cl_interpolate"))
@@ -111,6 +128,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             }
         }
     }
+
     // fov check #1 - if u get banned by this you are a clown
     // used for seeing more of the world
     else if (StrEqual(cvarName, "fov_desired"))
@@ -126,6 +144,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             }
         }
     }
+
     // cmdrate check - should always be at or above 10
     // used for faking ping to the server
     else if (StrEqual(cvarName, "cl_cmdrate"))
@@ -140,6 +159,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             }
         }
     }
+
     // r_drawothermodels (cheat cvar! should NEVER not be 1)
     // used for seeing thru the world
     else if (StrEqual(cvarName, "r_drawothermodels"))
@@ -153,6 +173,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             }
         }
     }
+
     // snd_show (cheat cvar! should NEVER not be 0)
     // used for showing currently playing sounds
     else if (StrEqual(cvarName, "snd_show"))
@@ -166,6 +187,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             }
         }
     }
+
     // snd_visualize (cheat cvar! should NEVER not be 0)
     // used for visualizing sounds in the world
     else if (StrEqual(cvarName, "snd_visualize"))
@@ -179,6 +201,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             }
         }
     }
+
     // fog_enable (cheat cvar! should NEVER not be 1)
     // used for making the world a little clearer. this should frankly be not cheat locked but i know cheaters will use it and that's still cheating
     else if (StrEqual(cvarName, "fog_enable"))
@@ -192,6 +215,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             }
         }
     }
+
     // cl_thirdperson (hidden cvar! should NEVER not be 0)
     // used for enabling thirdperson
     else if (StrEqual(cvarName, "cl_thirdperson"))
@@ -205,6 +229,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
             }
         }
     }
+
     // r_portalsopenall (cheat cvar! should NEVER not be 0)
     // used for disabling areaportal checks, so you can see the entire world at once. essentially "far esp"
     else if (StrEqual(cvarName, "r_portalsopenall"))
