@@ -195,7 +195,7 @@ public Action OnClientCommandKeyValues(int Cl, KeyValues kv)
 }
 
 
-
+// oh dear god why did I write this like this this is horrible
 public void OnClientSettingsChanged(int Cl)
 {
     // ignore invalid clients
