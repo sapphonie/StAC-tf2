@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "5.2.1"
+            "Latest"    "5.2.2"
         }
 
-        "Notes" "Changes in 5.2.1"
-        "Notes" "- Console colors! New detection methods! Bugs squashed!"
+        "Notes" "Changes in 5.2.2"
+        "Notes" "- Add more cvars to check due to a stanky Valve bug with hud sliders. See PR #86 for more info!"
     }
 
     "Files"
