@@ -106,6 +106,8 @@ elektro - beta testing
 
 Creators.TF Community - beta testing
 
+Cheddzy - for the COOL ass icon
+
 Nanochip - rare code audits
 
 Miggy - this one's for you, bud.
