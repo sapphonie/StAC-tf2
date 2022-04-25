@@ -29,21 +29,7 @@ public void OnPlayerRunCmdPre
 {
     useOnPlayerRunCmdPre = true;
 
-    float unconst_vel[3];
-    unconst_vel[0]      = vel[0];
-    unconst_vel[1]      = vel[1];
-    unconst_vel[2]      = vel[2];
-
-    float unconst_angles[3];
-    unconst_angles[0]   = unconst_angles[0];
-    unconst_angles[1]   = unconst_angles[1];
-    unconst_angles[2]   = unconst_angles[2];
-
-    int unconst_mouse[2];
-    unconst_mouse[0]    = mouse[0];
-    unconst_mouse[1]    = mouse[1];
-
-    PlayerRunCmd(Cl, buttons, impulse, unconst_vel, unconst_angles, weapon, subtype, cmdnum, tickcount, seed, unconst_mouse);
+    PlayerRunCmd(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
 }
 
 public Action OnPlayerRunCmd
@@ -79,7 +65,20 @@ public Action OnPlayerRunCmd
 }
 
 
-void PlayerRunCmd(int Cl, int buttons, int impulse, float vel[3], float angles[3], int weapon, int subtype, int cmdnum, int tickcount, int seed, int mouse[2])
+void PlayerRunCmd
+(
+    const int Cl,
+    const int buttons,
+    const int impulse,
+    const float vel[3],
+    const float angles[3],
+    const int weapon,
+    const int subtype,
+    const int cmdnum,
+    const int tickcount,
+    const int seed,
+    const int mouse[2]
+)
 {
     // make sure client is real & not a bot
     if (!IsValidClient(Cl))
