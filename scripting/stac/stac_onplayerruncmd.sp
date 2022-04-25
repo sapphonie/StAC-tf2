@@ -49,15 +49,15 @@ public void OnPlayerRunCmdPre
 public Action OnPlayerRunCmd
 (
     int Cl,
-    int &buttons,
-    int &impulse,
+    int& buttons,
+    int& impulse,
     float vel[3],
     float angles[3],
-    int &weapon,
-    int &subtype,
-    int &cmdnum,
-    int &tickcount,
-    int &seed,
+    int& weapon,
+    int& subtype,
+    int& cmdnum,
+    int& tickcount,
+    int& seed,
     int mouse[2]
 )
 {
