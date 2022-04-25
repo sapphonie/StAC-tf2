@@ -55,17 +55,17 @@ public Action OnPlayerRunCmd
         return Plugin_Handled;
     }
 
-    if (useOnPlayerRunCmdPre)
+    // only run if OnPlayerRunCmdPre doesn't ever fire (meaning we're not on a sm.1.11.6876 install or newer)
+    if (!useOnPlayerRunCmdPre)
     {
-        return Plugin_Continue;
+        PlayerRunCmd(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
     }
-    PlayerRunCmd(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
 
     return Plugin_Continue;
 }
 
 
-void PlayerRunCmd
+stock void PlayerRunCmd
 (
     const int Cl,
     const int buttons,
