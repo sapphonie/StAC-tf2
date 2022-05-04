@@ -1,11 +1,14 @@
 #pragma semicolon 1
 
+
+
 /********** MISC CLIENT JOIN/LEAVE **********/
 
 // client join
 public void OnClientPutInServer(int Cl)
 {
     int userid = GetClientUserId(Cl);
+
 
     if (IsValidClientOrBot(Cl))
     {
@@ -39,6 +42,7 @@ Action CheckAuthOn(Handle timer, int userid)
         if (!IsClientAuthorized(Cl))
         {
             SteamAuthFor[Cl][0] = '\0';
+
             if (kickUnauth)
             {
                 StacGeneralPlayerNotify(userid, "Reconnecting player for being unauthorized w/ Steam");
@@ -252,6 +256,7 @@ void ClearClBasedVars(int userid)
     bhopDetects             [Cl] = -1; // set to -1 to ignore single jumps
     cmdnumSpikeDetects      [Cl] = 0;
     tbotDetects             [Cl] = -1; // ignore first detect, it's prolly bunk
+    dtDetects               [Cl] = 0;
     userinfoSpamDetects     [Cl] = 0;
 
 
