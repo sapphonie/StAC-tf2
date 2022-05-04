@@ -10,8 +10,8 @@
 #include <sdktools>
 #include <sdkhooks>
 #include <tf2_stocks>
-#include <achievements>
 // external incs
+#include <achievements>
 #include <morecolors>
 #include <concolors>
 #include <autoexecconfig>
@@ -22,11 +22,12 @@
 #tryinclude <discord>
 #undef REQUIRE_EXTENSIONS
 #tryinclude <sourcetvmanager>
+#tryinclude <SteamWorks>
 
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.2.2"
+#define PLUGIN_VERSION  "5.2.4"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
