@@ -102,6 +102,7 @@ bool AIMPLOTTER;
 bool DISCORD;
 bool MVM;
 bool SOURCETVMGR;
+bool STEAMWORKS;
 
 /***** client based stuff *****/
 

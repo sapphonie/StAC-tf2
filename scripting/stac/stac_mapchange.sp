@@ -8,13 +8,14 @@ public void OnMapStart()
     ActuallySetRandomSeed();
     DoTPSMath();
     ResetTimers();
-    RequestFrame(checkStatus);
     if (optimizeCvars)
     {
         RunOptimizeCvars();
     }
     timeSinceMapStart = GetEngineTime();
     CreateTimer(0.1, checkNativesEtc);
+    CreateTimer(0.5, getIP);
+
     GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
 }
 
@@ -91,6 +92,11 @@ Action checkNativesEtc(Handle timer)
     {
         SOURCETVMGR = true;
     }
+    // steamworks
+    if (GetFeatureStatus(FeatureType_Native, "SteamWorks_GetPublicIP") == FeatureStatus_Available)
+    {
+        STEAMWORKS = true;
+    }
 
     return Plugin_Continue;
 }
@@ -149,28 +155,41 @@ void ActuallySetRandomSeed()
 }
 
 // jesus this is ugly
-void checkStatus()
+Action getIP(Handle timer)
 {
-    char status[2048];
-    ServerCommandEx(status, sizeof(status), "status");
-    char ipetc[128];
-    char ip[24];
-
+    // get our host port
     char hostport[8];
     GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
 
-    Format(hostipandport, sizeof(hostipandport), "un.known.ip.addr:%s", hostport);
-
-    if (MatchRegex(publicIPRegex, status) > 0)
+    // if we have steamworks we can get our ip ez pz
+    if (STEAMWORKS)
     {
-        if (GetRegexSubString(publicIPRegex, 0, ipetc, sizeof(ipetc)))
+        int sw_ip[4];
+        SteamWorks_GetPublicIP(sw_ip);
+        Format(hostipandport, sizeof(hostipandport), "%i.%i.%i.%i:%s", sw_ip[0], sw_ip[1], sw_ip[2], sw_ip[3], hostport);
+    }
+    // otherwise we have to scrape the status command (ugly and frightening)
+    else
+    {
+        char status_out[2048];
+        ServerCommandEx(status_out, sizeof(status_out), "status_out");
+
+        char ipetc[128];
+        char ip[24];
+
+        Format(hostipandport, sizeof(hostipandport), "un.known.ip.addr:%s", hostport);
+
+        if (MatchRegex(publicIPRegex, status_out) > 0)
         {
-            TrimString(ipetc);
-            if (MatchRegex(IPRegex, ipetc) > 0)
+            if (GetRegexSubString(publicIPRegex, 0, ipetc, sizeof(ipetc)))
             {
-                if (GetRegexSubString(IPRegex, 0, ip, sizeof(ip)))
+                TrimString(ipetc);
+                if (MatchRegex(IPRegex, ipetc) > 0)
                 {
-                    Format(hostipandport, sizeof(hostipandport), "%s:%s", ip, hostport);
+                    if (GetRegexSubString(IPRegex, 0, ip, sizeof(ip)))
+                    {
+                        Format(hostipandport, sizeof(hostipandport), "%s:%s", ip, hostport);
+                    }
                 }
             }
         }
@@ -179,7 +198,7 @@ void checkStatus()
     {
         StacLog("Server IP + Port = %s", hostipandport);
     }
-
+    return Plugin_Continue;
 }
 
 void DoTPSMath()
