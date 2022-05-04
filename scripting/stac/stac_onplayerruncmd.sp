@@ -13,6 +13,11 @@
 
 // float srvClangles[TFMAXPLAYERS+1][3][3];
 
+int dt              [MAXPLAYERS+1];
+int dtMAX           [MAXPLAYERS+1];
+float lastDtTime    [MAXPLAYERS+1];
+
+bool dtSpewed       [MAXPLAYERS+1];
 public Action OnPlayerRunCmd
 (
     int Cl,
@@ -147,6 +152,7 @@ public Action OnPlayerRunCmd
     fuzzyClangles[Cl][0][0] = RoundToPlace(clangles[Cl][0][0], 1);
     fuzzyClangles[Cl][0][1] = RoundToPlace(clangles[Cl][0][1], 1);
 
+    dtCheck(userid);
 
     // neither of these tests need fancy checks, so we do them first
     bhopCheck(userid);
@@ -172,10 +178,8 @@ public Action OnPlayerRunCmd
         || engineTime[Cl][0] - 2.5 < timeSinceMapStart
         // lets wait a bit if we had a server lag spike in the last 5 seconds
         || engineTime[Cl][0] - ServerLagWaitLength < timeSinceLagSpikeFor[0]
-
         // lets also wait a bit if we had a lag spike in the last 5 seconds on this specific client
         || engineTime[Cl][0] - PlayerLagWaitLength < timeSinceLagSpikeFor[Cl]
-
         // make sure client isn't timing out - duh
         || IsClientTimingOut(Cl)
         // this is just for halloween shit - plenty of halloween effects can and will mess up all of these checks
@@ -876,6 +880,51 @@ void triggerbotCheck(int userid)
         }
     }
 }
+
+// This code has bugs
+void dtCheck(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    // Repeated tick with sane cmdnum
+    if (cltickcount[Cl][0] == cltickcount[Cl][1] && isCmdnumInOrder(userid))
+    {
+        // inc our possible doubletap amt
+        dt[Cl]++;
+        // timestamp, we reset our max dt amt to 0 after a second
+        lastDtTime[Cl] = engineTime[Cl][0];
+    }
+    else
+    {
+        dt[Cl] = 0;
+    }
+    // has it been over a second since the last dt inc?
+    if (lastDtTime[Cl] >= engineTime[Cl][0] - 1)
+    {
+        dtMAX[Cl] = max(dt[Cl], dtMAX[Cl]);
+        dtSpewed[Cl] = false;
+    }
+    // if it has, let's spit out a detection
+    else
+    {
+        if (!dtSpewed[Cl])
+        {
+            dtSpewed[Cl] = true;
+            // only spit out a detection if it's within reasonable bounds
+            if (dtMAX[Cl] >= 10 && dtMAX[Cl] <= 32)
+            {
+                StacLog("Possible doubletap detect -> %i", dtMAX[Cl]);
+                PrintToChatAll("Possible doubletap detect -> %i", dtMAX[Cl]);
+            }
+        }
+        dtMAX[Cl] = 0;
+    }
+
+    // LogMessage("dt %i MAX %i", dt[Cl], dtMAX[Cl]);
+}
+
+
+
 
 /********** OnPlayerRunCmd based helper functions **********/
 
