@@ -4,10 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "5.2.3"
+            "Latest"    "5.2.4"
         }
 
-        "Notes" "Changes in 5.2.3"
+        "Notes" "Changes in 5.2.3/4"
+        "Notes" "- Leverage SteamWorks to get the server's IP address directly instead of scraping the damn status command."
         "Notes" "- Bring extensions into the github tree. This update doesn't add or remove any StAC functionality, it is just a version bump."
         "Notes" "- You should make your way to the GitHub and download the newest release if you haven't already!"
     }
