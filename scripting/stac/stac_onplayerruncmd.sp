@@ -13,11 +13,13 @@
 
 // float srvClangles[TFMAXPLAYERS+1][3][3];
 
-int dt              [MAXPLAYERS+1];
-int dtMAX           [MAXPLAYERS+1];
-float lastDtTime    [MAXPLAYERS+1];
+int dt              [TFMAXPLAYERS+1];
+int dtMAX           [TFMAXPLAYERS+1];
+float lastDtTime    [TFMAXPLAYERS+1];
 
-bool dtSpewed       [MAXPLAYERS+1];
+bool dtSpewed       [TFMAXPLAYERS+1];
+
+int dtDetects       [TFMAXPLAYERS+1];
 public Action OnPlayerRunCmd
 (
     int Cl,
@@ -899,7 +901,7 @@ void dtCheck(int userid)
         dt[Cl] = 0;
     }
     // has it been over a second since the last dt inc?
-    if (lastDtTime[Cl] >= engineTime[Cl][0] - 1)
+    if (lastDtTime[Cl] >= engineTime[Cl][0] - 1.0)
     {
         dtMAX[Cl] = max(dt[Cl], dtMAX[Cl]);
         dtSpewed[Cl] = false;
@@ -911,20 +913,26 @@ void dtCheck(int userid)
         {
             dtSpewed[Cl] = true;
             // only spit out a detection if it's within reasonable bounds
+            // Maybe see if total ticks this second >= tickrate * 1.125? idk
             if (dtMAX[Cl] >= 10 && dtMAX[Cl] <= 32)
             {
+                dtDetects[Cl]++;
+                // have this detection expire in 30 minutes
+                CreateTimer(1800.0, Timer_decr_dt, userid, TIMER_FLAG_NO_MAPCHANGE);
+
+                // Spew
                 StacLog("Possible doubletap detect -> %i", dtMAX[Cl]);
-                PrintToChatAll("Possible doubletap detect -> %i", dtMAX[Cl]);
+                StacLogSteam(userid);
+                StacLogNetData(userid);
+
+                char discordString[64];
+                Format(discordString, sizeof(discordString), "doubletap [%i ticks]", dtMAX[Cl]);
+                StacDetectionNotify(userid, discordString, dtDetects[Cl]);
             }
         }
         dtMAX[Cl] = 0;
     }
-
-    // LogMessage("dt %i MAX %i", dt[Cl], dtMAX[Cl]);
 }
-
-
-
 
 /********** OnPlayerRunCmd based helper functions **********/
 
@@ -1110,6 +1118,28 @@ Action Timer_decr_tbot(Handle timer, any userid)
             tbotDetects[Cl]--;
         }
         if (tbotDetects[Cl] <= 0)
+        {
+            if (AIMPLOTTER)
+            {
+                ServerCommand("sm_aimplot #%i off", userid);
+            }
+        }
+    }
+
+    return Plugin_Continue;
+}
+
+Action Timer_decr_dt(Handle timer, any userid)
+{
+    int Cl = GetClientOfUserId(userid);
+
+    if (IsValidClient(Cl))
+    {
+        if (dtDetects[Cl] > -1)
+        {
+            dtDetects[Cl]--;
+        }
+        if (dtDetects[Cl] <= 0)
         {
             if (AIMPLOTTER)
             {
