@@ -4,11 +4,12 @@
     {
         "Version"
         {
-            "Latest"    "5.2.2"
+            "Latest"    "5.2.3"
         }
 
-        "Notes" "Changes in 5.2.2"
-        "Notes" "- Add more cvars to check due to a stanky Valve bug with hud sliders. See PR #86 for more info!"
+        "Notes" "Changes in 5.2.3"
+        "Notes" "- Bring extensions into the github tree. This update doesn't add or remove any StAC functionality, it is just a version bump."
+        "Notes" "- You should make your way to the GitHub and download the newest release if you haven't already!"
     }
 
     "Files"
