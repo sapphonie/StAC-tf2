@@ -410,7 +410,7 @@ void initCvars()
     );
     HookConVarChange(stac_silent, setStacVars);
 
-    // shut up!
+    // max connections from the same ip
     IntToString(maxip, buffer, sizeof(buffer));
     stac_max_connections_from_ip =
     AutoExecConfig_CreateConVar
@@ -519,7 +519,7 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     // silent mode
     silent                  = GetConVarInt(stac_silent);
 
-    // silent mode
+    // max conns from same ip
     maxip                   = GetConVarInt(stac_max_connections_from_ip);
 }
 
