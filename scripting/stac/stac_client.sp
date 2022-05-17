@@ -25,8 +25,43 @@ public void OnClientPutInServer(int Cl)
         QueryTimer[Cl] = CreateTimer(15.0, Timer_CheckClientConVars, userid);
 
         CreateTimer(10.0, CheckAuthOn, userid);
+
+        checkIP(Cl);
     }
     OnClientPutInServer_jaypatch(Cl);
+}
+
+void checkIP(int Cl)
+{
+    int userid = GetClientUserId(Cl);
+    char clientIP[16];
+    GetClientIP(Cl, clientIP, sizeof(clientIP));
+
+    int sameip;
+
+    for (int itercl = 1; itercl <= MaxClients; itercl++)
+    {
+        if (IsValidClient(itercl))
+        {
+            char playersip[16];
+            GetClientIP(itercl, playersip, sizeof(playersip));
+    
+            if (StrEqual(clientIP, playersip))
+            {
+                sameip++;
+            }
+        }
+    }
+
+    // maxip is our cached stac_max_connections_from_ip
+    if (sameip > maxip)
+    {
+        char msg[256];
+        Format(msg, sizeof(msg), "Too many connections from the same IP address %s from client %N", clientIP, Cl);
+        StacGeneralPlayerNotify(userid, msg);
+        StacLog(msg);
+        KickClient(Cl, "[StAC] Too many concurrent connections from your IP address!", maxip);
+    }
 }
 
 Action CheckAuthOn(Handle timer, int userid)
