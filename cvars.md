@@ -41,3 +41,6 @@
 - `stac_kick_unauthed_clients` - `[StAC] kick clients unauthorized with steam? This only kicks if steam has been stable and online for at least the past 300 seconds or more. (recommended 1)`
 
 - `stac_silent` - `[StAC] If this cvar is 0 (default), StAC will print detections to admins with sm_ban access and to SourceTV, if extant. If this cvar is 1, it will print only to SourceTV. If this cvar is 2, StAC never print anything in chat to anyone, ever. If this cvar is -1, StAC will print ALL detections to ALL players. (recommended 0)`
+
+- `stac_max_connections_from_ip` - `[StAC] Max connections allowed from the same IP address. Useful for autokicking bots, though StAC should do that with cvar checks anyway. (recommended 5)`
+
