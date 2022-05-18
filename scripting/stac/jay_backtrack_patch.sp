@@ -68,7 +68,7 @@ void OnPluginStart_jaypatch()
 	backtrack_ticks = time_to_ticks(0.2);
 }
 
-public void cvar_change(ConVar convar, const char[] oldValue, const char[] newValue)
+void cvar_change(ConVar convar, const char[] oldValue, const char[] newValue)
 {
 	if (view_as<Handle>(convar) == hcvar[CVAR_ENABLE]) {
 		icvar[CVAR_ENABLE] = StringToInt(newValue, 10);
@@ -78,7 +78,7 @@ public void cvar_change(ConVar convar, const char[] oldValue, const char[] newVa
 	}
 }
 
-public Action event_teleported(Event event, const char[] name, bool dontBroadcast)
+Action event_teleported(Event event, const char[] name, bool dontBroadcast)
 {
 	int client;
 
@@ -90,7 +90,7 @@ public Action event_teleported(Event event, const char[] name, bool dontBroadcas
 	return Plugin_Continue;
 }
 
-public void map_teleport(const char[] output, int caller, int activator, float delay)
+void map_teleport(const char[] output, int caller, int activator, float delay)
 {
 	if (!is_player_valid(activator) || IsFakeClient(activator))
 		return;
@@ -98,7 +98,7 @@ public void map_teleport(const char[] output, int caller, int activator, float d
 	time_teleport[activator] = GetGameTime();
 }
 
-public void OnClientPutInServer_jaypatch(int client)
+void OnClientPutInServer_jaypatch(int client)
 {
 	prev_tickcount[client] = 0;
 	diff_tickcount[client] = 0;
@@ -106,7 +106,7 @@ public void OnClientPutInServer_jaypatch(int client)
 	time_teleport[client] = 0.0;
 }
 
-public Action OnPlayerRunCmd_jaypatch(int client, int& buttons, int& impulse,
+stock Action OnPlayerRunCmd_jaypatch(int client, int& buttons, int& impulse,
 				float vel[3], float angles[3], int& weapon,
 				int& subtype, int& cmdnum, int& tickcount,
 				int& seed, int mouse[2])

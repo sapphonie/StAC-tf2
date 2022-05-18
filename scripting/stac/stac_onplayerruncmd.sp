@@ -11,7 +11,26 @@
     - TURN BINDS
 */
 
-// float srvClangles[TFMAXPLAYERS+1][3][3];
+bool useOnPlayerRunCmdPre = false;
+public void OnPlayerRunCmdPre
+(
+    int Cl,
+    int buttons,
+    int impulse,
+    const float vel[3],
+    const float angles[3],
+    int weapon,
+    int subtype,
+    int cmdnum,
+    int tickcount,
+    int seed,
+    const int mouse[2]
+)
+{
+    useOnPlayerRunCmdPre = true;
+
+    PlayerRunCmd(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
+}
 
 public Action OnPlayerRunCmd
 (
@@ -29,16 +48,42 @@ public Action OnPlayerRunCmd
 )
 {
     OnPlayerRunCmd_jaypatch(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
+
     // sanity check, don't let banned clients do anything!
     if (userBanQueued[Cl])
     {
         return Plugin_Handled;
     }
 
+    // only run if OnPlayerRunCmdPre doesn't ever fire (meaning we're not on a sm.1.11.6876 install or newer)
+    if (!useOnPlayerRunCmdPre)
+    {
+        PlayerRunCmd(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
+    }
+
+    return Plugin_Continue;
+}
+
+
+stock void PlayerRunCmd
+(
+    const int Cl,
+    const int buttons,
+    const int impulse,
+    const float vel[3],
+    const float angles[3],
+    const int weapon,
+    const int subtype,
+    const int cmdnum,
+    const int tickcount,
+    const int seed,
+    const int mouse[2]
+)
+{
     // make sure client is real & not a bot
     if (!IsValidClient(Cl))
     {
-        return Plugin_Continue;
+        return;
     }
 
     // need this basically no matter what
@@ -51,11 +96,10 @@ public Action OnPlayerRunCmd
         {
             StacLog("cmdnum %i, tickcount %i", cmdnum, tickcount);
             StacGeneralPlayerNotify(userid, "Client has invalid usercmd data!");
-            // returning Plugin_Handled allows for airstuck to work again
-            return Plugin_Continue;
+            return;
         }
         timeSinceNullCmd[Cl] = GetEngineTime();
-        return Plugin_Continue;
+        return;
     }
 
     // grab engine time
@@ -182,7 +226,7 @@ public Action OnPlayerRunCmd
         || playerInBadCond[Cl] != 0
     )
     {
-        return Plugin_Continue;
+        return;
     }
 
     // not really lag dependant check
@@ -206,13 +250,13 @@ public Action OnPlayerRunCmd
     )
     // if any of these things are true, don't check angles etc
     {
-        return Plugin_Continue;
+        return;
     }
     aimsnapCheck(userid);
     triggerbotCheck(userid);
     psilentCheck(userid);
 
-    return Plugin_Continue;
+    return;
 }
 
 /*
