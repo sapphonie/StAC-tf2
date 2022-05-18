@@ -4,12 +4,13 @@
     {
         "Version"
         {
-            "Latest"    "5.3.1"
+            "Latest"    "5.3.2"
         }
 
-        "Notes" "Changes in 5.3.0/5.3.1"
+        "Notes" "Changes in 5.3.0/5.3.1/5.3.2"
         "Notes" "- Add stac_max_connections_from_ip - defaults to 5, max total connections from the same IP address. Any more clients connecting than this cvar will get kicked"
         "Notes" "- Add support for OnPlayerRunCmdPre, which should lead to significantly less invalid detections - this is only available in SourceMod 1.11.6876 or later - https://github.com/alliedmodders/sourcemod/pull/1760"
+        "Notes" "- Fix bug where servers without the SteamWorks extension would not have their IP address displayed properly in discord logs"
     }
 
     "Files"
