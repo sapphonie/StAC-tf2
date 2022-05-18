@@ -410,6 +410,22 @@ void initCvars()
     );
     HookConVarChange(stac_silent, setStacVars);
 
+    // max connections from the same ip
+    IntToString(maxip, buffer, sizeof(buffer));
+    stac_max_connections_from_ip =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_max_connections_from_ip",
+        buffer,
+        "[StAC] Max connections allowed from the same IP address. Useful for autokicking bots, though StAC should do that with cvar checks anyway.\n(recommended 5)",
+        FCVAR_NONE,
+        true,
+        1.0,
+        false,
+        _
+    );
+    HookConVarChange(stac_max_connections_from_ip, setStacVars);
+
     // actually exec the cfg after initing cvars lol
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
@@ -502,6 +518,9 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
 
     // silent mode
     silent                  = GetConVarInt(stac_silent);
+
+    // max conns from same ip
+    maxip                   = GetConVarInt(stac_max_connections_from_ip);
 }
 
 public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
