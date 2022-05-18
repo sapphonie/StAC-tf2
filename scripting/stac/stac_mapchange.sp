@@ -172,7 +172,7 @@ Action getIP(Handle timer)
     else
     {
         char status_out[2048];
-        ServerCommandEx(status_out, sizeof(status_out), "status_out");
+        ServerCommandEx(status_out, sizeof(status_out), "status");
 
         char ipetc[128];
         char ip[24];
