@@ -29,6 +29,8 @@ ConVar stac_log_to_file;
 ConVar stac_fixpingmasking_enabled;
 ConVar stac_kick_unauthed_clients;
 ConVar stac_silent;
+ConVar stac_max_connections_from_ip;
+
 
 /***** Misc cheat defaults *****/
 // ban duration
@@ -52,6 +54,7 @@ float maxAllowedTurnSecs        = -1.0;
 bool banForMiscCheats           = true;
 bool optimizeCvars              = true;
 int silent                      = 0;
+int maxip                       = 5;
 
 /***** Detection based cheat defaults *****/
 int maxAimsnapDetections        = 20;
