@@ -360,6 +360,22 @@ Action Timer_BanUser(Handle timer, DataPack pack)
     return Plugin_Continue;
 }
 
+bool hasWaitedForCvarCheck[TFMAXPLAYERS+1];
+
+// don't check clients in our random timer until they've waited 60 seconds after joining the server
+Action Timer_CheckClientConVars_FirstTime(Handle timer, int userid)
+{
+    // get actual client index
+    int Cl = GetClientOfUserId(userid);
+    // null out timer here
+    QueryTimer[Cl] = null;
+    if (IsValidClient(Cl))
+    {
+        hasWaitedForCvarCheck[Cl] = true;
+        CreateTimer(0.1, userid);
+    }
+}
+
 // timer for (re)checking ALL cvars and net props and everything else
 Action Timer_CheckClientConVars(Handle timer, int userid)
 {
@@ -369,6 +385,14 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
     QueryTimer[Cl] = null;
     if (IsValidClient(Cl))
     {
+        if (!hasWaitedForCvarCheck[Cl])
+        {
+            if (DEBUG)
+            {
+                StacLog("Client %N can't be checked because they haven't waited 60 seconds for their first cvar check!", Cl);
+            }
+            return Plugin_Continue;
+        }
         if (DEBUG)
         {
             StacLog("Checking client id, %i, %L", Cl, Cl);

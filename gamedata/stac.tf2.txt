@@ -1,0 +1,31 @@
+"Games"
+{
+    "tf"
+    {
+        "Signatures"
+        {
+            "CHLTVServer::UpdateTick"
+            {
+                "library"   "engine"
+                "linux"     "@_ZN11CHLTVServer10UpdateTickEv"
+                "windows"   ""
+            }
+        }
+        "Offsets"
+        {
+        }
+        "Functions"
+        {
+            "CHLTVServer::UpdateTick"
+            {
+                "signature"     "CHLTVServer::UpdateTick"
+                "return"        "void"
+                "this"          "address"
+                //"arguments"
+                //{
+                //
+                //}
+            }
+        }
+    }
+}
