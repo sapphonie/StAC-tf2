@@ -360,8 +360,6 @@ Action Timer_BanUser(Handle timer, DataPack pack)
     return Plugin_Continue;
 }
 
-bool hasWaitedForCvarCheck[TFMAXPLAYERS+1];
-
 // don't check clients in our random timer until they've waited 60 seconds after joining the server
 Action Timer_CheckClientConVars_FirstTime(Handle timer, int userid)
 {
@@ -372,7 +370,7 @@ Action Timer_CheckClientConVars_FirstTime(Handle timer, int userid)
     if (IsValidClient(Cl))
     {
         hasWaitedForCvarCheck[Cl] = true;
-        CreateTimer(0.1, userid);
+        CreateTimer(0.1, Timer_CheckClientConVars, userid);
     }
 }
 

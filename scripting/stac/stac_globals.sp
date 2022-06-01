@@ -250,3 +250,6 @@ int t                  [TFMAXPLAYERS+1];
 float secTime          [TFMAXPLAYERS+1];
 
 char os                [16];
+
+// client has waited the full 60 seconds for their first convar check
+bool hasWaitedForCvarCheck[TFMAXPLAYERS+1];
