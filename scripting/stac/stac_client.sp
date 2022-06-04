@@ -22,7 +22,7 @@ public void OnClientPutInServer(int Cl)
         {
             StacLog("%N joined. Checking cvars", Cl);
         }
-        QueryTimer[Cl] = CreateTimer(15.0, Timer_CheckClientConVars, userid);
+        QueryTimer[Cl] = CreateTimer(60.0, Timer_CheckClientConVars_FirstTime, userid);
 
         CreateTimer(10.0, CheckAuthOn, userid);
 
@@ -326,6 +326,9 @@ void ClearClBasedVars(int userid)
         userinfoValues[cvar][Cl][3][0] = '\0';
     }
     justclamped             [Cl] = false;
+
+    // has client has waited 60 seconds for their first cvar check
+    hasWaitedForCvarCheck   [Cl] = false;
 }
 
 /********** TIMER FOR NETINFO **********/
