@@ -14,7 +14,7 @@ char miscVars[][] =
     "cl_interpolate",
     // this is a useless check but we check it anyway
     "fov_desired",
-    // must be > 10
+    // must be >= 10
     "cl_cmdrate",
     // must be == 1
     "r_drawothermodels",
@@ -34,25 +34,27 @@ char miscVars[][] =
     // tf_tauntcam_* for third person ?
 };
 
-// DEFINITE cheat vars get appended to this array
+// DEFINITE cheat vars get appended to this array.
+// Every cheat except cathook is smart enough to not have queryable cvars.
+// For now.
 char cheatVars[][] =
 {
     // lith
-    "lithium_disable_party_bypass",
+    // "lithium_disable_party_bypass",
     // rijin
-    "rijin_load",
-    "rijin_save",
+    // "rijin_load",
+    // "rijin_save",
     // lmaobox apparently uses this? haven't seen it
-    "setcvar",
+    // "setcvar",
     // ncc doesn't have any that i can find lol
     // cathook
     "cat_load",
     // ...melancholy? maybe? lol
-    "caramelldansen",
-    "SetCursor",
-    "melancholy",
+    // "caramelldansen",
+    // "SetCursor",
+    // "melancholy",
     // general
-    "hook"
+    // "hook"
 };
 
 
@@ -60,6 +62,7 @@ char cheatVars[][] =
 char cvarsToCheck[sizeof(miscVars) + sizeof(cheatVars)][64];
 
 // oh man this is ugly
+// BONK: REWRITE THIS PLEASE
 void InitCvarArray()
 {
     int miscvars = sizeof(miscVars);
@@ -94,8 +97,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         sensFor[Cl] = StringToFloat(cvarValue);
     }
 
-    // TODO: yaw and pitch checks
-    // TODO: your mom
+    // TODO: yaw and pitch checks?
 
     /*
         non cheat client cvars, but we check if they have oob values or not
@@ -232,6 +234,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
 
     // r_portalsopenall (cheat cvar! should NEVER not be 0)
     // used for disabling areaportal checks, so you can see the entire world at once. essentially "far esp"
+    // BONK: Wait, huh? Is this actually useful? AFAIK the server controls this...
     else if (StrEqual(cvarName, "r_portalsopenall"))
     {
         if (StringToInt(cvarValue) != 0)

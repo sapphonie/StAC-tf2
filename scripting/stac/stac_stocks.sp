@@ -99,10 +99,10 @@ void StacLog(const char[] format, any ...)
     {
         WriteFileString(StacLogFile, file_buffer, false);
     }
-    else if (logtofile)
-    {
-        LogMessage("[StAC] File handle invalid!");
-    }
+    // else if (logtofile)
+    // {
+    //     LogMessage("[StAC] File handle invalid!");
+    // }
 
     PrintToServer("%s", colored_buffer);
 

@@ -26,7 +26,11 @@ public void OnClientPutInServer(int Cl)
 
         CreateTimer(10.0, CheckAuthOn, userid);
 
-        checkIP(Cl);
+        // bail if cvar is set to 0
+        if (maxip > 0)
+        {
+            checkIP(Cl);
+        }
     }
     OnClientPutInServer_jaypatch(Cl);
 }
@@ -45,7 +49,7 @@ void checkIP(int Cl)
         {
             char playersip[16];
             GetClientIP(itercl, playersip, sizeof(playersip));
-    
+
             if (StrEqual(clientIP, playersip))
             {
                 sameip++;
@@ -59,6 +63,7 @@ void checkIP(int Cl)
         char msg[256];
         Format(msg, sizeof(msg), "Too many connections from the same IP address %s from client %N", clientIP, Cl);
         StacGeneralPlayerNotify(userid, msg);
+        PrintToImportant("{hotpink}[StAC]{white} Too many connections (%i) from the same IP address {mediumpurple}%s{white} from client %N!", sameip, clientIP, Cl);
         StacLog(msg);
         KickClient(Cl, "[StAC] Too many concurrent connections from your IP address!", maxip);
     }
