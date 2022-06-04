@@ -252,7 +252,7 @@ stock void PlayerRunCmd
     if
     (
         // make sure client isnt using a spin bind
-        || buttons & IN_LEFT
+           buttons & IN_LEFT
         || buttons & IN_RIGHT
         // make sure we're not lagging and that cmdnum is saneish
         || IsUserLagging(userid, true, false)
