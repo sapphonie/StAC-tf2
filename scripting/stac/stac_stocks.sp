@@ -524,8 +524,6 @@ void calcTPSfor(int Cl)
     }
 }
 
-// sourcemod is fucking ridiculous, "IsNullString" only checks for a specific definition of nullstring
-// sorry asherkin i didnt mean it
 bool IsActuallyNullString(char[] somestring)
 {
     if (somestring[0] != '\0')
@@ -600,7 +598,10 @@ void PrintToImportant(const char[] format, any ...)
 
     for (int i = 1; i <= MaxClients; i++)
     {
-        // "[StAC] If this cvar is 0 (default), StAC will print detections to admins with sm_ban access and to SourceTV, if extant. If this cvar is 1, it will print only to SourceTV. If this cvar is 2, StAC never print anything in chat to anyone, ever. If this cvar is -1, StAC will print ALL detections to ALL players. \n(recommended 0)",
+        // If this cvar is 0 (default), StAC will print detections to admins with sm_ban access and to SourceTV, if extant.
+        // If this cvar is 1, it will print only to SourceTV.
+        // If this cvar is 2, StAC never print anything in chat to anyone, ever.
+        // If this cvar is -1, StAC will print ALL detections to ALL players
 
         if
         (
