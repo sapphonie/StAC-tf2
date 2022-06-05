@@ -98,6 +98,7 @@ void StacLog(const char[] format, any ...)
     if (StacLogFile != null)
     {
         WriteFileString(StacLogFile, file_buffer, false);
+        FlushFile(StacLogFile);
     }
     // else if (logtofile)
     // {

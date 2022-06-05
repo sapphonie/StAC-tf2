@@ -237,6 +237,7 @@ stock void PlayerRunCmd
         // make sure client doesn't have invalid angles. "invalid" in this case means "any angle is 0.000000", usually caused by plugin / trigger based teleportation
         !HasValidAngles(Cl)
         // make sure client doesn't have OUTRAGEOUS ping
+        // most cheater fakeping goes up to 800 so tack on 50 just in case
         || pingFor[Cl] > 850.0
     )
     {
@@ -500,6 +501,7 @@ void cmdnumspikeCheck(int userid)
             StacLogNetData(userid);
             StacLogCmdnums(userid);
             StacLogTickcounts(userid);
+            StacLog("Held weapon: %s", heldWeapon);
 
             if (cmdnumSpikeDetects[Cl] % 5 == 0)
             {
