@@ -707,7 +707,7 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
                 { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
                 { \"name\": \"Message\",        \"value\": \"%s\" } ,\
                 { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"IP\",             \"value\": \"%s\" } ,\
+                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
                 { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
                 { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
                 { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
@@ -775,7 +775,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
                 { \"name\": \"Detection type\", \"value\": \"%s\" } ,\
                 { \"name\": \"Detection\",      \"value\": \"%i\" } ,\
                 { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"IP\",             \"value\": \"%s\" } ,\
+                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
                 { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
                 { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
                 { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
