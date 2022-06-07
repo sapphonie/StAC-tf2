@@ -692,7 +692,7 @@ public void OnLibraryAdded(const char[] name)
 
 
 
-
+/********** DETECTIONS & DISCORD **********/
 
 void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
 {
@@ -703,89 +703,60 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         return;
     }
 
-    JSON_Array hFields = new JSON_Array();
+    // stac pink, aka morecolors {hotpink}
+    static char generalTemplate[1024] = \
+    "{ \"embeds\": \
+        [{\
+            \"title\": \"StAC Detection!\",\
+            \"color\": 16738740,\
+            \"fields\":\
+            [\
+                { \"name\": \"Player\",             \"value\": \"%s\" } ,\
+                { \"name\": \"SteamID\",            \"value\": \"%s\" } ,\
+                { \"name\": \"StAC Message\",       \"value\": \"%s\" } ,\
+                { \"name\": \"Server Hostname\",    \"value\": \"%s\" } ,\
+                { \"name\": \"Server IP\",          \"value\": \"%s\" } ,\
+                { \"name\": \"Current Demo\",       \"value\": \"%s\" } ,\
+                { \"name\": \"Demo Tick\",          \"value\": \"%i\" } ,\
+                { \"name\": \"Unix timestamp\",     \"value\": \"%i\" } \
+            ]\
+        }],\
+        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
+    }";
 
-    // detection message generated from our format string
-    char detectMsg[256];
-    VFormat(detectMsg, sizeof(detectMsg), format, 3);
+    char stacMessage[256];
+    VFormat(stacMessage, sizeof(stacMessage), format, 3);
 
-    // get name
+
+
     int Cl = GetClientOfUserId(userid);
     char ClName[64];
     GetClientName(Cl, ClName, sizeof(ClName));
-    json_escape_string(ClName, sizeof(ClName));
 
-    json_escape_string(detectMsg, sizeof(detectMsg));
+    char garbage[32] = {};
+    EscapeDiscordVars(ClName, stacMessage, garbage);
 
-    json_escape_string(demoname, sizeof(demoname));
- 
-    json_escape_string(hostname, sizeof(hostname));
-
-    // we technically store the url in this so it has to be bigger
     char steamid[96];
-    // ok we store these on client connect & auth, this shouldn't be null
-    if (!IsActuallyNullString(SteamAuthFor[Cl]))
-    {
-        // make this a clickable link in discord
-        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
-    }
-    // if it is, that means the plugin reloaded or steam is being fussy.
-    else
-    {
-        steamid = "N/A";
-    }
+    steamid = SteamIDToLink(Cl);
 
-    char strDemotick[64];
-    Format(strDemotick, sizeof(strDemotick), "%i", demotick );
+    char discordJson[1024];
+    Format
+    (
+        discordJson,
+        sizeof(discordJson),
+        generalTemplate,
+        Cl,
+        steamid,
+        stacMessage,
+        hostname,
+        hostipandport,
+        demoname,
+        demotick,
+        GetTime()
+    );
 
-    char strUnixTimestamp[64];
-    Format(strUnixTimestamp, sizeof(strUnixTimestamp), "%i", GetTime() );
-
-    PushField(hFields, "Player", ClName);
-    PushField(hFields, "SteamID", steamid);
-    PushField(hFields, "Message", detectMsg);
-    PushField(hFields, "Hostname", hostname);
-    PushField(hFields, "Server IP", hostipandport);
-    PushField(hFields, "Current Demo", demoname);
-    PushField(hFields, "Demo Tick", strDemotick );
-    PushField(hFields, "Unix timestamp", strUnixTimestamp );
-
-
-    JSON_Object hEmbed = new JSON_Object();
-    hEmbed.EnableOrderedKeys();
-
-    hEmbed.SetValue("color", 16738740);
-    hEmbed.SetString("title", "StAC Detection!");
-    hEmbed.SetString("avatar_url", "https://i.imgur.com/RKRaLPl.png");
-    hEmbed.SetObject("fields", hFields);
-
-    JSON_Array hEmbeds = new JSON_Array();
-    hEmbeds.EnableOrderedKeys();
-
-    hEmbeds.PushObject(hEmbed);
-
-    JSON_Object hObj = new JSON_Object();
-    hObj.EnableOrderedKeys();
-
-    hObj.SetObject("embeds", hEmbeds);
-
-    char ourjson[2048];
-    hObj.Encode(ourjson, 2048);
-
-    // Do the thing?
-    SendMessageToDiscord(ourjson);
-
-    json_cleanup_and_delete(hObj);
+    SendMessageToDiscord(discordJson);
 }
-
-static void PushField(JSON_Array hFields, const char[] name, const char[] value)
-{
-    JSON_Object hField = new JSON_Object();
-    hField.EnableOrderedKeys();
-    hField.SetString("name", name);
-    hField.SetString("value", value);
-    hFields.PushObject(hField);
-}   
 
 void StacDetectionNotify(int userid, char[] type, int detections)
 {
@@ -796,32 +767,78 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         return;
     }
 
-    static char detectionTemplate[2048] = \
-    "{ \"embeds\": \
-        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
+    // stac purple, aka morecolors {mediumpurple}
+    static char detectionTemplate[1024] = \
+    "{\
+        \"embeds\": \
+        [{\
+            \"title\": \"StAC Detection!\",\
+            \"color\": 16643558,\
+            \"fields\":\
             [\
-                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
-                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Detection type\", \"value\": \"%s\" } ,\
-                { \"name\": \"Detection\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
-                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
-                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
+                { \"name\": \"Player\",             \"value\": \"%s\" } ,\
+                { \"name\": \"SteamID\",            \"value\": \"%s\" } ,\
+                { \"name\": \"Detection type\",     \"value\": \"%s\" } ,\
+                { \"name\": \"Detection\",          \"value\": \"%i\" } ,\
+                { \"name\": \"Server Hostname\",    \"value\": \"%s\" } ,\
+                { \"name\": \"Server IP\",          \"value\": \"%s\" } ,\
+                { \"name\": \"Current Demo\",       \"value\": \"%s\" } ,\
+                { \"name\": \"Demo Tick\",          \"value\": \"%i\" } ,\
+                { \"name\": \"Unix timestamp\",     \"value\": \"%i\" } \
             ]\
         }],\
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
     }";
 
-    char msg[1024];
-
     int Cl = GetClientOfUserId(userid);
     char ClName[64];
     GetClientName(Cl, ClName, sizeof(ClName));
-    Discord_EscapeString(ClName, sizeof(ClName));
 
-    // we technically store the url in this so it has to be bigger
+
+    char garbage[256] = {};
+    EscapeDiscordVars(ClName, garbage, type);
+
+    char steamid[96];
+    steamid = SteamIDToLink(Cl);
+
+    char discordJson[1024];
+    Format
+    (
+        discordJson,
+        sizeof(discordJson),
+        detectionTemplate,
+        ClName,
+        steamid,
+        type,
+        detections,
+        hostname,
+        hostipandport,
+        demoname,
+        demotick,
+        GetTime()
+    );
+
+    SendMessageToDiscord(discordJson);
+}
+
+void EscapeDiscordVars(char ClName[64], char[] stacmsg, char[] type)
+{
+    json_escape_string(ClName, sizeof(ClName));
+    if (stacmsg[0] != '\0')
+    {
+        json_escape_string(stacmsg, 256);
+    }
+    if (type[0] != '\0')
+    {
+        json_escape_string(type, 32);
+    }
+    json_escape_string(hostname, sizeof(hostname));
+    json_escape_string(hostipandport, sizeof(hostipandport));
+    json_escape_string(demoname, sizeof(demoname));
+}
+
+char SteamIDToLink(int Cl)
+{
     char steamid[96];
     // ok we store these on client connect & auth, this shouldn't be null
     if (!IsActuallyNullString(SteamAuthFor[Cl]))
@@ -834,24 +851,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
     {
         steamid = "N/A";
     }
-
-    Format
-    (
-        msg,
-        sizeof(msg),
-        detectionTemplate,
-        Cl,
-        steamid,
-        type,
-        detections,
-        hostname,
-        hostipandport,
-        demoname,
-        demotick,
-        GetTime()
-    );
-
-    SendMessageToDiscord(msg);
+    return steamid;
 }
 
 void SendMessageToDiscord(char[] message)
