@@ -690,6 +690,10 @@ public void OnLibraryAdded(const char[] name)
 
 /********** DETECTIONS & DISCORD **********/
 
+
+
+
+
 void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
 {
     StacLogDemo();
@@ -699,32 +703,23 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         return;
     }
 
-    static char generalTemplate[2048] = \
-    "{ \"embeds\": \
-        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
-            [\
-                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
-                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Message\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
-                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
-                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
-            ]\
-        }],\
-        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
-    }";
+    JSON_Array hFields = new JSON_Array();
 
-    char msg[1024];
+    // detection message generated from our format string
+    char detectMsg[256];
+    VFormat(detectMsg, sizeof(detectMsg), format, 3);
 
-    char message[256];
-    VFormat(message, sizeof(message), format, 3);
-
+    // get name
     int Cl = GetClientOfUserId(userid);
     char ClName[64];
     GetClientName(Cl, ClName, sizeof(ClName));
-    Discord_EscapeString(ClName, sizeof(ClName));
+    json_escape_string(ClName, sizeof(ClName));
+
+    json_escape_string(detectMsg, sizeof(detectMsg));
+
+    json_escape_string(demoname, sizeof(demoname));
+ 
+    json_escape_string(hostname, sizeof(hostname));
 
     // we technically store the url in this so it has to be bigger
     char steamid[96];
@@ -739,23 +734,58 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
     {
         steamid = "N/A";
     }
-    Format
-    (
-        msg,
-        sizeof(msg),
-        generalTemplate,
-        Cl,
-        steamid,
-        message,
-        hostname,
-        hostipandport,
-        demoname,
-        demotick,
-        GetTime()
-    );
 
-    SendMessageToDiscord(msg);
+    char strDemotick[64];
+    Format(strDemotick, sizeof(strDemotick), "%i", demotick );
+
+    char strUnixTimestamp[64];
+    Format(strUnixTimestamp, sizeof(strUnixTimestamp), "%i", GetTime() );
+
+    PushField(hFields, "Player", ClName);
+    PushField(hFields, "SteamID", steamid);
+    PushField(hFields, "Message", detectMsg);
+    PushField(hFields, "Hostname", hostname);
+    PushField(hFields, "Server IP", hostipandport);
+    PushField(hFields, "Current Demo", demoname);
+    PushField(hFields, "Demo Tick", strDemotick );
+    PushField(hFields, "Unix timestamp", strUnixTimestamp );
+
+
+    JSON_Object hEmbed = new JSON_Object();
+    hEmbed.EnableOrderedKeys();
+
+    hEmbed.SetValue("color", 16738740);
+    hEmbed.SetString("title", "StAC Detection!");
+    hEmbed.SetString("avatar_url", "https://i.imgur.com/RKRaLPl.png");
+    hEmbed.SetObject("fields", hFields);
+
+    JSON_Array hEmbeds = new JSON_Array();
+    hEmbeds.EnableOrderedKeys();
+
+    hEmbeds.PushObject(hEmbed);
+
+    JSON_Object hObj = new JSON_Object();
+    hObj.EnableOrderedKeys();
+
+    hObj.SetObject("embeds", hEmbeds);
+
+    char ourjson[2048];
+    hObj.Encode(ourjson, 2048);
+
+    // Do the thing?
+    SendMessageToDiscord(ourjson);
+
+    json_cleanup_and_delete(hObj);
 }
+
+static void PushField(JSON_Array hFields, const char[] name, const char[] value)
+{
+    JSON_Object hField = new JSON_Object();
+    hField.EnableOrderedKeys();
+    hField.SetString("name", name);
+    hField.SetString("value", value);
+    hFields.PushObject(hField);
+}   
 
 void StacDetectionNotify(int userid, char[] type, int detections)
 {

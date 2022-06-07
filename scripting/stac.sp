@@ -15,6 +15,7 @@
 #include <morecolors>
 #include <concolors>
 #include <autoexecconfig>
+#include <json>
 #undef REQUIRE_PLUGIN
 #tryinclude <updater>
 #tryinclude <sourcebanspp>
@@ -27,7 +28,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.3.3"
+#define PLUGIN_VERSION  "5.3.4"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
