@@ -90,7 +90,7 @@ Though I wrote StAC to throw as few false positives as possible, I can't guarant
 ### Philosophy
 StAC isn't perfect. It can't be, no anticheat can, but especially not a serverside one. It does what it can, with the information available to it. This means, in simple terms, it's not gonna ban every single cheater. I essentially take the philosophy of a popular [php malware scanner](https://github.com/nbs-system/php-malware-finder/#what-does-it-detect):
 
-"Of course it's trivial to bypass <StAC>, but its goal is to catch skiddies and idiots, not people with a working brain. If you report a stupid tailored bypass for <StAC>, you likely belong to one (or both) category, and should re-read the previous statement.
+"Of course it's trivial to bypass [[StAC]], but its goal is to catch skiddies and idiots, not people with a working brain. If you report a stupid tailored bypass for [[StAC]], you likely belong to one (or both) category, and should re-read the previous statement.
 
 ***TL:DR***; If you want actually good anticheat, pester Valve to hire more anticheat engineers, or play [Open Fortress](https://openfortress.fun), which is a Quake like source mod of TF2 that I head the anticheat department of, of which I have access to the client to much more easily prevent them from cheating.
 
