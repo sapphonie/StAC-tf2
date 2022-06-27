@@ -385,7 +385,7 @@ void initCvars()
     (
         "stac_kick_unauthed_clients",
         buffer,
-        "[StAC] Forcibly reconnect clients unauthorized with steam - this protects against cheat clients not setting steamids, at the cost of making your server inaccessible when Steam is down.\n(recommended 1)",
+        "[StAC] Forcibly reconnect clients unauthorized with steam - this protects against cheat clients not setting steamids, at the cost of making your server inaccessible when Steam is down.\n(recommended 0, only enable this if you have consistent issues with unauthed cheaters!)",
         FCVAR_NONE,
         true,
         0.0,
