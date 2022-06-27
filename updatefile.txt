@@ -4,13 +4,16 @@
     {
         "Version"
         {
-            "Latest"    "5.3.2"
+            "Latest"    "5.4.0"
         }
 
-        "Notes" "Changes in 5.3.0/5.3.1/5.3.2"
-        "Notes" "- Add stac_max_connections_from_ip - defaults to 5, max total connections from the same IP address. Any more clients connecting than this cvar will get kicked"
-        "Notes" "- Add support for OnPlayerRunCmdPre, which should lead to significantly less invalid detections - this is only available in SourceMod 1.11.6876 or later - https://github.com/alliedmodders/sourcemod/pull/1760"
-        "Notes" "- Fix bug where servers without the SteamWorks extension would not have their IP address displayed properly in discord logs"
+        "Notes" "Changes in 5.4.0"
+        "Notes" "- Default stac_max_connections_from_ip to 0, only enable it if you need it because StAC isn't catching bots. If this happens, open an issue on the GitHub!"
+        "Notes" "- Default stac_kick_unauthed_clients to 0, only enable if you're having issues with cheating unauthenticated players."
+        "Notes" "- Better prevention of already banned clients from joining servers and spamming notifications to Discord, thank you Kaiga with Uncletopia for the report."
+        "Notes" "- Tightened up some checks."
+        "Notes" "- StAC now better ignores laggy clients."
+        "Notes" "- StAC no longer whines about an invalid file handle on server start."
     }
 
     "Files"
