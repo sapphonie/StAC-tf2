@@ -1,4 +1,4 @@
-<h1>  Steph's AntiCheat </h1>
+<h1>  STeph's AntiCheat </h1>
 
 
 
@@ -38,9 +38,20 @@ But wait. Don't server-side anticheats suck?
 
 Of course, there's limitations to what this plugin can do. It can't scan the memory or programs on your computer, it can't see exactly what keys you're pressing on your keyboard, and players don't live inside the server room, so there's always the factor of lag and loss. 
 
-But StAC is written so that it has as few false detections as possible, because **no one wants to get banned when they weren't cheating**. I've reverse engineered cheats, installed them myself (on an alt, don't worry!) and I've tested and refined this plugin over the course of years and thousands of hours of work so that it ignores legit clients, and only goes after naughty cheaters. StAC [runs on](https://sappho.io) [more community servers](https://creators.tf) [than you might think](https://gflclan.com/), too, and has banned thousands of cheaters. 
+But StAC is written so that it has as few false detections as possible, because **no one wants to get banned when they weren't cheating**. I've reverse engineered cheats, installed them myself (on an alt, don't worry!) and I've tested and refined this plugin over the course of years and thousands of hours of work so that it ignores legit clients, and only goes after naughty cheaters.
 
-Even better, this plugin is set up to be as easy to use and install as possible, so you don't have to be a sourcemod guru to get rid of cheaters on your nfoserver. 
+Even better, this plugin is set up to be as easy to use and install as possible, so you don't have to be a sourcemod guru to get rid of cheaters on your nfoserver.
+
+### Jeers
+- ["a fork of SMAC with a few added features"](https://canary.discord.com/channels/875964612233801748/880689027089584198/927463760547938325)
+- ["broken high school computer science level code"](https://www.teamfortress.tv/post/1066189/savetf2)
+- ["it's broken"](https://github.com/sapphonie/StAC-tf2/issues/95)
+- ["very easy to bypass"](https://canary.discord.com/channels/335290997317697536/335291251937116167/976374661602476052)
+- ["Is it really anti-cheat or just a joke?"](https://canary.discord.com/channels/335290997317697536/335291251937116167/976375279276666880)
+
+### Cheers
+- [~350 cheaters banned on my servers alone](https://sappho.io/bans/index.php?p=banlist&searchText=StAC&Submit=Search)
+- In use in countless other server networks, including [Uncletopia](https://uncletopia.com), the now dead [Creators.TF](https://creators.tf), and more
 
 ### Installation & Configuration
 
@@ -76,6 +87,12 @@ This plugin prints detections to any clients on the server with the `sm_ban` per
 ### Disclaimers
 Though I wrote StAC to throw as few false positives as possible, I can't guarantee perfection. I also can't guarantee that everything will always work how it's supposed to. Please submit a bug report if you can reproduce a way to trigger false positives, or for any bug or feature request. If you're more comfortable talking to me personally about it, join the development discord for StAC here: https://discord.gg/tUGgCByZVJ
 
+### Philosophy
+StAC isn't perfect. It can't be, no anticheat can, but especially not a serverside one. It does what it can, with the information available to it. This means, in simple terms, it's not gonna ban every single cheater. I essentially take the philosophy of a popular [php malware scanner](https://github.com/nbs-system/php-malware-finder/#what-does-it-detect):
+
+"Of course it's trivial to bypass [[StAC]], but its goal is to catch skiddies and idiots, not people with a working brain. If you report a stupid tailored bypass for [[StAC]], you likely belong to one (or both) category, and should re-read the previous statement.
+
+***TL:DR***; If you want actually good anticheat, pester Valve to hire more anticheat engineers, or play [Open Fortress](https://openfortress.fun), which is a Quake like source mod of TF2 that I head the anticheat department of, of which I have access to the client to much more easily prevent them from cheating.
 
 ### Special Thanks etc.
 
