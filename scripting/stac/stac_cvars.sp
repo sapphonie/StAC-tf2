@@ -385,7 +385,7 @@ void initCvars()
     (
         "stac_kick_unauthed_clients",
         buffer,
-        "[StAC] Forcibly reconnect clients unauthorized with steam - this protects against cheat clients not setting steamids, at the cost of making your server inaccessible when Steam is down.\n(recommended 1)",
+        "[StAC] Forcibly reconnect clients unauthorized with steam - this protects against cheat clients not setting steamids, at the cost of making your server inaccessible when Steam is down.\n(recommended 0, only enable this if you have consistent issues with unauthed cheaters!)",
         FCVAR_NONE,
         true,
         0.0,
@@ -417,10 +417,10 @@ void initCvars()
     (
         "stac_max_connections_from_ip",
         buffer,
-        "[StAC] Max connections allowed from the same IP address. Useful for autokicking bots, though StAC should do that with cvar checks anyway.\n(recommended 5)",
+        "[StAC] Max connections allowed from the same IP address. Useful for autokicking bots, though StAC should do that with cvar checks anyway.\n(recommended 0, you should really only enable this if you're getting swarmed by bots, and StAC isn't doing much against them, in which case, consider opening a bug report!)",
         FCVAR_NONE,
         true,
-        1.0,
+        0.0,
         false,
         _
     );

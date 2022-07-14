@@ -98,11 +98,12 @@ void StacLog(const char[] format, any ...)
     if (StacLogFile != null)
     {
         WriteFileString(StacLogFile, file_buffer, false);
+        FlushFile(StacLogFile);
     }
-    else if (logtofile)
-    {
-        LogMessage("[StAC] File handle invalid!");
-    }
+    // else if (logtofile)
+    // {
+    //     LogMessage("[StAC] File handle invalid!");
+    // }
 
     PrintToServer("%s", colored_buffer);
 
@@ -523,8 +524,6 @@ void calcTPSfor(int Cl)
     }
 }
 
-// sourcemod is fucking ridiculous, "IsNullString" only checks for a specific definition of nullstring
-// sorry asherkin i didnt mean it
 bool IsActuallyNullString(char[] somestring)
 {
     if (somestring[0] != '\0')
@@ -599,7 +598,10 @@ void PrintToImportant(const char[] format, any ...)
 
     for (int i = 1; i <= MaxClients; i++)
     {
-        // "[StAC] If this cvar is 0 (default), StAC will print detections to admins with sm_ban access and to SourceTV, if extant. If this cvar is 1, it will print only to SourceTV. If this cvar is 2, StAC never print anything in chat to anyone, ever. If this cvar is -1, StAC will print ALL detections to ALL players. \n(recommended 0)",
+        // If this cvar is 0 (default), StAC will print detections to admins with sm_ban access and to SourceTV, if extant.
+        // If this cvar is 1, it will print only to SourceTV.
+        // If this cvar is 2, StAC never print anything in chat to anyone, ever.
+        // If this cvar is -1, StAC will print ALL detections to ALL players
 
         if
         (
@@ -705,7 +707,7 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
                 { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
                 { \"name\": \"Message\",        \"value\": \"%s\" } ,\
                 { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"IP\",             \"value\": \"%s\" } ,\
+                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
                 { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
                 { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
                 { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
@@ -773,7 +775,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
                 { \"name\": \"Detection type\", \"value\": \"%s\" } ,\
                 { \"name\": \"Detection\",      \"value\": \"%i\" } ,\
                 { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"IP\",             \"value\": \"%s\" } ,\
+                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
                 { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
                 { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
                 { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \

@@ -49,12 +49,12 @@ bool demonameInBanReason        = true;
 bool logtofile                  = true;
 // fix pingmasking - required for pingreduce check
 bool fixpingmasking             = true;
-bool kickUnauth                 = true;
+bool kickUnauth                 = false;
 float maxAllowedTurnSecs        = -1.0;
 bool banForMiscCheats           = true;
 bool optimizeCvars              = true;
 int silent                      = 0;
-int maxip                       = 5;
+int maxip                       = 0;
 
 /***** Detection based cheat defaults *****/
 int maxAimsnapDetections        = 20;
@@ -250,3 +250,6 @@ int t                  [TFMAXPLAYERS+1];
 float secTime          [TFMAXPLAYERS+1];
 
 char os                [16];
+
+// client has waited the full 60 seconds for their first convar check
+bool hasWaitedForCvarCheck[TFMAXPLAYERS+1];
