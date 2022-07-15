@@ -576,16 +576,30 @@ public void UpdateRates(ConVar convar, const char[] oldValue, const char[] newVa
 
 void RunOptimizeCvars()
 {
-    // attempt to patch doubletap
-    SetConVarInt(FindConVar("sv_maxusrcmdprocessticks"), 16);
+    // attempt to patch doubletap (CS:GO default value!)
+    SetConVarInt(FindConVar("sv_maxusrcmdprocessticks"), 8);
+
     // force psilent to show up properly
     SetConVarInt(FindConVar("sv_maxusrcmdprocessticks_holdaim"), 1);
-    // limit fakelag abuse
+
+    // limit fakelag abuse / backtracking (CS:GO default value!)
     SetConVarFloat(FindConVar("sv_maxunlag"), 0.2);
+
+    // print dc reasons to clients
+    SetConVarBool(FindConVar("net_disconnect_reason"), true);
+
+    // prevent all sorts of exploits involving CNetChan fuzzing etc.
+    ConVar net_chan_limit_ms = FindConVar("net_chan_limit_ms");
+    // don't override server set settings if they have set it to a value other than 0 
+    if (GetConVarInt(net_chan_limit_ms) == 0)
+    {
+        SetConVarInt(net_chan_limit_ms, 75);
+    }
+
     // fix backtracking
-    // dont error out on server start
     ConVar jay_backtrack_enable     = FindConVar("jay_backtrack_enable");
     ConVar jay_backtrack_tolerance  = FindConVar("jay_backtrack_tolerance");
+    // dont error out on server start
     if (jay_backtrack_enable != null && jay_backtrack_tolerance != null)
     {
         // enable jaypatch
@@ -593,6 +607,7 @@ void RunOptimizeCvars()
         // set jaypatch to sane value
         SetConVarInt(jay_backtrack_tolerance, 1);
     }
+
     // get rid of any possible exploits by using teleporters and fov
     SetConVarInt(FindConVar("tf_teleporter_fov_start"), 90);
     SetConVarFloat(FindConVar("tf_teleporter_fov_time"), 0.0);
