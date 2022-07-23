@@ -48,6 +48,10 @@ Action checkNativesEtc(Handle timer)
             SetFailState("sv_cheats set to 1! Aborting!");
         }
     }
+
+    // check timescale so we can check if the client's matches the server's
+    timescale = GetConVarFloat(FindConVar("host_timescale"));
+
     // check wait command
     if (GetConVarBool(FindConVar("sv_allow_wait_command")))
     {
