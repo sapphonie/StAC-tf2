@@ -57,15 +57,9 @@ Action checkNativesEtc(Handle timer)
     {
         waitStatus = true;
     }
-    // are we in mann vs machine?
-    if (GameRules_GetProp("m_bPlayingMannVsMachine") == 1)
-    {
-        MVM = true;
-    }
-    else
-    {
-        MVM = false;
-    }
+        
+    MVM = false;
+    
 
     // check natives!
 

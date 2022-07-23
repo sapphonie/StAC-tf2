@@ -25,7 +25,7 @@ char miscVars[][] =
     // must be == 1
     "fog_enable",
     // must be == 0
-    "cl_thirdperson",
+    //"cl_thirdperson", //Removed for OF
     // must be == 0
     "r_portalsopenall",
     // must be == 1.0
@@ -143,7 +143,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     {
         int fovDesired = StringToInt(cvarValue);
         // check just in case
-        if (fovDesired < 20 || fovDesired > 90)
+        if (fovDesired < 20 || fovDesired > 160)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
             if (banForMiscCheats)
@@ -215,20 +215,6 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "fog_enable"))
     {
         if (StringToInt(cvarValue) != 1)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-
-    // cl_thirdperson (hidden cvar! should NEVER not be 0)
-    // used for enabling thirdperson
-    else if (StrEqual(cvarName, "cl_thirdperson"))
-    {
-        if (StringToInt(cvarValue) != 0)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
             if (banForMiscCheats)
