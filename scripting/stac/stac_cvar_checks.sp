@@ -28,6 +28,8 @@ char miscVars[][] =
     "cl_thirdperson",
     // must be == 0
     "r_portalsopenall",
+    // must be == 1
+    "host_timescale",
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
     // tf_showspeed ?
@@ -238,6 +240,20 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "r_portalsopenall"))
     {
         if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (banForMiscCheats)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    // host_timescale (cheat cvar! should NEVER not be 1)
+    // used to bypass VAC: https://github.com/ValveSoftware/Source-1-Games/issues/3911
+    else if (StrEqual(cvarName, "host_timescale"))
+    {
+        if (StringToInt(cvarValue) != 1)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
             if (banForMiscCheats)
