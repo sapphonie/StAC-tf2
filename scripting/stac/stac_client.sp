@@ -22,7 +22,7 @@ public void OnClientPutInServer(int Cl)
         {
             StacLog("%N joined. Checking cvars", Cl);
         }
-        QueryTimer[Cl] = CreateTimer(60.0, Timer_CheckClientConVars_FirstTime, userid);
+        QueryTimer[Cl] = CreateTimer(30.0, Timer_CheckClientConVars_FirstTime, userid);
 
         CreateTimer(10.0, CheckAuthOn, userid);
 
