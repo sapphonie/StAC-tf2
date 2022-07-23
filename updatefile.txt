@@ -7,7 +7,7 @@
             "Latest"    "5.4.1"
         }
 
-        "Notes"     "Changes in 5.4.0"
+        "Notes"     "Changes in 5.4.1"
         "Notes"     "- Updated stac_optimize_cvars to set certain new cvars (net_dc_reason and net_chan_limit_msec)"
         "Notes"     "net_chan_limit_msec is defaulted by StAC to 75, Valve defaults it to 50."
         "Notes"     "If you notice players getting kicked for exceeding processing time, feel free to raise this value, and StAC should respect it and leave it alone."
