@@ -3,6 +3,12 @@
 // we don't need 64 maxplayers because this is only for tf2. saves some memory.
 #define TFMAXPLAYERS 33
 
+#if defined _tf2c_included
+    #define TFMAXPLAYERS 33
+
+#endif
+
+
 /********** GLOBAL VARS **********/
 
 

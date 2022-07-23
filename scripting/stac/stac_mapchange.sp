@@ -57,6 +57,10 @@ Action checkNativesEtc(Handle timer)
     {
         waitStatus = true;
     }
+
+    #if defined OF
+    MVM = false;
+    #else
     // are we in mann vs machine?
     if (GameRules_GetProp("m_bPlayingMannVsMachine") == 1)
     {
@@ -66,7 +70,7 @@ Action checkNativesEtc(Handle timer)
     {
         MVM = false;
     }
-
+    #endif
     // check natives!
 
     // sourcebans

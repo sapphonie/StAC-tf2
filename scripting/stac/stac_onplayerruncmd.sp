@@ -484,7 +484,14 @@ void cmdnumspikeCheck(int userid)
     {
         int spikeamt = clcmdnum[Cl][0] - clcmdnum[Cl][1];
         // https://github.com/sapphonie/StAC-tf2/issues/74
+
+        // clients in OF can trigger this by lagging, hackers tend to hit ~1000
+        // -rowedahelicon
+        #if defined OF
+        if (spikeamt >= 999 || spikeamt < 0)
+        #else
         if (spikeamt >= 32 || spikeamt < 0)
+        #endif
         {
             char heldWeapon[256];
             GetClientWeapon(Cl, heldWeapon, sizeof(heldWeapon));

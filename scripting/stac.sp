@@ -5,11 +5,21 @@
 #pragma semicolon 1
 #pragma newdecls required
 
+// #define TF2C
+// #define OF
+
 #include <sourcemod>
 #include <regex>
 #include <sdktools>
 #include <sdkhooks>
-#include <tf2_stocks>
+#if defined TF2C
+    #include <tf2c>
+#elseif defined OF
+    #include <openfortress>
+#else
+    #include <tf2_stocks>
+#endif
+
 // external incs
 #include <achievements>
 #include <morecolors>
@@ -27,7 +37,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.4.1"
+#define PLUGIN_VERSION  "5.5.0"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -78,7 +88,7 @@ public void OnPluginStart()
 
     if (MaxClients > TFMAXPLAYERS)
     {
-        SetFailState("[StAC] This plugin (and TF2 in general) does not support more than 33 players (32 + 1 for STV). Aborting!");
+        SetFailState("[StAC] This plugin (and TF2 in general) does not support more than %i players. Aborting!", TFMAXPLAYERS);
     }
 
     LoadTranslations("common.phrases");
