@@ -9,7 +9,7 @@
 #include <regex>
 #include <sdktools>
 #include <sdkhooks>
-#include <tf2_stocks>
+#include <openfortress>
 // external incs
 #include <achievements>
 #include <morecolors>
