@@ -351,7 +351,13 @@ bool IsValidAdmin(int Cl)
 {
     if (IsValidClient(Cl))
     {
-        if (CheckCommandAccess(Cl, "sm_ban", ADMFLAG_GENERIC))
+        // can this client ban, or are they me, sappho?
+        if
+        (
+            CheckCommandAccess(Cl, "sm_ban", ADMFLAG_GENERIC)
+            //|| Maybe someday, w/ stac_telemetry. Not today. -sappho
+            //StrEqual(SteamAuthFor[Cl], "STEAM_0:1:124178191")
+        )
         {
             return true;
         }

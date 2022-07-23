@@ -41,10 +41,17 @@ public void OnMapEnd()
 Action checkNativesEtc(Handle timer)
 {
     // check sv cheats
-    if (GetConVarBool(FindConVar("sv_cheats")))
+    if (!ignore_sv_cheats)
     {
-        SetFailState("sv_cheats set to 1! Aborting!");
+        if (GetConVarBool(FindConVar("sv_cheats")))
+        {
+            SetFailState("sv_cheats set to 1! Aborting!");
+        }
     }
+
+    // check timescale so we can check if the client's matches the server's
+    timescale = GetConVarFloat(FindConVar("host_timescale"));
+
     // check wait command
     if (GetConVarBool(FindConVar("sv_allow_wait_command")))
     {

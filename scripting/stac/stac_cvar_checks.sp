@@ -28,6 +28,8 @@ char miscVars[][] =
     "cl_thirdperson",
     // must be == 0
     "r_portalsopenall",
+    // must be == 1.0
+    "host_timescale",
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
     // tf_showspeed ?
@@ -107,12 +109,16 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     // you know what this does and what it should be. 0.
     else if (StrEqual(cvarName, "sv_cheats"))
     {
-        if (StringToInt(cvarValue) != 0)
+        // if we're ignoring sv_cheats being on, obviously don't check this cvar
+        if (!ignore_sv_cheats)
         {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (StringToInt(cvarValue) != 0)
             {
-                oobVarBan(userid);
+                oobVarsNotify(userid, cvarName, cvarValue);
+                if (banForMiscCheats)
+                {
+                    oobVarBan(userid);
+                }
             }
         }
     }
@@ -238,6 +244,20 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "r_portalsopenall"))
     {
         if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (banForMiscCheats)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    // host_timescale (cheat cvar! should NEVER not be 1)
+    // used to bypass VAC: https://github.com/ValveSoftware/Source-1-Games/issues/3911
+    else if (StrEqual(cvarName, "host_timescale"))
+    {
+        if (StringToFloat(cvarValue) != timescale)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
             if (banForMiscCheats)
@@ -375,6 +395,8 @@ Action Timer_CheckClientConVars_FirstTime(Handle timer, int userid)
         hasWaitedForCvarCheck[Cl] = true;
         CreateTimer(0.1, Timer_CheckClientConVars, userid);
     }
+
+    return Plugin_Continue;
 }
 
 // timer for (re)checking ALL cvars and net props and everything else

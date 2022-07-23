@@ -60,7 +60,7 @@ Even better, this plugin is set up to be as easy to use and install as possible,
 2) extract the downloaded zip, and copy all the folders inside of it into `/tf/addons/sourcemod/` on your tf2 server. Overwrite any files if prompted.
 3) restart your server
 
-The current list of cvars is listed [here](cvars.md). The defaults should be good for most people, if you want to the plugin to autoban. If not, you can set any "detection" cvar to 0 to never ban, and to -1 to never even log or check in the first place. If you want to edit cvars,
+The current list of cvars and admin commands is listed [here](cvars.md). The defaults should be good for most people, if you want to the plugin to autoban. If not, you can set any "detection" cvar to 0 to never ban, and to -1 to never even log or check in the first place. If you want to edit cvars,
 
 4) wait 30 seconds after doing the above
 5) edit `/tf/cfg/sourcemod/stac.cfg` to your liking

@@ -4,18 +4,18 @@
     {
         "Version"
         {
-            "Latest"    "5.4.0"
+            "Latest"    "5.4.1"
         }
 
-        "Notes"     "Changes in 5.4.0"
-        "Notes"     "- Default stac_max_connections_from_ip to 0, only enable it if you need it because StAC isn't catching bots. If this happens, open an issue on the GitHub!"
-        "Notes"     "- Default stac_kick_unauthed_clients to 0, only enable if you're having issues with cheating unauthenticated players."
-        "Notes"     "- Better prevention of already banned clients from joining servers and spamming notifications to Discord, thank you Kaiga with Uncletopia for the report."
-        "Notes"     "- Tightened up some checks."
-        "Notes"     "- StAC now better ignores laggy clients."
-        "Notes"     "- StAC no longer whines about an invalid file handle on server start."
-        "Notes"     "- StAC no longer reports bhops until a client reaches `stac_max_bhop_detections` or more bhops, instead of half of that number."
-        "Notes"     "- Discord webhook stuff has been cleaned up a bit."
+        "Notes"     "Changes in 5.4.1"
+        "Notes"     "- Updated stac_optimize_cvars to set certain new cvars (net_dc_reason and net_chan_limit_msec)"
+        "Notes"     "net_chan_limit_msec is defaulted by StAC to 75, Valve defaults it to 50."
+        "Notes"     "If you notice players getting kicked for exceeding processing time, feel free to raise this value, and StAC should respect it and leave it alone."
+        "Notes"     "- Updated cvar check to check for host_timescale == 1, see https://github.com/ValveSoftware/Source-1-Games/issues/3911"
+        "Notes"     "- Updated lots of cvar descriptions to be accurate, and consistent with each other in style"
+        "Notes"     "- StAC now waits 30 seconds instead of 60 seconds to check client cvars when they first join the server. I probably should make this a cvar."
+        "Notes"     "===== StAC is always looking for feedback! Got an issue, request, or wanna discuss? Open a GitHub issue and join the Discord server linked in the README, on GitHub! ====="
+        "Notes"     "===== Thank you for using StAC. -sappho ===== "
     }
 
     "Files"
