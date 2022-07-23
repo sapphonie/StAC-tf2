@@ -41,9 +41,12 @@ public void OnMapEnd()
 Action checkNativesEtc(Handle timer)
 {
     // check sv cheats
-    if (GetConVarBool(FindConVar("sv_cheats")))
+    if (!ignore_sv_cheats)
     {
-        SetFailState("sv_cheats set to 1! Aborting!");
+        if (GetConVarBool(FindConVar("sv_cheats")))
+        {
+            SetFailState("sv_cheats set to 1! Aborting!");
+        }
     }
     // check wait command
     if (GetConVarBool(FindConVar("sv_allow_wait_command")))

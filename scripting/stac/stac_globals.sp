@@ -30,7 +30,7 @@ ConVar stac_fixpingmasking_enabled;
 ConVar stac_kick_unauthed_clients;
 ConVar stac_silent;
 ConVar stac_max_connections_from_ip;
-
+ConVar stac_work_with_sv_cheats;
 
 /***** Misc cheat defaults *****/
 // ban duration
@@ -55,11 +55,12 @@ bool banForMiscCheats           = true;
 bool optimizeCvars              = true;
 int silent                      = 0;
 int maxip                       = 0;
+bool ignore_sv_cheats           = false;
 
 /***** Detection based cheat defaults *****/
 int maxAimsnapDetections        = 20;
 int maxPsilentDetections        = 10;
-int maxFakeAngDetections        = 10;
+int maxFakeAngDetections        = 5;
 int maxBhopDetections           = 10;
 int maxCmdnumDetections         = 20;
 int maxTbotDetections           = 0;
@@ -90,6 +91,7 @@ int imaxupdaterate;
 int iminupdaterate;
 int imaxrate;
 int iminrate;
+float timescale;
 
 // time since some server event happened
 // time since the map started
