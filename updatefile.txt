@@ -13,8 +13,8 @@
         "Notes"     "If you notice players getting kicked for exceeding processing time, feel free to raise this value, and StAC should respect it and leave it alone."
         "Notes"     "- Updated cvar check to check for host_timescale == 1, see https://github.com/ValveSoftware/Source-1-Games/issues/3911"
         "Notes"     "- Updated lots of cvar descriptions to be accurate, and consistent with each other in style"
-	"Notes"     "===== StAC is always looking for feedback! Got an issue, request, or wanna discuss? Open a GitHub issue and join the Discord server linked in the README, on GitHub! ====="
-	"Notes"     "===== Thank you for using StAC. -sappho ===== "
+        "Notes"     "===== StAC is always looking for feedback! Got an issue, request, or wanna discuss? Open a GitHub issue and join the Discord server linked in the README, on GitHub! ====="
+        "Notes"     "===== Thank you for using StAC. -sappho ===== "
     }
 
     "Files"
