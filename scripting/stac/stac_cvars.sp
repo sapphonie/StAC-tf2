@@ -656,6 +656,7 @@ void RunOptimizeCvars()
     // limit fakelag abuse / backtracking (CS:GO default value!)
     SetConVarFloat(FindConVar("sv_maxunlag"), 0.2);
 
+// these cvars don't exist outside of tf2 (atm)
 #if !defined OF && !defined TF2C
     // print dc reasons to clients
     SetConVarBool(FindConVar("net_disconnect_reason"), true);
