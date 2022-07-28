@@ -656,6 +656,7 @@ void RunOptimizeCvars()
     // limit fakelag abuse / backtracking (CS:GO default value!)
     SetConVarFloat(FindConVar("sv_maxunlag"), 0.2);
 
+#if !defined OF && !defined TF2C
     // print dc reasons to clients
     SetConVarBool(FindConVar("net_disconnect_reason"), true);
 
@@ -666,6 +667,7 @@ void RunOptimizeCvars()
     {
         SetConVarInt(net_chan_limit_msec, 75);
     }
+#endif
 
     // fix backtracking
     ConVar jay_backtrack_enable     = FindConVar("jay_backtrack_enable");
