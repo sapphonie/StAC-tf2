@@ -18,21 +18,21 @@
     "AimsnapBanAllChat"
     {
         "#format"   "{1:N},{2:i}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}aimbotting{white}. Total aimsnap detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
-        "da"        "{hotpink}[StAC]{white} Spiller {1} brugte {mediumpurple}aimbotting{white}. Antal aimsnaps opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}AimBot{white}. Всего aimsnap-обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} estava usando {mediumpurple}aimbot{white}. Total de detecções por aimsnap: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 使用了 {mediumpurple}自动瞄准{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} was {mediumpurple}aimbotting{white}. Total aimsnap detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+        "da"        "{hotpink}[社区服反作弊]{white} Spiller {1} brugte {mediumpurple}aimbotting{white}. Antal aimsnaps opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
+        "ru"        "{hotpink}[社区服反作弊]{white} Игрок {1} использовал {mediumpurple}AimBot{white}. Всего aimsnap-обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) {1} estava usando {mediumpurple}aimbot{white}. Total de detecções por aimsnap: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 使用了 {mediumpurple}自动瞄准{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
     }
     // msg that gets written to sourcebans
     "AimsnapBanMsg"
     {
         "#format"   "{1:i}"
-        "en"        "[StAC] Banned for aimsnapping after {1} detections"
-        "da"        "[StAC] Banned for aimsnapping efter {1} opfangelser"
-        "ru"        "[StAC] Забанен за aimsnapping после {1} обнаружений"
-        "pt"        "[StAC] Banido(a) por aimsnapping depois de {1} detecções"
-        "chi"       "[StAC] 检测 {1} 次使用自动瞄准后封禁"
+        "en"        "[社区服反作弊] Banned for aimsnapping after {1} detections"
+        "da"        "[社区服反作弊] Banned for aimsnapping efter {1} opfangelser"
+        "ru"        "[社区服反作弊] Забанен за aimsnapping после {1} обнаружений"
+        "pt"        "[社区服反作弊] Banido(a) por aimsnapping depois de {1} detecções"
+        "chi"       "[社区服反作弊] 检测 {1} 次使用自动瞄准后封禁"
     }
     /*
               _____ _ __           __
@@ -46,21 +46,21 @@
     "pSilentBanAllChat"
     {
         "#format"   "{1:N},{2:i}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was using {mediumpurple}pSilentAim{white} or {mediumpurple}NoRecoil{white}. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
-        "da"        "{hotpink}[StAC]{white} Spiller {1} brugte {mediumpurple}pSilentAim{white} eller {mediumpurple}NoRecoil{white}. Antal opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}pSilentAim{white} или {mediumpurple}NoRecoil{white}. Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} estava usando {mediumpurple}pSilentAim{white} ou {mediumpurple}NoRecoil{white}. Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 使用了 {mediumpurple}无后座{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} was using {mediumpurple}pSilentAim{white} or {mediumpurple}NoRecoil{white}. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+        "da"        "{hotpink}[社区服反作弊]{white} Spiller {1} brugte {mediumpurple}pSilentAim{white} eller {mediumpurple}NoRecoil{white}. Antal opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
+        "ru"        "{hotpink}[社区服反作弊]{white} Игрок {1} использовал {mediumpurple}pSilentAim{white} или {mediumpurple}NoRecoil{white}. Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) {1} estava usando {mediumpurple}pSilentAim{white} ou {mediumpurple}NoRecoil{white}. Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 使用了 {mediumpurple}暴力锁头{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
     }
     // msg that gets written to sourcebans
     "pSilentBanMsg"
     {
         "#format"   "{1:i}"
-        "en"        "[StAC] Banned for pSilent after {1} detections"
-        "da"        "[StAC] Banned for pSilent efter {1} opfangelser"
-        "ru"        "[StAC] Забанен за pSilent после {1} обнаружений"
-        "pt"        "[StAC] Banido(a) por pSilent depois de {1} detecções"
-        "chi"       "[StAC] 检测 {1} 次使用无后座后封禁"
+        "en"        "[社区服反作弊] Banned for pSilent after {1} detections"
+        "da"        "[社区服反作弊] Banned for pSilent efter {1} opfangelser"
+        "ru"        "[社区服反作弊] Забанен за pSilent после {1} обнаружений"
+        "pt"        "[社区服反作弊] Banido(a) por pSilent depois de {1} detecções"
+        "chi"       "[社区服反作弊] 检测 {1} 次使用暴力锁头后封禁"
     }
     /*
         __    __
@@ -74,20 +74,20 @@
     "bhopBanAllChat"
     {
         "#format"   "{1:N},{2:i}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}bhopping{white} using a {mediumpurple}cheat program{white}. Total consecutive bhops: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
-        "da"        "{hotpink}[StAC]{white} Spiller {1} brugte {mediumpurple}bhopping{white} ved hjælp af et {mediumpurple}cheat program{white}. Total antal bhops: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}читы распрыжки{white}. Всего последовательных распрыжек: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} estava usando um {mediumpurple}cheat de bhop{white}. Total de bhops consecutivos: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 使用了 {mediumpurple}兔子跳{white} 于 {mediumpurple}非法脚本{white}. 总跳跃数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} was {mediumpurple}bhopping{white} using a {mediumpurple}cheat program{white}. Total consecutive bhops: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+        "da"        "{hotpink}[社区服反作弊]{white} Spiller {1} brugte {mediumpurple}bhopping{white} ved hjælp af et {mediumpurple}cheat program{white}. Total antal bhops: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
+        "ru"        "{hotpink}[社区服反作弊]{white} Игрок {1} использовал {mediumpurple}читы распрыжки{white}. Всего последовательных распрыжек: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) {1} estava usando um {mediumpurple}cheat de bhop{white}. Total de bhops consecutivos: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 使用了 {mediumpurple}兔子跳{white} 于 {mediumpurple}非法脚本{white}. 总跳跃数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
     }
     "bhopBanMsg"
     {
         "#format"   "{1:i}"
-        "en"        "[StAC] Banned for bhop cheats after {1} consec bhops"
-        "da"        "[StAC] Banned for bhop snyd efter {1} sammenhængende bhops"
-        "ru"        "[StAC] Забанен за читы распрыжки после {1} послед-ых прыжков"
-        "pt"        "[StAC] Banido(a) por cheat de bhop depois de {1} bhops consecutivos"
-        "chi"       "[StAC] 检测 {1} 次使用非法脚本后封禁"
+        "en"        "[社区服反作弊] Banned for bhop cheats after {1} consec bhops"
+        "da"        "[社区服反作弊] Banned for bhop snyd efter {1} sammenhængende bhops"
+        "ru"        "[社区服反作弊] Забанен за читы распрыжки после {1} послед-ых прыжков"
+        "pt"        "[社区服反作弊] Banido(a) por cheat de bhop depois de {1} bhops consecutivos"
+        "chi"       "[社区服反作弊] 检测 {1} 次使用非法脚本后封禁"
     }
     /*
         ____        __
@@ -101,20 +101,20 @@
     "fakeangBanAllChat"
     {
         "#format"   "{1:N},{2:i}"
-        "en"        "{hotpink}[StAC]{white} Player {1} had too many {mediumpurple}invalid eye angle detections{white}! Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
-        "da"        "{hotpink}[StAC]{white} Spiller {1} havde for mange {mediumpurple}ugyldige eye angle opfangelser{white}! Total opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
-        "ru"        "{hotpink}[StAC]{white} У игрока {1} было слишком много {mediumpurple}неверных углов зрения{white}! Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} teve muitas {mediumpurple}detecções inválidas de eye angle{white}! Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 使用了 {mediumpurple}非法异常角度射击{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} had too many {mediumpurple}invalid eye angle detections{white}! Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+        "da"        "{hotpink}[社区服反作弊]{white} Spiller {1} havde for mange {mediumpurple}ugyldige eye angle opfangelser{white}! Total opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
+        "ru"        "{hotpink}[社区服反作弊]{white} У игрока {1} было слишком много {mediumpurple}неверных углов зрения{white}! Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) {1} teve muitas {mediumpurple}detecções inválidas de eye angle{white}! Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 使用了 {mediumpurple}非法异常角度射击{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
     }
     "fakeangBanMsg"
     {
         "#format"   "{1:i}"
-        "en"        "[StAC] Banned for {1} fake angle detections"
-        "da"        "[StAC] Banned for {1} fake angle detections"
-        "ru"        "[StAC] Забанен за {1} неверных углов зрения"
-        "pt"        "[StAC] Banido(a) por {1} detecções falsas de ângulo"
-        "chi"       "[StAC] 检测 {1} 次使用非法异常角度射击后封禁"
+        "en"        "[社区服反作弊] Banned for {1} fake angle detections"
+        "da"        "[社区服反作弊] Banned for {1} fake angle detections"
+        "ru"        "[社区服反作弊] Забанен за {1} неверных углов зрения"
+        "pt"        "[社区服反作弊] Banido(a) por {1} detecções falsas de ângulo"
+        "chi"       "[社区服反作弊] 检测 {1} 次使用非法异常角度射击后封禁"
     }
     /*
 
@@ -129,20 +129,20 @@
     "cmdnumSpikesBanAllChat"
     {
         "#format"   "{1:N},{2:i}"
-        "en"        "{hotpink}[StAC]{white} Player {1} had too many {mediumpurple}cmdnum spikes{white}, indicating cheating. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
-        "da"        "{hotpink}[StAC]{white} spiller {1} havde for mange {mediumpurple}cmdnum spikes{white}, der indikerer snyd. Total opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
-        "ru"        "{hotpink}[StAC]{white} У игрока {1} было слишком много {mediumpurple}скачков cmdnum{white}, что указывает на чит. Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} teve muitos {mediumpurple}spikes de cmdnum{white}, indicando trapaça. Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 使用了 {mediumpurple}非法作弊指令{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} had too many {mediumpurple}cmdnum spikes{white}, indicating cheating. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+        "da"        "{hotpink}[社区服反作弊]{white} spiller {1} havde for mange {mediumpurple}cmdnum spikes{white}, der indikerer snyd. Total opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
+        "ru"        "{hotpink}[社区服反作弊]{white} У игрока {1} было слишком много {mediumpurple}скачков cmdnum{white}, что указывает на чит. Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) {1} teve muitos {mediumpurple}spikes de cmdnum{white}, indicando trapaça. Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 使用了 {mediumpurple}非法作弊指令{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
     }
     "cmdnumSpikesBanMsg"
     {
         "#format"   "{1:i}"
-        "en"        "[StAC] Banned for {1} cmdnum spikes"
-        "da"        "[StAC] Banned for {1} cmdnum spikes"
-        "ru"        "[StAC] Забанен за {1} скачков cmdnum"
-        "pt"        "[StAC] Banido(a) por {1} spikes de cmdnum"
-        "chi"       "[StAC] 检测 {1} 次使用非法作弊指令后封禁"
+        "en"        "[社区服反作弊] Banned for {1} cmdnum spikes"
+        "da"        "[社区服反作弊] Banned for {1} cmdnum spikes"
+        "ru"        "[社区服反作弊] Забанен за {1} скачков cmdnum"
+        "pt"        "[社区服反作弊] Banido(a) por {1} spikes de cmdnum"
+        "chi"       "[社区服反作弊] 检测 {1} 次使用非法作弊指令后封禁"
 
     }
     /*
@@ -157,20 +157,20 @@
     "tbotBanAllChat"
     {
         "#format"   "{1:N},{2:i}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was {mediumpurple}triggerbotting{white}. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
-        "da"        "{hotpink}[StAC]{white} Spiller {1} brugte {mediumpurple}triggerbotting{white}. Total opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}TriggerBot{white}. Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} estava usando {mediumpurple}triggerbot{white}. Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 使用了 {mediumpurple}自动射击{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} was {mediumpurple}triggerbotting{white}. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+        "da"        "{hotpink}[社区服反作弊]{white} Spiller {1} brugte {mediumpurple}triggerbotting{white}. Total opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
+        "ru"        "{hotpink}[社区服反作弊]{white} Игрок {1} использовал {mediumpurple}TriggerBot{white}. Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) {1} estava usando {mediumpurple}triggerbot{white}. Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 使用了 {mediumpurple}自动射击{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!"
     }
     "tbotBanMsg"
     {
         "#format"   "{1:i}"
-        "en"        "[StAC] Banned for triggerbotting after {1} detections"
-        "da"        "[StAC] Banned for triggerbotting efter {1} opfangelser"
-        "ru"        "[StAC] Забанен за triggerbotting после {1} обнаружений"
-        "pt"        "[StAC] Banido(a) por triggerbot depois de {1} detecções"
-        "chi"       "[StAC] 检测 {1} 次使用自动射击后封禁"
+        "en"        "[社区服反作弊] Banned for triggerbotting after {1} detections"
+        "da"        "[社区服反作弊] Banned for triggerbotting efter {1} opfangelser"
+        "ru"        "[社区服反作弊] Забанен за triggerbotting после {1} обнаружений"
+        "pt"        "[社区服反作弊] Banido(a) por triggerbot depois de {1} detecções"
+        "chi"       "[社区服反作弊] 检测 {1} 次使用自动射击后封禁"
     }
     /*
 
@@ -185,20 +185,20 @@
     "userinfoSpamBanAllChat"
     {
         "#format"   "{1:N},{2:i}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was repeatedly modifying their network cvars, {mediumpurple}indicating use of a cheat client{white}. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
-        "da"        "{hotpink}[StAC]{white} Spiller {1} ændrede gentagende gange sine network cvars, {mediumpurple}der indikerer brug af en cheat client{white}. Total opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} неоднократно изменял свои сетевые переменные, {mediumpurple}что указывает на использование чит-клиента{white}. Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} estava repetidamente modificando as suas cvars de internet, {mediumpurple}indicando o uso de um cheat client{white}. Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 使用了 {mediumpurple}虚假网络客户端信息{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!" 
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} was repeatedly modifying their network cvars, {mediumpurple}indicating use of a cheat client{white}. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+        "da"        "{hotpink}[社区服反作弊]{white} Spiller {1} ændrede gentagende gange sine network cvars, {mediumpurple}der indikerer brug af en cheat client{white}. Total opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
+        "ru"        "{hotpink}[社区服反作弊]{white} Игрок {1} неоднократно изменял свои сетевые переменные, {mediumpurple}что указывает на использование чит-клиента{white}. Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) {1} estava repetidamente modificando as suas cvars de internet, {mediumpurple}indicando o uso de um cheat client{white}. Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 使用了 {mediumpurple}虚假网络客户端信息{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!" 
     }
     "userinfoSpamBanMsg"
     {
         "#format"   "{1:i}"
-        "en"        "[StAC] Banned for cmdrate spam after {1} detections"
-        "da"        "[StAC] Banned for cmdrate spam efter {1} opfangelser"
-        "ru"        "[StAC] Забанен за спам cmdrate после {1} обнаружений"
-        "pt"        "[StAC] Banido(a) por spam de cmdrate depois de {1} detecções"
-        "chi"       "[StAC] 检测 {1} 次私自修改客户端信息后封禁"
+        "en"        "[社区服反作弊] Banned for cmdrate spam after {1} detections"
+        "da"        "[社区服反作弊] Banned for cmdrate spam efter {1} opfangelser"
+        "ru"        "[社区服反作弊] Забанен за спам cmdrate после {1} обнаружений"
+        "pt"        "[社区服反作弊] Banido(a) por spam de cmdrate depois de {1} detecções"
+        "chi"       "[社区服反作弊] 检测 {1} 次私自修改客户端信息后封禁"
     }
     /*
        __                      __    _           __
@@ -210,37 +210,37 @@
     */
     "turnbindKickMsg"
     {
-        "en"        "[StAC] Usage of turn binds or spin binds is not allowed. Kicked from server"
-        "da"        "[StAC] Brug af turn bind eller spin bind er ikke tilladt. Smidt af serveren"
-        "ru"        "[StAC] Использование клавиш поворота и вращения не разрешено. Выгнан с сервера"
-        "pt"        "[StAC] O uso de turn binds ou spin binds não é permitido. Expulso(a) do servidor"
-        "chi"       "[StAC] 玩家未听取劝阻停止使用旋转，已被踢出服务器"
+        "en"        "[社区服反作弊] Usage of turn binds or spin binds is not allowed. Kicked from server"
+        "da"        "[社区服反作弊] Brug af turn bind eller spin bind er ikke tilladt. Smidt af serveren"
+        "ru"        "[社区服反作弊] Использование клавиш поворота и вращения не разрешено. Выгнан с сервера"
+        "pt"        "[社区服反作弊] O uso de turn binds ou spin binds não é permitido. Expulso(a) do servidor"
+        "chi"       "[社区服反作弊] 玩家未听取劝阻停止使用旋转，已被踢出服务器"
     }
     "turnbindAdminMsg"
     {
         "#format"   "{1:N},{2:.1f}"
-        "en"        "{hotpink}[StAC]{white} Detected turn bind on player {1} for {palegreen}{2}{white} seconds"
-        "da"        "{hotpink}[StAC]{white} Opfangede turn bind på spiller {1} for {palegreen}{2}{white} sekunder siden"
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал клавишу поворота уже {palegreen}{2}{white} сек."
-        "pt"        "{hotpink}[StAC]{white} Detecção: o(a) jogador(a) {1} está usando turn bind ({palegreen}{2}{white} segundos)"
-        "en"        "{hotpink}[StAC]{white} 检测到玩家 {1} 使用了旋转 {palegreen}{2}{white} 秒"
+        "en"        "{hotpink}[社区服反作弊]{white} Detected turn bind on player {1} for {palegreen}{2}{white} seconds"
+        "da"        "{hotpink}[社区服反作弊]{white} Opfangede turn bind på spiller {1} for {palegreen}{2}{white} sekunder siden"
+        "ru"        "{hotpink}[社区服反作弊]{white} Игрок {1} использовал клавишу поворота уже {palegreen}{2}{white} сек."
+        "pt"        "{hotpink}[社区服反作弊]{white} Detecção: o(a) jogador(a) {1} está usando turn bind ({palegreen}{2}{white} segundos)"
+        "en"        "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 使用了旋转 {palegreen}{2}{white} 秒"
     }
     "turnbindWarnPlayer"
     {
-        "en"        "{hotpink}[StAC]{white} Turn binds and spin binds are not allowed on this server. If you continue to use them you will be autokicked!"
-        "da"        "{hotpink}[StAC]{white} Turn bind og spin bind er ikke tilladt på denne server. Hvis du fortsat benytter disse, bliver du autokicked!"
-        "ru"        "{hotpink}[StAC]{white} На этом сервере не разрешены привязки клавиш поворота и вращения. Если Вы продолжите использовать их, Вы будете автоматически выгнаны с сервера!"
-        "pt"        "{hotpink}[StAC]{white} Turn binds e spin binds não são permitidas neste servidor. Caso continue a usá-las, você será expulso(a) automaticamente!"
-        "chi"       "{hotpink}[StAC]{white} 服务器已禁止使用旋转以及绑定旋转，请立即停止，否则你将会被踢出服务器"
+        "en"        "{hotpink}[社区服反作弊]{white} Turn binds and spin binds are not allowed on this server. If you continue to use them you will be autokicked!"
+        "da"        "{hotpink}[社区服反作弊]{white} Turn bind og spin bind er ikke tilladt på denne server. Hvis du fortsat benytter disse, bliver du autokicked!"
+        "ru"        "{hotpink}[社区服反作弊]{white} На этом сервере не разрешены привязки клавиш поворота и вращения. Если Вы продолжите использовать их, Вы будете автоматически выгнаны с сервера!"
+        "pt"        "{hotpink}[社区服反作弊]{white} Turn binds e spin binds não são permitidas neste servidor. Caso continue a usá-las, você será expulso(a) automaticamente!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 服务器已禁止使用旋转以及绑定旋转，请立即停止，否则你将会被踢出服务器"
     }
     "turnbindAllChat"
     {
         "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was using turn binds. {palegreen}Kicked from server."
-        "da"        "{hotpink}[StAC]{white} Spiller {1} benyttede turn binds. {palegreen}Smidt af serveren."
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал клавиши поворота. {palegreen}Выгнан с сервера."
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} estava usando turn binds. {palegreen}Expulso(a) do servidor."
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 使用或绑定了旋转. {palegreen}已踢出服务器."
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} was using turn binds. {palegreen}Kicked from server."
+        "da"        "{hotpink}[社区服反作弊]{white} Spiller {1} benyttede turn binds. {palegreen}Smidt af serveren."
+        "ru"        "{hotpink}[社区服反作弊]{white} Игрок {1} использовал клавиши поворота. {palegreen}Выгнан с сервера."
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) {1} estava usando turn binds. {palegreen}Expulso(a) do servidor."
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 使用或绑定了旋转. {palegreen}已踢出服务器."
     }
     /*
              __  __                 __
@@ -255,65 +255,65 @@
     "illegalNameBanAllChat"
     {
         "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}illegal characters{white} in their name! {palegreen}BANNED from server!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} tinha {mediumpurple}caracteres ilegais{white} em seu nome! {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 名字中含有 {mediumpurple}非法字符{white} ! {palegreen}已禁止加入服务器!"
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} had {mediumpurple}illegal characters{white} in their name! {palegreen}BANNED from server!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) {1} tinha {mediumpurple}caracteres ilegais{white} em seu nome! {palegreen}BANIDO(A) do servidor!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 名字中含有 {mediumpurple}非法字符{white} ! {palegreen}已禁止加入服务器!"
     }
     "illegalNameBanMsg"
     {
-        "en"        "[StAC] Banned for illegal chars in their name"
-        "pt"        "[StAC] Banido(a) por caracteres ilegais em seu nome"
-        "chi"       "[StAC] 名称使用非法字符"
+        "en"        "[社区服反作弊] Banned for illegal chars in their name"
+        "pt"        "[社区服反作弊] Banido(a) por caracteres ilegais em seu nome"
+        "chi"       "[社区服反作弊] 名称使用非法字符"
     }
     // out of bounds cvars
     "oobVarBanAllChat"
     {
         "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}cvar/netvar values that were out of bounds{white}! {palegreen}BANNED from server!"
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} had {mediumpurple}cvar/netvar values that were out of bounds{white}! {palegreen}BANNED from server!"
         //"da"        ""
-        "ru"        "{hotpink}[StAC]{white} У игрока {1} были {mediumpurple}запредельные значения переменных{white}! {palegreen}ЗАБАНЕН с сервера!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) estava com {mediumpurple}valores fora dos limites em cvars/netvars{white}! {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 的 {mediumpurple}cvar/netvar 数值超出限制{white}! {palegreen}已被服务器封禁!"
+        "ru"        "{hotpink}[社区服反作弊]{white} У игрока {1} были {mediumpurple}запредельные значения переменных{white}! {palegreen}ЗАБАНЕН с сервера!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) estava com {mediumpurple}valores fora dos limites em cvars/netvars{white}! {palegreen}BANIDO(A) do servidor!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 的 {mediumpurple}cvar/netvar 数值超出限制{white}! {palegreen}已被服务器封禁!"
     }
     "oobVarBanMsg"
     {
-        "en"        "[StAC] Banned for OOB cvar/netvar values"
+        "en"        "[社区服反作弊] Banned for OOB cvar/netvar values"
         //"da"        ""
-        "ru"        "[StAC] Забанен за запредельные значения переменных"
-        "pt"        "[StAC] Banido(a) por valores fora dos limites em cvars/netvars"
-        "chi"       "[StAC] 修改cvar/netvar值超出限制"
+        "ru"        "[社区服反作弊] Забанен за запредельные значения переменных"
+        "pt"        "[社区服反作弊] Banido(a) por valores fora dos limites em cvars/netvars"
+        "chi"       "[社区服反作弊] 修改cvar/netvar值超出限制"
     }
     // misc known cheat cvars
     "cheatVarBanAllChat"
     {
         "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}a known cheat cvar{white}! {palegreen}BANNED from server!"
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} had {mediumpurple}a known cheat cvar{white}! {palegreen}BANNED from server!"
         //"da"        ""
-        "ru"        "{hotpink}[StAC]{white} У игрока {1} была {mediumpurple}известная чит-переменная{white}! {palegreen}ЗАБАНЕН с сервера!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) tinha {mediumpurple}uma cvar conhecida de cheat{white}! {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 使用了 {mediumpurple}非法作弊指令{white}. {palegreen}已禁止进入服务器!"
+        "ru"        "{hotpink}[社区服反作弊]{white} У игрока {1} была {mediumpurple}известная чит-переменная{white}! {palegreen}ЗАБАНЕН с сервера!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) tinha {mediumpurple}uma cvar conhecida de cheat{white}! {palegreen}BANIDO(A) do servidor!"
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 使用了 {mediumpurple}非法作弊指令{white}. {palegreen}已禁止进入服务器!"
     }
     "cheatVarBanMsg"
     {
-        "en"        "[StAC] Banned for having known cheat cvars"
+        "en"        "[社区服反作弊] Banned for having known cheat cvars"
         //"da"        ""
-        "ru"        "[StAC] Забанен за наличие известных чит-переменных"
-        "pt"        "[StAC] Banido(a) por ter cvars conhecidas de cheats"
-        "chi"       "[StAC] 检测 {1} 次使用非法作弊指令后封禁"
+        "ru"        "[社区服反作弊] Забанен за наличие известных чит-переменных"
+        "pt"        "[社区服反作弊] Banido(a) por ter cvars conhecidas de cheats"
+        "chi"       "[社区服反作弊] 检测 {1} 次使用非法作弊指令后封禁"
     }
     // cheevs
     "bogusAchieveBanAllChat"
     {
         "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} unlocked {mediumpurple}a invalid achievement{white}! {palegreen}BANNED from server!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) alcançou {mediumpurple}uma conquista inválida{white}! {palegreen}BANIDO(A) do servidor!"
-        "en"        "{hotpink}[StAC]{white} 检测到玩家 {1} 解锁了 {mediumpurple}一个无效成就{white}! {palegreen}已被服务器封禁!"
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1} unlocked {mediumpurple}a invalid achievement{white}! {palegreen}BANNED from server!"
+        "pt"        "{hotpink}[社区服反作弊]{white} O(A) jogador(a) alcançou {mediumpurple}uma conquista inválida{white}! {palegreen}BANIDO(A) do servidor!"
+        "en"        "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 解锁了 {mediumpurple}一个无效成就{white}! {palegreen}已被服务器封禁!"
     }
     "bogusAchieveBanMsg"
     {
-        "en"        "[StAC] Banned for bogus achievement values"
-        "pt"        "[StAC] Banido(a) por alcançar conquistas adulteradamente"
-        "chi"       "[StAC] 使用虚假成就"
+        "en"        "[社区服反作弊] Banned for bogus achievement values"
+        "pt"        "[社区服反作弊] Banido(a) por alcançar conquistas adulteradamente"
+        "chi"       "[社区服反作弊] 使用虚假成就"
     }
     /*
         __   _      __
@@ -328,19 +328,19 @@
     "interpKickMsg"
     {
         "#format"   "{1:.1f},{2:i},{3:i}"
-        "en"        "[StAC] Your interp ({1}ms) was out of bounds! Minimum allowed: {2}ms. Maximum allowed: {3}ms. Please fix this before rejoining"
-        "da"        "[StAC] Din interp er ude af rækkevidde! Din interp: {1}ms. Minimum tilladt: {2}ms. Maximum tilladt: {3}ms. Venligst ret dette, inden du rejoiner igen"
-        "ru"        "[StAC] Ваш interp ({1} мс.) был за пределами! Минимально допустимый: {2} мс. Максимально допустимый: {3} мс. Пожалуйста, поменяйте значение перед переподключением"
-        "pt"        "[StAC] A sua interpolação ({1}ms) estava fora dos limites! Mínimo permitido: {2}ms. Máximo permitido: {3}ms. Corrija isso antes de reentrar"
-        "chi"       "[StAC] 你的interp值 ({1}毫秒)超出限制!最小限制为:{2}毫秒.最大:{3}毫秒.请修改后再进入服务器!"
+        "en"        "[社区服反作弊] Your interp ({1}ms) was out of bounds! Minimum allowed: {2}ms. Maximum allowed: {3}ms. Please fix this before rejoining"
+        "da"        "[社区服反作弊] Din interp er ude af rækkevidde! Din interp: {1}ms. Minimum tilladt: {2}ms. Maximum tilladt: {3}ms. Venligst ret dette, inden du rejoiner igen"
+        "ru"        "[社区服反作弊] Ваш interp ({1} мс.) был за пределами! Минимально допустимый: {2} мс. Максимально допустимый: {3} мс. Пожалуйста, поменяйте значение перед переподключением"
+        "pt"        "[社区服反作弊] A sua interpolação ({1}ms) estava fora dos limites! Mínimo permitido: {2}ms. Máximo permitido: {3}ms. Corrija isso antes de reentrar"
+        "chi"       "[社区服反作弊] 你的interp值 ({1}毫秒)超出限制!最小限制为:{2}毫秒.最大:{3}毫秒.请修改后再进入服务器!"
     }
     "interpAllChat"
     {
         "#format"   "{1:N},{2:.1f}"
-        "en"        "{hotpink}[StAC]{white} Player {1}'s {mediumpurple}interp{white} was {mediumpurple}{2}{white}ms, indicating interp exploitation. {palegreen}Kicked from server."
-        "da"        "{hotpink}[StAC]{white} Spiller {1}'s {mediumpurple}interp{white} var {mediumpurple}{2}{white}ms, hvilket indikerer interp udnyttelse. {palegreen}Smidt af serveren."
-        "ru"        "{hotpink}[StAC]{mediumpurple} Interp{white} игрока {1} был {mediumpurple}{2}{white} мс., что указывает на экплойт. {palegreen}Выгнан с сервера."
-        "pt"        "{hotpink}[StAC]{mediumpurple}A {mediumpurple}interpolação{white} de {1} era {mediumpurple}{2}{white}ms, indicando exploit de interp. {palegreen}Expulso(a) do servidor."
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 的 {mediumpurple}interp{white} 为 {mediumpurple}{2}{white}ms, 未达到标准限制. {palegreen}已被踢出服务器."
+        "en"        "{hotpink}[社区服反作弊]{white} Player {1}'s {mediumpurple}interp{white} was {mediumpurple}{2}{white}ms, indicating interp exploitation. {palegreen}Kicked from server."
+        "da"        "{hotpink}[社区服反作弊]{white} Spiller {1}'s {mediumpurple}interp{white} var {mediumpurple}{2}{white}ms, hvilket indikerer interp udnyttelse. {palegreen}Smidt af serveren."
+        "ru"        "{hotpink}[社区服反作弊]{mediumpurple} Interp{white} игрока {1} был {mediumpurple}{2}{white} мс., что указывает на экплойт. {palegreen}Выгнан с сервера."
+        "pt"        "{hotpink}[社区服反作弊]{mediumpurple}A {mediumpurple}interpolação{white} de {1} era {mediumpurple}{2}{white}ms, indicando exploit de interp. {palegreen}Expulso(a) do servidor."
+        "chi"       "{hotpink}[社区服反作弊]{white} 检测到玩家 {1} 的 {mediumpurple}interp{white} 为 {mediumpurple}{2}{white}ms, 未达到标准限制. {palegreen}已被踢出服务器."
     }
 }
