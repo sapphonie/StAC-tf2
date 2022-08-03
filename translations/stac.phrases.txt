@@ -34,7 +34,7 @@
         "ru"        "[StAC] Забанен за aimsnapping после {1} обнаружений"
         "pt"        "[StAC] Banido(a) por aimsnapping depois de {1} detecções"
         "chi"       "[StAC] 检测 {1} 次使用自动瞄准后封禁"
-        "es"        "[StAC] Banneado por aimsnapping despues de {1} detecciones"
+        "es"        "[StAC] Baneado por aimsnapping despues de {1} detecciones"
     }
     /*
               _____ _ __           __
