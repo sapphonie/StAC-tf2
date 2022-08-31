@@ -28,7 +28,9 @@ jobs:
       run: |
         cd ./scripting
         pwd
-        spcomp -i"./include/" stac.sp -o ../plugins/stac.smx
+        spcomp          -i"./include/" stac.sp -o ../plugins/stac.smx
+        spcomp TF2C=yep -i"./include/" stac.sp -o ../plugins/disabled/stac_tf2c.smx
+        spcomp OF=yep   -i"./include/" stac.sp -o ../plugins/disabled/stac_of.smx
         ls -la
 
     - name: Zip packages
