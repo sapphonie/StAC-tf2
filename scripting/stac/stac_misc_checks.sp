@@ -117,7 +117,7 @@ Action BanName(Handle timer, int userid)
         char reason[128];
         Format(reason, sizeof(reason), "%t", "illegalNameBanMsg");
         char pubreason[256];
-        Format(pubreason, sizeof(pubreason), "%t", "illegalNameBanMsg", Cl);
+        Format(pubreason, sizeof(pubreason), "%t", "illegalNameBanAllChat", Cl);
         BanUser(userid, reason, pubreason);
     }
     else
