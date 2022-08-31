@@ -366,6 +366,7 @@
         "es"        "[StAC] Baneado por valores de logros falsos"
         "de"        "[StAC] Gebannt für falsche Achievements"
     }
+    "newlineBanAllChat"
     {
         "#format"   "{1:N}"
         "en"        "{hotpink}[StAC]{white} Player {1} used {mediumpurple}illegal characters{white} in the chat! {palegreen}BANNED from server!"
@@ -377,7 +378,6 @@
         "en"        "[StAC] Banned for using illegal characters in chat"
         "es"        "[StAC] Baneado por caracteres no permitidos en la charla"
     }
-    "newlineBanAllChat"
     /*
         __   _      __
        / /__(_)____/ /__   ____ ___  _________ ______
