@@ -366,6 +366,18 @@
         "es"        "[StAC] Baneado por valores de logros falsos"
         "de"        "[StAC] Gebannt für falsche Achievements"
     }
+    {
+        "#format"   "{1:N}"
+        "en"        "{hotpink}[StAC]{white} Player {1} used {mediumpurple}illegal characters{white} in the chat! {palegreen}BANNED from server!"
+        "es"        "{hotpink}[StAC]{white} El jugador {1} usó {mediumpurple}caracteres no permitidos{white} en la charla! {palegreen}BANEADO del servidor!"
+    }
+    // newlines in chat
+    "newlineBanMsg"
+    {
+        "en"        "[StAC] Banned for using illegal characters in chat"
+        "es"        "[StAC] Baneado por caracteres no permitidos en la charla"
+    }
+    "newlineBanAllChat"
     /*
         __   _      __
        / /__(_)____/ /__   ____ ___  _________ ______
@@ -397,16 +409,5 @@
         "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 的 {mediumpurple}interp{white} 为 {mediumpurple}{2}{white}ms, 未达到标准限制. {palegreen}已被踢出服务器."
         "es"        "{hotpink}[StAC]{mediumpurple}El Interp{white} del jugador {1}'s era {mediumpurple}{2}{white}ms, indicios de interp exploitation. {palegreen}Expulsado del servidor."
         "de"        "{hotpink}[StAC]{white} Spieler {1}'s {mediumpurple}interp{white} war {mediumpurple}{2}{white}ms, weist auf interp Manipulation hin. {palegreen}Vom Server gekickt."
-    }
-    "newlineBanMsg"
-    {
-        "en"    "[StAC] Banned for using illegal characters in chat"
-        "es"    "[StAC] Baneado por caracteres no permitidos en la charla"
-    }
-    "newlineBanAllChat"
-    {
-        "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} used {mediumpurple}illegal characters{white} in the chat! {palegreen}BANNED from server!"
-        "es"        "{hotpink}[StAC]{white} El jugador {1} usó {mediumpurple}caracteres no permitidos{white} en la charla! {palegreen}BANEADO del servidor!"
     }
 }
