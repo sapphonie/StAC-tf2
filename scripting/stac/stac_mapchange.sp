@@ -40,7 +40,7 @@ public void OnMapEnd()
 
 Action checkNativesEtc(Handle timer)
 {
-    // check sv cheats
+    ignore_sv_cheats = GetConVarBool(stac_stac_work_with_sv_cheats);
     if (!ignore_sv_cheats)
     {
         if (GetConVarBool(FindConVar("sv_cheats")))

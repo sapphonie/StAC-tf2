@@ -462,7 +462,7 @@ void initCvars()
     );
     HookConVarChange(stac_max_connections_from_ip, setStacVars);
 
-    // max connections from the same ip
+    // work with sv_cheats on
     IntToString(ignore_sv_cheats, buffer, sizeof(buffer));
     stac_work_with_sv_cheats =
     AutoExecConfig_CreateConVar
@@ -576,7 +576,7 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     // max conns from same ip
     maxip                   = GetConVarInt(stac_max_connections_from_ip);
 
-    // max conns from same ip
+    // work with sv_cheats enabled
     ignore_sv_cheats        = GetConVarBool(stac_work_with_sv_cheats);
 }
 
