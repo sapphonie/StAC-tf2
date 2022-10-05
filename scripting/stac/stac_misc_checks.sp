@@ -15,8 +15,6 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         StrContains(sArgs, "\n", false) != -1
         ||
         StrContains(sArgs, "\r", false) != -1
-        ||
-        StrContains(sArgs, "\t", false) != -1
     )
     {
         int userid = GetClientUserId(Cl);
@@ -53,8 +51,6 @@ void NameCheck(int userid)
             ||
             StrContains(curName, "\r")  != -1
             ||
-            StrContains(curName, "\t")  != -1
-            ||
             // right to left char
             StrContains(curName, "\xE2\x80\x8F") != -1
             ||
@@ -75,14 +71,12 @@ void SaniNameAndBan(int userid, char name[64])
 
     int newlines;
     int returns;
-    int tabs;
     int rtl;
     int ltr;
 
     // todo: implement C style iscntrl
     newlines    = ReplaceString(name, sizeof(name), "\n",           "");
     returns     = ReplaceString(name, sizeof(name), "\r",           "");
-    tabs        = ReplaceString(name, sizeof(name), "\t",           "");
     rtl         = ReplaceString(name, sizeof(name), "\xE2\x80\x8F", "");
     ltr         = ReplaceString(name, sizeof(name), "\xE2\x80\x8E", "");
 
@@ -93,12 +87,10 @@ void SaniNameAndBan(int userid, char name[64])
         "Client had:\
         \n%i newline chars,\
         \n%i return chars,\
-        \n%i tab chars,\
         \n%i right2left chars,\
         \n%i left2right chars",
         newlines,
         returns,
-        tabs,
         rtl,
         ltr
     );
