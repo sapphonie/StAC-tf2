@@ -576,22 +576,15 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     // max conns from same ip
     maxip                   = GetConVarInt(stac_max_connections_from_ip);
 
-    // max conns from same ip
+    // should stac work with sv_cheats or not
     ignore_sv_cheats        = GetConVarBool(stac_work_with_sv_cheats);
 }
 
 public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    if (!ignore_sv_cheats)
+    if (configsExecuted && !ignore_sv_cheats && convar == FindConVar("sv_cheats") && StringToInt(newValue) != 0)
     {
-        // IMMEDIATELY unload if we enable sv cheats
-        if (convar == FindConVar("sv_cheats"))
-        {
-            if (StringToInt(newValue) != 0)
-            {
-                SetFailState("[StAC] sv_cheats set to 1! Aborting!");
-            }
-        }
+        SetFailState("[StAC] sv_cheats set to 1! Aborting!");
     }
 
     // set timescale so we don't ban clients if its not default
@@ -664,7 +657,7 @@ void RunOptimizeCvars()
     // don't override server set settings if they have set it to a value other than 0
     if (GetConVarInt(net_chan_limit_msec) == 0)
     {
-        SetConVarInt(net_chan_limit_msec, 75);
+        SetConVarInt(net_chan_limit_msec, 128);
     }
 
     // fix backtracking
@@ -678,8 +671,4 @@ void RunOptimizeCvars()
         // set jaypatch to sane value
         SetConVarInt(jay_backtrack_tolerance, 1);
     }
-
-    // get rid of any possible exploits by using teleporters and fov
-    SetConVarInt(FindConVar("tf_teleporter_fov_start"), 90);
-    SetConVarFloat(FindConVar("tf_teleporter_fov_time"), 0.0);
 }
