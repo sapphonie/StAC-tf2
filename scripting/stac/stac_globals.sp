@@ -100,6 +100,8 @@ float timeSinceMapStart;
 float timeSinceLagSpikeFor[TFMAXPLAYERS + 1];
 
 // native/gamemode/plugin etc bools
+bool configsExecuted = false;
+
 bool SOURCEBANS;
 bool MATERIALADMIN;
 bool GBANS;

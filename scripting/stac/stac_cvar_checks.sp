@@ -110,7 +110,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "sv_cheats"))
     {
         // if we're ignoring sv_cheats being on, obviously don't check this cvar
-        if (!ignore_sv_cheats)
+        if (configsExecuted && !ignore_sv_cheats)
         {
             if (StringToInt(cvarValue) != 0)
             {

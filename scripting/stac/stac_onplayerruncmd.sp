@@ -11,7 +11,6 @@
     - TURN BINDS
 */
 
-bool useOnPlayerRunCmdPre = false;
 public void OnPlayerRunCmdPre
 (
     int Cl,
@@ -27,8 +26,6 @@ public void OnPlayerRunCmdPre
     const int mouse[2]
 )
 {
-    useOnPlayerRunCmdPre = true;
-
     PlayerRunCmd(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
 }
 
@@ -53,12 +50,6 @@ public Action OnPlayerRunCmd
     if (userBanQueued[Cl])
     {
         return Plugin_Handled;
-    }
-
-    // only run if OnPlayerRunCmdPre doesn't ever fire (meaning we're not on a sm.1.11.6876 install or newer)
-    if (!useOnPlayerRunCmdPre)
-    {
-        PlayerRunCmd(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
     }
 
     return Plugin_Continue;

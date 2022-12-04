@@ -2,6 +2,12 @@
 
 /********** MAP CHANGE / STARTUP RELATED STUFF **********/
 
+public void OnConfigsExecuted()
+{
+    checkNativesEtc(null);
+    configsExecuted = true;
+}    
+
 public void OnMapStart()
 {
     OpenStacLog();
@@ -40,6 +46,11 @@ public void OnMapEnd()
 
 Action checkNativesEtc(Handle timer)
 {
+    if (!configsExecuted)
+    {
+        return Plugin_Handled;
+    }
+
     // check sv cheats
     if (!ignore_sv_cheats)
     {
