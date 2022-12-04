@@ -4,11 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "5.4.2"
+            "Latest"    "5.4.3"
         }
 
-        "Notes"     "Changes in 5.4.2"
-        "Notes"     "- Fixed bug where clients could get improperly banned for having tab characters in their name due to a Steam bug: https://github.com/sapphonie/StAC-tf2/issues/132"
+        "Notes"     "Changes in 5.4.3"
+        "Notes"     "- Deprecated SourceMod 1.10 support."
         "Notes"     "===== StAC is always looking for feedback! Got an issue, request, or wanna discuss? Open a GitHub issue and join the Discord server linked in the README, on GitHub! ====="
         "Notes"     "===== Thank you for using StAC. -sappho ===== "
     }
