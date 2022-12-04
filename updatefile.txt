@@ -9,6 +9,9 @@
 
         "Notes"     "Changes in 5.4.3"
         "Notes"     "- Deprecated SourceMod 1.10 support."
+        "Notes"     "- Fixed stac_work_with_sv_cheats"
+        "Notes"     "- Removed useless teleport cvars in stac_optimize_cvars"
+        "Notes"     "- Updated net_chan_limit_msec default to 128, from 75"
         "Notes"     "===== StAC is always looking for feedback! Got an issue, request, or wanna discuss? Open a GitHub issue and join the Discord server linked in the README, on GitHub! ====="
         "Notes"     "===== Thank you for using StAC. -sappho ===== "
     }
