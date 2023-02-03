@@ -47,7 +47,7 @@ public Action OnPlayerRunCmd
     OnPlayerRunCmd_jaypatch(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
 
     // sanity check, don't let banned clients do anything!
-    if ( userBanQueued[Cl] || !IsClientInGame(Cl) )
+    if ( userBanQueued[Cl] || !IsClientInGame(Cl) || IsClientInKickQueue(Cl) )
     {
         // Todo; maybe KickClient for the IsClientInGame failing here?
         buttons     = 0;
