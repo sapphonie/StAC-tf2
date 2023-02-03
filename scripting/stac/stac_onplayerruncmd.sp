@@ -197,7 +197,7 @@ stock void PlayerRunCmd
         // ...isn't currently taunting - can cause fake angs!
         || playerTaunting[Cl]
         // ...didn't recently spawn - can cause invalid psilent detects
-        || engineTime[Cl][0] - 1.0 < timeSinceSpawn[Cl]
+        || engineTime[Cl][0] - 1.5 < timeSinceSpawn[Cl]
         // ...didn't recently taunt - can (obviously) cause fake angs!
         || engineTime[Cl][0] - 1.0 < timeSinceTaunt[Cl]
         // ...didn't recently teleport - can cause psilent detects
@@ -225,11 +225,9 @@ stock void PlayerRunCmd
 
     if
     (
-        // make sure client doesn't have invalid angles. "invalid" in this case means "any angle is 0.000000", usually caused by plugin / trigger based teleportation
-        !HasValidAngles(Cl)
         // make sure client doesn't have OUTRAGEOUS ping
         // most cheater fakeping goes up to 800 so tack on 50 just in case
-        || pingFor[Cl] > 850.0
+        pingFor[Cl] > 850.0
     )
     {
         return;
