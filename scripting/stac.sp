@@ -42,6 +42,8 @@ public Plugin myinfo =
 
 /********** SUBPLUGINS **********/
 
+Handle StacGenEvent_Fwd;
+
 // globals
 #include "stac/stac_globals.sp"
 // misc funcs used around the plugin
@@ -161,6 +163,22 @@ public void OnPluginStart()
 
     // jaypatch
     OnPluginStart_jaypatch();
+
+    // 
+StacGenEvent_Fwd = CreateGlobalForward
+(   
+    "StacGenEvent_Fwd",
+    ET_Ignore,
+    /* int Cl               */ Param_Cell,
+    /* char[] steamid       */ Param_String,
+    /* char[] eventmsg      */ Param_String,
+    /* char[] host          */ Param_String,
+    /* char[] hostipandport */ Param_String,
+    /* char[] demoname      */ Param_String,
+    /* int demotick         */ Param_Cell
+);
+
+
 }
 
 public void OnPluginEnd()

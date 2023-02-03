@@ -694,17 +694,17 @@ public void OnLibraryAdded(const char[] name)
     }
 }
 
-/********** DETECTIONS & DISCORD **********/
+/********** DETECTIONS && DISCORD && API **********/
 
 void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
 {
     StacLogDemo();
 
-    if (!DISCORD)
+    /*if (!DISCORD)
     {
         return;
     }
-
+*/
     static char generalTemplate[2048] = \
     "{ \"embeds\": \
         [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
@@ -745,6 +745,13 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
     {
         steamid = "N/A";
     }
+    Call_StartForward(StacGenEvent_Fwd);
+
+    // forward void StacGenEvent_Fwd(int Cl, char[] steamid, char[] eventmsg, char[] hostname, char[] hostipandport, char[] demoname, int demotick);
+
+    Call_Finish();
+
+    // Stac_OnGeneralNotify(
     Format
     (
         msg,
