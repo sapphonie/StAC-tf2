@@ -47,9 +47,19 @@ public Action OnPlayerRunCmd
     OnPlayerRunCmd_jaypatch(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
 
     // sanity check, don't let banned clients do anything!
-    if (userBanQueued[Cl])
+    if ( userBanQueued[Cl] || !IsClientInGame(Cl) )
     {
-        return Plugin_Handled;
+        buttons     = 0;
+        impulse     = 0;
+        vel         = {0.0, 0.0, 0.0};
+        angles      = {0.0, 0.0, 0.0};
+        weapon      = 0;
+        subtype     = 0;
+        cmdnum      = 0;
+        tickcount   = 0;
+        seed        = 0;
+        mouse       = {0, 0};
+        return Plugin_Continue;
     }
 
     return Plugin_Continue;
@@ -929,7 +939,7 @@ bool IsUserLagging(int userid, bool checkcmdnum = true, bool checktickcount = tr
     if
     (
         // we don't want very much loss at all. this may be removed some day.
-        // lossFor[Cl] >= 1.0
+        lossFor[Cl] >= 1.0
         || !isCmdnumSequential(userid) && checkcmdnum
         || !isTickcountInOrder(userid) && checktickcount
         // tickcount the same over 6 ticks, client is *definitely* lagging
@@ -945,7 +955,7 @@ bool IsUserLagging(int userid, bool checkcmdnum = true, bool checktickcount = tr
         //         // too long
         //         tickspersec[Cl] >= (100)
         //     )
-        // )
+        //
     )
     {
         if (!checktickcount)

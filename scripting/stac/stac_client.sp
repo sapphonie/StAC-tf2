@@ -92,8 +92,8 @@ Action CheckAuthOn(Handle timer, int userid)
             }
             else
             {
-                StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
-                StacLog("Client %N failed to authorize w/ Steam in a timely manner.", Cl);
+                // StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
+                // StacLog("Client %N failed to authorize w/ Steam in a timely manner.", Cl);
                 // SteamAuthFor[Cl][0] = '\0'; ?
             }
         }
