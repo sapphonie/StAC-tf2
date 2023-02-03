@@ -90,11 +90,11 @@ Action CheckAuthOn(Handle timer, int userid)
                 // TODO: detect clients that ignore this
                 // KickClient(Cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
             }
-            else
+            else if (DEBUG)
             {
-                // StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
-                // StacLog("Client %N failed to authorize w/ Steam in a timely manner.", Cl);
-                // SteamAuthFor[Cl][0] = '\0'; ?
+                StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
+                StacLog("Client %N failed to authorize w/ Steam in a timely manner.", Cl);
+                SteamAuthFor[Cl][0] = '\0';
             }
         }
         else
