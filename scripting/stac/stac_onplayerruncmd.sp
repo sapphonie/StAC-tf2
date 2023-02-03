@@ -929,23 +929,23 @@ bool IsUserLagging(int userid, bool checkcmdnum = true, bool checktickcount = tr
     if
     (
         // we don't want very much loss at all. this may be removed some day.
-            lossFor[Cl] >= 1.0
+        // lossFor[Cl] >= 1.0
         || !isCmdnumSequential(userid) && checkcmdnum
         || !isTickcountInOrder(userid) && checktickcount
         // tickcount the same over 6 ticks, client is *definitely* lagging
         || isTickcountRepeated(userid)
-        ||
-        (
-            isDefaultTickrate()
-            &&
-            (
-                // too short
-                tickspersec[Cl] <= (40)
-                ||
-                // too long
-                tickspersec[Cl] >= (100)
-            )
-        )
+        // ||
+        // (
+        //     isDefaultTickrate()
+        //     &&
+        //     (
+        //         // too short
+        //         tickspersec[Cl] <= (40)
+        //         ||
+        //         // too long
+        //         tickspersec[Cl] >= (100)
+        //     )
+        // )
     )
     {
         if (!checktickcount)
