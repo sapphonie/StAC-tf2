@@ -49,6 +49,7 @@ public Action OnPlayerRunCmd
     // sanity check, don't let banned clients do anything!
     if ( userBanQueued[Cl] || !IsClientInGame(Cl) )
     {
+        // Todo; maybe KickClient for the IsClientInGame failing here?
         buttons     = 0;
         impulse     = 0;
         vel         = {0.0, 0.0, 0.0};
@@ -59,6 +60,8 @@ public Action OnPlayerRunCmd
         tickcount   = 0;
         seed        = 0;
         mouse       = {0, 0};
+
+        timeSinceNullCmd[Cl] = GetEngineTime();
         return Plugin_Continue;
     }
 
@@ -86,7 +89,6 @@ stock void PlayerRunCmd
     {
         return;
     }
-
     // need this basically no matter what
     int userid = GetClientUserId(Cl);
 
