@@ -44,10 +44,8 @@ public Action OnPlayerRunCmd
     int mouse[2]
 )
 {
-    OnPlayerRunCmd_jaypatch(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
-
     // sanity check, don't let banned clients do anything!
-    if ( userBanQueued[Cl] || !IsClientInGame(Cl) || IsClientInKickQueue(Cl) )
+    if ( userBanQueued[Cl] || !IsClientConnected(Cl) || !IsClientInGame(Cl) || IsClientInKickQueue(Cl) )
     {
         // Todo; maybe KickClient for the IsClientInGame failing here?
         buttons     = 0;
@@ -64,6 +62,8 @@ public Action OnPlayerRunCmd
         timeSinceNullCmd[Cl] = GetEngineTime();
         return Plugin_Continue;
     }
+
+    OnPlayerRunCmd_jaypatch(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
 
     return Plugin_Continue;
 }
@@ -179,7 +179,7 @@ stock void PlayerRunCmd
     didBangThisFrame[Cl] = false;
 
     // detect trigger teleports
-    if (GetVectorDistance(clpos[Cl][0], clpos[Cl][1], false) > 500)
+    if (GetVectorDistance(clpos[Cl][0], clpos[Cl][1], false) > 256)
     {
         // reuse this variable
         timeSinceTeled[Cl] = GetEngineTime();
@@ -226,6 +226,7 @@ stock void PlayerRunCmd
         // make sure client isn't timing out - duh
         || IsClientTimingOut(Cl)
         // this is just for halloween shit - plenty of halloween effects can and will mess up all of these checks
+        // TODO: THIS CAN APPARENTLY BE SPOOFED. CLEAN THIS UP.
         || playerInBadCond[Cl] != 0
     )
     {
@@ -946,18 +947,18 @@ bool IsUserLagging(int userid, bool checkcmdnum = true, bool checktickcount = tr
         || !isTickcountInOrder(userid) && checktickcount
         // tickcount the same over 6 ticks, client is *definitely* lagging
         || isTickcountRepeated(userid)
-        // ||
-        // (
-        //     isDefaultTickrate()
-        //     &&
-        //     (
-        //         // too short
-        //         tickspersec[Cl] <= (40)
-        //         ||
-        //         // too long
-        //         tickspersec[Cl] >= (100)
-        //     )
-        //
+        // TODO: HOOKS
+        (
+            isDefaultTickrate()
+            &&
+            (
+                // too short
+                tickspersec[Cl] <= (40)
+                ||
+                // too long
+                tickspersec[Cl] >= (100)
+            )
+        )
     )
     {
         if (!checktickcount)

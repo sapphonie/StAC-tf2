@@ -30,6 +30,8 @@ char miscVars[][] =
     "r_portalsopenall",
     // must be == 1.0
     "host_timescale",
+    // if this is >= 8 just kick them, cathook uses this to "spoof" windows
+    "windows_speaker_config"
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
     // tf_showspeed ?
@@ -44,10 +46,10 @@ char cheatVars[][] =
     // lith
     // "lithium_disable_party_bypass",
     // rijin
-    // "rijin_load",
+    "rijin_load",
     // "rijin_save",
-    // lmaobox apparently uses this? haven't seen it
-    // "setcvar",
+    // plenty of idiot cheats use this
+    "setcvar",
     // ncc doesn't have any that i can find lol
     // cathook
     "cat_load",
@@ -57,6 +59,8 @@ char cheatVars[][] =
     // "melancholy",
     // general
     // "hook"
+    // fware
+    "crash",
 };
 
 
@@ -267,6 +271,21 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         }
     }
 
+    // chook does this. we cant ban since technically legit clients can set this, but we can kick em out
+    else if (StrEqual(cvarName, "windows_speaker_config"))
+    {
+        if (StringToInt(cvarValue) >= 8)
+        {
+            StacGeneralPlayerNotify
+            (
+                userid,
+                "Client %N has a value of \"%i\" for cvar \"%s\", which is out of bounds. Legit clients can set this, but most of the time, this is a bot. Kicked from server.",
+                Cl, StringToInt(cvarValue), cvarName
+            );
+            KickClient(Cl, "#GameUI_ServerInsecure");
+        }
+    }
+
     /*
         cheat program only cvars
     */
@@ -281,8 +300,8 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
     // log something about cvar errors
     else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
     {
-        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", cvarName, Cl);
-        StacLog("Could not query cvar %s on player %L", cvarName, Cl);
+        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on player %N", cvarName, Cl);
+        StacGeneralPlayerNotify(userid, "Could not query cvar %s on player %N! This person is probably cheating, but please verify this!", cvarName, Cl);
     }
 }
 
