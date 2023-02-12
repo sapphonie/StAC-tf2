@@ -301,7 +301,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         }
     }
     // log something about cvar errors
-    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
+    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName) && !StrEqual(cvarName, "windows_speaker_config"))
     {
         PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on player %N", cvarName, Cl);
         StacGeneralPlayerNotify(userid, "Could not query cvar %s on player %N! This person is probably cheating, but please verify this!", cvarName, Cl);
