@@ -947,7 +947,7 @@ bool IsUserLagging(int userid, bool checkcmdnum = true, bool checktickcount = tr
         || !isTickcountInOrder(userid) && checktickcount
         // tickcount the same over 6 ticks, client is *definitely* lagging
         || isTickcountRepeated(userid)
-        // TODO: HOOKS
+        || // TODO: HOOKS
         (
             isDefaultTickrate()
             &&
