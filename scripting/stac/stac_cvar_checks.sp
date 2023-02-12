@@ -282,7 +282,10 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
                 "Client %N has a value of \"%i\" for cvar \"%s\", which is out of bounds. Legit clients can set this, but most of the time, this is a bot. Kicked from server.",
                 Cl, StringToInt(cvarValue), cvarName
             );
-            KickClient(Cl, "#GameUI_ServerInsecure");
+            if (banForMiscCheats)
+            {
+                KickClient(Cl, "#GameUI_ServerInsecure");
+            }
         }
     }
 
