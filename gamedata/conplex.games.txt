@@ -1,0 +1,187 @@
+"Games"
+{	
+	"#default"
+	{
+		"Signatures"
+		{
+			/*
+			 * String: "Socket ProcessAccept Error: %s\n"
+			 */
+			"ProcessAccept"
+			{
+				"library" "engine"
+				"linux"   "@_ZN14CSocketCreator13ProcessAcceptEv"
+			}
+
+			/*
+			 * If this signature exists, it is used to scope the ProcessAccept detour to only the RCon server.
+			 *
+			 * String: "RCON Cmd: recv error (%s)\n"
+			 * You're looking for the one that doesn't also contain "Lost RCON connection, please retry command (%s)\n"
+			 */
+			"RunFrame"
+			{
+				"library" "engine"
+				"linux"   "@_ZN11CRConServer8RunFrameEv"
+			}
+
+			/*
+			 * Optional, used to ban clients sending invalid data.
+			 *
+			 * String: "Banning %s for rcon hacking attempts\n"
+			 */
+			"HandleFailedRconAuth"
+			{
+				"library" "engine"
+				"linux"   "@_ZN11CRConServer20HandleFailedRconAuthERK8netadr_s"
+			}
+		}
+	}
+
+	"tf"
+	{
+		"Signatures"
+		{
+			"ProcessAccept"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x24\x53\x57\x8D\x45\xF8\xC7\x45\xF8\x10\x00\x00\x00\x50"
+			}
+
+			"RunFrame"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\xB8\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x53\x8B\xD9\x56\x57"
+			}
+
+			"HandleFailedRconAuth"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x18\xA1\x2A\x2A\x2A\x2A\x8B\x15\x2A\x2A\x2A\x2A\x53\x56\x57"
+			}
+		}
+	}
+
+	"cstrike"
+	{
+		"Signatures"
+		{
+			"ProcessAccept"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x24\x53\x57\x8D\x45\xF8\xC7\x45\xF8\x10\x00\x00\x00\x50"
+			}
+
+			"RunFrame"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\xB8\x68\x10\x00\x00\xE8\x2A\x2A\x2A\x2A\x53\x56\x8B\xF1\x57"
+			}
+
+			"HandleFailedRconAuth"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x18\xA1\x2A\x2A\x2A\x2A\x8B\x15\x2A\x2A\x2A\x2A\x53\x56\x57"
+			}
+		}
+	}
+
+	"hl2mp"
+	{
+		"Signatures"
+		{
+			"ProcessAccept"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x24\x53\x57\x8D\x45\xF8\xC7\x45\xF8\x10\x00\x00\x00\x50"
+			}
+
+			"RunFrame"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\xB8\x68\x10\x00\x00\xE8\x2A\x2A\x2A\x2A\x53\x56\x8B\xF1\x57"
+			}
+
+			"HandleFailedRconAuth"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x18\xA1\x2A\x2A\x2A\x2A\x8B\x15\x2A\x2A\x2A\x2A\x53\x56\x57"
+			}
+		}
+	}
+
+	"dod"
+	{
+		"Signatures"
+		{
+			"ProcessAccept"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x24\x53\x57\x8D\x45\xF8\xC7\x45\xF8\x10\x00\x00\x00\x50"
+			}
+
+			"RunFrame"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\xB8\x68\x10\x00\x00\xE8\x2A\x2A\x2A\x2A\x53\x56\x8B\xF1\x57"
+			}
+
+			"HandleFailedRconAuth"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x18\xA1\x2A\x2A\x2A\x2A\x8B\x15\x2A\x2A\x2A\x2A\x53\x56\x57"
+			}
+		}
+	}
+
+	"csgo"
+	{
+		"Signatures"
+		{
+			"ProcessAccept"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8D\x45\xF8\xC7\x45\xF8\x10\x00\x00\x00\x50"
+				"linux"   "\x55\x89\xE5\x83\xEC\x58\x89\x5D\xF4\x8B\x5D\x08\x8D\x45\xE0"
+			}
+
+			"RunFrame"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\xB8\x64\x10\x00\x00\xE8\x2A\x2A\x2A\x2A\x53"
+				"linux"   "\x55\x89\xE5\x57\x56\x53\x81\xEC\x6C\x10\x00\x00\x8B\x75\x08\x83\xC6\x04"
+			}
+
+			"HandleFailedRconAuth"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x10\x8B\x15\x2A\x2A\x2A\x2A\x89\x4D\xFC"
+				"linux"   "\x55\xB8\x2A\x2A\x2A\x2A\x89\xE5\x57\x56\x53\x83\xEC\x5C\x8B\x15\x2A\x2A\x2A\x2A\x8B"
+			}
+		}
+	}
+
+	"left4dead2"
+	{
+		"Signatures"
+		{
+			"ProcessAccept"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x28\xA1\x2A\x2A\x2A\x2A\x33\xC5\x89\x45\xFC\x53\x57\x8B\xF9"
+			}
+
+			"RunFrame"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\xB8\x2C\x10\x00\x00\xE8\x2A\x2A\x2A\x2A\xA1\x2A\x2A\x2A\x2A\x33\xC5\x89\x45\xFC\x53\x8B\xD9\x56\x57\x8D\x4B\x04"
+			}
+
+			"HandleFailedRconAuth"
+			{
+				"library" "engine"
+				"windows" "\x55\x8B\xEC\x83\xEC\x10\x53\x56\x8B\xD9\x8B\x43\x2A\x57\x33\xFF"
+			}
+		}
+	}
+}
