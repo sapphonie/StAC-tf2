@@ -10,6 +10,23 @@
 #include <sdktools>
 #include <sdkhooks>
 #include <tf2_stocks>
+
+#define AUTOLOAD_EXTENSIONS
+// REQUIRED extensions:
+// SteamWorks for being able to make webrequests: https://forums.alliedmods.net/showthread.php?t=229556
+// Get latest version from here: https://github.com/KyleSanderson/SteamWorks/releases
+#include <SteamWorks>
+// Connect for preventing SteamID spoofing: https://forums.alliedmods.net/showthread.php?t=162489
+// Get latest version from here: https://builds.limetech.io/?project=connect
+#include <connect>
+// SourceTV Manager for reading currently recording demo information: https://forums.alliedmods.net/showthread.php?t=280402
+// Get latest version from here or it will not work: https://github.com/peace-maker/sourcetvmanager/actions
+#include <sourcetvmanager>
+// Conplex for rcon hardening: https://forums.alliedmods.net/showthread.php?t=270962
+// Get latest version from here: https://builds.limetech.io/?p=webcon
+#include <conplex>
+#undef AUTOLOAD_EXTENSIONS
+
 // external incs
 #include <achievements>
 #include <morecolors>
@@ -20,14 +37,12 @@
 #tryinclude <sourcebanspp>
 #tryinclude <materialadmin>
 #tryinclude <discord>
-#undef REQUIRE_EXTENSIONS
-#tryinclude <sourcetvmanager>
-#tryinclude <SteamWorks>
+// #undef REQUIRE_EXTENSIONS
 
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.4.4"
+#define PLUGIN_VERSION  "5.5.0"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -69,6 +84,7 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+    StopIncompatPlugins();
     StacLog("\n\n----> StAC version [%s] loaded\n", PLUGIN_VERSION);
     // check if tf2, unload if not
     if (GetEngineVersion() != Engine_TF2)
@@ -161,7 +177,23 @@ public void OnPluginStart()
 
     // jaypatch
     OnPluginStart_jaypatch();
+
+    // Conplex_RegisterProtocol("StAC", StAC_Detector, StAC_Handler);
 }
+
+/*
+public ConplexProtocolDetectionState StAC_Detector(const char[] id, const char[] data, int length)
+{
+    LogMessage("[StAC Conplex Detector] id = %s, data = %s, len = %i", id, data, length);
+    return ConplexProtocolDetection_NoMatch;
+}
+
+public bool StAC_Handler(const char[] id, ConplexSocket socket, const char[] address)
+{
+    LogMessage("[StAC Conplex Handler] id = %s, data = , addr = %s", id, address);
+    return false;
+}
+*/
 
 public void OnPluginEnd()
 {
@@ -221,4 +253,53 @@ Action Timer_TriggerTimedStuff(Handle timer)
 {
     ActuallySetRandomSeed();
     return Plugin_Continue;
+}
+
+void StopIncompatPlugins()
+{
+    // https://forums.alliedmods.net/showpost.php?p=1744525&postcount=6
+    char plName[128];
+
+    // Mama mia
+    Handle plugini = GetPluginIterator();
+    while (MorePlugins(plugini))
+    {
+        Handle thisPlug = ReadPlugin(plugini);
+        GetPluginInfo(thisPlug, PlInfo_Name, plName, sizeof(plName));
+        // Fuck off lol. Compile it out if you want. I don't care. If you do this shit you're a jackass and should feel bad about it.
+        // I will not provide any support for you or your annoying server if you do this.
+        if
+        (
+               StrContains("Simple block",  plName, false)  != -1 /* SM Plugins blocker */
+            || StrContains("Block SM",      plName, false)  != -1 /* wildcard for blocking sm plugins */
+        )
+        {
+            delete plugini;
+            SetFailState("[StAC] Refusing to load with malicious plugins.");
+            return;
+        }
+        else if (StrContains("SMAC", plName, false) != -1) /* SMAC */
+        {
+            delete plugini;
+            SetFailState("[StAC] Refusing to load with SMAC. SMAC is outdated and is actively harmful to server performance as well as StAC's operation. Uninstall SMAC and try again.");
+            return;
+        }
+        else if
+        (
+               StrContains("Backtrack Patch",       plName, false)  != -1 /* JTanz backtrack fix */
+            || StrContains("Backtrack Elimination", plName, false)  != -1 /* Shavit backtrack fix */
+        )
+        {
+            delete plugini;
+            SetFailState("[StAC] Refusing to load with other backtrack fix plugins. StAC contains its own backtrack patch built in, written by J-Tanzanite, author of LilAC. Uninstall them and try again.");
+            return;
+        }
+        /*
+            Todo, maybe;
+            Scan all SM plugin memory for instances of "rcon" inside plugins to maybe prevent malicious plugins?
+            Might be unfeasible and get too many false positives.
+        */
+    }
+    delete plugini;
+
 }
