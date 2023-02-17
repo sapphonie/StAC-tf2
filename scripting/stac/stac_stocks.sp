@@ -836,48 +836,6 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
     }";
 
-
-/*
-    StacLog
-    (
-        "\
-        \nNetwork:\
-        \n %.2f ms ping\
-        \n %.2f loss\
-        \n %.2f inchoke\
-        \n %.2f outchoke\
-        \n %.2f totalchoke\
-        \n %.2f kbps rate\
-        \n %.2f pps rate\
-        ",
-        pingFor[Cl],
-        lossFor[Cl],
-        inchokeFor[Cl],
-        outchokeFor[Cl],
-        chokeFor[Cl],
-        rateFor[Cl],
-        ppsFor[Cl]
-    );
-
-    StacLog
-    (
-        "\
-        \nMore network:\
-        \n Approx client cmdrate: ≈%i cmd/sec\
-        \n Approx server tickrate: ≈%i tick/sec\
-        \n Failing lag check? %s\
-        \n HasValidAngles? %s\
-        \n SequentialCmdnum? %s\
-        \n OrderedTickcount? %s\
-        ",
-        tickspersec[Cl],
-        tickspersec[0],
-        IsUserLagging(userid) ? "yes" : "no",
-        HasValidAngles(Cl) ? "yes" : "no",
-        isCmdnumSequential(userid) ? "yes" : "no",
-        isTickcountInOrder(userid) ? "yes" : "no"
-    );
-*/
     // this probably does not need to be this huge
     char msg[8192];
     int Cl = GetClientOfUserId(userid);
