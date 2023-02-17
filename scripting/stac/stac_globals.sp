@@ -139,9 +139,9 @@ bool didHurtThisFrame       [TFMAXPLAYERS+1];
 
 // OnPlayerRunCmd vars      [ client index ][history][ang/pos/etc]
 float clangles              [TFMAXPLAYERS+1][5][3];
-int   clcmdnum              [TFMAXPLAYERS+1][6];
-int   cltickcount           [TFMAXPLAYERS+1][6];
-int   clbuttons             [TFMAXPLAYERS+1][6];
+int   clcmdnum              [TFMAXPLAYERS+1][5];
+int   cltickcount           [TFMAXPLAYERS+1][5];
+int   clbuttons             [TFMAXPLAYERS+1][5];
 int   clmouse               [TFMAXPLAYERS+1]   [2];
 // OnPlayerRunCmd misc
 float engineTime            [TFMAXPLAYERS+1][3];

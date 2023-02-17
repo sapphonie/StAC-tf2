@@ -139,21 +139,21 @@ stock void PlayerRunCmd
 */
 
     // grab cmdnum
-    for (int i = 5; i > 0; --i)
+    for (int i = 4; i > 0; --i)
     {
         clcmdnum[Cl][i] = clcmdnum[Cl][i-1];
     }
     clcmdnum[Cl][0] = cmdnum;
 
     // grab tickccount
-    for (int i = 5; i > 0; --i)
+    for (int i = 4; i > 0; --i)
     {
         cltickcount[Cl][i] = cltickcount[Cl][i-1];
     }
     cltickcount[Cl][0] = tickcount;
 
     // grab buttons
-    for (int i = 5; i > 0; --i)
+    for (int i = 4; i > 0; --i)
     {
         clbuttons[Cl][i] = clbuttons[Cl][i-1];
     }
@@ -1014,7 +1014,6 @@ bool isCmdnumSequential(int userid)
         && clcmdnum[Cl][1] == clcmdnum[Cl][2] + 1
         && clcmdnum[Cl][2] == clcmdnum[Cl][3] + 1
         && clcmdnum[Cl][3] == clcmdnum[Cl][4] + 1
-        && clcmdnum[Cl][4] == clcmdnum[Cl][5] + 1
     )
     {
         return true;
@@ -1026,7 +1025,7 @@ bool isCmdnumSequential(int userid)
 bool isCmdnumInOrder(int userid)
 {
     int Cl = GetClientOfUserId(userid);
-    if (clcmdnum[Cl][0] > clcmdnum[Cl][1] > clcmdnum[Cl][2] > clcmdnum[Cl][3] > clcmdnum[Cl][4] > clcmdnum[Cl][5])
+    if (clcmdnum[Cl][0] > clcmdnum[Cl][1] > clcmdnum[Cl][2] > clcmdnum[Cl][3] > clcmdnum[Cl][4])
     {
         return true;
     }
@@ -1036,7 +1035,7 @@ bool isCmdnumInOrder(int userid)
 bool isTickcountInOrder(int userid)
 {
     int Cl = GetClientOfUserId(userid);
-    if (cltickcount[Cl][0] > cltickcount[Cl][1] > cltickcount[Cl][2] > cltickcount[Cl][3] > cltickcount[Cl][4] > cltickcount[Cl][5])
+    if (cltickcount[Cl][0] > cltickcount[Cl][1] > cltickcount[Cl][2] > cltickcount[Cl][3] > cltickcount[Cl][4])
     {
         return true;
     }
@@ -1052,7 +1051,6 @@ bool isTickcountRepeated(int userid)
         && cltickcount[Cl][1] == cltickcount[Cl][2]
         && cltickcount[Cl][2] == cltickcount[Cl][3]
         && cltickcount[Cl][3] == cltickcount[Cl][4]
-        && cltickcount[Cl][4] == cltickcount[Cl][5]
     )
     {
         return true;

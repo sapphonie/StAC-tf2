@@ -162,7 +162,7 @@ public void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcas
 // Just in case SourceMod whines about this not being used or we wanna do something with this later
 public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255])
 {
-    //
+    return true;
 }
 
 /********** CLIENT BASED EVENTS **********/

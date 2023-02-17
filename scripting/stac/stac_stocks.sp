@@ -253,14 +253,12 @@ void StacLogCmdnums(int userid)
         \n2 %i\
         \n3 %i\
         \n4 %i\
-        \n5 %i\
         ",
         clcmdnum[Cl][0],
         clcmdnum[Cl][1],
         clcmdnum[Cl][2],
         clcmdnum[Cl][3],
-        clcmdnum[Cl][4],
-        clcmdnum[Cl][5]
+        clcmdnum[Cl][4]
     );
 }
 
@@ -276,14 +274,12 @@ void StacLogTickcounts(int userid)
         \n2 %i\
         \n3 %i\
         \n4 %i\
-        \n5 %i\
         ",
         cltickcount[Cl][0],
         cltickcount[Cl][1],
         cltickcount[Cl][2],
         cltickcount[Cl][3],
-        cltickcount[Cl][4],
-        cltickcount[Cl][5]
+        cltickcount[Cl][4]
     );
 }
 
@@ -300,14 +296,12 @@ void StacLogButtons(int userid)
         \n2 %i\
         \n3 %i\
         \n4 %i\
-        \n5 %i\
         ",
         clbuttons[Cl][0],
         clbuttons[Cl][1],
         clbuttons[Cl][2],
         clbuttons[Cl][3],
-        clbuttons[Cl][4],
-        clbuttons[Cl][5]
+        clbuttons[Cl][4]
     );
 }
 
@@ -705,18 +699,18 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         return;
     }
 
-    static char generalTemplate[2048] = \
+    static char generalTemplate[] = \
     "{ \"embeds\": \
         [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
             [\
-                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
-                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Message\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
-                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
-                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
+                { \"name\": \"Player\",             \"value\": \"%N\" },\
+                { \"name\": \"SteamID\",            \"value\": \"%s\" },\
+                { \"name\": \"Message\",            \"value\": \"%s\" },\
+                { \"name\": \"Hostname\",           \"value\": \"%s\" },\
+                { \"name\": \"Server IP\",          \"value\": \"%s\" },\
+                { \"name\": \"Current Demo\",       \"value\": \"%s\" },\
+                { \"name\": \"Demo Tick\",          \"value\": \"%i\" },\
+                { \"name\": \"Unix timestamp\",     \"value\": \"%i\" }\
             ]\
         }],\
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
@@ -772,26 +766,120 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         return;
     }
 
-    static char detectionTemplate[2048] = \
+    static char detectionTemplate[] = \
     "{ \"embeds\": \
         [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
             [\
-                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
-                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Detection type\", \"value\": \"%s\" } ,\
-                { \"name\": \"Detection\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
-                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
-                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
+                { \"name\": \"Player\",             \"value\": \"%N\" },\
+                { \"name\": \"SteamID\",            \"value\": \"%s\" },\
+                { \"name\": \"Detection type\",     \"value\": \"%s\" },\
+                { \"name\": \"Detection\",          \"value\": \"%i\" },\
+                { \"name\": \"Hostname\",           \"value\": \"%s\" },\
+                { \"name\": \"Server IP\",          \"value\": \"%s\" },\
+                { \"name\": \"Current Demo\",       \"value\": \"%s\" },\
+                { \"name\": \"Demo Tick\",          \"value\": \"%i\" },\
+                { \"name\": \"Unix timestamp\",     \"value\": \"%i\" },\
+                { \"name\": \"viewangle history\",  \"value\":\
+               \"```   ---pitch---yaw-----roll-----\\n\
+                    0 | %7.2f %7.2f %7.2f\\n\
+                    1 | %7.2f %7.2f %7.2f\\n\
+                    2 | %7.2f %7.2f %7.2f\\n\
+                    3 | %7.2f %7.2f %7.2f\\n\
+                    4 | %7.2f %7.2f %7.2f\\n```\",\
+                    \"inline\": false \
+                }, \
+                { \
+                \"name\": \"cmdnum history\",       \"value\":\
+               \"```   --------\\n\
+                    0 | %i\\n\
+                    1 | %i\\n\
+                    2 | %i\\n\
+                    3 | %i\\n\
+                    4 | %i\\n```\",\
+                    \"inline\": true \
+                }, \
+                { \
+                \"name\": \"tickcount history\",    \"value\":\
+               \"```   --------\\n\
+                    0 | %i\\n\
+                    1 | %i\\n\
+                    2 | %i\\n\
+                    3 | %i\\n\
+                    4 | %i\\n```\",\
+                    \"inline\": true \
+                }, \
+                { \
+                \"name\": \"buttons history\",      \"value\":\
+               \"```   --------\\n\
+                    0 | %i\\n\
+                    1 | %i\\n\
+                    2 | %i\\n\
+                    3 | %i\\n\
+                    4 | %i\\n```\",\
+                    \"inline\": true \
+                }, \
+                { \
+                \"name\": \"network info\",         \"value\":\
+               \"```                   ---------------\\n\
+                    ping               | %7.2fms\\n\
+                    loss               | %7.2f%%\\n\
+                    inchoke            | %7.2f%%\\n\
+                    outchoke           | %7.2f%%\\n\
+                    totalchoke         | %7.2f%%\\n\
+                    rate               | %7.2fkbps\\n\
+                    approx packets/sec | %7.2f\\n\
+                    approx usrcmds/sec | %7i\\n```\",\
+                    \"inline\": false \
+                } \
             ]\
-        }],\
+        }], \
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
     }";
 
-    char msg[1024];
 
+/*
+    StacLog
+    (
+        "\
+        \nNetwork:\
+        \n %.2f ms ping\
+        \n %.2f loss\
+        \n %.2f inchoke\
+        \n %.2f outchoke\
+        \n %.2f totalchoke\
+        \n %.2f kbps rate\
+        \n %.2f pps rate\
+        ",
+        pingFor[Cl],
+        lossFor[Cl],
+        inchokeFor[Cl],
+        outchokeFor[Cl],
+        chokeFor[Cl],
+        rateFor[Cl],
+        ppsFor[Cl]
+    );
+
+    StacLog
+    (
+        "\
+        \nMore network:\
+        \n Approx client cmdrate: ≈%i cmd/sec\
+        \n Approx server tickrate: ≈%i tick/sec\
+        \n Failing lag check? %s\
+        \n HasValidAngles? %s\
+        \n SequentialCmdnum? %s\
+        \n OrderedTickcount? %s\
+        ",
+        tickspersec[Cl],
+        tickspersec[0],
+        IsUserLagging(userid) ? "yes" : "no",
+        HasValidAngles(Cl) ? "yes" : "no",
+        isCmdnumSequential(userid) ? "yes" : "no",
+        isTickcountInOrder(userid) ? "yes" : "no"
+    );
+*/
+    // this probably does not need to be this huge
+    char msg[8192];
     int Cl = GetClientOfUserId(userid);
     char ClName[64];
     GetClientName(Cl, ClName, sizeof(ClName));
@@ -824,7 +912,59 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         hostipandport,
         demoname,
         demotick,
-        GetTime()
+        GetTime(),
+
+        // angles
+        clangles[Cl][0][0],
+        clangles[Cl][0][1],
+        clangles[Cl][0][2],
+
+        clangles[Cl][1][0],
+        clangles[Cl][1][1],
+        clangles[Cl][1][2],
+
+        clangles[Cl][2][0],
+        clangles[Cl][2][1],
+        clangles[Cl][2][2],
+
+        clangles[Cl][3][0],
+        clangles[Cl][3][1],
+        clangles[Cl][3][2],
+
+        clangles[Cl][4][0],
+        clangles[Cl][4][1],
+        clangles[Cl][4][2],
+
+        // cmdnum
+        clcmdnum[Cl][0],
+        clcmdnum[Cl][1],
+        clcmdnum[Cl][2],
+        clcmdnum[Cl][3],
+        clcmdnum[Cl][4],
+
+        // tickcount
+        cltickcount[Cl][0],
+        cltickcount[Cl][1],
+        cltickcount[Cl][2],
+        cltickcount[Cl][3],
+        cltickcount[Cl][4],
+
+        // buttons
+        clbuttons[Cl][0],
+        clbuttons[Cl][1],
+        clbuttons[Cl][2],
+        clbuttons[Cl][3],
+        clbuttons[Cl][4],
+
+        // network
+        pingFor[Cl],
+        lossFor[Cl],
+        inchokeFor[Cl],
+        outchokeFor[Cl],
+        chokeFor[Cl],
+        rateFor[Cl],
+        ppsFor[Cl],
+        tickspersec[Cl]
     );
 
     SendMessageToDiscord(msg);
@@ -832,7 +972,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
 
 void SendMessageToDiscord(char[] message)
 {
-    char webhook[32] = "stac";
+    char webhook[8] = "stac";
     Discord_SendMessage(webhook, message);
 }
 
