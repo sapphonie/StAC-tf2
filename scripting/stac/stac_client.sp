@@ -210,6 +210,10 @@ public Action Hook_TEFireBullets(const char[] te_name, const int[] players, int 
     // this user fired a bullet this frame!
     didBangThisFrame[Cl] = true;
 
+    // For testing discord notifs
+    // StacDetectionNotify(GetClientUserId(Cl), "test", 0);
+    // StacLogAngles(GetClientUserId(Cl));
+
     return Plugin_Continue;
 }
 

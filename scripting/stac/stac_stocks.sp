@@ -239,6 +239,20 @@ void StacLogAngles(int userid)
         clangles[Cl][4][0],
         clangles[Cl][4][1]
     );
+    StacLog
+    (
+        "\
+        \nClient eye positions:\
+        \n eyepos 0: x %.3f y %.3f z %.3f\
+        \n eyepos 1: x %.3f y %.3f z %.3f\
+        ",
+        clpos[Cl][0][0],
+        clpos[Cl][0][1],
+        clpos[Cl][0][2],
+        clpos[Cl][1][0],
+        clpos[Cl][1][1],
+        clpos[Cl][1][2]
+    );
 }
 
 void StacLogCmdnums(int userid)
@@ -716,10 +730,11 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
     }";
 
-    char msg[1024];
+    char[] msg = new char[ strlen(generalTemplate) ];
 
-    char message[256];
-    VFormat(message, sizeof(message), format, 3);
+
+    char fmtmsg[256];
+    VFormat(fmtmsg, sizeof(fmtmsg), format, 3);
 
     int Cl = GetClientOfUserId(userid);
     char ClName[64];
@@ -742,11 +757,11 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
     Format
     (
         msg,
-        sizeof(msg),
+        4096,
         generalTemplate,
         Cl,
         steamid,
-        message,
+        fmtmsg,
         hostname,
         hostipandport,
         demoname,
@@ -780,7 +795,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
                 { \"name\": \"Demo Tick\",          \"value\": \"%i\" },\
                 { \"name\": \"Unix timestamp\",     \"value\": \"%i\" },\
                 { \"name\": \"viewangle history\",  \"value\":\
-               \"```   ---pitch---yaw-----roll-----\\n\
+               \"```==----pitch---yaw-----roll-----\\n\
                     0 | %7.2f %7.2f %7.2f\\n\
                     1 | %7.2f %7.2f %7.2f\\n\
                     2 | %7.2f %7.2f %7.2f\\n\
@@ -788,9 +803,16 @@ void StacDetectionNotify(int userid, char[] type, int detections)
                     4 | %7.2f %7.2f %7.2f\\n```\",\
                     \"inline\": false \
                 }, \
+                { \"name\": \"eye position history\",  \"value\":\
+               \"```==-----x--------y--------z---------\\n\
+                    0 | %8.2f %8.2f %8.2f\\n\
+                    1 | %8.2f %8.2f %8.2f\\n```\",\
+                    \"inline\": false \
+                }, \
                 { \
                 \"name\": \"cmdnum history\",       \"value\":\
-               \"```   --------\\n\
+                \"approx client sequence number\\n\
+                ```\
                     0 | %i\\n\
                     1 | %i\\n\
                     2 | %i\\n\
@@ -800,7 +822,8 @@ void StacDetectionNotify(int userid, char[] type, int detections)
                 }, \
                 { \
                 \"name\": \"tickcount history\",    \"value\":\
-               \"```   --------\\n\
+                \"approx client gpGlobals->tickcount\\n\
+                ```\
                     0 | %i\\n\
                     1 | %i\\n\
                     2 | %i\\n\
@@ -810,7 +833,8 @@ void StacDetectionNotify(int userid, char[] type, int detections)
                 }, \
                 { \
                 \"name\": \"buttons history\",      \"value\":\
-               \"```   --------\\n\
+                \"convert to button flags [here](https://sapphonie.github.io/flags.html)\\n\
+                    ```\
                     0 | %i\\n\
                     1 | %i\\n\
                     2 | %i\\n\
@@ -820,7 +844,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
                 }, \
                 { \
                 \"name\": \"network info\",         \"value\":\
-               \"```                   ---------------\\n\
+                \"```\
                     ping               | %7.2fms\\n\
                     loss               | %7.2f%%\\n\
                     inchoke            | %7.2f%%\\n\
@@ -836,8 +860,9 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
     }";
 
-    // this probably does not need to be this huge
-    char msg[8192];
+
+    char[] msg = new char[ strlen(detectionTemplate) ];
+
     int Cl = GetClientOfUserId(userid);
     char ClName[64];
     GetClientName(Cl, ClName, sizeof(ClName));
@@ -860,7 +885,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
     Format
     (
         msg,
-        sizeof(msg),
+        4096,
         detectionTemplate,
         Cl,
         steamid,
@@ -892,6 +917,14 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         clangles[Cl][4][0],
         clangles[Cl][4][1],
         clangles[Cl][4][2],
+
+        // eye positions
+        clpos[Cl][0][0],
+        clpos[Cl][0][1],
+        clpos[Cl][0][2],
+        clpos[Cl][1][0],
+        clpos[Cl][1][1],
+        clpos[Cl][1][2],
 
         // cmdnum
         clcmdnum[Cl][0],
