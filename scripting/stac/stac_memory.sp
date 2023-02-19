@@ -119,7 +119,7 @@ public MRESReturn Detour_CNetChan__ProcessPacket(Address pThis, DHookParam hPara
     int cl;
     if (!GetClientFromNetChan(pThis, icl_ptr, cl) || !icl_ptr || cl <= 0 )
     {
-        LogMessage("bunk addr in procpacket dtor");
+        StacLog("bunk addr in procpacket dtor");
         return MRES_Ignored;
     }
 
@@ -149,7 +149,7 @@ bool GetClientFromNetChan(Address pThis, Address& IClient, int& client)
     // sanity check
     if (!pThis)
     {
-        LogMessage("null pThis??");
+        StacLog("null pThis??");
         return false;
     }
 
@@ -157,7 +157,7 @@ bool GetClientFromNetChan(Address pThis, Address& IClient, int& client)
     // Clients will be null when connecting and disconnecting
     if (!IClient)
     {
-        LogMessage("null iclient?");
+        StacLog("null iclient?");
         return false;
     }
 
