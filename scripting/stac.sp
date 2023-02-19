@@ -10,7 +10,7 @@
 #include <sdktools>
 #include <sdkhooks>
 #include <tf2_stocks>
-
+#include <dhooks>
 #define AUTOLOAD_EXTENSIONS
 // REQUIRED extensions:
 // SteamWorks for being able to make webrequests: https://forums.alliedmods.net/showthread.php?t=229556
@@ -77,6 +77,8 @@ public Plugin myinfo =
 #include "stac/stac_misc_checks.sp"
 // stac livefeed
 #include "stac/stac_livefeed.sp"
+// gamedata / memory hacking bullshit
+#include "stac/stac_memory.sp"
 // if it ain't broke, don't fix it. jtanz has written a great backtrack patch.
 #include "stac/jay_backtrack_patch.sp"
 
@@ -95,6 +97,13 @@ public void OnPluginStart()
     if (MaxClients > TFMAXPLAYERS)
     {
         SetFailState("[StAC] This plugin (and TF2 in general) does not support more than 33 players (32 + 1 for STV). Aborting!");
+    }
+
+    DoStACGamedata();
+
+    if (!AddCommandListener(OnAllClientCommands))
+    {
+        SetFailState("Failed to AddCommandListener?");
     }
 
     LoadTranslations("common.phrases");

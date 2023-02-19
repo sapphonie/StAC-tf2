@@ -257,3 +257,48 @@ char os                [16];
 
 // client has waited the full 60 seconds for their first convar check
 bool hasWaitedForCvarCheck[TFMAXPLAYERS+1];
+
+/*
+TODO: point_worldtext entities
+
+this will be an array, probably
+
+int pwt = 0;
+*/
+
+/* stac memory stuff */
+// signon state per client
+int signonStateFor[TFMAXPLAYERS+1] = {-1, ...};
+
+
+#define SIGNONSTATE_NONE        0   // no state yet, about to connect
+#define SIGNONSTATE_CHALLENGE   1   // client challenging server, all OOB packets
+#define SIGNONSTATE_CONNECTED   2   // client is connected to server, netchans ready
+#define SIGNONSTATE_NEW         3   // just got serverinfo and string tables
+#define SIGNONSTATE_PRESPAWN    4   // received signon buffers
+#define SIGNONSTATE_SPAWN       5   // ready to receive entity packets
+#define SIGNONSTATE_FULL        6   // we are fully connected, first non-delta packet received
+#define SIGNONSTATE_CHANGELEVEL 7   // server is changing level, please wait
+
+
+// Address Offset_PacketSize;
+Address Offset_SignonState;
+Address Offset_IClient_HACK;
+
+GameData stac_gamedata;
+
+Handle SDKCall_GetPlayerSlot;
+Handle SDKCall_GetMsgHandler;
+
+/*
+Handle SDKCall_GetName;
+Handle SDKCall_GetAddr;
+Handle SDKCall_GetTimeSinceLastReceived;
+Handle SDKCall_GetSeqNum;
+Handle SDKCall_GetTime;
+Handle SDKCall_GetDropNumber;
+
+
+int dropThreshold;
+int seqNr[MAXPLAYERS+1][5];
+*/

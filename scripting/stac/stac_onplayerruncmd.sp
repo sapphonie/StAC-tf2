@@ -196,10 +196,12 @@ stock void PlayerRunCmd
     fuzzyClangles[Cl][0][0] = RoundToPlace(clangles[Cl][0][0], 1);
     fuzzyClangles[Cl][0][1] = RoundToPlace(clangles[Cl][0][1], 1);
 
+    // point_worldtextTODO();
 
     // neither of these tests need fancy checks, so we do them first
     bhopCheck(userid);
     turnbindCheck(userid);
+
 
     // we have to do all these annoying checks to make sure we get as few false positives as possible.
     if
@@ -1125,3 +1127,173 @@ Action Timer_decr_tbot(Handle timer, any userid)
 
     return Plugin_Continue;
 }
+
+/*
+void point_worldtext_TODO(int Cl)
+{
+    TODO point_worldtext
+
+    put this in a func
+    // this is so ugly lol
+    static char RareButtonNames[][] =
+    {
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "CANCEL",
+        "LEFT",
+        "RIGHT",
+        "",
+        "",
+        "",
+        "RUN",
+        "",
+        "ALT1",
+        "ALT2",
+        "SCORE",
+        "SPEED",
+        "WALK",
+        "ZOOM",
+        "WEAPON1",
+        "WEAPON2",
+        "BULLRUSH",
+        "GRENADE1",
+        "GRENADE2",
+        ""
+    };
+
+
+
+    char fwd    [4] = "_";
+    if (buttons & IN_FORWARD)
+    {
+        fwd = "^";
+    }
+
+    char back   [4] = "_";
+    if (buttons & IN_BACK)
+    {
+        back = "v";
+    }
+
+    char left   [4] = "_";
+    if (buttons & IN_MOVELEFT)
+    {
+        left = "<";
+    }
+
+    char right  [4] = "_";
+    if (buttons & IN_MOVERIGHT)
+    {
+        right = ">";
+    }
+
+    char m1     [4] = "_";
+    if (buttons & IN_ATTACK)
+    {
+        m1 = "1";
+    }
+
+    char m2     [4] = "_";
+    if (buttons & IN_ATTACK2)
+    {
+        m2 = "2";
+    }
+
+    char m3     [4] = "_";
+    if (buttons & IN_ATTACK3)
+    {
+        m3 = "3";
+    }
+
+    char jump   [6] = "____";
+    if (buttons & IN_JUMP)
+    {
+        jump = "JUMP";
+    }
+
+    char duck   [6] = "____";
+    if (buttons & IN_DUCK)
+    {
+        duck = "DUCK";
+    }
+
+    char reload [4] = "_";
+    if (buttons & IN_RELOAD)
+    {
+        reload = "R";
+    }
+    char use [4] = "_";
+    if (buttons & IN_USE)
+    {
+        use = "U";
+    }
+
+    char strButtons[512];
+    for (int i = 0; i < sizeof(RareButtonNames); i++)
+    {
+        if (buttons & (1 << i))
+        {
+            Format(strButtons, sizeof(strButtons), "%s %s", strButtons, RareButtonNames[i]);
+        }
+    }
+    TrimString(strButtons);
+
+
+    char msg[1024];
+    Format(msg,  sizeof(msg),
+        "\
+        \nOnPlayerRunCmd Info:\
+        \n %i cmdnum\
+        \n %i tickcount\
+        \n common buttons:\
+        \n  %c %c %c\
+        \n  %c %c %c    %c %c %c\
+        \n  %s    %s\
+        \n other buttons:\
+        \n  %s\
+        \n buttons int\
+        \n  %i\
+        \n mouse\
+        \n x %i\
+        \n y %i\
+        \n cl angs\
+        \n x %.2f \
+        \n y %.2f \
+        \n z %.2f \
+        ",
+        clcmdnum[Cl][0],
+        cltickcount[Cl][0],
+        use,  fwd, reload,
+        left, back, right,    m1, m2, m3,
+        jump, duck,
+        IsActuallyNullString(strButtons) ? "N/A" : strButtons,
+        clbuttons[Cl][0],
+        clmouse[Cl][0], clmouse[Cl][1],
+        clangles[Cl][0][0], clangles[Cl][0][1], clangles[Cl][0][2]
+    );
+
+
+    DispatchKeyValue        (pwt, "message", msg);
+
+    "\
+    \nMisc Info:\
+    \n Approx client cmdrate: ≈%i cmd/sec\
+    \n Approx server tickrate: ≈%i tick/sec\
+    \n Failing lag check? %s\
+    \n HasValidAngles? %s\
+    \n SequentialCmdnum? %s\
+    \n OrderedTickcount? %s\
+    ",
+    tickspersec[Cl],
+    tickspersec[0],
+    IsUserLagging(userid) ? "yes" : "no",
+    HasValidAngles(Cl) ? "yes" : "no",
+    isCmdnumSequential(userid) ? "yes" : "no",
+    isTickcountInOrder(userid) ? "yes" : "no"
+
+}
+*/

@@ -176,6 +176,40 @@ public Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
         timeSinceSpawn[Cl] = GetEngineTime();
     }
 
+    /*
+
+    TODO
+    point_worldtext replacement for livefeed
+
+    int ent = -1;
+    while ((ent = FindEntityByClassname(ent, "point_worldtext")) != -1)
+    {
+        if (IsValidEntity(ent))
+        {
+            RemoveEntity(ent);
+        }
+    }
+
+    pwt = CreateEntityByName("point_worldtext");
+    DispatchKeyValue        (pwt, "message", "test");
+    DispatchKeyValueFloat   (pwt, "textsize", 2.5);
+    DispatchKeyValue        (pwt, "color", "255 105 180");
+    DispatchKeyValueInt     (pwt, "Orientation", 1);
+    // 8 looks pretty good, 9 looks good, 10 looks good, 11 is weirdly colored
+    DispatchKeyValueInt     (pwt, "font", 10);
+    // SetEntityMoveType       (pwt, MOVETYPE_PUSH);
+    DispatchSpawn           (pwt);
+
+    int vm = GetEntPropEnt(Cl, Prop_Data, "m_hViewModel", 0);
+
+    SetVariantString        ("!activator");
+    AcceptEntityInput       (pwt, "SetParent", vm, 0);
+    // ?, ?, y
+    TeleportEntity          (pwt, {32.0, 24.0, 24.0 } , NULL_VECTOR, NULL_VECTOR);
+    AcceptEntityInput       (pwt, "Enable");
+    SetEntityRenderMode(pwt, RENDER_GLOW);
+
+    */
     return Plugin_Continue;
 }
 
@@ -290,6 +324,25 @@ public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
     return Plugin_Continue;
 }
 
+// Ignore cmds from unconnected clients
+Action OnAllClientCommands(int client, const char[] command, int argc)
+{
+    if (client == 0)
+    {
+        return Plugin_Continue;
+    }
+    if (StrEqual(command, "menuclosed"))
+    {
+        return Plugin_Continue;
+    }
+    if (signonStateFor[client] <= SIGNONSTATE_SPAWN)
+    {
+        LogMessage("cmd = %s", command);
+        return Plugin_Handled;
+    }
+    return Plugin_Continue;
+}
+
 void ClearClBasedVars(int userid)
 {
     // get fresh cli id
@@ -339,10 +392,12 @@ void ClearClBasedVars(int userid)
 
     // has client has waited 60 seconds for their first cvar check
     hasWaitedForCvarCheck   [Cl] = false;
+
+    signonStateFor          [Cl] = -1;
 }
 
 /********** TIMER FOR NETINFO **********/
-
+// CNetChan::FlowUpdate
 public Action Timer_GetNetInfo(Handle timer)
 {
     // reset all client based vars on plugin reload
