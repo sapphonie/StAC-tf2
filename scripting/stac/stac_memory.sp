@@ -106,7 +106,7 @@ public MRESReturn Detour_CBasePlayer__ProcessUsercmds(int entity, DHookParam hPa
     // BONK: -1 might get ret'd ??
     if (signonStateFor[entity] <= SIGNONSTATE_SPAWN)
     {
-        LogMessage("sos = %i", signonStateFor[entity]);
+        // LogMessage("sos = %i", signonStateFor[entity]);
         return MRES_Supercede;
     }
     return MRES_Ignored;
@@ -166,7 +166,6 @@ bool GetClientFromNetChan(Address pThis, Address& IClient, int& client)
 
     return true;
 }
-
 
 Address DerefPtr(Address addr)
 {
