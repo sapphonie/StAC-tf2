@@ -128,7 +128,7 @@ public MRESReturn Detour_CNetChan__ProcessPacket(Address pThis, DHookParam hPara
     int signonState     = GetSignonState(icl_ptr);
     signonStateFor[cl]  = signonState;
 
-    LogMessage("sos = %i", signonState);
+    // LogMessage("sos = %i", signonState);
     return MRES_Ignored;
 }
 

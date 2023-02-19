@@ -331,13 +331,13 @@ Action OnAllClientCommands(int client, const char[] command, int argc)
     {
         return Plugin_Continue;
     }
-    if (StrEqual(command, "menuclosed"))
+    if (StrEqual(command, "menuclosed") || StrEqual(command, "vmodenable"))
     {
         return Plugin_Continue;
     }
     if (signonStateFor[client] <= SIGNONSTATE_SPAWN)
     {
-        LogMessage("cmd = %s", command);
+        StacLog("Client %L sent cmd %s b4 signon???", client, command);
         return Plugin_Handled;
     }
     return Plugin_Continue;
