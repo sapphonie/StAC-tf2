@@ -11,20 +11,21 @@ Action checkAdmin(int callingCl, int args)
 
     if (callingCl != 0)
     {
-        bool isAdmin;
-        AdminId clAdmin = GetUserAdmin(callingCl);
-        if (GetAdminFlag(clAdmin, Admin_Ban))
+        if (IsValidAdmin(callingCl))
         {
-            isAdmin = true;
+            if (GetClientCount(true) >= 1 && !DEBUG)
+            {
+                ReplyToCommand(callingCl, "[StAC] Only one player is on. Most checks are logging only and cvar checking doesn't occur.");
+            }
         }
-        if (!isAdmin)
+        else
         {
             PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
             StacLogSteam(GetClientUserId(callingCl));
             StacGeneralPlayerNotify(GetClientUserId(callingCl), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
-            return Plugin_Handled;
+            return Plugin_Continue; // Return this instead. This causes non-admins to get an "Unknown Command" message, further disguising the anticheat.
         }
-        StacGeneralPlayerNotify(GetClientUserId(callingCl), "Admin %N used %s", callingCl, arg0);
+        //OracxGeneralPlayerNotify(GetClientUserId(callingCl), "Admin %N used %s", callingCl, arg0); // Why should we notify for this?
     }
 
     if (StrEqual(arg0, "sm_stac_checkall"))
@@ -36,6 +37,12 @@ Action checkAdmin(int callingCl, int args)
     if (StrEqual(arg0, "sm_stac_detections"))
     {
         ShowAllDetections(callingCl);
+        return Plugin_Handled;
+    }
+    
+    if (StrEqual(arg0, "sm_stac_version"))
+    {
+        ShowVersion(callingCl);
         return Plugin_Handled;
     }
 
@@ -57,6 +64,11 @@ Action checkAdmin(int callingCl, int args)
         }
 
         StacTargetCommand(callingCl, arg0, arg1);
+        return Plugin_Handled;
+    }
+    if (StrEqual(arg0, "sm_stac_printos"))
+    {
+        ShowAllOS(callingCl);
         return Plugin_Handled;
     }
     return Plugin_Handled;
@@ -92,6 +104,8 @@ void ShowAllDetections(int callingCl)
                 || cmdnumSpikeDetects      [Cl] > 0
                 || tbotDetects             [Cl] > 0
                 || userinfoSpamDetects     [Cl] > 0
+                || invalidWishVelDetects   [Cl] > 0
+                || unsyncMoveDetects       [Cl] > 0
             )
             {
                 PrintToConsole
@@ -105,6 +119,8 @@ void ShowAllDetections(int callingCl)
                     \n pSilent       %i\
                     \n Cmdnum spikes %i\
                     \n Triggerbots   %i\
+                    \n Invalid wish velocity    %i\
+                    \n Unsynchronized movement  %i\
                     \n",
                     Cl,
                     turnTimes               [Cl],
@@ -112,8 +128,51 @@ void ShowAllDetections(int callingCl)
                     aimsnapDetects          [Cl],
                     pSilentDetects          [Cl],
                     cmdnumSpikeDetects      [Cl],
-                    tbotDetects             [Cl]
+                    tbotDetects             [Cl],
+                    invalidWishVelDetects   [Cl],
+                    unsyncMoveDetects       [Cl]
                 );
+            }
+        }
+    }
+    PrintToConsole(callingCl, "[StAC] === Done ===");
+
+    return;
+}
+
+// sm_stac_version
+void ShowVersion(int callingCl)
+{
+    ReplyToCommand(callingCl, "StAC version [%s]", PLUGIN_VERSION);
+    return;
+}
+
+// sm_stac_printos
+void ShowAllOS(int callingCl)
+{
+    if (callingCl != 0)
+    {
+        ReplyToCommand(callingCl, "[StAC] Check your console!");
+    }
+    PrintToConsole(callingCl, "[StAC] === Printing client operating systems ===");
+    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    {
+        if (IsValidClient(Cl))
+        {
+            switch(clientOS[Cl])
+            {
+                case 0:
+                {
+                    PrintToConsole(callingCl, "\n%L: Windows/Wine", Cl);
+                }
+                case 1:
+                {
+                    PrintToConsole(callingCl, "\n%L: Linux/MacOS", Cl);
+                }
+                default:
+                {
+                    PrintToConsole(callingCl, "\n%L: Unknown, probably hasn't been queried yet.", Cl);
+                }
             }
         }
     }
