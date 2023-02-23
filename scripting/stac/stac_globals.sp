@@ -9,12 +9,16 @@
 /***** Cvar Handles *****/
 ConVar stac_enabled;
 ConVar stac_ban_duration;
+ConVar stac_min_time_before_ban;
+ConVar stac_max_time_before_ban;
 ConVar stac_verbose_info;
 ConVar stac_max_allowed_turn_secs;
 ConVar stac_ban_for_misccheats;
 ConVar stac_optimize_cvars;
 ConVar stac_max_aimsnap_detections;
 ConVar stac_max_psilent_detections;
+ConVar stac_max_invalid_wish_vel_detections;
+ConVar stac_max_unsync_move_detections;
 ConVar stac_max_bhop_detections;
 ConVar stac_max_fakeang_detections;
 ConVar stac_max_cmdnum_detections;
@@ -33,8 +37,10 @@ ConVar stac_max_connections_from_ip;
 ConVar stac_work_with_sv_cheats;
 
 /***** Misc cheat defaults *****/
-// ban duration
+// ban duration & banqueue times
 int banDuration                 = 0;
+float minTimeBeforeBan          = 15.0;
+float maxTimeBeforeBan          = 60.0;
 // verbose mode
 bool DEBUG                      = false;
 // interp
@@ -61,6 +67,8 @@ bool ignore_sv_cheats           = false;
 int maxAimsnapDetections        = 20;
 int maxPsilentDetections        = 10;
 int maxFakeAngDetections        = 5;
+int maxInvalidWishVelDetections = 10; // Not sure what these values should be by default since they have never been widely rolled out.
+int maxUnsyncMoveDetections     = 10; // ^
 int maxBhopDetections           = 10;
 int maxCmdnumDetections         = 20;
 int maxTbotDetections           = 0;
@@ -118,6 +126,8 @@ int turnTimes               [TFMAXPLAYERS+1];
 int fakeAngDetects          [TFMAXPLAYERS+1];
 int aimsnapDetects          [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore first detections, as theyre most likely junk
 int pSilentDetects          [TFMAXPLAYERS+1] = {-1, ...}; // ^
+int invalidWishVelDetects   [TFMAXPLAYERS+1] = {-1, ...}; // ^
+int unsyncMoveDetects       [TFMAXPLAYERS+1];
 int bhopDetects             [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore single jumps
 int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = {-1, ...};
@@ -147,20 +157,33 @@ int   clmouse               [TFMAXPLAYERS+1]   [2];
 float engineTime            [TFMAXPLAYERS+1][3];
 float fuzzyClangles         [TFMAXPLAYERS+1][5][2];
 float clpos                 [TFMAXPLAYERS+1][2][3];
+bool  joystickQueried       [TFMAXPLAYERS+1] = {false, ...}; // Not sure whether or not it's necessary to set any of these.
+bool  joy_xconQueried       [TFMAXPLAYERS+1] = {false, ...};
+bool  joystick              [TFMAXPLAYERS+1] = {false, ...};
+bool  joy_xcon              [TFMAXPLAYERS+1] = {false, ...};
+bool  printedOnce           [TFMAXPLAYERS+1];
+bool  waitTillNextQuery     [TFMAXPLAYERS+1] = {true, ...};
 
 // Misc stuff per client    [ client index ][char size]
 char SteamAuthFor           [TFMAXPLAYERS+1][64];
 
-bool highGrav               [TFMAXPLAYERS+1];
-bool playerTaunting         [TFMAXPLAYERS+1];
-int playerInBadCond         [TFMAXPLAYERS+1];
-bool userBanQueued          [TFMAXPLAYERS+1];
-float sensFor               [TFMAXPLAYERS+1];
+bool    highGrav                [TFMAXPLAYERS+1];
+bool    playerTaunting          [TFMAXPLAYERS+1];
+int     playerInBadCond         [TFMAXPLAYERS+1];
+int     clientOS                [TFMAXPLAYERS+1] = {2, ...};
+bool    teamChecked             [TFMAXPLAYERS+1];
+bool    classChecked            [TFMAXPLAYERS+1];
+bool    userBanQueued           [TFMAXPLAYERS+1];
+float   timeSinceJoined         [TFMAXPLAYERS+1];
+float   timeSinceJointeam       [TFMAXPLAYERS+1];
+float   timeSinceJoinclass      [TFMAXPLAYERS+1];
+bool    userBanQueued           [TFMAXPLAYERS+1];
+float   sensFor                 [TFMAXPLAYERS+1];
 // weapon name, gets passed to aimsnap check
-char hurtWeapon             [TFMAXPLAYERS+1][256];
-char lastCommandFor         [TFMAXPLAYERS+1][256];
-bool LiveFeedOn             [TFMAXPLAYERS+1];
-bool hasBadName             [TFMAXPLAYERS+1];
+char    hurtWeapon              [TFMAXPLAYERS+1][256];
+char    lastCommandFor          [TFMAXPLAYERS+1][256];
+bool    LiveFeedOn              [TFMAXPLAYERS+1];
+bool    hasBadName              [TFMAXPLAYERS+1];
 
 // network info
 float lossFor               [TFMAXPLAYERS+1];
@@ -189,6 +212,7 @@ Handle HudSyncNetwork;
 
 // Timer handles
 Handle QueryTimer           [TFMAXPLAYERS+1];
+Handle BanTimer             [TFMAXPLAYERS+1];
 Handle TriggerTimedStuffTimer;
 
 /*
