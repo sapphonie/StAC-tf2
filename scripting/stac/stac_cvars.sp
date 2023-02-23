@@ -64,7 +64,41 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_verbose_info, setStacVars);
+    HookConVarChange(stac_ban_duration, setStacVars);
+
+    // min time before ban queue fires
+    FloatToString(minTimeBeforeBan, buffer, sizeof(buffer));
+    stac_min_time_before_ban =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_min_time_before_ban",
+        buffer,
+        "[StAC] delay ban AT LEAST this long in seconds after a detection\n\
+        (recommended 15)",
+        FCVAR_NONE,
+        true,
+        1.0,
+        false,
+        _
+    );
+    HookConVarChange(stac_min_time_before_ban, setStacVars);
+
+    // max time before ban queue fires
+    FloatToString(maxTimeBeforeBan, buffer, sizeof(buffer));
+    stac_max_time_before_ban =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_max_time_before_ban",
+        buffer,
+        "[StAC] delay ban AT MOST this long in seconds after a detection\n\
+        (recommended 60)",
+        FCVAR_NONE,
+        true,
+        2.0,
+        false,
+        _
+    );
+    HookConVarChange(stac_max_time_before_ban, setStacVars);
 
     // turn seconds
     FloatToString(maxAllowedTurnSecs, buffer, sizeof(buffer));
@@ -167,6 +201,42 @@ void initCvars()
         _
     );
     HookConVarChange(stac_max_psilent_detections, setStacVars);
+
+    // invalid wish velocity detections
+    IntToString(maxInvalidWishVelDetections, buffer, sizeof(buffer));
+    stac_max_invalid_wish_vel_detections =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_max_invalid_wish_vel_detections",
+        buffer,
+        "[StAC] maximum invalid wish velocity detections on a client before they get banned.\n\
+        -1 to disable checking for invalid wish velocity (saves cpu), 0 to print to admins/stv but never ban\n\
+        (recommended 10 or higher)",
+        FCVAR_NONE,
+        true,
+        -1.0,
+        false,
+        _
+    );
+    HookConVarChange(stac_max_invalid_wish_vel_detections, setStacVars);
+
+    // unsynchronized move detections
+    IntToString(maxUnsyncMoveDetections, buffer, sizeof(buffer));
+    stac_max_unsync_move_detections =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_max_unsync_move_detections",
+        buffer,
+        "[StAC] maximum unsynchronized movement detections on a client before they get banned.\n\
+        -1 to disable checking for unsynchronized movement (saves cpu), 0 to print to admins/stv but never ban\n\
+        (recommended 10)",
+        FCVAR_NONE,
+        true,
+        -1.0,
+        false,
+        _
+    );
+    HookConVarChange(stac_max_unsync_move_detections, setStacVars);
 
     // bhop detections
     IntToString(maxBhopDetections, buffer, sizeof(buffer));
@@ -497,87 +567,95 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
         SetFailState("[StAC] stac_enabled is set to 0 - aborting!");
     }
 
-    // ban duration var
-    banDuration             = GetConVarInt(stac_ban_duration);
+    // ban vars
+    banDuration                     = GetConVarInt(stac_ban_duration);
+    minTimeBeforeBan                = GetConVarFloat(stac_min_time_before_ban);
+    maxTimeBeforeBan                = GetConVarFloat(stac_max_time_before_ban);
 
     // verbose info var
-    DEBUG                   = GetConVarBool(stac_verbose_info);
+    DEBUG                           = GetConVarBool(stac_verbose_info);
 
     // turn seconds var
-    maxAllowedTurnSecs      = GetConVarFloat(stac_max_allowed_turn_secs);
+    maxAllowedTurnSecs              = GetConVarFloat(stac_max_allowed_turn_secs);
     if (maxAllowedTurnSecs < 0.0 && maxAllowedTurnSecs != -1.0)
     {
         maxAllowedTurnSecs = 0.0;
     }
 
     // misccheats
-    banForMiscCheats        = GetConVarBool(stac_ban_for_misccheats);
+    banForMiscCheats                = GetConVarBool(stac_ban_for_misccheats);
 
     // optimizecvars
-    optimizeCvars           = GetConVarBool(stac_optimize_cvars);
+    optimizeCvars                   = GetConVarBool(stac_optimize_cvars);
     if (optimizeCvars)
     {
         RunOptimizeCvars();
     }
 
     // aimsnap var
-    maxAimsnapDetections    = GetConVarInt(stac_max_aimsnap_detections);
+    maxAimsnapDetections            = GetConVarInt(stac_max_aimsnap_detections);
 
     // psilent var
-    maxPsilentDetections    = GetConVarInt(stac_max_psilent_detections);
+    maxPsilentDetections            = GetConVarInt(stac_max_psilent_detections);
+    
+    // invalid wish vel var
+    maxInvalidWishVelDetections     = GetConVarInt(stac_max_invalid_wish_vel_detections);
+
+    // unsync move var
+    maxUnsyncMoveDetections         = GetConVarInt(stac_max_unsync_move_detections);
 
     // bhop var
-    maxBhopDetections       = GetConVarInt(stac_max_bhop_detections);
+    maxBhopDetections               = GetConVarInt(stac_max_bhop_detections);
 
     // fakeang var
-    maxFakeAngDetections    = GetConVarInt(stac_max_fakeang_detections);
+    maxFakeAngDetections            = GetConVarInt(stac_max_fakeang_detections);
 
     // cmdnum spikes var
-    maxCmdnumDetections     = GetConVarInt(stac_max_cmdnum_detections);
+    maxCmdnumDetections             = GetConVarInt(stac_max_cmdnum_detections);
 
     // tbot var
-    maxTbotDetections       = GetConVarInt(stac_max_tbot_detections);
+    maxTbotDetections               = GetConVarInt(stac_max_tbot_detections);
 
     // max ping reduce detections - clamp to -1 if 0
-    maxuserinfoSpamDetections   = GetConVarInt(stac_max_cmdrate_spam_detections);
+    maxuserinfoSpamDetections       = GetConVarInt(stac_max_cmdrate_spam_detections);
 
     // minterp var - clamp to -1 if 0
-    min_interp_ms           = GetConVarInt(stac_min_interp_ms);
+    min_interp_ms                   = GetConVarInt(stac_min_interp_ms);
     if (min_interp_ms == 0)
     {
         min_interp_ms = -1;
     }
 
     // maxterp var - clamp to -1 if 0
-    max_interp_ms           = GetConVarInt(stac_max_interp_ms);
+    max_interp_ms                   = GetConVarInt(stac_max_interp_ms);
     if (max_interp_ms == 0)
     {
         max_interp_ms = -1;
     }
 
     // min check sec var
-    minRandCheckVal         = GetConVarFloat(stac_min_randomcheck_secs);
+    minRandCheckVal                 = GetConVarFloat(stac_min_randomcheck_secs);
 
     // max check sec var
-    maxRandCheckVal         = GetConVarFloat(stac_max_randomcheck_secs);
+    maxRandCheckVal                 = GetConVarFloat(stac_max_randomcheck_secs);
 
     // log to file
-    logtofile               = GetConVarBool(stac_log_to_file);
+    logtofile                       = GetConVarBool(stac_log_to_file);
 
     // properly fix pingmasking
-    fixpingmasking          = GetConVarBool(stac_fixpingmasking_enabled);
+    fixpingmasking                  = GetConVarBool(stac_fixpingmasking_enabled);
 
     // kick unauthed clients
-    kickUnauth              = GetConVarBool(stac_kick_unauthed_clients);
+    kickUnauth                      = GetConVarBool(stac_kick_unauthed_clients);
 
     // silent mode
-    silent                  = GetConVarInt(stac_silent);
+    silent                          = 0; // This should always be 0. Setting this to anything else is BAD. Comment and I can change it if you disagree, otherwise, do it properly.
 
     // max conns from same ip
-    maxip                   = GetConVarInt(stac_max_connections_from_ip);
+    maxip                           = GetConVarInt(stac_max_connections_from_ip);
 
     // should stac work with sv_cheats or not
-    ignore_sv_cheats        = GetConVarBool(stac_work_with_sv_cheats);
+    ignore_sv_cheats                = GetConVarBool(stac_work_with_sv_cheats);
 }
 
 public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
