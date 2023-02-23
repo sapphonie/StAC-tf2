@@ -37,6 +37,44 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
     return Plugin_Continue;
 }
 
+Action joinTeam(int Cl, const char[] command, int argc)
+{
+    if (!teamChecked[Cl])
+    {
+        char ClName[64];
+        int userid = GetClientUserId(Cl);
+        GetClientName(Cl, ClName, sizeof(ClName));
+        timeSinceJointeam[Cl] = GetEngineTime();
+        if (timeSinceJointeam[Cl] - timeSinceJoined[Cl] < 2.5)
+        {
+            PrintToImportant("Suspicious: %.2f seconds between %s fully joined and chose team", timeSinceJointeam[Cl] - timeSinceJoined[Cl], ClName);
+            StacGeneralPlayerNotify(userid, "Suspicious: %.2f seconds between %s fully joined and chose team", timeSinceJointeam[Cl] - timeSinceJoined[Cl], ClName);
+        }
+        teamChecked[Cl] = true;
+        return Plugin_Continue;
+    }
+    return Plugin_Continue;
+}
+
+Action joinClass(int Cl, const char[] command, int argc)
+{
+    if (!classChecked[Cl])
+    {
+        char ClName[64];
+        int userid = GetClientUserId(Cl);
+        GetClientName(Cl, ClName, sizeof(ClName));
+        timeSinceJoinclass[Cl] = GetEngineTime();
+        if (timeSinceJoinclass[Cl] - timeSinceJoined[Cl] < 2.5) // This value may need to be tweaked.
+        {
+            PrintToImportant("Suspicious: %.2f seconds between %s fully joined and chose class", timeSinceJoinclass[Cl] - timeSinceJoined[Cl], ClName);
+            StacGeneralPlayerNotify(userid, "Suspicious: %.2f seconds between %s fully joined and chose class", timeSinceJoinclass[Cl] - timeSinceJoined[Cl], ClName);
+        }
+        classChecked[Cl] = true;
+        return Plugin_Continue;
+    }
+    return Plugin_Continue;
+}
+
 void NameCheck(int userid)
 {
     int Cl = GetClientOfUserId(userid);
