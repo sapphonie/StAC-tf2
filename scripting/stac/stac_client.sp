@@ -474,6 +474,8 @@ void ClearClBasedVars(int userid)
     cmdnumSpikeDetects      [cl] = 0;
     tbotDetects             [cl] = -1;
     invalidUsercmdDetects   [cl] = 0;
+    invalidWishVelDetects   [cl] = -1; // first detect is likely bunk
+    unsyncMoveDetects       [cl] = 0;
 
     // frames since client "did something"
     //                      [ client index ][history]

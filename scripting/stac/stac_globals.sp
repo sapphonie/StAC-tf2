@@ -65,6 +65,10 @@ int maxCmdnumDetections         = 20;
 int maxTbotDetections           = 0;
 int maxInvalidUsercmdDetections = 5;
 
+
+int maxInvalidWishVelDetections = 10; // Not sure what these values should be by default since they have never been widely rolled out.
+int maxUnsyncMoveDetections     = 10; // ^
+
 /***** Server based stuff *****/
 
 // tickrate stuff
@@ -112,6 +116,8 @@ int bhopDetects             [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore
 int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = {-1, ...};
 int invalidUsercmdDetects   [TFMAXPLAYERS+1];
+int invalidWishVelDetects   [TFMAXPLAYERS+1] = {-1, ...}; // first detect is likely bunk
+int unsyncMoveDetects       [TFMAXPLAYERS+1];
 
 // frames since client "did something"
 //                          [ client index ][history]
@@ -144,6 +150,14 @@ bool playerTaunting         [TFMAXPLAYERS+1];
 int playerInBadCond         [TFMAXPLAYERS+1];
 bool userBanQueued          [TFMAXPLAYERS+1];
 float sensFor               [TFMAXPLAYERS+1];
+
+bool  joystickQueried       [TFMAXPLAYERS+1];
+bool  joy_xconQueried       [TFMAXPLAYERS+1];
+bool  joystick              [TFMAXPLAYERS+1];
+bool  joy_xcon              [TFMAXPLAYERS+1];
+bool  printedOnce           [TFMAXPLAYERS+1];
+bool  waitTillNextQuery     [TFMAXPLAYERS+1];
+
 // weapon name, gets passed to aimsnap check
 char hurtWeapon             [TFMAXPLAYERS+1][256];
 char lastCommandFor         [TFMAXPLAYERS+1][256];

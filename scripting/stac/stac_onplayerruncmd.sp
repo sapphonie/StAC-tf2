@@ -347,14 +347,12 @@ stock void PlayerRunCmd
 */
 void invalidWishVelCheck(int cl, float forwardmove, float sidemove, int buttons) 
 {
-    int Cl = cl;
-
     int attack = 0;
-    if ((clbuttons[Cl][0] & IN_ATTACK))
+    if ((clbuttons[cl][0] & IN_ATTACK))
     {
         attack = 1;
     }
-    else if ((clbuttons[Cl][0] & IN_ATTACK2))
+    else if ((clbuttons[cl][0] & IN_ATTACK2))
     {
         attack = 2;
     }
@@ -377,20 +375,20 @@ void invalidWishVelCheck(int cl, float forwardmove, float sidemove, int buttons)
         )
         &&
         (
-            clangles[Cl][1][1] != clangles[Cl][0][1] // (somewhat) Workaround false positives occuring while holding +strafe. Technically may open up room for a bypass, but I have found no other solution.
+            clangles[cl][1][1] != clangles[cl][0][1] // (somewhat) Workaround false positives occuring while holding +strafe. Technically may open up room for a bypass, but I have found no other solution.
         )
     )
     {
-        invalidWishVelDetects[Cl]++;
-        if (invalidWishVelDetects[Cl] > 0) // First detect is ignored.
+        invalidWishVelDetects[cl]++;
+        if (invalidWishVelDetects[cl] > 0) // First detect is ignored.
         {
             PrintToImportant
             (
                 "{hotpink}[StAC]{white} Player %N {mediumpurple}has invalid wish velocity{white}!\
                 \nThis player is *probably* cheating, especially if they trigger this more than once.\
                 \nDetections so far: {palegreen}%i",
-                Cl,
-                invalidWishVelDetects[Cl]
+                cl,
+                invalidWishVelDetects[cl]
             );
             PrintToImportant
             (
@@ -407,8 +405,9 @@ void invalidWishVelCheck(int cl, float forwardmove, float sidemove, int buttons)
                     attack
                 );
             }
+            int userid = GetClientUserId(cl);
             StacLogSteam(userid);
-            if (invalidWishVelDetects[Cl] == 1 || invalidWishVelDetects[Cl] % 5 == 0)
+            if (invalidWishVelDetects[cl] == 1 || invalidWishVelDetects[cl] % 5 == 0)
             {
                 char invalidWishVelInfo[128];
                 if (attack > 0)
@@ -434,14 +433,14 @@ void invalidWishVelCheck(int cl, float forwardmove, float sidemove, int buttons)
                         sidemove
                     );
                 }
-                StacDetectionNotify(userid, invalidWishVelInfo, invalidWishVelDetects[Cl]);
+                StacNotify(userid, invalidWishVelInfo, invalidWishVelDetects[cl]);
             }
-            if (invalidWishVelDetects[Cl] >= maxInvalidWishVelDetections && maxInvalidWishVelDetections > 0)
+            if (invalidWishVelDetects[cl] >= maxInvalidWishVelDetections && maxInvalidWishVelDetections > 0)
             {
                 char reason[128];
-                Format(reason, sizeof(reason), "%t", "invalidWishVelBanMsg", invalidWishVelDetects[Cl]);
+                Format(reason, sizeof(reason), "%t", "invalidWishVelBanMsg", invalidWishVelDetects[cl]);
                 char pubreason[256];
-                Format(pubreason, sizeof(pubreason), "%t", "invalidWishVelBanAllChat", Cl, invalidWishVelDetects[Cl]);
+                Format(pubreason, sizeof(pubreason), "%t", "invalidWishVelBanAllChat", cl, invalidWishVelDetects[cl]);
                 BanUser(userid, reason, pubreason);
             }
         }
@@ -457,8 +456,7 @@ void invalidWishVelCheck(int cl, float forwardmove, float sidemove, int buttons)
 // If it was my choice, I would ban controller users and cheaters all the same since they all trigger this. Plus, controller players are annoying.
 void unsynchronizedMoveCheck(int cl, int buttons, float forwardmove, float sidemove)
 {
-    int Cl = cl;
-    if (playerUsingController(userid))
+    if (playerUsingController(cl))
     {
         return;
     }
@@ -481,29 +479,30 @@ void unsynchronizedMoveCheck(int cl, int buttons, float forwardmove, float sidem
         )
     )
     {
-        unsyncMoveDetects[Cl]++;
+        unsyncMoveDetects[cl]++;
         PrintToImportant
         (
             "{hotpink}[StAC]{white} Player %N {mediumpurple}had unsynchronized movement{white}!\
             \nConsecutive detections so far: {palegreen}%i",
-            Cl,
-            unsyncMoveDetects[Cl]
+            cl,
+            unsyncMoveDetects[cl]
         );
+        int userid = GetClientUserId(cl);
         PrintToImportant("{hotpink}[StAC]{red} Hey, since this doesn't ban automatically yet (testing mode), you should ban them manually with the reason \"Banned from server\". This goes for any detection, but especially this one.");
         StacLogSteam(userid);
         
-        if (unsyncMoveDetects[Cl] == 1 || unsyncMoveDetects[Cl] % 5 == 0)
+        if (unsyncMoveDetects[cl] == 1 || unsyncMoveDetects[cl] % 5 == 0)
         {
             char unsyncMovInfo[128];
             Format(unsyncMovInfo, sizeof(unsyncMovInfo), "unsynchronized movement");
-            StacDetectionNotify(userid, unsyncMovInfo, unsyncMoveDetects[Cl]);
+            StacNotify(userid, unsyncMovInfo, unsyncMoveDetects[cl]);
         }
-        if (unsyncMoveDetects[Cl] >= maxUnsyncMoveDetections && maxUnsyncMoveDetections > 0)
+        if (unsyncMoveDetects[cl] >= maxUnsyncMoveDetections && maxUnsyncMoveDetections > 0)
         {
             char reason[128];
-            Format(reason, sizeof(reason), "%t", "unsynchronizedMoveBanMsg", unsyncMoveDetects[Cl]);
+            Format(reason, sizeof(reason), "%t", "unsynchronizedMoveBanMsg", unsyncMoveDetects[cl]);
             char pubreason[256];
-            Format(pubreason, sizeof(pubreason), "%t", "unsynchronizedMoveBanAllChat", Cl, unsyncMoveDetects[Cl]);
+            Format(pubreason, sizeof(pubreason), "%t", "unsynchronizedMoveBanAllChat", cl, unsyncMoveDetects[cl]);
             BanUser(userid, reason, pubreason);
         }
     }
@@ -1483,7 +1482,7 @@ bool playerUsingController(int userid)
         if (!printedOnce[Cl])
         {
             PrintToImportant("{hotpink}[StAC]{white} Player %N {powderblue}appears to be using a controller{white}!", Cl);
-            StacGeneralPlayerNotify(userid, "Client appears to be using a controller");
+            StacNotify(userid, "Client appears to be using a controller");
             printedOnce[Cl] = true;
         }
         return true;
