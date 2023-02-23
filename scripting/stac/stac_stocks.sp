@@ -381,18 +381,84 @@ bool IsValidSrcTV(int client)
 
 /********** MISC FUNCS **********/
 
-void BanUser(int userid, char[] reason, char[] pubreason)
+// Thanks to Mitchell on AlliedModders for this.
+stock int FindClientBySteamID(char[] SteamID)
+{
+    char steamid[64];
+    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    {
+        if (IsClientInGame(Cl))
+        {
+            GetClientAuthId(Cl, AuthId_Steam2, steamid, sizeof(steamid));
+            if (StrEqual(steamid, SteamID, false))
+            {
+                return Cl;
+            }
+        }
+    }
+    return -1;
+}
+
+Action Timer_BanAfterTime(Handle timer, DataPack pack)
+{
+    int userid;
+    int Cl;
+    char reason[128];
+    char pubreason[256];
+    char bannedID[TFMAXPLAYERS+1][64];
+    char steamid[64];
+    // We probably want to set this to something so that if Cl == 0, we don't error out on the strcmp because there is nothing stored in the string.
+    steamid = "STEAM_1:1:00000000";
+
+    pack.Reset();
+    userid = pack.ReadCell();
+    Cl = GetClientOfUserId(userid);
+    pack.ReadString(reason, sizeof(reason));
+    pack.ReadString(pubreason, sizeof(pubreason));
+    pack.ReadString(bannedID[Cl], sizeof(bannedID));
+
+    if (Cl != 0)
+    {
+        GetClientAuthId(Cl, AuthId_Steam2, steamid, sizeof(steamid)); // Get the client's SteamID
+    }
+
+    if (strcmp(steamid, bannedID[Cl]) == 0) // Make sure we're not banning the wrong client.
+    {
+        BanUserOriginal(userid, reason, pubreason); // Why wasn't I doing this before? Lol.
+    }
+    else
+    {
+        int bannedClient = FindClientBySteamID(bannedID[Cl]);
+        if (bannedClient == -1)
+        {
+            BanIdentity(bannedID[Cl], 0, BANFLAG_AUTHID, "Banned from server"); // User isn't connected to the server. Add to banlist.
+        }
+        else
+        {
+            int newuserid = GetClientUserId(bannedClient);
+            BanUserOriginal(newuserid, reason, pubreason); // Client is connected to the server. Ban and kick them.
+        }
+    }
+    return Plugin_Continue;
+}
+
+/*
+    We need this still.
+*/
+void BanUserOriginal(int userid, char[] reason, char[] pubreason)
 {
     int Cl = GetClientOfUserId(userid);
 
     // prevent double bans
+    /*
     if (userBanQueued[Cl])
     {
-        KickClient(Cl, "Banned by StAC");
+        KickClient(Cl, "Banned from server");
         return;
-    }
+    } 
+    */
 
-    StacGeneralPlayerNotify(userid, reason);
+    // OracxGeneralPlayerNotify(userid, reason);
     // make sure we dont detect on already banned players
     userBanQueued[Cl] = true;
 
@@ -418,22 +484,22 @@ void BanUser(int userid, char[] reason, char[] pubreason)
     {
         if (SOURCEBANS)
         {
-            SBPP_BanPlayer(0, Cl, banDuration, reason);
+            SBPP_BanPlayer(0, Cl, banDuration, "Banned from server");
             // there's no return value for that native, so we have to just assume it worked lol
             return;
         }
-        if (MATERIALADMIN && MABanPlayer(0, Cl, MA_BAN_STEAM, banDuration, reason))
+        if (MATERIALADMIN && MABanPlayer(0, Cl, MA_BAN_STEAM, banDuration, "Banned from server"))
         {
             return;
         }
         if (GBANS)
         {
-            ServerCommand("gb_ban %i, %i, %s", userid, banDuration, reason);
+            ServerCommand("gb_ban %i, %i, %s", userid, banDuration, "Banned from server");
             // there's no return value nor a native for gbans bans (YET), so we have to just assume it worked lol
             return;
         }
         // stock tf2, no ext ban system. if we somehow fail here, keep going.
-        if (BanClient(Cl, banDuration, BANFLAG_AUTO, reason, reason, _, _))
+        if (BanClient(Cl, banDuration, BANFLAG_AUTO, reason, "Banned from server", _, _))
         {
             return;
         }
@@ -443,8 +509,8 @@ void BanUser(int userid, char[] reason, char[] pubreason)
     // if this returns true, we can still ban the client with their steamid in a roundabout and annoying way.
     if (!IsActuallyNullString(SteamAuthFor[Cl]))
     {
-        ServerCommand("sm_addban %i \"%s\" %s", banDuration, SteamAuthFor[Cl], reason);
-        KickClient(Cl, "%s", reason);
+        ServerCommand("sm_addban %i \"%s\" %s", banDuration, SteamAuthFor[Cl], "Banned from server");
+        KickClient(Cl, "%s", "Banned from server");
     }
     // if the above returns false, we can only do ip :/
     else
@@ -453,12 +519,13 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         GetClientIP(Cl, ip, sizeof(ip));
 
         StacLog("No cached SteamID for %N! Banning with IP %s...", Cl, ip);
-        ServerCommand("sm_banip %s %i %s", ip, banDuration, reason);
+        ServerCommand("sm_banip %s %i %s", ip, banDuration, "Banned from server");
         // this kick client might not be needed - you get kicked by "being added to ban list"
         // KickClient(Cl, "%s", reason);
     }
 
-    MC_PrintToChatAll("%s", pubreason);
+    // MC_PrintToChatAll("%s", pubreason); This still isn't happening. Why should we notify all clients WHY they were banned? Bad idea.
+    PrintToImportant("%s", pubreason); // This may be redundant. Testing needed.
     StacLog("%s", pubreason);
 }
 
@@ -707,16 +774,17 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
 
     static char generalTemplate[2048] = \
     "{ \"embeds\": \
-        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
+        [{ \"title\": \"StAC Notification!\", \"color\": 16738740, \"fields\":\
             [\
-                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
-                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Message\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
-                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
-                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
+                { \"name\": \"Player\",             \"value\": \"%N\" } ,\
+                { \"name\": \"SteamID\",            \"value\": \"%s\" } ,\
+                { \"name\": \"Operating System\",   \"value\": \"%s\" } ,\
+                { \"name\": \"Message\",            \"value\": \"%s\" } ,\
+                { \"name\": \"Hostname\",           \"value\": \"%s\" } ,\
+                { \"name\": \"Server IP\",          \"value\": \"%s\" } ,\
+                { \"name\": \"Current Demo\",       \"value\": \"%s\" } ,\
+                { \"name\": \"Demo Tick\",          \"value\": \"%i\" } ,\
+                { \"name\": \"Unix timestamp\",     \"value\": \"%i\" } \
             ]\
         }],\
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
@@ -745,6 +813,24 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
     {
         steamid = "N/A";
     }
+    
+    char OS[36]; // 34 bytes (largest outcome) + 1 (string read end byte) + 1 (to make it an even number lol) Note: I don't know anything about how to handle arrays!
+    switch(clientOS[Cl])
+    {
+        case 0:
+        {
+            Format(OS, sizeof(OS), "Windows/Wine");
+        }
+        case 1:
+        {
+            Format(OS, sizeof(OS), "Linux/MacOS (Most likely Cathook)");
+        }
+        default:
+        {
+            Format(OS, sizeof(OS), "Not queried yet or blocked by user");
+        }
+    }
+    
     Format
     (
         msg,
@@ -752,6 +838,7 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         generalTemplate,
         Cl,
         steamid,
+        OS,
         message,
         hostname,
         hostipandport,
@@ -776,15 +863,16 @@ void StacDetectionNotify(int userid, char[] type, int detections)
     "{ \"embeds\": \
         [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
             [\
-                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
-                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Detection type\", \"value\": \"%s\" } ,\
-                { \"name\": \"Detection\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
-                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
-                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
+                { \"name\": \"Player\",             \"value\": \"%N\" } ,\
+                { \"name\": \"SteamID\",            \"value\": \"%s\" } ,\
+                { \"name\": \"Operating System\",   \"value\": \"%s\" } ,\
+                { \"name\": \"Detection type\",     \"value\": \"%s\" } ,\
+                { \"name\": \"Detection\",          \"value\": \"%i\" } ,\
+                { \"name\": \"Hostname\",           \"value\": \"%s\" } ,\
+                { \"name\": \"Server IP\",          \"value\": \"%s\" } ,\
+                { \"name\": \"Current Demo\",       \"value\": \"%s\" } ,\
+                { \"name\": \"Demo Tick\",          \"value\": \"%i\" } ,\
+                { \"name\": \"Unix timestamp\",     \"value\": \"%i\" } \
             ]\
         }],\
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
@@ -810,6 +898,23 @@ void StacDetectionNotify(int userid, char[] type, int detections)
     {
         steamid = "N/A";
     }
+    
+    char OS[36]; // 34 bytes (largest outcome) + 1 (string read end byte) + 1 (to make it an even number lol) Note: I don't know anything about how to handle arrays!
+    switch(clientOS[Cl])
+    {
+        case 0:
+        {
+            Format(OS, sizeof(OS), "Windows/Wine");
+        }
+        case 1:
+        {
+            Format(OS, sizeof(OS), "Linux/MacOS (Most likely Cathook)");
+        }
+        default:
+        {
+            Format(OS, sizeof(OS), "Not queried yet or blocked by user");
+        }
+    }
 
     Format
     (
@@ -818,6 +923,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         detectionTemplate,
         Cl,
         steamid,
+        OS,
         type,
         detections,
         hostname,
