@@ -1,0 +1,107 @@
+"Games"
+{
+    "#default"
+    {
+        "Keys"
+        {
+            "EngineInterface"    "VEngineServer021"
+        }
+        "Signatures"
+        {
+            "CreateInterface"
+            {
+                "library"    "engine"
+                "windows"    "@CreateInterface"
+                "linux"      "@CreateInterface"
+            }
+        }
+        "Offsets"
+        {
+            "ClientPrintf"
+            {
+                "windows"   "45"
+                "linux"     "45"
+            }
+        }
+    }
+    
+    "cstrike"
+    {
+        "Keys"
+        {
+            "EngineInterface"    "VEngineServer023"
+        }
+        "Offsets"
+        {
+            "ClientPrintf"
+            {
+                "windows"    "45"
+                "linux"      "45"
+            }
+        }
+    }
+    
+    "tf"
+    {
+        "Keys"
+        {
+            "EngineInterface"    "VEngineServer023"
+        }
+        "Offsets"
+        {
+            "ClientPrintf"
+            {
+                "windows"    "45"
+                "linux"      "45"
+            }
+        }
+    }
+    
+    "csgo"
+    {
+        "Keys"
+        {
+            "EngineInterface"    "VEngineServer023"
+        }
+        "Offsets"
+        {
+            "ClientPrintf"
+            {
+                "windows"  "47"
+                "linux"    "47"
+            }
+        }
+    }
+    
+    "left4dead2"
+    {
+        "Keys"
+        {
+            "EngineInterface"    "VEngineServer022"
+        }
+        "Offsets"
+        {
+            "ClientPrintf"
+            {
+                "windows"  "46"
+                "linux"    "46"
+            }
+        }
+    }
+    
+    "nmrih"
+    {
+        "Keys"
+        {
+            "EngineInterface"    "VEngineServer023"
+        }
+        "Offsets"
+        {
+            "ClientPrintf"
+            {
+                "windows"  "45"
+                "linux"    "45"
+            }
+        }
+    }
+}
