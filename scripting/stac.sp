@@ -15,6 +15,7 @@
 #include <morecolors>
 #include <concolors>
 #include <autoexecconfig>
+#include <sbpstac>
 #undef REQUIRE_PLUGIN
 #tryinclude <updater>
 #tryinclude <sourcebanspp>
@@ -27,7 +28,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.4.3"
+#define PLUGIN_VERSION  "5.4.4"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -70,6 +71,7 @@ public Plugin myinfo =
 public void OnPluginStart()
 {
     StacLog("\n\n----> StAC version [%s] loaded\n", PLUGIN_VERSION);
+    CreateConVar("stac_version", PLUGIN_VERSION, "StAC version", (FCVAR_DONTRECORD));
     // check if tf2, unload if not
     if (GetEngineVersion() != Engine_TF2)
     {
