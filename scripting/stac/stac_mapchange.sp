@@ -10,6 +10,7 @@ public void OnConfigsExecuted()
 
 public void OnMapStart()
 {
+    checkForBadPlugins(); // Not sure if this is the best place for this.
     OpenStacLog();
     ActuallySetRandomSeed();
     DoTPSMath();
@@ -23,6 +24,11 @@ public void OnMapStart()
     CreateTimer(0.5, getIP);
 
     GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
+}
+
+public void OnAllPluginsLoaded()
+{
+    checkForBadPlugins(); // Also not sure on this.
 }
 
 public Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
@@ -227,5 +233,25 @@ void DoTPSMath()
     if (DEBUG)
     {
         StacLog("tickinterv %f, tps %f", tickinterv, tps);
+    }
+}
+
+void checkForBadPlugins()
+{
+    // Make sure we're not using the original adminhelp.
+    if (FindPluginByFile("adminhelp.smx") != INVALID_HANDLE)
+    {
+        char message[] = "StAC failed to load because a possibly unmodified \"adminhelp\" was found.";
+        PrintToImportant(message);
+        SendMessageToDiscord(message);
+        SetFailState("Unmodified(?) adminhelp copy is still present (Unexpected adminhelp.smx). Delete it from the folder, use \"sm plugins unload adminhelp\", and reload StAC.");
+    }
+    // Make sure we're not using the original SBP.
+    if (FindPluginByFile("sbp.smx") != INVALID_HANDLE)
+    {
+        char message[] = "StAC failed to load because a possibly unmodified \"sbp\" was found.";
+        PrintToImportant(message);
+        SendMessageToDiscord(message);
+        SetFailState("Unmodified(?) sbp copy is still present (Unexpected sbp.smx). Delete it from the folder, use \"sm plugins unload sbp\", and reload StAC.");
     }
 }
