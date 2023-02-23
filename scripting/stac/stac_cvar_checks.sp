@@ -30,6 +30,13 @@ char miscVars[][] =
     "r_portalsopenall",
     // must be == 1.0
     "host_timescale",
+    // Exists on Linux only
+    "dxa_nullrefresh_capslock",
+    // Refresh this every once in a while
+    // (Supposedly) using the controller
+    "joystick",
+    // Controller plugged in
+    "joy_xcontroller_found"
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
     // tf_showspeed ?
@@ -37,8 +44,9 @@ char miscVars[][] =
 };
 
 // DEFINITE cheat vars get appended to this array.
-// Every cheat except cathook is smart enough to not have queryable cvars.
+// Every cheat except fedoraware (dead) is smart enough to not have queryable cvars.
 // For now.
+// Cathook fixed their cvars being queryable but I'll keep the query in for now.
 char cheatVars[][] =
 {
     // lith
@@ -51,6 +59,7 @@ char cheatVars[][] =
     // ncc doesn't have any that i can find lol
     // cathook
     "cat_load",
+    "crash"
     // ...melancholy? maybe? lol
     // "caramelldansen",
     // "SetCursor",
@@ -267,6 +276,35 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         }
     }
 
+    // dxa_nullrefresh_capslock
+    else if (StrEqual(cvarName, "dxa_nullrefresh_capslock"))
+    {
+        if (result == ConVarQuery_NotFound)
+        {
+            clientOS[Cl] = 0;
+        }
+        else
+        {
+            clientOS[Cl] = 1;
+        }
+    }
+
+    // joystick
+    else if (StrEqual(cvarName, "joystick"))
+    {
+        bool joy = (0.0 <= StringToFloat(cvarValue) < 1.0)?false:true;
+        joystick[Cl] = joy;
+        joystickQueried[Cl] = true;
+    }
+    // joy_xcontroller_found
+    else if (StrEqual(cvarName, "joy_xcontroller_found"))
+    {
+        bool joy = (0.0 <= StringToFloat(cvarValue) < 1.0)?false:true;
+        joy_xcon[Cl] = joy;
+        joy_xconQueried[Cl] = true;
+        return;
+    }
+
     /*
         cheat program only cvars
     */
@@ -279,7 +317,7 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         }
     }
     // log something about cvar errors
-    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
+    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName) && !StrEqual(cvarName, "dxa_nullrefresh_capslock"))
     {
         PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", cvarName, Cl);
         StacLog("Could not query cvar %s on player %L", cvarName, Cl);
@@ -441,6 +479,12 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
 // query all cvars and netprops for userid
 void QueryCvarsEtc(int userid, int i)
 {
+    // No point in running this if only one player is on.
+    if (GetClientCount(true) == 1 && !DEBUG)
+    {
+        return;
+    }
+    
     // get client index of userid
     int Cl = GetClientOfUserId(userid);
     // don't go no further if client isn't valid!
