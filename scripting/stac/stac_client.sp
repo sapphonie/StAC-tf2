@@ -6,6 +6,8 @@
 public void OnClientPutInServer(int Cl)
 {
     int userid = GetClientUserId(Cl);
+    
+    timeSinceJoined[Cl] = GetEngineTime(); // Store time since joined for auto-class/team join checks
 
     if (IsValidClientOrBot(Cl))
     {
@@ -289,6 +291,8 @@ void ClearClBasedVars(int userid)
     fakeAngDetects          [Cl] = 0;
     aimsnapDetects          [Cl] = -1; // ignore first detect, it's prolly bunk
     pSilentDetects          [Cl] = -1; // ignore first detect, it's prolly bunk
+    invalidWishVelDetects   [Cl] = -1; // ignore first detect, it's prolly bunk
+    unsyncMoveDetects       [Cl] = 0;
     bhopDetects             [Cl] = -1; // set to -1 to ignore single jumps
     cmdnumSpikeDetects      [Cl] = 0;
     tbotDetects             [Cl] = -1; // ignore first detect, it's prolly bunk
@@ -309,8 +313,16 @@ void ClearClBasedVars(int userid)
     playerTaunting          [Cl] = false;
     playerInBadCond         [Cl] = 0;
     userBanQueued           [Cl] = false;
+    clientOS                [Cl] = 2;
+    teamChecked             [Cl] = false;
+    classChecked            [Cl] = false;
+    printedOnce             [Cl] = false;
     // STORED SENS PER CLIENT
     sensFor                 [Cl] = 0.0;
+    // STORED JOYSTICK SHIT
+    joystick                [Cl] = false;
+    joy_xcon                [Cl] = false;
+    waitTillNextQuery       [Cl] = true;
     // don't bother clearing arrays
     LiveFeedOn              [Cl] = false;
 
@@ -329,6 +341,8 @@ void ClearClBasedVars(int userid)
 
     // has client has waited 60 seconds for their first cvar check
     hasWaitedForCvarCheck   [Cl] = false;
+    joystickQueried         [Cl] = false;
+    joy_xconQueried         [Cl] = false;
 }
 
 /********** TIMER FOR NETINFO **********/
