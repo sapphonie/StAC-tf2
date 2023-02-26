@@ -591,10 +591,10 @@ void psilentCheck(int userid)
             &&
             // BUT the 1st previous (in between) angle doesnt?
             (
-                    floatcmpreal(clangles[Cl][1][0], clangles[Cl][0][0], 0.1)
-                &&  floatcmpreal(clangles[Cl][1][1], clangles[Cl][0][1], 0.1)
-                &&  floatcmpreal(clangles[Cl][1][0], clangles[Cl][2][0], 0.1)
-                &&  floatcmpreal(clangles[Cl][1][1], clangles[Cl][2][1], 0.1)
+                   !floatcmpreal(clangles[Cl][1][0], clangles[Cl][0][0], 0.1)
+                && !floatcmpreal(clangles[Cl][1][1], clangles[Cl][0][1], 0.1)
+                && !floatcmpreal(clangles[Cl][1][0], clangles[Cl][2][0], 0.1)
+                && !floatcmpreal(clangles[Cl][1][1], clangles[Cl][2][1], 0.1)
             )
         )
         {
