@@ -687,7 +687,7 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
 
     static char generalTemplate[] = \
     "{ \"embeds\": \
-        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
+        [{ \"title\": \"StAC Message!\", \"color\": 16738740, \"fields\":\
             [\
                 { \"name\": \"Player\",             \"value\": \"%N\" },\
                 { \"name\": \"SteamID\",            \"value\": \"%s\" },\
@@ -939,6 +939,57 @@ void StacDetectionNotify(int userid, char[] type, int detections)
 
     SendMessageToDiscord(msg);
 }
+
+void StacGeneralMessageNotify(const char[] format, any ...)
+{
+    StacLogDemo();
+
+    if (!DISCORD)
+    {
+        return;
+    }
+
+    static char bareTemplate[] = \
+    "{ \"embeds\": \
+        [{ \"title\": \"StAC Message!\", \"color\": 16738740, \"fields\":\
+            [\
+                { \"name\": \"Message\",            \"value\": \"%s\" },\
+                { \"name\": \"Hostname\",           \"value\": \"%s\" },\
+                { \"name\": \"Server IP\",          \"value\": \"%s\" },\
+                { \"name\": \"Current Demo\",       \"value\": \"%s\" },\
+                { \"name\": \"Demo Tick\",          \"value\": \"%i\" },\
+                { \"name\": \"Unix timestamp\",     \"value\": \"%i\" }\
+            ]\
+        }],\
+        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
+    }";
+
+    char[] msg = new char[ strlen(bareTemplate) ];
+
+
+    char fmtmsg[256];
+    VFormat(fmtmsg, sizeof(fmtmsg), format, 2);
+
+
+    char hostname[256];
+    GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
+
+    Format
+    (
+        msg,
+        4096,
+        bareTemplate,
+        fmtmsg,
+        hostname,
+        hostipandport,
+        demoname,
+        demotick,
+        GetTime()
+    );
+
+    SendMessageToDiscord(msg);
+}
+
 
 void SendMessageToDiscord(char[] message)
 {

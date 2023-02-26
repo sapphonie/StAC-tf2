@@ -11,7 +11,6 @@ public void OnConfigsExecuted()
 public void OnMapStart()
 {
     OpenStacLog();
-    ActuallySetRandomSeed();
     DoTPSMath();
     ResetTimers();
     if (optimizeCvars)
@@ -22,6 +21,7 @@ public void OnMapStart()
     CreateTimer(0.1, checkNativesEtc);
     CreateTimer(0.5, getIP);
 
+/*
     int ent = -1;
     while ((ent = FindEntityByClassname(ent, "point_worldtext")) != -1)
     {
@@ -30,13 +30,12 @@ public void OnMapStart()
             RemoveEntity(ent);
         }
     }
+*/
 }
 
 public Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
 {
     DoTPSMath();
-    // might as well do this here!
-    ActuallySetRandomSeed();
     // this counts
     timeSinceMapStart = GetEngineTime();
 
@@ -45,7 +44,6 @@ public Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
 
 public void OnMapEnd()
 {
-    ActuallySetRandomSeed();
     DoTPSMath();
     NukeTimers();
     CloseStacLog();
@@ -123,7 +121,6 @@ void NukeTimers()
     {
         delete QueryTimer[Cl];
     }
-    delete TriggerTimedStuffTimer;
 }
 
 // recreate the timers we just nuked
@@ -153,23 +150,8 @@ void ResetTimers()
             );
         }
     }
-    // create timer to reset seed every 15 mins
-    TriggerTimedStuffTimer = CreateTimer(900.0, Timer_TriggerTimedStuff, _, TIMER_REPEAT);
 }
 
-// reseed random server seed to help prevent certain nospread stuff from working.
-// this probably doesn't do anything, but it makes me feel better.
-void ActuallySetRandomSeed()
-{
-    int seed = GetURandomInt();
-    if (DEBUG)
-    {
-        StacLog("setting random server seed to %i", seed);
-    }
-    SetRandomSeed(seed);
-}
-
-// jesus this is ugly
 Action getIP(Handle timer)
 {
     // get our host port

@@ -200,7 +200,13 @@ public bool StAC_Handler(const char[] id, ConplexSocket socket, const char[] add
 public void OnPluginEnd()
 {
     StacLog("\n\n----> StAC version [%s] unloaded\n", PLUGIN_VERSION);
+
     MC_PrintToChatAll("{hotpink}StAC{white} version [%s] unloaded!!! If this wasn't intentional, something nefarious is afoot!", PLUGIN_VERSION);
+    MC_PrintToChatAll("{hotpink}StAC{white} version [%s] unloaded!!! If this wasn't intentional, something nefarious is afoot!", PLUGIN_VERSION);
+    MC_PrintToChatAll("{hotpink}StAC{white} version [%s] unloaded!!! If this wasn't intentional, something nefarious is afoot!", PLUGIN_VERSION);
+
+    StacGeneralMessageNotify("StAC was just unloaded!!! Was this intentional??");
+
     NukeTimers();
     OnMapEnd();
 }
@@ -250,12 +256,6 @@ public void OnGameFrame()
             }
         }
     }
-}
-
-Action Timer_TriggerTimedStuff(Handle timer)
-{
-    ActuallySetRandomSeed();
-    return Plugin_Continue;
 }
 
 void StopIncompatPlugins()

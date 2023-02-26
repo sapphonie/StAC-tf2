@@ -494,6 +494,7 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     // enabled var
     if (!GetConVarBool(stac_enabled))
     {
+        OnPluginEnd();
         SetFailState("[StAC] stac_enabled is set to 0 - aborting!");
     }
 
@@ -584,6 +585,7 @@ public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[
 {
     if (configsExecuted && !ignore_sv_cheats && convar == FindConVar("sv_cheats") && StringToInt(newValue) != 0)
     {
+        OnPluginEnd();
         SetFailState("[StAC] sv_cheats set to 1! Aborting!");
     }
 
@@ -671,4 +673,9 @@ void RunOptimizeCvars()
         // set jaypatch to sane value
         SetConVarInt(jay_backtrack_tolerance, 1);
     }
+
+    // there have been several exploits in the past regarding non steam codec
+    // this is defensive
+    ConVar sv_voicecodec = FindConVar("sv_voicecodec");
+    SetConVarString(sv_voicecodec, "steam");
 }

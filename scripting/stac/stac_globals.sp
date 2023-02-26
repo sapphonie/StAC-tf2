@@ -179,7 +179,6 @@ Handle HudSyncNetwork;
 
 // Timer handles
 Handle QueryTimer           [TFMAXPLAYERS+1];
-Handle TriggerTimedStuffTimer;
 
 /*
     "cl_interp_npcs",
