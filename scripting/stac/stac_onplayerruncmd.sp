@@ -67,6 +67,12 @@ public Action OnPlayerRunCmd
 
     OnPlayerRunCmd_jaypatch(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
 
+    // Don't allow clients to have both left and right turns active
+    if (buttons & IN_LEFT && buttons & IN_RIGHT)
+    {
+        buttons ~= IN_LEFT;
+        buttons ~= IN_RIGHT;
+    }
     return Plugin_Continue;
 }
 
@@ -251,12 +257,12 @@ stock void PlayerRunCmd
     {
         cmdnumspikeCheck(userid);
     }
+    triggerbotCheck(userid);
 
     if
     (
         // make sure client isnt using a spin bind
-           buttons & IN_LEFT
-        || buttons & IN_RIGHT
+        ( buttons & IN_LEFT | buttons & IN_RIGHT )
         // make sure we're not lagging and that cmdnum is saneish
         || IsUserLagging(userid, true, false)
     )
@@ -265,7 +271,6 @@ stock void PlayerRunCmd
         return;
     }
     aimsnapCheck(userid);
-    triggerbotCheck(userid);
     psilentCheck(userid);
     StopProfiling(prof);
     //LogMessage("%.2fµs", GetProfilerTime(prof) * 1000.0 * 1000.0);
