@@ -166,52 +166,129 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
 }
 
 /********** CLIENT BASED EVENTS **********/
-
 public Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
 {
-    int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
-    //int userid = GetEventInt(event, "userid");
+    int userid = GetEventInt(event, "userid");
+    int Cl = GetClientOfUserId(userid);
     if (IsValidClient(Cl))
     {
         timeSinceSpawn[Cl] = GetEngineTime();
     }
+
+
 
     /*
 
     TODO
     point_worldtext replacement for livefeed
 
-    int ent = -1;
-    while ((ent = FindEntityByClassname(ent, "point_worldtext")) != -1)
+    */
+    //if (IsFakeClient(Cl))
+    //{
+    //    return Plugin_Continue;
+    //}
+    // CreateTimer(1.0, bleh, userid);
+    return Plugin_Continue;
+}
+
+/*
+int test;
+Action bleh(Handle timer, int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    //if (!IsFakeClient(Cl))
+    //{
+    //    return Plugin_Continue;
+    //}
+    int vm = GetEntPropEnt(Cl, Prop_Data, "m_hViewModel", 0);
+    float vec[3];
+    GetEntPropVector(vm, Prop_Data, "m_vecAbsOrigin", vec);
+
+    LogMessage("vec = %f %f %f", vec[0], vec[1], vec[2]);
+
+    int fl = GetEdictFlags(vm);
+    fl &= FL_EDICT_ALWAYS;
+    SetEdictFlags(vm, fl);
+    if (!vm || !IsValidEntity(vm))
     {
-        if (IsValidEntity(ent))
-        {
-            RemoveEntity(ent);
-        }
+        return Plugin_Stop;
     }
 
+    LogMessage("%i", vm);
+
+    int pwt;
+
+    //pwt = pointWorldTextEnts[Cl][0];
+    //if (pwt && IsValidEntity(pwt))
+    //{
+    //    RemoveEntity(pwt);
+    //}
     pwt = CreateEntityByName("point_worldtext");
+    pointWorldTextEnts[Cl][0] = pwt;
+
+
     DispatchKeyValue        (pwt, "message", "test");
-    DispatchKeyValueFloat   (pwt, "textsize", 2.5);
-    DispatchKeyValue        (pwt, "color", "255 105 180");
+    DispatchKeyValueFloat   (pwt, "textsize", 1.75);
+    DispatchKeyValue        (pwt, "color", "255 255 255");
     DispatchKeyValueInt     (pwt, "Orientation", 1);
     // 8 looks pretty good, 9 looks good, 10 looks good, 11 is weirdly colored
     DispatchKeyValueInt     (pwt, "font", 10);
-    // SetEntityMoveType       (pwt, MOVETYPE_PUSH);
     DispatchSpawn           (pwt);
 
-    int vm = GetEntPropEnt(Cl, Prop_Data, "m_hViewModel", 0);
+    SetVariantString        ("!activator");
+    AcceptEntityInput       (pwt, "SetParent", vm, -1, -1);
+
+    // in z out, <- x ->, ^ y v
+    TeleportEntity          (pwt, { 128.0, 128.0, 128.0 }, NULL_VECTOR, NULL_VECTOR);
+    AcceptEntityInput       (pwt, "Enable");
+    SetEntityRenderMode     (pwt, RENDER_GLOW);
+
+    pwt = pointWorldTextEnts[Cl][1];
+    if (pwt && IsValidEntity(pwt))
+    {
+        RemoveEntity(pwt);
+    }
+    pwt = CreateEntityByName("point_worldtext");
+    pointWorldTextEnts[Cl][1] = pwt;
+
+    DispatchKeyValue        (pwt, "message", "test");
+    DispatchKeyValueFloat   (pwt, "textsize", 1.75);
+    DispatchKeyValue        (pwt, "color", "255 255 255");
+    DispatchKeyValueInt     (pwt, "Orientation", 1);
+    DispatchKeyValueInt     (pwt, "font", 10);
+    DispatchSpawn           (pwt);
+
+
+    SetVariantString        ("!activator");
+    AcceptEntityInput       (pwt, "SetParent", vm, Cl);
+    TeleportEntity          (pwt, { 48.0, 22.0, -8.0 } , NULL_VECTOR, NULL_VECTOR);
+    AcceptEntityInput       (pwt, "Enable");
+    SetEntityRenderMode     (pwt, RENDER_GLOW);
+
+
+    pwt = pointWorldTextEnts[Cl][2];
+    if (pwt && IsValidEntity(pwt))
+    {
+        RemoveEntity(pwt);
+    }
+    pwt = CreateEntityByName("point_worldtext");
+    pointWorldTextEnts[Cl][2] = pwt;
+
+    DispatchKeyValue        (pwt, "message", "test");
+    DispatchKeyValueFloat   (pwt, "textsize", 1.75);
+    DispatchKeyValue        (pwt, "color", "255 255 255");
+    DispatchKeyValueInt     (pwt, "Orientation", 1);
+    DispatchKeyValueInt     (pwt, "font", 10);
+    DispatchSpawn           (pwt);
+
 
     SetVariantString        ("!activator");
     AcceptEntityInput       (pwt, "SetParent", vm, 0);
-    // ?, ?, y
-    TeleportEntity          (pwt, {32.0, 24.0, 24.0 } , NULL_VECTOR, NULL_VECTOR);
+    TeleportEntity          (pwt, { 48.0, -24.0, 24.0 } , NULL_VECTOR, NULL_VECTOR);
     AcceptEntityInput       (pwt, "Enable");
-    SetEntityRenderMode(pwt, RENDER_GLOW);
-
-    */
-    return Plugin_Continue;
+    SetEntityRenderMode     (pwt, RENDER_GLOW);
 }
+*/
 
 public Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
 {
@@ -406,13 +483,13 @@ public Action Timer_GetNetInfo(Handle timer)
         if (IsValidClient(Cl))
         {
             // convert to percentages
-            lossFor[Cl]      = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
-            chokeFor[Cl]     = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
-            inchokeFor[Cl]   = GetClientAvgChoke(Cl, NetFlow_Incoming) * 100.0;
-            outchokeFor[Cl]  = GetClientAvgChoke(Cl, NetFlow_Outgoing) * 100.0;
+            lossFor[Cl]      = GetClientAvgLoss(Cl, NetFlow_Incoming)   * 100.0;
+            chokeFor[Cl]     = GetClientAvgChoke(Cl, NetFlow_Both)      * 100.0;
+            inchokeFor[Cl]   = GetClientAvgChoke(Cl, NetFlow_Incoming)  * 100.0;
+            outchokeFor[Cl]  = GetClientAvgChoke(Cl, NetFlow_Outgoing)  * 100.0;
             // convert to ms
-            pingFor[Cl]      = GetClientLatency(Cl, NetFlow_Both) * 1000.0;
-            rateFor[Cl]      = GetClientAvgData(Cl, NetFlow_Both) / 125.0;
+            pingFor[Cl]      = GetClientLatency(Cl, NetFlow_Both)       * 1000.0;
+            rateFor[Cl]      = GetClientAvgData(Cl, NetFlow_Both)       / 125.0;
             ppsFor[Cl]       = GetClientAvgPackets(Cl, NetFlow_Both);
             if (LiveFeedOn[Cl])
             {

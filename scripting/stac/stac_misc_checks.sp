@@ -82,27 +82,32 @@ void SaniNameAndBan(int userid, char name[64])
 
     SetClientName(Cl, name);
 
-    StacLog
+    char namemsg[512];
+    Format
     (
-        "Client had:\
+        namemsg,
+        sizeof(namemsg),
+        "Client %s had:\
         \n%i newline chars,\
         \n%i return chars,\
         \n%i right2left chars,\
         \n%i left2right chars",
+        SteamAuthFor[Cl],
         newlines,
         returns,
         rtl,
         ltr
     );
 
-    CreateTimer(0.5, BanName, userid);
+    StacLog(namemsg);
+    StacDetectionNotify(userid, namemsg, 1);
+    CreateTimer(0.25, BanName, userid);
 }
 
 Action BanName(Handle timer, int userid)
 {
     int Cl = GetClientOfUserId(userid);
 
-    StacDetectionNotify(userid, "Client has illegal chars in their name!", 1);
 
     if (banForMiscCheats)
     {

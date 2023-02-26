@@ -11,7 +11,6 @@ void DoStACGamedata()
         SetFailState("Failed to load StAC gamedata.");
         return;
     }
-
     /*
         Memory offsets
     */
@@ -95,7 +94,6 @@ void DoStACGamedata()
     }
 }
 
-
 public MRESReturn Detour_CBasePlayer__ProcessUsercmds(int entity, DHookParam hParams)
 {
     // Could this ever throw? We may one day find out...
@@ -103,7 +101,7 @@ public MRESReturn Detour_CBasePlayer__ProcessUsercmds(int entity, DHookParam hPa
     {
         return MRES_Ignored;
     }
-    // BONK: -1 might get ret'd ??
+
     if (signonStateFor[entity] <= SIGNONSTATE_SPAWN)
     {
         // LogMessage("sos = %i", signonStateFor[entity]);
@@ -114,6 +112,7 @@ public MRESReturn Detour_CBasePlayer__ProcessUsercmds(int entity, DHookParam hPa
 
 public MRESReturn Detour_CNetChan__ProcessPacket(Address pThis, DHookParam hParams)
 {
+    // LogMessage("this = %x", pThis);
     // Get our client idx and iclient ptr
     Address icl_ptr;
     int cl;
@@ -127,6 +126,8 @@ public MRESReturn Detour_CNetChan__ProcessPacket(Address pThis, DHookParam hPara
     // ^ no, would break on lateload
     int signonState     = GetSignonState(icl_ptr);
     signonStateFor[cl]  = signonState;
+
+
 
     // LogMessage("sos = %i", signonState);
     return MRES_Ignored;
@@ -157,7 +158,7 @@ bool GetClientFromNetChan(Address pThis, Address& IClient, int& client)
     // Clients will be null when connecting and disconnecting
     if (!IClient)
     {
-        StacLog("null iclient?");
+        StacLog("null iclient??");
         return false;
     }
 

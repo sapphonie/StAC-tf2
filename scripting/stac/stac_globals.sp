@@ -78,7 +78,6 @@ float ServerLagWaitLength = 5.0;
 float PlayerLagWaitLength = 1.0;
 
 // misc server info
-char hostname[64];
 char hostipandport[24];
 char demoname[128];
 int demotick = -1;
@@ -108,11 +107,9 @@ bool GBANS;
 bool AIMPLOTTER;
 bool DISCORD;
 bool MVM;
-bool SOURCETVMGR;
-bool STEAMWORKS;
 
 /***** client based stuff *****/
-
+// This insane shit will eventually be an enum struct
 // cheat detections per client
 int turnTimes               [TFMAXPLAYERS+1];
 int fakeAngDetects          [TFMAXPLAYERS+1];
@@ -145,7 +142,6 @@ int   clbuttons             [TFMAXPLAYERS+1][5];
 int   clmouse               [TFMAXPLAYERS+1]   [2];
 // OnPlayerRunCmd misc
 float engineTime            [TFMAXPLAYERS+1][3];
-float fuzzyClangles         [TFMAXPLAYERS+1][5][2];
 float clpos                 [TFMAXPLAYERS+1][2][3];
 
 // Misc stuff per client    [ client index ][char size]
@@ -175,12 +171,6 @@ float ppsFor                [TFMAXPLAYERS+1];
 
 // Log file
 File StacLogFile;
-
-// regex for getting demoname and server pub ip
-Regex demonameRegex;
-Regex demonameRegexFINAL;
-Regex publicIPRegex;
-Regex IPRegex;
 
 // hud sync handles for livefeed
 Handle HudSyncRunCmd;
@@ -258,13 +248,18 @@ char os                [16];
 // client has waited the full 60 seconds for their first convar check
 bool hasWaitedForCvarCheck[TFMAXPLAYERS+1];
 
+
 /*
 TODO: point_worldtext entities
 
 this will be an array, probably
+int pointWorldTextEnts[TFMAXPLAYERS+1][5];
 
-int pwt = 0;
 */
+
+// int pwt = 0;
+// int pwt2 = 0;
+// int pwt3 = 0;
 
 /* stac memory stuff */
 // signon state per client

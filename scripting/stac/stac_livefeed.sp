@@ -280,12 +280,14 @@ bool IsValidLiveFeedViewer(int client)
         // only show to admins that are dead or in spec
         (
             IsValidAdmin(client)
+            /*
             &&
             (
                 TF2_GetClientTeam(client) == TFTeam_Spectator
                 ||
                 !IsPlayerAlive(client)
             )
+            */
         )
         ||
         // and sourcetv

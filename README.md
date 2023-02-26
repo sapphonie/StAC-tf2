@@ -50,13 +50,13 @@ Even better, this plugin is set up to be as easy to use and install as possible,
 - ["Is it really anti-cheat or just a joke?"](https://canary.discord.com/channels/335290997317697536/335291251937116167/976375279276666880)
 
 ### Cheers
-- [~350 cheaters banned on my servers alone](https://sappho.io/bans/index.php?p=banlist&searchText=StAC&Submit=Search)
+- [~500 cheaters banned on my servers alone](https://sappho.io/bans/index.php?p=banlist&searchText=StAC&Submit=Search)
 - In use in countless other server networks, including [Uncletopia](https://uncletopia.com), the now dead [Creators.TF](https://creators.tf), and more
 
 ### Installation & Configuration
 
 0) Install and configure [Discord API](https://forums.alliedmods.net/showthread.php?t=292663) for Discord Webhook logging, if you'd like
-1) download the latest release (called `stac.zip`) from [here](https://github.com/sapphonie/StAC-tf2/releases/latest). StAC automatically includes the latest versions of SourceTVManager and SteamWorks, though will run (albeit with more limited functionality) without them.
+1) download the latest release (called `stac.zip`) from [here](https://github.com/sapphonie/StAC-tf2/releases/latest). StAC automatically includes the latest versions of SourceTVManager, SteamWorks, Connect, and Conplex, and will not run without them. If you have issues with installation, feel free to join the discord and I'd be happy to help you out.
 2) extract the downloaded zip, and copy all the folders inside of it into `/tf/addons/sourcemod/` on your tf2 server. Overwrite any files if prompted.
 3) restart your server
 

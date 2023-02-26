@@ -472,44 +472,14 @@ void BanUser(int userid, char[] reason, char[] pubreason)
 
 bool GetDemoName()
 {
-    if (SOURCETVMGR)
+    demotick = SourceTV_GetRecordingTick();
+    if (!SourceTV_GetDemoFileName(demoname, sizeof(demoname)))
     {
-        demotick = SourceTV_GetRecordingTick();
-        if (!SourceTV_GetDemoFileName(demoname, sizeof(demoname)))
-        {
-            demoname = "N/A";
-            return false;
-        }
-
-        return true;
-    }
-
-    else
-    {
-        char tvStatus[512];
-        ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
-        char demoname_etc[128];
-        if (MatchRegex(demonameRegex, tvStatus) > 0)
-        {
-            if (GetRegexSubString(demonameRegex, 0, demoname_etc, sizeof(demoname_etc)))
-            {
-                TrimString(demoname_etc);
-                if (MatchRegex(demonameRegexFINAL, demoname_etc) > 0)
-                {
-                    if (GetRegexSubString(demonameRegexFINAL, 0, demoname, sizeof(demoname)))
-                    {
-                        TrimString(demoname);
-                        StripQuotes(demoname);
-                        return true;
-                    }
-                }
-            }
-        }
         demoname = "N/A";
-        demotick = -1;
-
         return false;
     }
+
+    return true;
 }
 
 bool isDefaultTickrate()
@@ -672,11 +642,13 @@ any abs(any x)
     return x > 0 ? x : -x;
 }
 
+/*
 float RoundToPlace(float input, int decimalPlaces)
 {
     float poweroften = Pow(10.0, float(decimalPlaces));
     return RoundToNearest(input * poweroften) / (poweroften);
 }
+*/
 
 bool IsZeroVector(const float vec[3])
 {
@@ -754,6 +726,10 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
     {
         steamid = "N/A";
     }
+
+    char hostname[256];
+    GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
+
     Format
     (
         msg,
@@ -881,6 +857,9 @@ void StacDetectionNotify(int userid, char[] type, int detections)
     {
         steamid = "N/A";
     }
+
+    char hostname[256];
+    GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
 
     Format
     (

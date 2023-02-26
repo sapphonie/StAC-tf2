@@ -9,6 +9,8 @@
     - AIM SNAPS
     - FAKE ANGLES
     - TURN BINDS
+
+    TODO: nullcmd spamming
 */
 
 public void OnPlayerRunCmdPre
@@ -89,8 +91,15 @@ stock void PlayerRunCmd
     {
         return;
     }
+    Profiler prof = CreateProfiler();
+    StartProfiling(prof);
+
+    // point_worldtext_TODO(Cl);
+
     // need this basically no matter what
     int userid = GetClientUserId(Cl);
+
+
 
     // originally from ssac - block invalid usercmds with invalid data
     if (cmdnum <= 0 || tickcount <= 0)
@@ -117,11 +126,12 @@ stock void PlayerRunCmd
 
     // grab angles
     // thanks to nosoop from the sm discord for some help with this
-    clangles[Cl][4] = clangles[Cl][3];
-    clangles[Cl][3] = clangles[Cl][2];
-    clangles[Cl][2] = clangles[Cl][1];
-    clangles[Cl][1] = clangles[Cl][0];
+    for (int i = 4; i > 0; --i)
+    {
+        clangles[Cl][i] = clangles[Cl][i-1];
+    }
     clangles[Cl][0] = angles;
+
     // GetClientEyeAngles( Cl, clangles[Cl][0] );
 
 
@@ -185,19 +195,6 @@ stock void PlayerRunCmd
         timeSinceTeled[Cl] = GetEngineTime();
     }
 
-    // round our angles.
-    // fuzzy psilent detection to detect lmaobox silent+ and better detect other forms of silent aim
-    // BONK: use an epsilon??
-
-    fuzzyClangles[Cl][2][0] = RoundToPlace(clangles[Cl][2][0], 1);
-    fuzzyClangles[Cl][2][1] = RoundToPlace(clangles[Cl][2][1], 1);
-    fuzzyClangles[Cl][1][0] = RoundToPlace(clangles[Cl][1][0], 1);
-    fuzzyClangles[Cl][1][1] = RoundToPlace(clangles[Cl][1][1], 1);
-    fuzzyClangles[Cl][0][0] = RoundToPlace(clangles[Cl][0][0], 1);
-    fuzzyClangles[Cl][0][1] = RoundToPlace(clangles[Cl][0][1], 1);
-
-    // point_worldtextTODO();
-
     // neither of these tests need fancy checks, so we do them first
     bhopCheck(userid);
     turnbindCheck(userid);
@@ -226,6 +223,7 @@ stock void PlayerRunCmd
         // lets also wait a bit if we had a lag spike in the last 5 seconds on this specific client
         || engineTime[Cl][0] - PlayerLagWaitLength < timeSinceLagSpikeFor[Cl]
         // make sure client isn't timing out - duh
+        // BONK: do we NEED to check this?
         || IsClientTimingOut(Cl)
         // this is just for halloween shit - plenty of halloween effects can and will mess up all of these checks
         // TODO: THIS CAN APPARENTLY BE SPOOFED. CLEAN THIS UP.
@@ -235,7 +233,7 @@ stock void PlayerRunCmd
         return;
     }
 
-    // not really lag dependant check
+    // not really a lag dependant check
     fakeangCheck(userid);
 
     if
@@ -269,6 +267,9 @@ stock void PlayerRunCmd
     aimsnapCheck(userid);
     triggerbotCheck(userid);
     psilentCheck(userid);
+    StopProfiling(prof);
+    //LogMessage("%.2fµs", GetProfilerTime(prof) * 1000.0 * 1000.0);
+
 
     return;
 }
@@ -550,25 +551,22 @@ void cmdnumspikeCheck(int userid)
      angles2: x 8.82 y 127.68
 */
 
-// todo: https://github.com/sapphonie/StAC-tf2/issues/74
 // check angle diff from clangles[Cl][1] to clangles[Cl][0] and clangles[Cl][2] , count if they "match" up to an epsilon of 1.0 deg (ish?)
 // my foolishly =='ing floats must unfortunately come to an end
-/*
+
 
 bool floatcmpreal( float a, float b, float precision = 0.001 )
 {
     return FloatAbs( a - b ) <= precision;
 }
 
-*/
 void psilentCheck(int userid)
 {
     int Cl = GetClientOfUserId(userid);
     // get difference between angles - used for psilent
     float aDiffReal = NormalizeAngleDiff(CalcAngDeg(clangles[Cl][0], clangles[Cl][1]));
 
-    // is this a fuzzy detect or not
-    int fuzzy = -1;
+    bool detect;
     // don't run this check if silent aim cvar is -1
     if
     (
@@ -585,41 +583,21 @@ void psilentCheck(int userid)
         (
             // so the current and 2nd previous angles match...
             (
-                   clangles[Cl][0][0] == clangles[Cl][2][0]
-                && clangles[Cl][0][1] == clangles[Cl][2][1]
-                // floatcmpreal(clangles[Cl][0][0], clangles[Cl][2][0], 1.0);
-                // floatcmpreal(clangles[Cl][0][0], clangles[Cl][2][0], 1.0);
+                floatcmpreal(clangles[Cl][0][0], clangles[Cl][2][0], 0.1)
+                &&
+                floatcmpreal(clangles[Cl][0][1], clangles[Cl][2][1], 0.1)
             )
             &&
             // BUT the 1st previous (in between) angle doesnt?
             (
-                   clangles[Cl][1][0] != clangles[Cl][0][0]
-                && clangles[Cl][1][1] != clangles[Cl][0][1]
-                && clangles[Cl][1][0] != clangles[Cl][2][0]
-                && clangles[Cl][1][1] != clangles[Cl][2][1]
+                    floatcmpreal(clangles[Cl][1][0], clangles[Cl][0][0], 0.1)
+                &&  floatcmpreal(clangles[Cl][1][1], clangles[Cl][0][1], 0.1)
+                &&  floatcmpreal(clangles[Cl][1][0], clangles[Cl][2][0], 0.1)
+                &&  floatcmpreal(clangles[Cl][1][1], clangles[Cl][2][1], 0.1)
             )
         )
         {
-            fuzzy = 0;
-        }
-        else if
-        (
-            // etc
-            (
-                   fuzzyClangles[Cl][0][0] == fuzzyClangles[Cl][2][0]
-                && fuzzyClangles[Cl][0][1] == fuzzyClangles[Cl][2][1]
-            )
-            &&
-            // etc
-            (
-                   fuzzyClangles[Cl][1][0] != fuzzyClangles[Cl][0][0]
-                && fuzzyClangles[Cl][1][1] != fuzzyClangles[Cl][0][1]
-                && fuzzyClangles[Cl][1][0] != fuzzyClangles[Cl][2][0]
-                && fuzzyClangles[Cl][1][1] != fuzzyClangles[Cl][2][1]
-            )
-        )
-        {
-            fuzzy = 1;
+            detect = true;
         }
         //  ok - lets make sure there's a difference of at least 1 degree on either axis to avoid most fake detections
         //  these are probably caused by packets arriving out of order but i'm not a fucking network engineer (yet) so idk
@@ -634,7 +612,7 @@ void psilentCheck(int userid)
         //  doing this might make it harder to detect legitcheaters but like. legitcheating in a 12 yr old dead game OMEGALUL who fucking cares
         if
         (
-            aDiffReal >= 1.0 && fuzzy >= 0
+            detect && aDiffReal >= 1.0
         )
         {
             pSilentDetects[Cl]++;
@@ -648,9 +626,9 @@ void psilentCheck(int userid)
                 (
                     "\
                     {hotpink}[StAC]{white} SilentAim detection of {yellow}%.2f{white}° on %N.\
-                    \nDetections so far: {palegreen}%i{white}. fuzzy = {blue}%s{white} norecoil = {plum}%s",
+                    \nDetections so far: {palegreen}%i{white} norecoil = {plum}%s",
                     aDiffReal, Cl,
-                    pSilentDetects[Cl], fuzzy == 1 ? "yes" : "no", aDiffReal <= 3.0 ? "yes" : "no"
+                    pSilentDetects[Cl], aDiffReal <= 3.0 ? "yes" : "no"
                 );
                 StacLogSteam(userid);
                 StacLogNetData(userid);
@@ -944,7 +922,7 @@ bool IsUserLagging(int userid, bool checkcmdnum = true, bool checktickcount = tr
     if
     (
         // we don't want very much loss at all. this may be removed some day.
-        lossFor[Cl] >= 1.0
+        lossFor[Cl] >= 5.0
         || !isCmdnumSequential(userid) && checkcmdnum
         || !isTickcountInOrder(userid) && checktickcount
         // tickcount the same over 6 ticks, client is *definitely* lagging
@@ -1131,6 +1109,10 @@ Action Timer_decr_tbot(Handle timer, any userid)
 /*
 void point_worldtext_TODO(int Cl)
 {
+    //if ( !pointWorldTextEnts[Cl][0] || !pointWorldTextEnts[Cl][1] || !pointWorldTextEnts[Cl][2] )
+    //{
+    //    return;
+    //}
     TODO point_worldtext
 
     put this in a func
@@ -1165,7 +1147,7 @@ void point_worldtext_TODO(int Cl)
         ""
     };
 
-
+    int buttons = clbuttons[Cl][0];
 
     char fwd    [4] = "_";
     if (buttons & IN_FORWARD)
@@ -1241,9 +1223,9 @@ void point_worldtext_TODO(int Cl)
         }
     }
     TrimString(strButtons);
+    int userid = GetClientUserId(Cl);
 
-
-    char msg[1024];
+    char msg[2048];
     Format(msg,  sizeof(msg),
         "\
         \nOnPlayerRunCmd Info:\
@@ -1275,25 +1257,60 @@ void point_worldtext_TODO(int Cl)
         clmouse[Cl][0], clmouse[Cl][1],
         clangles[Cl][0][0], clangles[Cl][0][1], clangles[Cl][0][2]
     );
+    DispatchKeyValue        (pointWorldTextEnts[Cl][0], "message", msg);
+    TeleportEntity          (pointWorldTextEnts[Cl][0], { 255.0, 255.0, 255.0 }, NULL_VECTOR, NULL_VECTOR);
+
+    Format(msg,  sizeof(msg),
+        "\
+        \nMisc Info:\
+        \n Approx client cmdrate: ≈%i cmd/sec\
+        \n Approx server tickrate: ≈%i tick/sec\
+        \n Failing lag check? %s\
+        \n HasValidAngles? %s\
+        \n SequentialCmdnum? %s\
+        \n OrderedTickcount? %s\
+        ",
+        tickspersec[Cl],
+        tickspersec[0],
+        IsUserLagging(userid) ? "yes" : "no",
+        HasValidAngles(Cl) ? "yes" : "no",
+        isCmdnumSequential(userid) ? "yes" : "no",
+        isTickcountInOrder(userid) ? "yes" : "no"
+    );
+    DispatchKeyValue        (pointWorldTextEnts[Cl][1], "message", msg);
 
 
-    DispatchKeyValue        (pwt, "message", msg);
-
-    "\
-    \nMisc Info:\
-    \n Approx client cmdrate: ≈%i cmd/sec\
-    \n Approx server tickrate: ≈%i tick/sec\
-    \n Failing lag check? %s\
-    \n HasValidAngles? %s\
-    \n SequentialCmdnum? %s\
-    \n OrderedTickcount? %s\
-    ",
-    tickspersec[Cl],
-    tickspersec[0],
-    IsUserLagging(userid) ? "yes" : "no",
-    HasValidAngles(Cl) ? "yes" : "no",
-    isCmdnumSequential(userid) ? "yes" : "no",
-    isTickcountInOrder(userid) ? "yes" : "no"
+    Format(msg,  sizeof(msg),
+        "\
+        \nClient: %N\
+        \n Index: %i\
+        \n Userid: %i\
+        \n Status: %s\
+        \n Connected for: %.0fs\
+        \n\
+        \nNetwork:\
+        \n %.2f ms ping\
+        \n %.2f loss\
+        \n %.2f inchoke\
+        \n %.2f outchoke\
+        \n %.2f totalchoke\
+        \n %.2f kbps rate\
+        \n %.2f pps rate\
+        ",
+        Cl,
+        Cl,
+        GetClientUserId(Cl),
+        IsPlayerAlive(Cl) ? "alive" : "dead",
+        GetClientTime(Cl),
+        pingFor[Cl],
+        lossFor[Cl],
+        inchokeFor[Cl],
+        outchokeFor[Cl],
+        chokeFor[Cl],
+        rateFor[Cl],
+        ppsFor[Cl]
+    );
+    DispatchKeyValue        (pointWorldTextEnts[Cl][2], "message", msg);
 
 }
 */

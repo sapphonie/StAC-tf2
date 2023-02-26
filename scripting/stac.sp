@@ -11,6 +11,7 @@
 #include <sdkhooks>
 #include <tf2_stocks>
 #include <dhooks>
+#include <profiler>
 #define AUTOLOAD_EXTENSIONS
 // REQUIRED extensions:
 // SteamWorks for being able to make webrequests: https://forums.alliedmods.net/showthread.php?t=229556
@@ -124,14 +125,6 @@ public void OnPluginStart()
     RegConsoleCmd("sm_stac_getauth",    checkAdmin, "Print StAC's cached auth for a client");
     RegConsoleCmd("sm_stac_livefeed",   checkAdmin, "Show live feed (debug info etc) for a client. This gets printed to SourceTV if available.");
 
-
-    // setup regex - "Recording to ".*""
-    demonameRegex       = CompileRegex("Recording to \".*\"");
-    demonameRegexFINAL  = CompileRegex("\".*\"");
-    // this is fucking disgusting
-    publicIPRegex       = CompileRegex("(ip  : .*)\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b");
-    IPRegex             = CompileRegex("\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b");
-
     // grab round start events for calculating tps
     HookEvent("teamplay_round_start", eRoundStart);
     // grab player spawns
@@ -174,7 +167,7 @@ public void OnPluginStart()
     AddTempEntHook("Fire Bullets", Hook_TEFireBullets);
 
     // create global timer running every half second for getting all clients' network info
-    CreateTimer(0.5, Timer_GetNetInfo, _, TIMER_REPEAT);
+    CreateTimer(0.1, Timer_GetNetInfo, _, TIMER_REPEAT);
 
     // init hud sync stuff for livefeed
     HudSyncRunCmd       = CreateHudSynchronizer();
@@ -207,6 +200,7 @@ public bool StAC_Handler(const char[] id, ConplexSocket socket, const char[] add
 public void OnPluginEnd()
 {
     StacLog("\n\n----> StAC version [%s] unloaded\n", PLUGIN_VERSION);
+    MC_PrintToChatAll("{hotpink}StAC{white} version [%s] unloaded!!! If this wasn't intentional, something nefarious is afoot!", PLUGIN_VERSION);
     NukeTimers();
     OnMapEnd();
 }
@@ -275,7 +269,7 @@ void StopIncompatPlugins()
     {
         Handle thisPlug = ReadPlugin(plugini);
         GetPluginInfo(thisPlug, PlInfo_Name, plName, sizeof(plName));
-        // Fuck off lol. Compile it out if you want. I don't care. If you do this shit you're a jackass and should feel bad about it.
+        // Compile it out if you want, I don't care. If you do this shit you're cringe and should feel bad about it.
         // I will not provide any support for you or your annoying server if you do this.
         if
         (
