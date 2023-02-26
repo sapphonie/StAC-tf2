@@ -46,8 +46,7 @@ public Action OnPlayerRunCmd
     int mouse[2]
 )
 {
-    // sanity check, don't let banned clients do anything!
-    if ( userBanQueued[Cl] || !IsClientConnected(Cl) || !IsClientInGame(Cl) || IsClientInKickQueue(Cl) )
+    if ( !IsClientConnected(Cl) || !IsClientInGame(Cl) || IsClientInKickQueue(Cl) )
     {
         // Todo; maybe KickClient for the IsClientInGame failing here?
         buttons     = 0;
@@ -70,8 +69,7 @@ public Action OnPlayerRunCmd
     // Don't allow clients to have both left and right turns active
     if (buttons & IN_LEFT && buttons & IN_RIGHT)
     {
-        buttons ~= IN_LEFT;
-        buttons ~= IN_RIGHT;
+        buttons &= ~( IN_LEFT |  IN_RIGHT );
     }
     return Plugin_Continue;
 }
@@ -104,8 +102,6 @@ stock void PlayerRunCmd
 
     // need this basically no matter what
     int userid = GetClientUserId(Cl);
-
-
 
     // originally from ssac - block invalid usercmds with invalid data
     if (cmdnum <= 0 || tickcount <= 0)
