@@ -95,8 +95,8 @@ stock void PlayerRunCmd
     {
         return;
     }
-    Profiler prof = CreateProfiler();
-    StartProfiling(prof);
+    //Profiler prof = CreateProfiler();
+    //StartProfiling(prof);
 
     // point_worldtext_TODO(Cl);
 
@@ -268,9 +268,9 @@ stock void PlayerRunCmd
     }
     aimsnapCheck(userid);
     psilentCheck(userid);
-    StopProfiling(prof);
+    //StopProfiling(prof);
     //LogMessage("%.2fµs", GetProfilerTime(prof) * 1000.0 * 1000.0);
-
+    //delete prof;
 
     return;
 }
@@ -555,7 +555,8 @@ void cmdnumspikeCheck(int userid)
 // check angle diff from clangles[Cl][1] to clangles[Cl][0] and clangles[Cl][2] , count if they "match" up to an epsilon of 1.0 deg (ish?)
 // my foolishly =='ing floats must unfortunately come to an end
 
-
+// https://bitbashing.io/comparing-floats.html
+// DON'T use prec values above ~2, even ~1 was giving me weird issues
 bool floatcmpreal( float a, float b, float precision = 0.001 )
 {
     return FloatAbs( a - b ) <= precision;
@@ -926,7 +927,7 @@ bool IsUserLagging(int userid, bool checkcmdnum = true, bool checktickcount = tr
         lossFor[Cl] >= 5.0
         || !isCmdnumSequential(userid) && checkcmdnum
         || !isTickcountInOrder(userid) && checktickcount
-        // tickcount the same over 6 ticks, client is *definitely* lagging
+        // tickcount the same over 5 ticks, client is *definitely* lagging
         || isTickcountRepeated(userid)
         || // TODO: HOOKS
         (
