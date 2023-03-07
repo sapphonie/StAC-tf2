@@ -175,8 +175,6 @@ public Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
         timeSinceSpawn[Cl] = GetEngineTime();
     }
 
-
-
     /*
 
     TODO
@@ -378,6 +376,7 @@ public Action ePlayerChangedName(Handle event, char[] name, bool dontBroadcast)
 
     int Cl = GetClientOfUserId(userid);
 
+    // I dont remember why this is here..........
     if (hasBadName[Cl])
     {
         hasBadName[Cl] = false;
@@ -457,15 +456,7 @@ void ClearClBasedVars(int userid)
     // reset namechanging var
     hasBadName              [Cl] = false;
 
-
-    for (int cvar; cvar < sizeof(userinfoToCheck); cvar++)
-    {
-        userinfoValues[cvar][Cl][0][0] = '\0';
-        userinfoValues[cvar][Cl][1][0] = '\0';
-        userinfoValues[cvar][Cl][2][0] = '\0';
-        userinfoValues[cvar][Cl][3][0] = '\0';
-    }
-    justclamped             [Cl] = false;
+    justClamped             [Cl] = false;
 
     // has client has waited 60 seconds for their first cvar check
     hasWaitedForCvarCheck   [Cl] = false;

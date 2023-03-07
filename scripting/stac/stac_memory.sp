@@ -2,6 +2,9 @@
 /*
     Gamedata
 */
+
+
+
 void DoStACGamedata()
 {
     // Our base gamedata file
@@ -92,6 +95,14 @@ void DoStACGamedata()
             SetFailState( "Failed to get CBaseClient::GetPlayerSlot offset." );
         }
     }
+
+    Offset_m_fFlags     = FindSendPropInfo("CTFPlayer", "m_fFlags");
+
+    if ( Offset_m_fFlags == -1 )
+    {
+        SetFailState( "Failed to get CTFPlayer::m_fFlags offset." );
+    }
+
 }
 
 public MRESReturn Detour_CBasePlayer__ProcessUsercmds(int entity, DHookParam hParams)

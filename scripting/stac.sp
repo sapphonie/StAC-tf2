@@ -125,6 +125,8 @@ public void OnPluginStart()
     RegConsoleCmd("sm_stac_getauth",    checkAdmin, "Print StAC's cached auth for a client");
     RegConsoleCmd("sm_stac_livefeed",   checkAdmin, "Show live feed (debug info etc) for a client. This gets printed to SourceTV if available.");
 
+
+
     // grab round start events for calculating tps
     HookEvent("teamplay_round_start", eRoundStart);
     // grab player spawns
@@ -142,14 +144,6 @@ public void OnPluginStart()
     HookConVarChange(FindConVar("host_timescale"), GenericCvarChanged);
     // hook wait command status for tbot
     HookConVarChange(FindConVar("sv_allow_wait_command"), GenericCvarChanged);
-    // hook these for pingmasking stuff
-    HookConVarChange(FindConVar("sv_mincmdrate"), UpdateRates);
-    HookConVarChange(FindConVar("sv_maxcmdrate"), UpdateRates);
-    HookConVarChange(FindConVar("sv_minupdaterate"), UpdateRates);
-    HookConVarChange(FindConVar("sv_maxupdaterate"), UpdateRates);
-
-    // make sure we get the actual values on plugin load in our plugin vars
-    UpdateRates(null, "", "");
 
     // Create Stac ConVars for adjusting settings
     initCvars();
@@ -159,6 +153,8 @@ public void OnPluginStart()
     {
         if (IsValidClientOrBot(Cl))
         {
+            // Force network settings
+            OnClientSettingsChanged(Cl);
             OnClientPutInServer(Cl);
         }
     }
@@ -181,7 +177,56 @@ public void OnPluginStart()
     OnPluginStart_jaypatch();
 
     // Conplex_RegisterProtocol("StAC", StAC_Detector, StAC_Handler);
+
+    // Profiling
+    // RegConsoleCmd("stac_prof",   stacProf, "stacProf");
 }
+
+/*
+Action stacProf(int callingCl, int args)
+{
+    static int runs = 50000000;
+
+
+
+    int Cl = 1;
+
+    Profiler prof = CreateProfiler();
+    StartProfiling(prof);
+
+    for (int i = 0; i <= runs; i++)
+    {
+        // checkcmdnum =
+        // checktickcount =
+        IsUserLagging(Cl, false,  false);
+    }
+
+    StopProfiling(prof);
+    float usTime = GetProfilerTime(prof) * 1000.0 * 1000.0;
+    LogMessage("%09.3fµs", usTime);
+    delete prof;
+
+
+
+    Profiler prof2 = CreateProfiler();
+    StartProfiling(prof2);
+
+    for (int i = 0; i <= runs; i++)
+    {
+        IsUserLagging(Cl, true, false);
+    }
+
+
+    // THIS IS GOING TO LEAK HANDLES BECAUSE WE WONT ALWAYS GET HERE
+    // SHUT UP
+    StopProfiling(prof2);
+    usTime = GetProfilerTime(prof2) * 1000.0 * 1000.0;
+    LogMessage("%09.3fµs", usTime);
+    delete prof2;
+
+    return Plugin_Handled;
+}
+*/
 
 /*
 public ConplexProtocolDetectionState StAC_Detector(const char[] id, const char[] data, int length)

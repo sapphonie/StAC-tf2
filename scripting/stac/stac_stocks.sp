@@ -550,15 +550,14 @@ bool IsClientPlaying(int client)
         IsPlayerAlive(client)
         &&
         (
-            team != TFTeam_Unassigned
-            &&
-            team != TFTeam_Spectator
+            team != TFTeam_Unassigned && team != TFTeam_Spectator
         )
     )
     {
         return true;
     }
     return false;
+
 }
 
 /********** PRINT HELPER FUNCS **********/

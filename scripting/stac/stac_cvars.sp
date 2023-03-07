@@ -23,6 +23,7 @@ void initCvars()
         true,
         1.0
     );
+    //SetConVarFlags(stac_enabled, FCVAR_NONE);
     HookConVarChange(stac_enabled, setStacVars);
 
     // verbose mode
@@ -494,6 +495,7 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     // enabled var
     if (!GetConVarBool(stac_enabled))
     {
+        //SetConVarFlags(stac_enabled, FCVAR_NOTIFY);
         OnPluginEnd();
         SetFailState("[StAC] stac_enabled is set to 0 - aborting!");
     }
@@ -608,37 +610,6 @@ public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[
     }
 }
 
-#define MAX_RATE        (1024*1024)
-#define MIN_RATE        1000
-// update server rate settings for cmdrate spam check - i'd rather have one func do this lol
-public void UpdateRates(ConVar convar, const char[] oldValue, const char[] newValue)
-{
-    imincmdrate    = GetConVarInt(FindConVar("sv_mincmdrate"));
-    imaxcmdrate    = GetConVarInt(FindConVar("sv_maxcmdrate"));
-    iminupdaterate = GetConVarInt(FindConVar("sv_minupdaterate"));
-    imaxupdaterate = GetConVarInt(FindConVar("sv_maxupdaterate"));
-    iminrate       = GetConVarInt(FindConVar("sv_minrate"));
-    imaxrate       = GetConVarInt(FindConVar("sv_maxrate"));
-
-    if (iminrate <= 0)
-    {
-        iminrate = MIN_RATE;
-    }
-
-    if (imaxrate <= 0)
-    {
-        imaxrate = MAX_RATE;
-    }
-
-    // update clients
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
-    {
-        if (IsValidClient(Cl))
-        {
-            OnClientSettingsChanged(Cl);
-        }
-    }
-}
 
 void RunOptimizeCvars()
 {
@@ -649,7 +620,8 @@ void RunOptimizeCvars()
     SetConVarInt(FindConVar("sv_maxusrcmdprocessticks_holdaim"), 1);
 
     // limit fakelag abuse / backtracking (CS:GO default value!)
-    SetConVarFloat(FindConVar("sv_maxunlag"), 0.2);
+    // Note from the future: we DON'T need to do this with our backtrack patch.
+    // SetConVarFloat(FindConVar("sv_maxunlag"), 0.2);
 
     // print dc reasons to clients
     SetConVarBool(FindConVar("net_disconnect_reason"), true);
@@ -657,16 +629,38 @@ void RunOptimizeCvars()
     // prevent all sorts of exploits involving CNetChan fuzzing etc.
     ConVar net_chan_limit_msec = FindConVar("net_chan_limit_msec");
     // don't override server set settings if they have set it to a value other than 0
-    if (GetConVarInt(net_chan_limit_msec) == 0)
+    if (GetConVarInt(net_chan_limit_msec) <= 0)
     {
         SetConVarInt(net_chan_limit_msec, 128);
     }
+
+    if (isDefaultTickrate())
+    {
+        if (GetConVarInt(FindConVar("sv_mincmdrate")) < 30)
+        {
+            SetConVarInt(FindConVar("sv_mincmdrate"), 30);
+        }
+        if (GetConVarInt(FindConVar("sv_minupdaterate")) < 30)
+        {
+            SetConVarInt(FindConVar("sv_minupdaterate"), 30);
+        }
+        // 65536 = 0.5 mebibits per second
+        if (GetConVarInt(FindConVar("sv_minrate")) < 65536)
+        {
+            SetConVarInt(FindConVar("sv_minrate"), 65536);
+        }
+    }
+
+    // OVERRIDE this setting, i am smarter than you in this regard, i promise:
+    // There is basically NO situation where you want the client updating FROM the server at a different rate
+    // than they are updating the server itself by sending usercmds
+    SetConVarInt(FindConVar("sv_client_cmdrate_difference"), 0);
 
     // fix backtracking
     ConVar jay_backtrack_enable     = FindConVar("jay_backtrack_enable");
     ConVar jay_backtrack_tolerance  = FindConVar("jay_backtrack_tolerance");
     // dont error out on server start
-    if (jay_backtrack_enable != null && jay_backtrack_tolerance != null)
+    if ( jay_backtrack_enable && jay_backtrack_tolerance )
     {
         // enable jaypatch
         SetConVarInt(jay_backtrack_enable, 1);
@@ -676,6 +670,5 @@ void RunOptimizeCvars()
 
     // there have been several exploits in the past regarding non steam codec
     // this is defensive
-    ConVar sv_voicecodec = FindConVar("sv_voicecodec");
-    SetConVarString(sv_voicecodec, "steam");
+    SetConVarString(FindConVar("sv_voicecodec"), "steam");
 }

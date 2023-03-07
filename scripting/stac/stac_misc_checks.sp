@@ -192,7 +192,6 @@ public Action OnClientCommandKeyValues(int Cl, KeyValues kv)
 }
 
 
-// oh dear god why did I write this like this this is horrible
 public void OnClientSettingsChanged(int Cl)
 {
     // ignore invalid clients
@@ -219,187 +218,97 @@ public void OnClientSettingsChanged(int Cl)
         return;
     }
 
-    // horrific
-    for (int cvar; cvar < sizeof(userinfoToCheck); cvar++)
-    {
-        char cvarvalue[64];
-        GetClientInfo(Cl, userinfoToCheck[cvar], cvarvalue, sizeof(cvarvalue));
-
-        // one of our monitored cvars changed!
-        if (!StrEqual(userinfoValues[cvar][Cl][0], cvarvalue))
-        {
-            // copy into history
-            strcopy(userinfoValues[cvar][Cl][3], sizeof(userinfoValues[][][]), userinfoValues[cvar][Cl][2]);
-            strcopy(userinfoValues[cvar][Cl][2], sizeof(userinfoValues[][][]), userinfoValues[cvar][Cl][1]);
-            strcopy(userinfoValues[cvar][Cl][1], sizeof(userinfoValues[][][]), userinfoValues[cvar][Cl][0]);
-            strcopy(userinfoValues[cvar][Cl][0], sizeof(userinfoValues[][][]), cvarvalue);
-
-            // we have at least some history
-            if (!IsActuallyNullString(userinfoValues[cvar][Cl][0]) && !IsActuallyNullString(userinfoValues[cvar][Cl][1]))
-            {
-                if (DEBUG)
-                {
-                    StacLog("Client %N changed %s: old %s new %s", Cl, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], cvarvalue);
-                }
-
-                // check interp
-                if
-                (
-                    StrEqual(userinfoToCheck[cvar], "cl_interp_ratio")
-                    ||
-                    StrEqual(userinfoToCheck[cvar], "cl_interp")
-                    ||
-                    StrEqual(userinfoToCheck[cvar], "cl_updaterate")
-                )
-                {
-                    checkInterp(userid);
-                }
-                // fix pingmasking
-                if
-                (
-                    StrEqual(userinfoToCheck[cvar], "cl_cmdrate")
-                    ||
-                    StrEqual(userinfoToCheck[cvar], "cl_updaterate")
-                    ||
-                    StrEqual(userinfoToCheck[cvar], "rate")
-                )
-                {
-                    if (fixpingmasking)
-                    {
-                        FixPingMasking(Cl, userinfoToCheck[cvar], userinfoValues[cvar][Cl][0]);
-                    }
-                }
-                if
-                (
-                    StrEqual(userinfoToCheck[cvar], "cl_cmdrate")
-                )
-                {
-                    // ban for illegal values
-                    int cmdrate = StringToInt(cvarvalue);
-                    if (cmdrate < 10)
-                    {
-                        oobVarsNotify(userid, userinfoToCheck[cvar], cvarvalue);
-                        if (banForMiscCheats)
-                        {
-                            oobVarBan(userid);
-                        }
-                    }
-                    // userinfo spam
-                    // prevent clients from purposefully trying to trigger stac
-                    if
-                    (
-                        !StrEqual(userinfoValues[cvar][Cl][3], userinfoValues[cvar][Cl][0])
-                        &&
-                        !StrEqual(userinfoValues[cvar][Cl][2], userinfoValues[cvar][Cl][0])
-                        &&
-                        !justclamped[Cl]
-                    )
-                    {
-                        userinfoSpamEtc(userid, userinfoToCheck[cvar], userinfoValues[cvar][Cl][1], userinfoValues[cvar][Cl][0]);
-                    }
-                    if (justclamped[Cl])
-                    {
-                        justclamped[Cl] = false;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void userinfoSpamEtc(int userid, const char[] cvar, const char[] oldvalue, const char[] newvalue)
-{
-    int Cl = GetClientOfUserId(userid);
-    userinfoSpamDetects[Cl]++;
-    // have this detection expire in 10 seconds!!! remember - this means that the amount of detects are ONLY in the last 10 seconds!
-    CreateTimer(10.0, Timer_decr_userinfospam, userid, TIMER_FLAG_NO_MAPCHANGE);
-    if (userinfoSpamDetects[Cl] >= 5)
-    {
-        PrintToImportant
-        (
-            "{hotpink}[StAC]{white} %N is spamming userinfo updates. Detections in the last 10 seconds: {palegreen}%i{white}.\
-            \n'{blue}%s{white}' changed, from '{blue}%s{white}' to '{blue}%s{white}'",
-            Cl, userinfoSpamDetects[Cl],
-            cvar, oldvalue, newvalue
-        );
-        if (userinfoSpamDetects[Cl] % 5 == 0)
-        {
-            StacDetectionNotify(userid, "userinfo spam", userinfoSpamDetects[Cl]);
-        }
-        StacLogSteam(userid);
-        // BAN USER if they trigger too many detections
-        if (userinfoSpamDetects[Cl] >= maxuserinfoSpamDetections && maxuserinfoSpamDetections > 0)
-        {
-            char reason[128];
-            Format(reason, sizeof(reason), "%t", "userinfoSpamBanMsg", userinfoSpamDetects[Cl]);
-            char pubreason[256];
-            Format(pubreason, sizeof(pubreason), "%t", "userinfoSpamBanAllChat", Cl, userinfoSpamDetects[Cl]);
-            BanUser(userid, reason, pubreason);
-            return;
-        }
-    }
-}
-
-Action Timer_decr_userinfospam(Handle timer, any userid)
-{
-    int Cl = GetClientOfUserId(userid);
-
-    if (IsValidClient(Cl))
-    {
-        if (userinfoSpamDetects[Cl] > 0)
-        {
-            userinfoSpamDetects[Cl]--;
-        }
-    }
-    return Plugin_Continue;
-}
-
-void FixPingMasking(int Cl, const char[] cvar, const char[] value)
-{
-    int irate;
-    int ioptimalrate;
-    char soptimalrate[24];
-
-
-    // convert value to int
-    irate = StringToInt(value);
-    if (StrEqual("cl_cmdrate", cvar))
-    {
-        // clamp it
-        ioptimalrate = clamp(irate, imincmdrate, imaxcmdrate);
-    }
-    else if (StrEqual("cl_updaterate", cvar))
-    {
-        // clamp it
-        ioptimalrate = clamp(irate, iminupdaterate, imaxupdaterate);
-    }
-    else if (StrEqual("rate", cvar))
-    {
-        // clamp it
-        ioptimalrate = clamp(irate, iminrate, imaxrate);
-    }
-    // we shouldn't get here
-    else
+    if (!fixpingmasking)
     {
         return;
     }
-    // convert it to string
-    IntToString(ioptimalrate, soptimalrate, sizeof(soptimalrate));
 
-    if
-    (
-        // cmdrate isnt == to optimal clamped rate
-        irate != ioptimalrate
-        ||
-        // client string isnt equal to string of optimal cmdrate
-        !StrEqual(value, soptimalrate)
-    )
+    if (justClamped[Cl])
     {
-        SetClientInfo(Cl, cvar, soptimalrate);
-        justclamped[Cl] = true;
+        justClamped[Cl] = false;
+        return;
     }
-}
 
+    // We are basically FORCING clients to have sane network settings here,
+    // because tf2 configs are all over the damn place, and it makes it more consistent to detect on, anyway
+    // YOUD THINK since the engine already clamps this itself, that we could just be like, "ok, set sv_client_cmdrate_difference and sane min network cvars"
+    // and that it would be fine and work properly with scoreboard ping, but it Absolutely Just Does Not Do That so we gotta do it ourselves here
+
+    char cl_cmdrate     [64];
+    char cl_updaterate  [64];
+    char rate           [64];
+
+    GetClientInfo( Cl, "cl_cmdrate",         cl_cmdrate,         sizeof(cl_cmdrate) );
+    GetClientInfo( Cl, "cl_updaterate",      cl_updaterate,      sizeof(cl_updaterate) );
+    GetClientInfo( Cl, "rate",               rate,               sizeof(rate) );
+
+    LogMessage("[1] cmdrate %s / updaterate %s / rate %s", cl_cmdrate, cl_updaterate, rate);
+
+    checkInterp(userid);
+
+    // ban for illegal values
+    if ( StringToInt(cl_cmdrate) < 10 )
+    {
+        oobVarsNotify(userid, "cl_cmdrate", cl_cmdrate);
+        if (banForMiscCheats)
+        {
+            oobVarBan(userid);
+        }
+    }
+
+    static int MAX_RATE = (1024*1024);
+    static int MIN_RATE = 1000;
+
+    // This isn't expensive. See Handle_t ConVarManager::FindConVar(const char *name):
+    // https://cs.alliedmods.net/sourcemod/source/core/ConVarManager.cpp#427
+    // Not only is this cached, icvar->FindVar is fast enough anyway
+    static int imincmdrate    ;
+    static int imaxcmdrate    ;
+    static int iminupdaterate ;
+    static int imaxupdaterate ;
+    static int iminrate       ;
+    static int imaxrate       ;
+
+    imincmdrate    = GetConVarInt( FindConVar("sv_mincmdrate") );
+    imaxcmdrate    = GetConVarInt( FindConVar("sv_maxcmdrate") );
+    iminupdaterate = GetConVarInt( FindConVar("sv_minupdaterate") );
+    imaxupdaterate = GetConVarInt( FindConVar("sv_maxupdaterate") );
+    iminrate       = GetConVarInt( FindConVar("sv_minrate") );
+    imaxrate       = GetConVarInt( FindConVar("sv_maxrate") );
+
+    if (iminrate <= 0)
+    {
+        iminrate = MIN_RATE;
+    }
+
+    if (imaxrate <= 0 || imaxrate > MAX_RATE)
+    {
+        imaxrate = MAX_RATE;
+    }
+
+    int clamped_cl_cmdrate      = clamp( StringToInt(cl_cmdrate),       imincmdrate,    imaxcmdrate );
+    int clamped_cl_updaterate   = clamp( StringToInt(cl_updaterate),    iminupdaterate, imaxupdaterate );
+    int clamped_rate            = clamp( StringToInt(rate),             iminrate,       imaxrate );
+
+    IntToString( clamped_cl_cmdrate,    cl_cmdrate,     sizeof(cl_cmdrate) );
+    IntToString( clamped_cl_updaterate, cl_updaterate,  sizeof(cl_updaterate) );
+    IntToString( clamped_rate,          rate,           sizeof(rate) );
+
+
+    //                                   vvvvvvvvvvvvv THIS IS NOT A TYPO, WE ARE FORCIBLY CLAMPING CMDRATE TO UPDATERATE
+    SetClientInfo( Cl, "cl_cmdrate",     cl_updaterate );
+    SetClientInfo( Cl, "cl_updaterate",  cl_updaterate );
+    SetClientInfo( Cl, "rate",           rate );
+
+    GetClientInfo( Cl, "cl_cmdrate",         cl_cmdrate,         sizeof(cl_cmdrate) );
+    GetClientInfo( Cl, "cl_updaterate",      cl_updaterate,      sizeof(cl_updaterate) );
+    GetClientInfo( Cl, "rate",               rate,               sizeof(rate) );
+
+
+    LogMessage("[2] cmdrate %s / updaterate %s / rate %s", cl_cmdrate, cl_updaterate, rate);
+
+    justClamped[Cl] = true;
+}
 
 // no longer just for netprops!
 void MiscCheatsEtcsCheck(int userid)

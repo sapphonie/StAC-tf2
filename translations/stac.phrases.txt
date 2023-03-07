@@ -196,38 +196,6 @@
         "de"        "[StAC] Gebannt für triggerbotting nach {1} Erkennungen"
     }
     /*
-
-                          __           __
-      _________ ___  ____/ /________ _/ /____     _________  ____ _____ ___
-     / ___/ __ `__ \/ __  / ___/ __ `/ __/ _ \   / ___/ __ \/ __ `/ __ `__ \
-    / /__/ / / / / / /_/ / /  / /_/ / /_/  __/  (__  ) /_/ / /_/ / / / / / /
-    \___/_/ /_/ /_/\____/_/   \__,_/\__/\___/  /____/ .___/\__-_/_/ /_/ /_/
-                                                   /_/
-
-    */
-    "userinfoSpamBanAllChat"
-    {
-        "#format"   "{1:N},{2:i}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was repeatedly modifying their network cvars, {mediumpurple}indicating use of a cheat client{white}. Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
-        "da"        "{hotpink}[StAC]{white} Spiller {1} ændrede gentagende gange sine network cvars, {mediumpurple}der indikerer brug af en cheat client{white}. Total opfanget: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
-        "ru"        "{hotpink}[StAC]{white} Игрок {1} неоднократно изменял свои сетевые переменные, {mediumpurple}что указывает на использование чит-клиента{white}. Всего обнаружений: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
-        "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} estava repetidamente modificando as suas cvars de internet, {mediumpurple}indicando o uso de um cheat client{white}. Total de detecções: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
-        "chi"       "{hotpink}[StAC]{white} 检测到玩家 {1} 使用了 {mediumpurple}虚假网络客户端信息{white}. 总检测数: {mediumpurple}{2}{white}. {palegreen}已被禁止进入服务器!" 
-        "es"        "{hotpink}[StAC]{white} El jugador {1} estuvo modificando repetidamente sus cvars de red, {mediumpurple}indicios de un cliente modificado{white}. Detecciones totales: {mediumpurple}{2}{white}. {palegreen}BANEADO del servidor!"
-        "de"        "{hotpink}[StAC]{white} Spieler {1} hat mehrmals seine network cvars geändert, {mediumpurple}deutet auf einen Cheat Client hin{white}. Gesamtzahl der Erkennungen: {mediumpurple}{2}{white}. {palegreen}Gebannt vom Server!"
-    }
-    "userinfoSpamBanMsg"
-    {
-        "#format"   "{1:i}"
-        "en"        "[StAC] Banned for cmdrate spam after {1} detections"
-        "da"        "[StAC] Banned for cmdrate spam efter {1} opfangelser"
-        "ru"        "[StAC] Забанен за спам cmdrate после {1} обнаружений"
-        "pt"        "[StAC] Banido(a) por spam de cmdrate depois de {1} detecções"
-        "chi"       "[StAC] 检测 {1} 次私自修改客户端信息后封禁"
-        "es"        "[StAC] Baneado por cmdrate spam despues de {1} detecciones"
-        "de"        "[StAC] Gebannt für cmdrate spam nach {1} Erkennungen"
-    }
-    /*
        __                      __    _           __
       / /___  ___________     / /_  (_)___  ____/ /____
      / __/ / / / ___/ __ \   / __ \/ / __ \/ __  / ___/
