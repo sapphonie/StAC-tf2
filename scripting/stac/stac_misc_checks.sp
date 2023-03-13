@@ -3,10 +3,10 @@
 /********** MISC CHEAT DETECTIONS / PATCHES *********/
 
 // ban on invalid characters (newlines, carriage returns, etc)
-public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArgs)
+public Action OnClientSayCommand(int cl, const char[] command, const char[] sArgs)
 {
     // don't pick up console or bots
-    if (!IsValidClient(Cl))
+    if (!IsValidClient(cl))
     {
         return Plugin_Continue;
     }
@@ -17,18 +17,18 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
         StrContains(sArgs, "\r", false) != -1
     )
     {
-        int userid = GetClientUserId(Cl);
+        int userid = GetClientUserId(cl);
         if (banForMiscCheats)
         {
             char reason[128];
             Format(reason, sizeof(reason), "%t", "newlineBanMsg");
             char pubreason[256];
-            Format(pubreason, sizeof(pubreason), "%t", "newlineBanAllChat", Cl);
+            Format(pubreason, sizeof(pubreason), "%t", "newlineBanAllChat", cl);
             BanUser(userid, reason, pubreason);
         }
         else
         {
-            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Blocked newline print from player %N", Cl);
+            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Blocked newline print from player %N", cl);
             StacLogSteam(userid);
         }
         StacDetectionNotify(userid, "Client tried to print a newline character", 1);
@@ -39,11 +39,11 @@ public Action OnClientSayCommand(int Cl, const char[] command, const char[] sArg
 
 void NameCheck(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
-    if (IsValidClient(Cl))
+    int cl = GetClientOfUserId(userid);
+    if (IsValidClient(cl))
     {
         char curName[64];
-        GetClientName(Cl, curName, sizeof(curName));
+        GetClientName(cl, curName, sizeof(curName));
         // ban for invalid characters in names
         if
         (
@@ -65,9 +65,9 @@ void NameCheck(int userid)
 
 void SaniNameAndBan(int userid, char name[64])
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
-    hasBadName[Cl] = true;
+    hasBadName[cl] = true;
 
     int newlines;
     int returns;
@@ -80,7 +80,7 @@ void SaniNameAndBan(int userid, char name[64])
     rtl         = ReplaceString(name, sizeof(name), "\xE2\x80\x8F", "");
     ltr         = ReplaceString(name, sizeof(name), "\xE2\x80\x8E", "");
 
-    SetClientName(Cl, name);
+    SetClientName(cl, name);
 
     char namemsg[512];
     Format
@@ -92,7 +92,7 @@ void SaniNameAndBan(int userid, char name[64])
         \n%i return chars,\
         \n%i right2left chars,\
         \n%i left2right chars",
-        SteamAuthFor[Cl],
+        SteamAuthFor[cl],
         newlines,
         returns,
         rtl,
@@ -106,7 +106,7 @@ void SaniNameAndBan(int userid, char name[64])
 
 Action BanName(Handle timer, int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
 
     if (banForMiscCheats)
@@ -114,24 +114,24 @@ Action BanName(Handle timer, int userid)
         char reason[128];
         Format(reason, sizeof(reason), "%t", "illegalNameBanMsg");
         char pubreason[256];
-        Format(pubreason, sizeof(pubreason), "%t", "illegalNameBanAllChat", Cl);
+        Format(pubreason, sizeof(pubreason), "%t", "illegalNameBanAllChat", cl);
         BanUser(userid, reason, pubreason);
     }
     else
     {
-        PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N has illegal chars in their name!", Cl);
+        PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N has illegal chars in their name!", cl);
         StacLogSteam(userid);
-        StacLog("[Detection] Player %N has illegal chars in their name!", Cl);
+        StacLog("[Detection] Player %N has illegal chars in their name!", cl);
     }
     return Plugin_Continue;
 }
 
 // block long commands - i don't know if this actually does anything but it makes me feel better
-public Action OnClientCommand(int Cl, int args)
+public Action OnClientCommand(int cl, int args)
 {
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
-        int userid = GetClientUserId(Cl);
+        int userid = GetClientUserId(cl);
         // init var
         char ClientCommandChar[512];
         // gets the first command
@@ -148,8 +148,8 @@ public Action OnClientCommand(int Cl, int args)
         }
 
 
-        strcopy(lastCommandFor[Cl], sizeof(lastCommandFor[]), ClientCommandChar);
-        timeSinceLastCommand[Cl] = engineTime[Cl][0];
+        strcopy(lastCommandFor[cl], sizeof(lastCommandFor[]), ClientCommandChar);
+        timeSinceLastCommand[cl] = engineTime[cl][0];
 
 
         // clean it up ( PROBABLY NOT NEEDED )
@@ -169,9 +169,9 @@ public Action OnClientCommand(int Cl, int args)
 
 // for achievement checking, because chook tries to be s n e a k y
 // if there are upgrades to the call/response bullshit in chook i can and will make this iterate thru every single kv
-public Action OnClientCommandKeyValues(int Cl, KeyValues kv)
+public Action OnClientCommandKeyValues(int cl, KeyValues kv)
 {
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
         if (KvJumpToKey(kv, "achievementID", false))
         {
@@ -181,7 +181,7 @@ public Action OnClientCommandKeyValues(int Cl, KeyValues kv)
                 int id = KvGetNum(kv, NULL_STRING, -123456789);
                 if (id != -123456789)
                 {
-                    int userid = GetClientUserId(Cl);
+                    int userid = GetClientUserId(cl);
                     cheevCheck(userid, id);
                 }
             }
@@ -192,28 +192,28 @@ public Action OnClientCommandKeyValues(int Cl, KeyValues kv)
 }
 
 
-public void OnClientSettingsChanged(int Cl)
+public void OnClientSettingsChanged(int cl)
 {
     // ignore invalid clients
-    if (!IsValidClient(Cl))
+    if (!IsValidClient(cl))
     {
         return;
     }
-    int userid = GetClientUserId(Cl);
+    int userid = GetClientUserId(cl);
     if
     (
         // command occured recently
-        engineTime[Cl][0] - 1.5 < timeSinceLastCommand[Cl]
+        engineTime[cl][0] - 1.5 < timeSinceLastCommand[cl]
         &&
         (
             // and it's a demorestart
-            StrEqual("demorestart", lastCommandFor[Cl])
+            StrEqual("demorestart", lastCommandFor[cl])
         )
     )
     {
         if (DEBUG)
         {
-            StacLog("Ignoring demorestart settings change for %N", Cl);
+            StacLog("Ignoring demorestart settings change for %N", cl);
         }
         return;
     }
@@ -223,9 +223,9 @@ public void OnClientSettingsChanged(int Cl)
         return;
     }
 
-    if (justClamped[Cl])
+    if (justClamped[cl])
     {
-        justClamped[Cl] = false;
+        justClamped[cl] = false;
         return;
     }
 
@@ -238,9 +238,9 @@ public void OnClientSettingsChanged(int Cl)
     char cl_updaterate  [64];
     char rate           [64];
 
-    GetClientInfo( Cl, "cl_cmdrate",         cl_cmdrate,         sizeof(cl_cmdrate) );
-    GetClientInfo( Cl, "cl_updaterate",      cl_updaterate,      sizeof(cl_updaterate) );
-    GetClientInfo( Cl, "rate",               rate,               sizeof(rate) );
+    GetClientInfo( cl, "cl_cmdrate",         cl_cmdrate,         sizeof(cl_cmdrate) );
+    GetClientInfo( cl, "cl_updaterate",      cl_updaterate,      sizeof(cl_updaterate) );
+    GetClientInfo( cl, "rate",               rate,               sizeof(rate) );
 
     LogMessage("[1] cmdrate %s / updaterate %s / rate %s", cl_cmdrate, cl_updaterate, rate);
 
@@ -296,26 +296,26 @@ public void OnClientSettingsChanged(int Cl)
 
 
     //                                   vvvvvvvvvvvvv THIS IS NOT A TYPO, WE ARE FORCIBLY CLAMPING CMDRATE TO UPDATERATE
-    SetClientInfo( Cl, "cl_cmdrate",     cl_updaterate );
-    SetClientInfo( Cl, "cl_updaterate",  cl_updaterate );
-    SetClientInfo( Cl, "rate",           rate );
+    SetClientInfo( cl, "cl_cmdrate",     cl_updaterate );
+    SetClientInfo( cl, "cl_updaterate",  cl_updaterate );
+    SetClientInfo( cl, "rate",           rate );
 
-    GetClientInfo( Cl, "cl_cmdrate",         cl_cmdrate,         sizeof(cl_cmdrate) );
-    GetClientInfo( Cl, "cl_updaterate",      cl_updaterate,      sizeof(cl_updaterate) );
-    GetClientInfo( Cl, "rate",               rate,               sizeof(rate) );
+    GetClientInfo( cl, "cl_cmdrate",         cl_cmdrate,         sizeof(cl_cmdrate) );
+    GetClientInfo( cl, "cl_updaterate",      cl_updaterate,      sizeof(cl_updaterate) );
+    GetClientInfo( cl, "rate",               rate,               sizeof(rate) );
 
 
     LogMessage("[2] cmdrate %s / updaterate %s / rate %s", cl_cmdrate, cl_updaterate, rate);
 
-    justClamped[Cl] = true;
+    justClamped[cl] = true;
 }
 
 // no longer just for netprops!
 void MiscCheatsEtcsCheck(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
         // there used to be an fov check here - but there's odd behavior that i don't want to work around regarding the m_iFov netprop.
         // sorry!
@@ -326,15 +326,15 @@ void MiscCheatsEtcsCheck(int userid)
 
 void checkInterp(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     // lerp check - we check the netprop
     // don't check if not default tickrate
     if (isDefaultTickrate())
     {
-        float lerp = GetEntPropFloat(Cl, Prop_Data, "m_fLerpTime") * 1000;
+        float lerp = GetEntPropFloat(cl, Prop_Data, "m_fLerpTime") * 1000;
         if (DEBUG)
         {
-            StacLog("%.2f ms interp on %N", lerp, Cl);
+            StacLog("%.2f ms interp on %N", lerp, cl);
         }
 
         // nolerp
@@ -358,9 +358,9 @@ void checkInterp(int userid)
             char message[256];
             Format(message, sizeof(message), "Client was kicked for attempted interp exploitation. Their interp: %.2fms", lerp);
             StacGeneralPlayerNotify(userid, message);
-            KickClient(Cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
-            MC_PrintToChatAll("%t", "interpAllChat", Cl, lerp);
-            StacLog("%t", "interpAllChat", Cl, lerp);
+            KickClient(cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
+            MC_PrintToChatAll("%t", "interpAllChat", cl, lerp);
+            StacLog("%t", "interpAllChat", cl, lerp);
         }
     }
 }
@@ -368,7 +368,7 @@ void checkInterp(int userid)
 void cheevCheck(int userid, int achieve_id)
 {
     // ent index of achievement earner
-    int Cl              = GetClientOfUserId(userid);
+    int cl              = GetClientOfUserId(userid);
 
     // we can't sdkcall CAchievementMgr::GetAchievementByIndex(int) here because the server will never have a valid CAchievementMgr*
     // this is because achievements are all client side (because Valve just trusts clients fsr?)
@@ -389,16 +389,16 @@ void cheevCheck(int userid, int achieve_id)
 
         if (banForMiscCheats)
         {
-            PrintToImportant("{hotpink}[StAC] {white} User %N earned BOGUS achievement ID %i (hex %X)", Cl, achieve_id, achieve_id);
+            PrintToImportant("{hotpink}[StAC] {white} User %N earned BOGUS achievement ID %i (hex %X)", cl, achieve_id, achieve_id);
             char reason[128];
             Format(reason, sizeof(reason), "%t", "bogusAchieveBanMsg");
             char pubreason[256];
-            Format(pubreason, sizeof(pubreason), "%t", "bogusAchieveBanAllChat", Cl);
+            Format(pubreason, sizeof(pubreason), "%t", "bogusAchieveBanAllChat", cl);
             BanUser(userid, reason, pubreason);
         }
         else
         {
-            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} User %N earned BOGUS achievement ID %i (hex %X)", Cl, achieve_id, achieve_id);
+            PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} User %N earned BOGUS achievement ID %i (hex %X)", cl, achieve_id, achieve_id);
         }
 
         char message[256];

@@ -117,27 +117,27 @@ Action checkNativesEtc(Handle timer)
 // NUKE the client timers from orbit on plugin and map reload
 void NukeTimers()
 {
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    for (int cl = 1; cl <= MaxClients; cl++)
     {
-        delete QueryTimer[Cl];
+        delete QueryTimer[cl];
     }
 }
 
 // recreate the timers we just nuked
 void ResetTimers()
 {
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    for (int cl = 1; cl <= MaxClients; cl++)
     {
-        if (IsValidClient(Cl))
+        if (IsValidClient(cl))
         {
-            int userid = GetClientUserId(Cl);
+            int userid = GetClientUserId(cl);
 
             if (DEBUG)
             {
-                StacLog("Creating timer for %L", Cl);
+                StacLog("Creating timer for %L", cl);
             }
             // lets make a timer with a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
-            QueryTimer[Cl] =
+            QueryTimer[cl] =
             CreateTimer
             (
                 GetRandomFloat

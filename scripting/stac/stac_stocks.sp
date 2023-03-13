@@ -120,21 +120,21 @@ void StacLogDemo()
 
 void StacLogSteam(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
     StacLog
     ("\
         \n Player: %L\
         \n StAC cached SteamID: %s\
         ",
-        Cl,
-        SteamAuthFor[Cl]
+        cl,
+        SteamAuthFor[cl]
     );
 }
 
 void StacLogNetData(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
     StacLog
     (
@@ -148,13 +148,13 @@ void StacLogNetData(int userid)
         \n %.2f kbps rate\
         \n %.2f pps rate\
         ",
-        pingFor[Cl],
-        lossFor[Cl],
-        inchokeFor[Cl],
-        outchokeFor[Cl],
-        chokeFor[Cl],
-        rateFor[Cl],
-        ppsFor[Cl]
+        pingFor[cl],
+        lossFor[cl],
+        inchokeFor[cl],
+        outchokeFor[cl],
+        chokeFor[cl],
+        rateFor[cl],
+        ppsFor[cl]
     );
 
     StacLog
@@ -168,17 +168,17 @@ void StacLogNetData(int userid)
         \n SequentialCmdnum? %s\
         \n OrderedTickcount? %s\
         ",
-        tickspersec[Cl],
+        tickspersec[cl],
         tickspersec[0],
-        IsUserLagging(Cl) ? "yes" : "no",
-        HasValidAngles(Cl) ? "yes" : "no",
-        isCmdnumSequential(Cl) ? "yes" : "no"
+        IsUserLagging(cl) ? "yes" : "no",
+        HasValidAngles(cl) ? "yes" : "no",
+        isCmdnumSequential(cl) ? "yes" : "no"
     );
 }
 
 void StacLogMouse(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     //if (GetRandomInt(1, 5) == 1)
     //{
     //    QueryClientConVar(Cl, "sensitivity", ConVarCheck);
@@ -187,10 +187,10 @@ void StacLogMouse(int userid)
     int wx;
     int wy;
     // scale mouse movement to sensitivity
-    if (sensFor[Cl] != 0.0)
+    if (sensFor[cl] != 0.0)
     {
-        wx = abs(RoundFloat(clmouse[Cl][0] * ( 1 / sensFor[Cl])));
-        wy = abs(RoundFloat(clmouse[Cl][1] * ( 1 / sensFor[Cl])));
+        wx = abs(RoundFloat(clmouse[cl][0] * ( 1 / sensFor[cl])));
+        wy = abs(RoundFloat(clmouse[cl][1] * ( 1 / sensFor[cl])));
     }
     StacLog
     (
@@ -206,9 +206,9 @@ void StacLogMouse(int userid)
         ",
         wx,
         wy,
-        clmouse[Cl][0],
-        clmouse[Cl][1],
-        sensFor[Cl]
+        clmouse[cl][0],
+        clmouse[cl][1],
+        sensFor[cl]
     );
     // log buttons whenever we log mouse
     StacLogButtons(userid);
@@ -216,7 +216,7 @@ void StacLogMouse(int userid)
 
 void StacLogAngles(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     StacLog
     (
         "\
@@ -227,16 +227,16 @@ void StacLogAngles(int userid)
         \n angles3: x %f y %f\
         \n angles4: x %f y %f\
         ",
-        clangles[Cl][0][0],
-        clangles[Cl][0][1],
-        clangles[Cl][1][0],
-        clangles[Cl][1][1],
-        clangles[Cl][2][0],
-        clangles[Cl][2][1],
-        clangles[Cl][3][0],
-        clangles[Cl][3][1],
-        clangles[Cl][4][0],
-        clangles[Cl][4][1]
+        clangles[cl][0][0],
+        clangles[cl][0][1],
+        clangles[cl][1][0],
+        clangles[cl][1][1],
+        clangles[cl][2][0],
+        clangles[cl][2][1],
+        clangles[cl][3][0],
+        clangles[cl][3][1],
+        clangles[cl][4][0],
+        clangles[cl][4][1]
     );
     StacLog
     (
@@ -245,18 +245,18 @@ void StacLogAngles(int userid)
         \n eyepos 0: x %.3f y %.3f z %.3f\
         \n eyepos 1: x %.3f y %.3f z %.3f\
         ",
-        clpos[Cl][0][0],
-        clpos[Cl][0][1],
-        clpos[Cl][0][2],
-        clpos[Cl][1][0],
-        clpos[Cl][1][1],
-        clpos[Cl][1][2]
+        clpos[cl][0][0],
+        clpos[cl][0][1],
+        clpos[cl][0][2],
+        clpos[cl][1][0],
+        clpos[cl][1][1],
+        clpos[cl][1][2]
     );
 }
 
 void StacLogCmdnums(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     StacLog
     (
         "\
@@ -267,17 +267,17 @@ void StacLogCmdnums(int userid)
         \n3 %i\
         \n4 %i\
         ",
-        clcmdnum[Cl][0],
-        clcmdnum[Cl][1],
-        clcmdnum[Cl][2],
-        clcmdnum[Cl][3],
-        clcmdnum[Cl][4]
+        clcmdnum[cl][0],
+        clcmdnum[cl][1],
+        clcmdnum[cl][2],
+        clcmdnum[cl][3],
+        clcmdnum[cl][4]
     );
 }
 
 void StacLogTickcounts(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     StacLog
     (
         "\
@@ -288,17 +288,17 @@ void StacLogTickcounts(int userid)
         \n3 %i\
         \n4 %i\
         ",
-        cltickcount[Cl][0],
-        cltickcount[Cl][1],
-        cltickcount[Cl][2],
-        cltickcount[Cl][3],
-        cltickcount[Cl][4]
+        cltickcount[cl][0],
+        cltickcount[cl][1],
+        cltickcount[cl][2],
+        cltickcount[cl][3],
+        cltickcount[cl][4]
     );
 }
 
 void StacLogButtons(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
     StacLog
     (
@@ -310,25 +310,25 @@ void StacLogButtons(int userid)
         \n3 %i\
         \n4 %i\
         ",
-        clbuttons[Cl][0],
-        clbuttons[Cl][1],
-        clbuttons[Cl][2],
-        clbuttons[Cl][3],
-        clbuttons[Cl][4]
+        clbuttons[cl][0],
+        clbuttons[cl][1],
+        clbuttons[cl][2],
+        clbuttons[cl][3],
+        clbuttons[cl][4]
     );
 }
 
 /********** ISVALIDCLIENT STUFF *********/
 
-bool IsValidClient(int client)
+bool IsValidClient(int cl)
 {
     if
     (
-        (0 < client <= MaxClients)
-        && IsClientInGame(client)
-        && !IsClientInKickQueue(client)
-        && !userBanQueued[client]
-        && !IsFakeClient(client)
+        (0 < cl <= MaxClients)
+        && IsClientInGame(cl)
+        && !IsClientInKickQueue(cl)
+        && !userBanQueued[cl]
+        && !IsFakeClient(cl)
     )
     {
         return true;
@@ -336,17 +336,17 @@ bool IsValidClient(int client)
     return false;
 }
 
-bool IsValidClientOrBot(int client)
+bool IsValidClientOrBot(int cl)
 {
     if
     (
-        (0 < client <= MaxClients)
-        && IsClientInGame(client)
-        && !IsClientInKickQueue(client)
-        && !userBanQueued[client]
+        (0 < cl <= MaxClients)
+        && IsClientInGame(cl)
+        && !IsClientInKickQueue(cl)
+        && !userBanQueued[cl]
         // don't bother sdkhooking stv or replay bots lol
-        && !IsClientSourceTV(client)
-        && !IsClientReplay(client)
+        && !IsClientSourceTV(cl)
+        && !IsClientReplay(cl)
     )
     {
         return true;
@@ -354,16 +354,16 @@ bool IsValidClientOrBot(int client)
     return false;
 }
 
-bool IsValidAdmin(int Cl)
+bool IsValidAdmin(int cl)
 {
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
         // can this client ban, or are they me, sappho?
         if
         (
-            CheckCommandAccess(Cl, "sm_ban", ADMFLAG_GENERIC)
+            CheckCommandAccess(cl, "sm_ban", ADMFLAG_GENERIC)
             //|| Maybe someday, w/ stac_telemetry. Not today. -sappho
-            //StrEqual(SteamAuthFor[Cl], "STEAM_0:1:124178191")
+            //StrEqual(SteamAuthFor[cl], "STEAM_0:1:124178191")
         )
         {
             return true;
@@ -390,21 +390,21 @@ bool IsValidSrcTV(int client)
 
 void BanUser(int userid, char[] reason, char[] pubreason)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
     // prevent double bans
-    if (userBanQueued[Cl])
+    if (userBanQueued[cl])
     {
-        KickClient(Cl, "Banned by StAC");
+        KickClient(cl, "Banned by StAC");
         return;
     }
 
     StacGeneralPlayerNotify(userid, reason);
     // make sure we dont detect on already banned players
-    userBanQueued[Cl] = true;
+    userBanQueued[cl] = true;
 
     // check if client is authed before banning normally
-    bool isAuthed = IsClientAuthorized(Cl);
+    bool isAuthed = IsClientAuthorized(cl);
 
     if (demonameInBanReason)
     {
@@ -425,11 +425,11 @@ void BanUser(int userid, char[] reason, char[] pubreason)
     {
         if (SOURCEBANS)
         {
-            SBPP_BanPlayer(0, Cl, banDuration, reason);
+            SBPP_BanPlayer(0, cl, banDuration, reason);
             // there's no return value for that native, so we have to just assume it worked lol
             return;
         }
-        if (MATERIALADMIN && MABanPlayer(0, Cl, MA_BAN_STEAM, banDuration, reason))
+        if (MATERIALADMIN && MABanPlayer(0, cl, MA_BAN_STEAM, banDuration, reason))
         {
             return;
         }
@@ -440,29 +440,29 @@ void BanUser(int userid, char[] reason, char[] pubreason)
             return;
         }
         // stock tf2, no ext ban system. if we somehow fail here, keep going.
-        if (BanClient(Cl, banDuration, BANFLAG_AUTO, reason, reason, _, _))
+        if (BanClient(cl, banDuration, BANFLAG_AUTO, reason, reason, _, _))
         {
             return;
         }
     }
     // if we got here steam is being fussy or the client is not auth'd in some way, or the stock tf2 ban failed somehow.
-    StacLog("Client %N is not authorized, steam is down, or the ban failed for some other reason. Attempting to ban with cached SteamID...", Cl);
+    StacLog("Client %N is not authorized, steam is down, or the ban failed for some other reason. Attempting to ban with cached SteamID...", cl);
     // if this returns true, we can still ban the client with their steamid in a roundabout and annoying way.
-    if (!IsActuallyNullString(SteamAuthFor[Cl]))
+    if (!IsActuallyNullString(SteamAuthFor[cl]))
     {
-        ServerCommand("sm_addban %i \"%s\" %s", banDuration, SteamAuthFor[Cl], reason);
-        KickClient(Cl, "%s", reason);
+        ServerCommand("sm_addban %i \"%s\" %s", banDuration, SteamAuthFor[cl], reason);
+        KickClient(cl, "%s", reason);
     }
     // if the above returns false, we can only do ip :/
     else
     {
         char ip[16];
-        GetClientIP(Cl, ip, sizeof(ip));
+        GetClientIP(cl, ip, sizeof(ip));
 
-        StacLog("No cached SteamID for %N! Banning with IP %s...", Cl, ip);
+        StacLog("No cached SteamID for %N! Banning with IP %s...", cl, ip);
         ServerCommand("sm_banip %s %i %s", ip, banDuration, reason);
         // this kick client might not be needed - you get kicked by "being added to ban list"
-        // KickClient(Cl, "%s", reason);
+        // KickClient(cl, "%s", reason);
     }
 
     MC_PrintToChatAll("%s", pubreason);
@@ -496,14 +496,14 @@ bool isDefaultTickrate()
     return false;
 }
 
-void calcTPSfor(int Cl)
+void calcTPSfor(int cl)
 {
-    t[Cl]++;
-    if (GetEngineTime() - 1.0 >= secTime[Cl])
+    t[cl]++;
+    if (GetEngineTime() - 1.0 >= secTime[cl])
     {
-        secTime[Cl] = GetEngineTime();
-        tickspersec[Cl] = t[Cl];
-        t[Cl] = 0;
+        secTime[cl] = GetEngineTime();
+        tickspersec[cl] = t[cl];
+        t[cl] = 0;
     }
 }
 
@@ -706,18 +706,18 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
     char fmtmsg[256];
     VFormat(fmtmsg, sizeof(fmtmsg), format, 3);
 
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     char ClName[64];
-    GetClientName(Cl, ClName, sizeof(ClName));
+    GetClientName(cl, ClName, sizeof(ClName));
     Discord_EscapeString(ClName, sizeof(ClName));
 
     // we technically store the url in this so it has to be bigger
     char steamid[96];
     // ok we store these on client connect & auth, this shouldn't be null
-    if (!IsActuallyNullString(SteamAuthFor[Cl]))
+    if (!IsActuallyNullString(SteamAuthFor[cl]))
     {
         // make this a clickable link in discord
-        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
+        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[cl], SteamAuthFor[cl]);
     }
     // if it is, that means the plugin reloaded or steam is being fussy.
     else
@@ -733,7 +733,7 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         msg,
         4096,
         generalTemplate,
-        Cl,
+        cl,
         steamid,
         fmtmsg,
         hostname,
@@ -837,18 +837,18 @@ void StacDetectionNotify(int userid, char[] type, int detections)
 
     char[] msg = new char[ strlen(detectionTemplate) ];
 
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     char ClName[64];
-    GetClientName(Cl, ClName, sizeof(ClName));
+    GetClientName(cl, ClName, sizeof(ClName));
     Discord_EscapeString(ClName, sizeof(ClName));
 
     // we technically store the url in this so it has to be bigger
     char steamid[96];
     // ok we store these on client connect & auth, this shouldn't be null
-    if (!IsActuallyNullString(SteamAuthFor[Cl]))
+    if (!IsActuallyNullString(SteamAuthFor[cl]))
     {
         // make this a clickable link in discord
-        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
+        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[cl], SteamAuthFor[cl]);
     }
     // if it is, that means the plugin reloaded or steam is being fussy.
     else
@@ -864,7 +864,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         msg,
         4096,
         detectionTemplate,
-        Cl,
+        cl,
         steamid,
         type,
         detections,
@@ -875,64 +875,64 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         GetTime(),
 
         // angles
-        clangles[Cl][0][0],
-        clangles[Cl][0][1],
-        clangles[Cl][0][2],
+        clangles[cl][0][0],
+        clangles[cl][0][1],
+        clangles[cl][0][2],
 
-        clangles[Cl][1][0],
-        clangles[Cl][1][1],
-        clangles[Cl][1][2],
+        clangles[cl][1][0],
+        clangles[cl][1][1],
+        clangles[cl][1][2],
 
-        clangles[Cl][2][0],
-        clangles[Cl][2][1],
-        clangles[Cl][2][2],
+        clangles[cl][2][0],
+        clangles[cl][2][1],
+        clangles[cl][2][2],
 
-        clangles[Cl][3][0],
-        clangles[Cl][3][1],
-        clangles[Cl][3][2],
+        clangles[cl][3][0],
+        clangles[cl][3][1],
+        clangles[cl][3][2],
 
-        clangles[Cl][4][0],
-        clangles[Cl][4][1],
-        clangles[Cl][4][2],
+        clangles[cl][4][0],
+        clangles[cl][4][1],
+        clangles[cl][4][2],
 
         // eye positions
-        clpos[Cl][0][0],
-        clpos[Cl][0][1],
-        clpos[Cl][0][2],
-        clpos[Cl][1][0],
-        clpos[Cl][1][1],
-        clpos[Cl][1][2],
+        clpos[cl][0][0],
+        clpos[cl][0][1],
+        clpos[cl][0][2],
+        clpos[cl][1][0],
+        clpos[cl][1][1],
+        clpos[cl][1][2],
 
         // cmdnum
-        clcmdnum[Cl][0],
-        clcmdnum[Cl][1],
-        clcmdnum[Cl][2],
-        clcmdnum[Cl][3],
-        clcmdnum[Cl][4],
+        clcmdnum[cl][0],
+        clcmdnum[cl][1],
+        clcmdnum[cl][2],
+        clcmdnum[cl][3],
+        clcmdnum[cl][4],
 
         // tickcount
-        cltickcount[Cl][0],
-        cltickcount[Cl][1],
-        cltickcount[Cl][2],
-        cltickcount[Cl][3],
-        cltickcount[Cl][4],
+        cltickcount[cl][0],
+        cltickcount[cl][1],
+        cltickcount[cl][2],
+        cltickcount[cl][3],
+        cltickcount[cl][4],
 
         // buttons
-        clbuttons[Cl][0],
-        clbuttons[Cl][1],
-        clbuttons[Cl][2],
-        clbuttons[Cl][3],
-        clbuttons[Cl][4],
+        clbuttons[cl][0],
+        clbuttons[cl][1],
+        clbuttons[cl][2],
+        clbuttons[cl][3],
+        clbuttons[cl][4],
 
         // network
-        pingFor[Cl],
-        lossFor[Cl],
-        inchokeFor[Cl],
-        outchokeFor[Cl],
-        chokeFor[Cl],
-        rateFor[Cl],
-        ppsFor[Cl],
-        tickspersec[Cl]
+        pingFor[cl],
+        lossFor[cl],
+        inchokeFor[cl],
+        outchokeFor[cl],
+        chokeFor[cl],
+        rateFor[cl],
+        ppsFor[cl],
+        tickspersec[cl]
     );
 
     SendMessageToDiscord(msg);

@@ -149,13 +149,13 @@ public void OnPluginStart()
     initCvars();
 
     // redo all client based stuff on plugin reload
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    for (int cl = 1; cl <= MaxClients; cl++)
     {
-        if (IsValidClientOrBot(Cl))
+        if (IsValidClientOrBot(cl))
         {
             // Force network settings
-            OnClientSettingsChanged(Cl);
-            OnClientPutInServer(Cl);
+            OnClientSettingsChanged(cl);
+            OnClientPutInServer(cl);
         }
     }
 
@@ -193,7 +193,7 @@ Action stacProf(int callingCl, int args)
 
 
 
-    int Cl = 1;
+    int cl = 1;
 
     Profiler prof = CreateProfiler();
     StartProfiling(prof);
@@ -202,7 +202,7 @@ Action stacProf(int callingCl, int args)
     {
         // checkcmdnum =
         // checktickcount =
-        IsUserLagging(Cl, false,  false);
+        IsUserLagging(cl, false,  false);
     }
 
     StopProfiling(prof);
@@ -217,7 +217,7 @@ Action stacProf(int callingCl, int args)
 
     for (int i = 0; i <= runs; i++)
     {
-        IsUserLagging(Cl, true, false);
+        IsUserLagging(cl, true, false);
     }
 
 
@@ -265,13 +265,13 @@ Action Timer_CheckLiveFeed(Handle timer)
     // TODO: WE DONT NEED TO DO THIS EVERY FRAME YOU HEADASS
     // TODONE: Stuck this in a timer
     // LIVEFEED
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    for (int cl = 1; cl <= MaxClients; cl++)
     {
-        if (IsValidClient(Cl))
+        if (IsValidClient(cl))
         {
-            if (LiveFeedOn[Cl])
+            if (LiveFeedOn[cl])
             {
-                LiveFeed_PlayerCmd(GetClientUserId(Cl));
+                LiveFeed_PlayerCmd(GetClientUserId(cl));
             }
         }
     }

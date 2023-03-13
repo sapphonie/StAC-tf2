@@ -4,10 +4,10 @@
 
 void LiveFeed_PlayerCmd(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
     float srvangles[3];
-    GetClientEyeAngles(Cl, srvangles);
+    GetClientEyeAngles(cl, srvangles);
 
     // this is so ugly lol
     static char RareButtonNames[][] =
@@ -41,7 +41,7 @@ void LiveFeed_PlayerCmd(int userid)
     };
 
 
-    int buttons = clbuttons[Cl][0];
+    int buttons = clbuttons[cl][0];
 
     char fwd    [4] = "_";
     if (buttons & IN_FORWARD)
@@ -159,15 +159,15 @@ void LiveFeed_PlayerCmd(int userid)
                 \n y %.2f \
                 \n z %.2f \
                 ",
-                clcmdnum[Cl][0],
-                cltickcount[Cl][0],
+                clcmdnum[cl][0],
+                cltickcount[cl][0],
                 use,  fwd, reload,
                 left, back, right,    m1, m2, m3,
                 jump, duck,
                 IsActuallyNullString(strButtons) ? "N/A" : strButtons,
-                clbuttons[Cl][0],
-                clmouse[Cl][0], clmouse[Cl][1],
-                clangles[Cl][0][0], clangles[Cl][0][1], clangles[Cl][0][2]
+                clbuttons[cl][0],
+                clmouse[cl][0], clmouse[cl][1],
+                clangles[cl][0][0], clangles[cl][0][1], clangles[cl][0][2]
                 //srvangles[0], srvangles[1], srvangles[2]
             );
             /*
@@ -202,10 +202,10 @@ void LiveFeed_PlayerCmd(int userid)
                 \n SequentialCmdnum? %s\
                 \n OrderedTickcount? %s\
                 ",
-                tickspersec[Cl],
+                tickspersec[cl],
                 tickspersec[0],
                 IsUserLagging(userid) ? "yes" : "no",
-                HasValidAngles(Cl) ? "yes" : "no",
+                HasValidAngles(cl) ? "yes" : "no",
                 isCmdnumSequential(userid) ? "yes" : "no"
             );
         }
@@ -214,8 +214,8 @@ void LiveFeed_PlayerCmd(int userid)
 
 void LiveFeed_NetInfo(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
-    if (!IsValidClient(Cl))
+    int cl = GetClientOfUserId(userid);
+    if (!IsValidClient(cl))
     {
         return;
     }
@@ -255,18 +255,18 @@ void LiveFeed_NetInfo(int userid)
                 \n %.2f kbps rate\
                 \n %.2f pps rate\
                 ",
-                Cl,
-                Cl,
-                GetClientUserId(Cl),
-                IsPlayerAlive(Cl) ? "alive" : "dead",
-                GetClientTime(Cl),
-                pingFor[Cl],
-                lossFor[Cl],
-                inchokeFor[Cl],
-                outchokeFor[Cl],
-                chokeFor[Cl],
-                rateFor[Cl],
-                ppsFor[Cl]
+                cl,
+                cl,
+                GetClientUserId(cl),
+                IsPlayerAlive(cl) ? "alive" : "dead",
+                GetClientTime(cl),
+                pingFor[cl],
+                lossFor[cl],
+                inchokeFor[cl],
+                outchokeFor[cl],
+                chokeFor[cl],
+                rateFor[cl],
+                ppsFor[cl]
             );
         }
     }
