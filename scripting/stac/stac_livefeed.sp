@@ -206,8 +206,7 @@ void LiveFeed_PlayerCmd(int userid)
                 tickspersec[0],
                 IsUserLagging(userid) ? "yes" : "no",
                 HasValidAngles(Cl) ? "yes" : "no",
-                isCmdnumSequential(userid) ? "yes" : "no",
-                isTickcountInOrder(userid) ? "yes" : "no"
+                isCmdnumSequential(userid) ? "yes" : "no"
             );
         }
     }

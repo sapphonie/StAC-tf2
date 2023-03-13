@@ -61,6 +61,7 @@ public Action OnPlayerRunCmd
     if ( !IsClientConnected(Cl) || !IsClientInGame(Cl) || IsClientInKickQueue(Cl) )
     {
         // Todo; maybe KickClient for the IsClientInGame failing here?
+        // Can this cause airstuck??
         buttons     = 0;
         impulse     = 0;
         vel         = {0.0, 0.0, 0.0};
@@ -76,17 +77,78 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
+
+    // Something nasty is happening
+    /*
+    if (tickcount > GetGameTickCount() || cmdnum > GetSequenceNumber(Cl) )
+    {
+        //
+    }
+    */
+
     OnPlayerRunCmd_jaypatch(Cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
 
     // Don't allow clients to have both left and right turns active
     if (buttons & IN_LEFT && buttons & IN_RIGHT)
     {
-        buttons &= ~( IN_LEFT |  IN_RIGHT );
+        buttons &= ~( IN_LEFT | IN_RIGHT );
     }
     return Plugin_Continue;
 }
 
 
+
+/*
+    void CInput::CreateMove ( int sequence_number, float input_sample_frametime, bool active )
+    {
+        CUserCmd *cmd = &m_pCommands[ sequence_number % MULTIPLAYER_BACKUP ];
+        CVerifiedUserCmd *pVerified = &m_pVerifiedCommands[ sequence_number % MULTIPLAYER_BACKUP ];
+
+        cmd->Reset();
+
+        cmd->command_number = sequence_number;
+        cmd->tick_count     = gpGlobals->tickcount;
+
+        ...
+    }
+
+    // For matching server and client commands for debugging
+    int     command_number;
+
+    // the tick the client created this command
+    int     tick_count;
+
+    // Player instantaneous view angles.
+    QAngle  viewangles;
+
+    // Intended velocities
+    //  forward velocity.
+    float   forwardmove;
+
+    //  sideways velocity.
+    float   sidemove;
+
+    //  upward velocity.
+    float   upmove;
+
+    // Attack button states
+    int     buttons;
+
+    // Impulse command issued.
+    byte    impulse;
+
+    // Current weapon id
+    int     weaponselect;
+    int     weaponsubtype;
+
+    int     random_seed;        // For shared random functions
+#ifdef GAME_DLL
+    int     server_random_seed; // Only the server populates this seed
+#endif
+
+    short   mousedx;            // mouse accum in x from create move
+    short   mousedy;            // mouse accum in y from create move
+*/
 stock void PlayerRunCmd
 (
     const int Cl,
@@ -105,17 +167,25 @@ stock void PlayerRunCmd
     //Profiler prof = CreateProfiler();
     //StartProfiling(prof);
 
-    // + around 1µs
     // make sure client is real & not a bot
     if (!IsValidClient(Cl))
     {
         return;
     }
 
+    // you NEED to move this to OnGameFrame()
+    // int servertickcount = GetGameTickCount();
+
+    //if (tickbase > servertickcount || tickcount > servertickcount)
+    //{
+    //    // LogMessage("->");
+    //}
+
     // point_worldtext_TODO(Cl);
 
 
     // originally from ssac - block invalid usercmds with invalid data
+    // todo: do we really still need this...
     if (cmdnum <= 0 || tickcount <= 0)
     {
         if (cmdnum < 0 || tickcount < 0)
@@ -130,7 +200,6 @@ stock void PlayerRunCmd
         timeSinceNullCmd[Cl] = GetEngineTime();
         return;
     }
-
 
     // + around 1µs
     // grab engine time
@@ -200,9 +269,11 @@ stock void PlayerRunCmd
         didBangThisFrame[Cl] = false;
     }
 
-    // + around 1.5µs [ ! ]
     // detect trigger teleports
-    if (GetVectorDistance(clpos[Cl][0], clpos[Cl][1], false) > 256)
+    // squared for optimization
+    // 256 * 256
+    static int maxTeleDist = 65536;
+    if (GetVectorDistance(clpos[Cl][0], clpos[Cl][1], /* squared for optimization */ true) > maxTeleDist)
     {
         // reuse this variable
         timeSinceTeled[Cl] = GetEngineTime();
@@ -225,19 +296,10 @@ stock void PlayerRunCmd
         || engineTime[Cl][0] - 1.0 < timeSinceTaunt[Cl]
         // ...didn't recently teleport - can cause psilent detects
         || engineTime[Cl][0] - 1.0 < timeSinceTeled[Cl]
-        // don't touch this client if they've recently run a nullcmd, because they're probably lagging
-        // I will tighten this up if cheats decide to try to get around stac by spamming nullcmds.
-        || engineTime[Cl][0] - 0.1 < timeSinceNullCmd[Cl]
         // don't touch if map or plugin just started - let the server framerate stabilize a bit
-        || engineTime[Cl][0] - 2.5 < timeSinceMapStart
+        || engineTime[Cl][0] - 5.0 < timeSinceMapStart
         // lets wait a bit if we had a server lag spike in the last 5 seconds
         || engineTime[Cl][0] - ServerLagWaitLength < timeSinceLagSpikeFor[0]
-        // lets also wait a bit if we had a lag spike in the last 5 seconds on this specific client
-        || engineTime[Cl][0] - PlayerLagWaitLength < timeSinceLagSpikeFor[Cl]
-        // make sure client isn't timing out - duh
-        // TODO: do we NEED to check this?
-        // TODONE; No, it's also vaguely slow
-        //|| IsClientTimingOut(Cl)
         // this is just for halloween shit - plenty of halloween effects can and will mess up all of these checks
         // TODO: THIS CAN APPARENTLY BE SPOOFED. CLEAN THIS UP.
         || playerInBadCond[Cl] != 0
@@ -249,6 +311,32 @@ stock void PlayerRunCmd
     // not really a lag dependant check
     fakeangCheck(Cl);
 
+    // dont check cmdnum here but check everything else
+    if ( !IsUserLagging(Cl, /* checkcmdnum = */ false) )
+    {
+        //LogMessage("would check cmdnumspikeCheck - >");
+
+        cmdnumspikeCheck(Cl);
+    }
+
+    // time to wait after player lags before checking single client's OnPlayerRunCmd
+    static float PlayerLagWaitLength = 5.0;
+
+    // Give some overlap so that we check BEFORE the lag length expires
+    if ( engineTime[Cl][0] - ( PlayerLagWaitLength - 1.0 ) < timeSinceLagSpikeFor[Cl] )
+    {
+        IsUserLagging(Cl, false);
+    }
+
+    // lets also wait a bit if we had a lag spike in the last 5 seconds on this specific client
+    if ( engineTime[Cl][0] - PlayerLagWaitLength < timeSinceLagSpikeFor[Cl] )
+    {
+        return;
+    }
+
+    //LogMessage("would check psilent - >");
+
+/*
     if
     (
         // make sure client doesn't have OUTRAGEOUS ping
@@ -258,29 +346,22 @@ stock void PlayerRunCmd
     {
         return;
     }
+*/
 
-    // ISUSERLAGGING EATS ~3US
-
-    // we don't want to check this if we're repeating tickcount a lot and/or if loss is high, but cmdnums and tickcounts DO NOT NEED TO BE PERFECT for this.
-    if (!IsUserLagging(Cl, /* checkcmdnum = */ false, /* checktickcount = */ false) && isCmdnumInOrder(Cl))
-    {
-        cmdnumspikeCheck(Cl);
-    }
-
-    triggerbotCheck(Cl);
 
     if
     (
         // make sure client isnt using a spin bind
         ( buttons & IN_LEFT | buttons & IN_RIGHT )
         // make sure we're not lagging and that cmdnum is saneish
-        || IsUserLagging(Cl, /* checkcmdnum = */ true, /* checktickcount = */ false)
+        || IsUserLagging(Cl, /* checkcmdnum = */ true)
     )
     // if any of these things are true, don't check angles etc
     {
         return;
     }
 
+    triggerbotCheck(Cl);
     aimsnapCheck(Cl);
     psilentCheck(Cl);
 
@@ -516,6 +597,7 @@ void cmdnumspikeCheck(int Cl)
     {
         return;
     }
+
     int spikeamt = clcmdnum[Cl][0] - clcmdnum[Cl][1];
     // https://github.com/sapphonie/StAC-tf2/issues/74
     if (spikeamt >= 32 || spikeamt < 0)
@@ -856,12 +938,7 @@ void aimsnapCheck(int Cl)
 void triggerbotCheck(int Cl)
 {
     // don't run if cvar is -1 or if wait is enabled on this server
-
-    if (maxTbotDetections == -1)
-    {
-        return;
-    }
-    if (waitStatus)
+    if (maxTbotDetections == -1 || waitStatus)
     {
         return;
     }
@@ -962,37 +1039,48 @@ void triggerbotCheck(int Cl)
 
 /********** OnPlayerRunCmd based helper functions **********/
 
-bool IsUserLagging(int Cl, bool checkcmdnum = true, bool checktickcount = true)
+
+// TODO: we NEED to make this overlap
+bool IsUserLagging(int Cl, bool checkcmdnum = true)
 {
-    // check if we have sequential cmdnums
-    if
-    (
-        // we don't want very much loss at all. this may be removed some day.
-        lossFor[Cl] >= 5.0
-        || (!isCmdnumSequential(Cl) && checkcmdnum)
-        || (!isTickcountInOrder(Cl) && checktickcount)
-        // tickcount the same over 5 ticks, client is *definitely* lagging
-        || isTickcountRepeated(Cl)
-        || // TODO: HOOKS
-        (
-            isDefaultTickrate()
-            &&
-            (
-                // too short
-                tickspersec[Cl] <= (40)
-                ||
-                // too long
-                tickspersec[Cl] >= (100)
-            )
-        )
-    )
+    /*
+    if ( lossFor[Cl] >= 10.0 )
     {
-        if (!checktickcount)
-        {
-            timeSinceLagSpikeFor[Cl] = engineTime[Cl][0];
-        }
+        timeSinceLagSpikeFor[Cl] = engineTime[Cl][0];
         return true;
     }
+    */
+
+    // check if we have sequential cmdnums
+    if ( checkcmdnum && !isCmdnumSequential(Cl) )
+    {
+        timeSinceLagSpikeFor[Cl] = engineTime[Cl][0];
+        return true;
+    }
+
+    // TIME_TO_TICKS
+    float ratio = timeSinceLastRecvFor[Cl][0] / tickinterv;
+    if ( ratio >= 6.0 || ratio < 0.0 )
+    {
+        //LogMessage("ratio = %f", ratio );
+        //LogMessage("tps = %i", tickspersec[Cl] );
+        timeSinceLagSpikeFor[Cl] = engineTime[Cl][0];
+        return true;
+    }
+
+    static float maxPingDiff = 15.0;
+    float nowdiff = pingFor[Cl] - avgPingFor[Cl];
+    // LogMessage("%f / avg %f / jitter %f" , nowdiff, avgPingFor[Cl], pingFor[Cl]);
+    // if jitter ping is 10ms less than avg...
+    if ( nowdiff >= maxPingDiff || nowdiff <= -maxPingDiff )
+    {
+
+        timeSinceLagSpikeFor[Cl] = engineTime[Cl][0];
+
+        //LogMessage("pingdiff = %f", maxPingDiff );
+        return true;
+    }
+
     return false;
 }
 
@@ -1047,6 +1135,7 @@ bool isCmdnumSequential(int Cl)
 }
 
 // check if the current cmdnum is greater than the last value etc
+/*
 bool isCmdnumInOrder(int Cl)
 {
     if (clcmdnum[Cl][0] > clcmdnum[Cl][1] > clcmdnum[Cl][2] > clcmdnum[Cl][3] > clcmdnum[Cl][4])
@@ -1079,6 +1168,7 @@ bool isTickcountRepeated(int Cl)
     }
     return false;
 }
+*/
 
 /********** DETECTION FORGIVENESS TIMERS **********/
 

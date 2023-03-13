@@ -480,6 +480,7 @@ public Action Timer_GetNetInfo(Handle timer)
             outchokeFor[Cl]  = GetClientAvgChoke(Cl, NetFlow_Outgoing)  * 100.0;
             // convert to ms
             pingFor[Cl]      = GetClientLatency(Cl, NetFlow_Both)       * 1000.0;
+            avgPingFor[Cl]   = GetClientAvgLatency(Cl, NetFlow_Both)    * 1000.0;
             rateFor[Cl]      = GetClientAvgData(Cl, NetFlow_Both)       / 125.0;
             ppsFor[Cl]       = GetClientAvgPackets(Cl, NetFlow_Both);
             if (LiveFeedOn[Cl])

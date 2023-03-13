@@ -74,8 +74,6 @@ float tps;
 
 // time to wait after server lags before checking all client's OnPlayerRunCmd
 float ServerLagWaitLength = 5.0;
-// time to wait after player lags before checking single client's OnPlayerRunCmd
-float PlayerLagWaitLength = 1.0;
 
 // misc server info
 char hostipandport[24];
@@ -158,6 +156,7 @@ float chokeFor              [TFMAXPLAYERS+1];
 float inchokeFor            [TFMAXPLAYERS+1];
 float outchokeFor           [TFMAXPLAYERS+1];
 float pingFor               [TFMAXPLAYERS+1];
+float avgPingFor            [TFMAXPLAYERS+1];
 float rateFor               [TFMAXPLAYERS+1];
 float ppsFor                [TFMAXPLAYERS+1];
 
@@ -225,6 +224,21 @@ GameData stac_gamedata;
 
 Handle SDKCall_GetPlayerSlot;
 Handle SDKCall_GetMsgHandler;
+
+
+//Handle SDKCall_GetSeqNum;
+//Handle SDKCall_GetDropNumber;
+//Handle SDKCall_GetTime;
+Handle SDKCall_GetTimeSinceLastReceived;
+
+
+//int     CLI_seqNrFor                [TFMAXPLAYERS+1][5];
+//int     SRV_seqNrFor                [TFMAXPLAYERS+1][5];
+//int     dropNumFor              [TFMAXPLAYERS+1][5];
+//float   packetTimeFor           [TFMAXPLAYERS+1][5];
+float   timeSinceLastRecvFor    [TFMAXPLAYERS+1][5];
+
+
 
 
 int Offset_m_fFlags;

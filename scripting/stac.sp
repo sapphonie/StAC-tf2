@@ -162,8 +162,12 @@ public void OnPluginStart()
     // hook bullets fired for aimsnap and triggerbot
     AddTempEntHook("Fire Bullets", Hook_TEFireBullets);
 
-    // create global timer running every half second for getting all clients' network info
+    // create global timer running every couple jiffys for getting all clients' network info
     CreateTimer(0.1, Timer_GetNetInfo, _, TIMER_REPEAT);
+    Timer_GetNetInfo(null);
+
+    CreateTimer(3.0, Timer_CheckLiveFeed, _, TIMER_REPEAT);
+
 
     // init hud sync stuff for livefeed
     HudSyncRunCmd       = CreateHudSynchronizer();
@@ -256,12 +260,10 @@ public void OnPluginEnd()
     OnMapEnd();
 }
 
-
-/********** ONGAMEFRAME **********/
-
-// monitor server tickrate
-public void OnGameFrame()
+Action Timer_CheckLiveFeed(Handle timer)
 {
+    // TODO: WE DONT NEED TO DO THIS EVERY FRAME YOU HEADASS
+    // TODONE: Stuck this in a timer
     // LIVEFEED
     for (int Cl = 1; Cl <= MaxClients; Cl++)
     {
@@ -273,7 +275,15 @@ public void OnGameFrame()
             }
         }
     }
+    return Plugin_Continue;
+}
 
+
+/********** ONGAMEFRAME **********/
+
+// monitor server tickrate
+public void OnGameFrame()
+{
     calcTPSfor(0);
 
     if (GetEngineTime() - 15.0 < timeSinceMapStart)

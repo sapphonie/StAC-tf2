@@ -170,10 +170,9 @@ void StacLogNetData(int userid)
         ",
         tickspersec[Cl],
         tickspersec[0],
-        IsUserLagging(userid) ? "yes" : "no",
+        IsUserLagging(Cl) ? "yes" : "no",
         HasValidAngles(Cl) ? "yes" : "no",
-        isCmdnumSequential(userid) ? "yes" : "no",
-        isTickcountInOrder(userid) ? "yes" : "no"
+        isCmdnumSequential(Cl) ? "yes" : "no"
     );
 }
 

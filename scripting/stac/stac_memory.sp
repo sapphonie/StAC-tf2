@@ -33,7 +33,6 @@ void DoStACGamedata()
         {
             SetFailState("Failed to setup detour for CNetChan::ProcessPacket");
         }
-
         // detour
         if ( !DHookEnableDetour(hProcessPacket, false, Detour_CNetChan__ProcessPacket) )
         {
@@ -96,6 +95,70 @@ void DoStACGamedata()
         }
     }
 
+    /*
+        GetTimeSinceLastReceived
+    */
+    StartPrepSDKCall( SDKCall_Raw );
+    PrepSDKCall_SetFromConf( stac_gamedata, SDKConf_Virtual, "CNetChan::GetTimeSinceLastReceived" );
+    PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
+    SDKCall_GetTimeSinceLastReceived = EndPrepSDKCall();
+    if ( SDKCall_GetTimeSinceLastReceived != INVALID_HANDLE )
+    {
+        PrintToServer( "CNetChan::GetTimeSinceLastReceived set up!" );
+    }
+    else
+    {
+        SetFailState( "Failed to get CNetChan::GetTimeSinceLastReceived offset." );
+    }
+/*
+
+        GetSeqNumber
+
+    StartPrepSDKCall( SDKCall_Raw );
+    PrepSDKCall_SetFromConf( stac_gamedata, SDKConf_Virtual, "CNetChan::GetSequenceNr" );
+    PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+    PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+    SDKCall_GetSeqNum = EndPrepSDKCall();
+    if ( SDKCall_GetSeqNum != INVALID_HANDLE )
+    {
+        PrintToServer( "CNetChan::GetSequenceNr set up!" );
+    }
+    else
+    {
+        SetFailState( "Failed to get CNetChan::GetSequenceNr offset." );
+    }
+
+        GetTime
+
+    StartPrepSDKCall( SDKCall_Raw );
+    PrepSDKCall_SetFromConf( stac_gamedata, SDKConf_Virtual, "CNetChan::GetTime" );
+    PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
+    SDKCall_GetTime = EndPrepSDKCall();
+    if ( SDKCall_GetTime != INVALID_HANDLE )
+    {
+        PrintToServer( "CNetChan::GetTime set up!" );
+    }
+    else
+    {
+        SetFailState( "Failed to get CNetChan::GetTime offset." );
+    }
+
+
+        GetDropNumber
+
+    StartPrepSDKCall(SDKCall_Raw);
+    PrepSDKCall_SetFromConf(stac_gamedata, SDKConf_Virtual, "CNetChan::GetDropNumber");
+    PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+    SDKCall_GetDropNumber = EndPrepSDKCall();
+    if (SDKCall_GetDropNumber != INVALID_HANDLE)
+    {
+        PrintToServer("CNetChan::GetDropNumber set up!");
+    }
+    else
+    {
+        SetFailState("Failed to get CNetChan::GetDropNumber offset.");
+    }
+*/
     Offset_m_fFlags     = FindSendPropInfo("CTFPlayer", "m_fFlags");
 
     if ( Offset_m_fFlags == -1 )
@@ -121,9 +184,11 @@ public MRESReturn Detour_CBasePlayer__ProcessUsercmds(int entity, DHookParam hPa
     return MRES_Ignored;
 }
 
+
 public MRESReturn Detour_CNetChan__ProcessPacket(Address pThis, DHookParam hParams)
 {
-    // LogMessage("this = %x", pThis);
+    //LogMessage("this = %x", pThis);
+
     // Get our client idx and iclient ptr
     Address icl_ptr;
     int cl;
@@ -139,8 +204,101 @@ public MRESReturn Detour_CNetChan__ProcessPacket(Address pThis, DHookParam hPara
     signonStateFor[cl]  = signonState;
 
 
+    // int     CLI_seqNrFor             [TFMAXPLAYERS+1][5];
+    // int     SRV_seqNrFor             [TFMAXPLAYERS+1][5];
+    // int     dropNumFor               [TFMAXPLAYERS+1][5];
+    // float   packetTimeFor            [TFMAXPLAYERS+1][5];
+    // float   timeSinceLastRecvFor     [TFMAXPLAYERS+1][5];
 
-    // LogMessage("sos = %i", signonState);
+
+    /*
+    for (int i = 4; i > 0; --i)
+    {
+        CLI_seqNrFor[cl][i] = CLI_seqNrFor[cl][i-1];
+    }
+    CLI_seqNrFor[cl][0] = SDKCall(SDKCall_GetSeqNum, pThis, view_as<int>(NetFlow_Outgoing));
+
+    for (int i = 4; i > 0; --i)
+    {
+        SRV_seqNrFor[cl][i] = SRV_seqNrFor[cl][i-1];
+    }
+    SRV_seqNrFor[cl][0] = SDKCall(SDKCall_GetSeqNum, pThis, view_as<int>(NetFlow_Incoming));
+
+    for (int i = 4; i > 0; --i)
+    {
+        dropNumFor[cl][i] = dropNumFor[cl][i-1];
+    }
+    dropNumFor[cl][0] = SDKCall(SDKCall_GetDropNumber, pThis)
+
+    for (int i = 4; i > 0; --i)
+    {
+        packetTimeFor[cl][i] = packetTimeFor[cl][i-1];
+    }
+    packetTimeFor[cl][0] = SDKCall(SDKCall_GetTime, pThis);
+    */
+    for (int i = 4; i > 0; --i)
+    {
+        timeSinceLastRecvFor[cl][i] = timeSinceLastRecvFor[cl][i-1];
+    }
+    timeSinceLastRecvFor[cl][0] = SDKCall(SDKCall_GetTimeSinceLastReceived, pThis);
+
+    /*
+    if ( CLI_seqNrFor[cl][0] > SRV_seqNrFor[cl][0])
+    {
+        //LogMessage("BAD");
+    }
+
+
+    if
+    (
+           SRV_seqNrFor[cl][0] > SRV_seqNrFor[cl][1]
+        && SRV_seqNrFor[cl][1] > SRV_seqNrFor[cl][2]
+        && SRV_seqNrFor[cl][2] > SRV_seqNrFor[cl][3]
+        && SRV_seqNrFor[cl][3] > SRV_seqNrFor[cl][4]
+    )
+    {
+        //LogMessage("%i %i %i %i %i", SRV_seqNrFor[cl][0], SRV_seqNrFor[cl][1], SRV_seqNrFor[cl][2], SRV_seqNrFor[cl][3], SRV_seqNrFor[cl][4]);
+
+        //LogMessage("seq");
+    }
+    else
+    {
+        //LogMessage("%i %i %i %i %i", SRV_seqNrFor[cl][0], SRV_seqNrFor[cl][1], SRV_seqNrFor[cl][2], SRV_seqNrFor[cl][3], SRV_seqNrFor[cl][4]);
+    }
+    */
+    //LogMessage("-> %i", dropNumFor[cl][0]);
+    /*
+    // client seq num
+    int outSeq  = SDKCall(SDKCall_GetSeqNum, pThis, view_as<int>(NetFlow_Outgoing));
+    // LogMessage("outSeq -> %i", outSeq);
+
+    // server seq num
+    int inSeq   = SDKCall(SDKCall_GetSeqNum, pThis, view_as<int>(NetFlow_Incoming));
+    // LogMessage("inSeq -> %i", inSeq);
+
+
+    seqNr[cl][4] = seqNr[cl][3];
+    seqNr[cl][3] = seqNr[cl][2];
+    seqNr[cl][2] = seqNr[cl][1];
+    seqNr[cl][1] = seqNr[cl][0];
+    seqNr[cl][0] = outSeq;
+    */
+    //
+    // if (seqNr[cl][4] + 6 < outSeq)
+    // {
+    //     LogMessage("%i %i", seqNr[cl][4], outSeq);
+    //     LogMessage("beh");
+    // }
+
+
+    // Packet size
+    // int offset          = ( 13 * 4 );
+    // Address netpacket   = DHookGetParamAddress( hParams, 1 );
+    // int size = DerefPtr( netpacket + offset );
+    //LogMessage("-> %x", netpacket);
+    //LogMessage("-> %i", size);
+
+
     return MRES_Ignored;
 }
 
