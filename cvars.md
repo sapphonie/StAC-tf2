@@ -151,13 +151,6 @@ stac_log_to_file "1"
 // Maximum: "1.000000"
 stac_fixpingmasking_enabled "1"
 
-// [StAC] maximum number of times a client can spam userinfo updates (over the course of 10 seconds) before getting banned.
-// (recommended 10+)
-// -
-// Default: "25"
-// Minimum: "-1.000000"
-stac_max_userinfo_spam_detections "25"
-
 // [StAC] forcibly reconnect clients unauthorized with steam - this protects against cheat clients not setting steamids, at the cost of making your server inaccessible when Steam is down.
 // (recommended 0, only enable this if you have consistent issues with unauthed cheaters!)
 // -

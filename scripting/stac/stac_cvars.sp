@@ -651,7 +651,7 @@ void RunOptimizeCvars()
         }
     }
 
-    // OVERRIDE this setting, i am smarter than you in this regard, i promise:
+    // OVERRIDE this setting
     // There is basically NO situation where you want the client updating FROM the server at a different rate
     // than they are updating the server itself by sending usercmds
     SetConVarInt(FindConVar("sv_client_cmdrate_difference"), 0);

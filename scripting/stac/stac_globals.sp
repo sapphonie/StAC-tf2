@@ -71,6 +71,8 @@ int maxuserinfoSpamDetections   = 25;
 // tickrate stuff
 float tickinterv;
 float tps;
+int servertick;
+
 
 // time to wait after server lags before checking all client's OnPlayerRunCmd
 float ServerLagWaitLength = 5.0;
@@ -87,8 +89,6 @@ float timescale;
 // time since some server event happened
 // time since the map started
 float timeSinceMapStart;
-// time since the last stutter/lag spike occurred per client
-float timeSinceLagSpikeFor[TFMAXPLAYERS + 1];
 
 // native/gamemode/plugin etc bools
 bool configsExecuted = false;
@@ -110,14 +110,12 @@ int pSilentDetects          [TFMAXPLAYERS+1] = {-1, ...}; // ^
 int bhopDetects             [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore single jumps
 int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = {-1, ...};
-int userinfoSpamDetects     [TFMAXPLAYERS+1];
 
 // frames since client "did something"
 //                          [ client index ][history]
 float timeSinceSpawn        [TFMAXPLAYERS+1];
 float timeSinceTaunt        [TFMAXPLAYERS+1];
 float timeSinceTeled        [TFMAXPLAYERS+1];
-float timeSinceNullCmd      [TFMAXPLAYERS+1];
 float timeSinceLastCommand  [TFMAXPLAYERS+1];
 // ticks since client "did something"
 //                          [ client index ][history]
@@ -159,6 +157,9 @@ float pingFor               [TFMAXPLAYERS+1];
 float avgPingFor            [TFMAXPLAYERS+1];
 float rateFor               [TFMAXPLAYERS+1];
 float ppsFor                [TFMAXPLAYERS+1];
+
+// time since the last stutter/lag spike occurred per client
+float timeSinceLagSpikeFor  [TFMAXPLAYERS+1];
 
 /***** Misc other handles *****/
 
@@ -224,34 +225,12 @@ GameData stac_gamedata;
 
 Handle SDKCall_GetPlayerSlot;
 Handle SDKCall_GetMsgHandler;
-
-
-//Handle SDKCall_GetSeqNum;
-//Handle SDKCall_GetDropNumber;
-//Handle SDKCall_GetTime;
 Handle SDKCall_GetTimeSinceLastReceived;
 
-
-//int     CLI_seqNrFor                [TFMAXPLAYERS+1][5];
-//int     SRV_seqNrFor                [TFMAXPLAYERS+1][5];
-//int     dropNumFor              [TFMAXPLAYERS+1][5];
-//float   packetTimeFor           [TFMAXPLAYERS+1][5];
-float   timeSinceLastRecvFor    [TFMAXPLAYERS+1][5];
-
-
-
-
+float   timeSinceLastRecvFor    [TFMAXPLAYERS+1];
 int Offset_m_fFlags;
 
-/*
-Handle SDKCall_GetName;
-Handle SDKCall_GetAddr;
-Handle SDKCall_GetTimeSinceLastReceived;
-Handle SDKCall_GetSeqNum;
-Handle SDKCall_GetTime;
-Handle SDKCall_GetDropNumber;
 
-
-int dropThreshold;
-int seqNr[MAXPLAYERS+1][5];
-*/
+int PITCH   = 0;
+int YAW     = 1;
+int ROLL    = 2;

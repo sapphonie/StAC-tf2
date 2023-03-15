@@ -23,46 +23,6 @@
                     }
                 }
             }
-            // void CServerGameClients::ProcessUsercmds(edict_t *player, bf_read *buf, int numcmds, int totalcmds, int dropped_packets, bool ignore, bool paused)
-            "CServerGameClients::ProcessUsercmds"
-            {
-                "signature"     "CServerGameClients::ProcessUsercmds"
-                "callconv"      "thiscall"
-                "return"        "float"     // ignored
-                "this"          "address"   // i don't care
-                "arguments"
-                {
-                    "player_edict"  // edict_t*
-                    {
-                        "type"      "edict"
-                    }
-                    "buf"           // bf_read*
-                    {
-                        "type"      "objectptr"
-                    }
-                    "numcmds"
-                    {
-                        "type"      "int"
-                    }
-                    "totalcmds"
-                    {
-                        "type"      "int"
-                    }
-                    "dropped_packets"
-                    {
-                        "type"      "int"
-                    }
-                    "ignore"
-                    {
-                        "type"      "bool"
-                    }
-                    "paused"
-                    {
-                        "type"      "bool"
-                    }
-                }
-            }
-
             // void CBasePlayer::ProcessUsercmds(CBasePlayer* this, CUserCmd* ucmd, int numcmd, int totalcmd, int unknown, bool unknown)
             "CBasePlayer::ProcessUsercmds"
             {
@@ -94,22 +54,6 @@
                     }
                 }
             }
-
-            // void NET_RunFrame(float realtime);
-            "NET_RunFrame"
-            {
-                "signature"     "NET_RunFrame"
-                "callconv"      "thiscall"
-                "return"        "void"
-                "this"          "address"
-                "arguments"
-                {
-                    "realtime"
-                    {
-                        "type"      "float"
-                    }
-                }
-            }
         }
 
         "Signatures"
@@ -124,13 +68,7 @@
                 "linux"     "@_ZN8CNetChan13ProcessPacketEP11netpacket_sb"
                 "windows"   "\x55\x8B\xEC\x83\xEC\x10\x53\x56\x57\x8B\x7D\x08\x8B\xD9\x83\x7F\x24\x00"
             }
-            // Unusued don't care [ yet ]
-            "CServerGameClients::ProcessUsercmds"
-            {
-                "library"   "server"
-                "linux"     "@_ZN18CServerGameClients15ProcessUsercmdsEP7edict_tP7bf_readiiibb"
-                "windows"   "todo"
-            }
+
             /*
                 "CBasePlayer::ChangeTeam( %d )" - 2 in vtable from that func
                 sub_102B44C0          ; int __thiscall sub_102B44C0(_DWORD *this, int, int, int, int, char)
@@ -141,38 +79,27 @@
                 "linux"     "@_ZN11CBasePlayer15ProcessUsercmdsEP8CUserCmdiiib"
                 "windows"   "\x55\x8B\xEC\x83\xEC\x10\x53\x8B\xD9\x56\x57\xFF\xB3\xCC\x0C\x00\x00"
             }
-            // Unused don't care [ yet ]
-            "NET_RunFrame"
-            {
-                "library"   "engine"
-                "linux"     "@_Z12NET_RunFramed"
-                "windows"   "todo"
-            }
         }
 
         "Offsets"
         {
             /*
-                .text:000BD330
-                .text:000BD330
-                .text:000BD330     ; Attributes: bp-based frame
-                .text:000BD330
-                .text:000BD330     ; bool __cdecl CBaseClient::IsConnected(CBaseClient *this)
-                .text:000BD330     _ZNK11CBaseClient11IsConnectedEv proc near
-                .text:000BD330
-                .text:000BD330     this= dword ptr  8
-                .text:000BD330
-                .text:000BD330     ; __unwind {
-                .text:000BD330 000 push    ebp
-                .text:000BD331 004 mov     ebp, esp
-                .text:000BD333 004 mov     eax, [ebp+this]
-                .text:000BD336 004 pop     ebp
-                .text:000BD337 000 cmp     dword ptr [eax+0C8h], 1
-                .text:000BD33E 000 setnle  al  ;          ^^^^
-                .text:000BD341 000 retn
-                .text:000BD341     ; } // starts at BD330
-                .text:000BD341     _ZNK11CBaseClient11IsConnectedEv endp
-                .text:000BD341
+                    ; Attributes: bp-based frame
+
+                    ; bool __cdecl CBaseClient::IsConnected(CBaseClient *this)
+                    _ZNK11CBaseClient11IsConnectedEv proc near
+
+                    this= dword ptr  8
+
+                    000 push    ebp
+                    004 mov     ebp, esp
+                    004 mov     eax, [ebp+this]
+                    004 pop     ebp
+                    000 cmp     dword ptr [eax+0C8h], 1
+                    000 setnle  al  ;          ^^^^
+                    000 retn
+
+                    _ZNK11CBaseClient11IsConnectedEv endp
 
 
                 _ZN11CBaseClient13FireGameEventEP10IGameEvent has "FireGameEvent"
@@ -182,7 +109,6 @@
                 CBaseClient::IsConnected()  const
                 CBaseClient::IsSpawned()    const
                 CBaseClient::IsActive()     const
-
 
                 ; bool __thiscall sub_1007F080(_DWORD *this)
                 sub_1007F080 proc near
@@ -221,50 +147,16 @@
                 "linux"     "15"
                 "windows"   "14" // <-- annoying offset to get that i'm just trusting nosoop to be correct on (it doesn't crash)
             }
-            "CNetChan::GetName"
-            {
-                "linux"     "0"
-                "windows"   "0"
-            }
-            "CNetChan::GetAddress"
-            {
-                "linux"     "1"
-                "windows"   "1"
-            }
-            "CNetChan::GetTime"
-            {
-                "linux"     "2"
-                "windows"   "2"
-            }
-            "CNetChan::GetSequenceNr"
-            {
-                "linux"     "16"
-                "windows"   "16"
-            }
             "CNetChan::GetTimeSinceLastReceived"
             {
                 "linux"     "21"
                 "windows"   "21"
             }
-            // "CNetChan::ProcessPacket"
-            // {
-            //     "linux"     "37"
-            //     "windows"   "36"
-            // }
-
             "CNetChan::GetMsgHandler"
             {
                 "linux"     "47"
                 "windows"   "46"
             }
-            "CNetChan::GetDropNumber"
-            {
-                "linux"     "48"
-                "windows"   "47"
-            }
         }
     }
 }
-
-
-

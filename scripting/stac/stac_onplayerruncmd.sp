@@ -9,8 +9,6 @@
     - AIM SNAPS
     - FAKE ANGLES
     - TURN BINDS
-
-    TODO: nullcmd spamming
 */
 
 /*
@@ -21,9 +19,9 @@
 
 */
 
-int PITCH   = 0;
-int YAW     = 1;
-int ROLL    = 2;
+// int PITCH   = 0;
+// int YAW     = 1;
+// int ROLL    = 2;
 
 public void OnPlayerRunCmdPre
 (
@@ -62,29 +60,19 @@ public Action OnPlayerRunCmd
     {
         // Todo; maybe KickClient for the IsClientInGame failing here?
         // Can this cause airstuck??
-        buttons     = 0;
-        impulse     = 0;
-        vel         = {0.0, 0.0, 0.0};
-        angles      = {0.0, 0.0, 0.0};
-        weapon      = 0;
-        subtype     = 0;
-        cmdnum      = 0;
-        tickcount   = 0;
-        seed        = 0;
-        mouse       = {0, 0};
+        buttons = 0;
+        // impulse     = 0;
+        // vel         = {0.0, 0.0, 0.0};
+        // angles      = {0.0, 0.0, 0.0};
+        // weapon      = 0;
+        // subtype     = 0;
+        // cmdnum      = 0;
+        // tickcount   = 0;
+        // seed        = 0;
+        // mouse       = {0, 0};
 
-        timeSinceNullCmd[cl] = GetEngineTime();
         return Plugin_Continue;
     }
-
-
-    // Something nasty is happening
-    /*
-    if (tickcount > GetGameTickCount() || cmdnum > GetSequenceNumber(cl) )
-    {
-        //
-    }
-    */
 
     OnPlayerRunCmd_jaypatch(cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
 
@@ -164,40 +152,31 @@ stock void PlayerRunCmd
     const int mouse[2]
 )
 {
-    //Profiler prof = CreateProfiler();
-    //StartProfiling(prof);
-
     // make sure client is real & not a bot
     if (!IsValidClient(cl))
     {
         return;
     }
 
-    // you NEED to move this to OnGameFrame()
-    // int servertickcount = GetGameTickCount();
+    // originally from ssac - log invalid usercmds with invalid data
+    if
+    (
+        // negative cmdnum??
+           cmdnum       < 0
+        // negative tickcount??
+        || tickcount    < 0
+        // tickcount ahead of the server??
+        || tickcount    > servertick
+        // We should never see buttons >= (26 bits) since IN_ATTACK3 is (1 << 25)
+        // I've seen ucmds with 134217728 == (1 << 27)
+        // I need to make sure this isn't a fluke, so we're not banning anyone at the moment for it
+        || buttons      >= (1 << 26)
 
-    //if (tickbase > servertickcount || tickcount > servertickcount)
-    //{
-    //    // LogMessage("->");
-    //}
-
-    // point_worldtext_TODO(cl);
-
-
-    // originally from ssac - block invalid usercmds with invalid data
-    // todo: do we really still need this...
-    if (cmdnum <= 0 || tickcount <= 0)
+        // MAYBE TODO: cmdnum > Client? Server? SeqNr
+    )
     {
-        if (cmdnum < 0 || tickcount < 0)
-        {
-            // need this basically no matter what
-            int userid = GetClientUserId(cl);
-
-            StacLog("cmdnum %i, tickcount %i", cmdnum, tickcount);
-            StacGeneralPlayerNotify(userid, "Client has invalid usercmd data!");
-            return;
-        }
-        timeSinceNullCmd[cl] = GetEngineTime();
+        int userid = GetClientUserId(cl);
+        StacDetectionNotify(userid, "Invalid usercmd data!", 1);
         return;
     }
 
@@ -252,7 +231,6 @@ stock void PlayerRunCmd
         clpos[cl][1] = clpos[cl][0];
         GetClientEyePosition(cl, clpos[cl][0]);
     }
-
 
     // + around 1µs
     {
@@ -314,8 +292,6 @@ stock void PlayerRunCmd
     // dont check cmdnum here but check everything else
     if ( !IsUserLagging(cl, /* checkcmdnum = */ false) )
     {
-        //LogMessage("would check cmdnumspikeCheck - >");
-
         cmdnumspikeCheck(cl);
     }
 
@@ -334,21 +310,6 @@ stock void PlayerRunCmd
         return;
     }
 
-    //LogMessage("would check psilent - >");
-
-/*
-    if
-    (
-        // make sure client doesn't have OUTRAGEOUS ping
-        // most cheater fakeping goes up to 800 so tack on 50 just in case
-        pingFor[cl] > 850.0
-    )
-    {
-        return;
-    }
-*/
-
-
     if
     (
         // make sure client isnt using a spin bind
@@ -364,16 +325,6 @@ stock void PlayerRunCmd
     triggerbotCheck(cl);
     aimsnapCheck(cl);
     psilentCheck(cl);
-
-    // THIS IS GOING TO LEAK HANDLES BECAUSE WE WONT ALWAYS GET HERE
-    // SHUT UP
-    //StopProfiling(prof);
-    //float usTime = GetProfilerTime(prof) * 1000.0 * 1000.0;
-    //if (usTime >= 30.0)
-    //{
-    //    LogMessage("%09.3fµs", usTime);
-    //}
-    //delete prof;
 
     return;
 }
@@ -553,9 +504,9 @@ void fakeangCheck(int cl)
     }
     if
     (
-        FloatAbs(clangles[cl][0][PITCH]) > 89.00
+        FloatAbs(clangles[cl][0][PITCH]) > 89.0001
         ||
-        FloatAbs(clangles[cl][0][ROLL ]) > 50.00
+        FloatAbs(clangles[cl][0][ROLL ]) > 50.0001
     )
     {
         int userid = GetClientUserId(cl);
@@ -1059,7 +1010,7 @@ bool IsUserLagging(int cl, bool checkcmdnum = true)
     }
 
     // TIME_TO_TICKS
-    float ratio = timeSinceLastRecvFor[cl][0] / tickinterv;
+    float ratio = timeSinceLastRecvFor[cl] / tickinterv;
     if ( ratio >= 6.0 || ratio < 0.0 )
     {
         //LogMessage("ratio = %f", ratio );
@@ -1070,14 +1021,10 @@ bool IsUserLagging(int cl, bool checkcmdnum = true)
 
     static float maxPingDiff = 15.0;
     float nowdiff = pingFor[cl] - avgPingFor[cl];
-    // LogMessage("%f / avg %f / jitter %f" , nowdiff, avgPingFor[cl], pingFor[cl]);
-    // if jitter ping is 10ms less than avg...
+    // if jitter ping is 10ms more or less than avg...
     if ( nowdiff >= maxPingDiff || nowdiff <= -maxPingDiff )
     {
-
         timeSinceLagSpikeFor[cl] = engineTime[cl][0];
-
-        //LogMessage("pingdiff = %f", maxPingDiff );
         return true;
     }
 
@@ -1102,6 +1049,24 @@ float NormalizeAngleDiff(float aDiff)
     return aDiff;
 }
 
+bool isCmdnumSequential(int cl)
+{
+    if
+    (
+           clcmdnum[cl][0] == clcmdnum[cl][1] + 1
+        && clcmdnum[cl][1] == clcmdnum[cl][2] + 1
+        && clcmdnum[cl][2] == clcmdnum[cl][3] + 1
+        && clcmdnum[cl][3] == clcmdnum[cl][4] + 1
+    )
+    {
+        return true;
+    }
+    return false;
+}
+
+
+
+/*
 bool HasValidAngles(int cl)
 {
     if
@@ -1118,24 +1083,7 @@ bool HasValidAngles(int cl)
     }
     return true;
 }
-
-bool isCmdnumSequential(int cl)
-{
-    if
-    (
-           clcmdnum[cl][0] == clcmdnum[cl][1] + 1
-        && clcmdnum[cl][1] == clcmdnum[cl][2] + 1
-        && clcmdnum[cl][2] == clcmdnum[cl][3] + 1
-        && clcmdnum[cl][3] == clcmdnum[cl][4] + 1
-    )
-    {
-        return true;
-    }
-    return false;
-}
-
 // check if the current cmdnum is greater than the last value etc
-/*
 bool isCmdnumInOrder(int cl)
 {
     if (clcmdnum[cl][0] > clcmdnum[cl][1] > clcmdnum[cl][2] > clcmdnum[cl][3] > clcmdnum[cl][4])
@@ -1171,6 +1119,9 @@ bool isTickcountRepeated(int cl)
 */
 
 /********** DETECTION FORGIVENESS TIMERS **********/
+
+// I gotta figure out a way to make these stop running after a client gets banned
+// It probably does not matter though.
 
 Action Timer_decr_aimsnaps(Handle timer, any userid)
 {
@@ -1237,212 +1188,3 @@ Action Timer_decr_tbot(Handle timer, any userid)
 
     return Plugin_Continue;
 }
-
-/*
-void point_worldtext_TODO(int cl)
-{
-    //if ( !pointWorldTextEnts[cl][0] || !pointWorldTextEnts[cl][1] || !pointWorldTextEnts[cl][2] )
-    //{
-    //    return;
-    //}
-    TODO point_worldtext
-
-    put this in a func
-    // this is so ugly lol
-    static char RareButtonNames[][] =
-    {
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "CANCEL",
-        "LEFT",
-        "RIGHT",
-        "",
-        "",
-        "",
-        "RUN",
-        "",
-        "ALT1",
-        "ALT2",
-        "SCORE",
-        "SPEED",
-        "WALK",
-        "ZOOM",
-        "WEAPON1",
-        "WEAPON2",
-        "BULLRUSH",
-        "GRENADE1",
-        "GRENADE2",
-        ""
-    };
-
-    int buttons = clbuttons[cl][0];
-
-    char fwd    [4] = "_";
-    if (buttons & IN_FORWARD)
-    {
-        fwd = "^";
-    }
-
-    char back   [4] = "_";
-    if (buttons & IN_BACK)
-    {
-        back = "v";
-    }
-
-    char left   [4] = "_";
-    if (buttons & IN_MOVELEFT)
-    {
-        left = "<";
-    }
-
-    char right  [4] = "_";
-    if (buttons & IN_MOVERIGHT)
-    {
-        right = ">";
-    }
-
-    char m1     [4] = "_";
-    if (buttons & IN_ATTACK)
-    {
-        m1 = "1";
-    }
-
-    char m2     [4] = "_";
-    if (buttons & IN_ATTACK2)
-    {
-        m2 = "2";
-    }
-
-    char m3     [4] = "_";
-    if (buttons & IN_ATTACK3)
-    {
-        m3 = "3";
-    }
-
-    char jump   [6] = "____";
-    if (buttons & IN_JUMP)
-    {
-        jump = "JUMP";
-    }
-
-    char duck   [6] = "____";
-    if (buttons & IN_DUCK)
-    {
-        duck = "DUCK";
-    }
-
-    char reload [4] = "_";
-    if (buttons & IN_RELOAD)
-    {
-        reload = "R";
-    }
-    char use [4] = "_";
-    if (buttons & IN_USE)
-    {
-        use = "U";
-    }
-
-    char strButtons[512];
-    for (int i = 0; i < sizeof(RareButtonNames); i++)
-    {
-        if (buttons & (1 << i))
-        {
-            Format(strButtons, sizeof(strButtons), "%s %s", strButtons, RareButtonNames[i]);
-        }
-    }
-    TrimString(strButtons);
-    int userid = GetClientUserId(cl);
-
-    char msg[2048];
-    Format(msg,  sizeof(msg),
-        "\
-        \nOnPlayerRunCmd Info:\
-        \n %i cmdnum\
-        \n %i tickcount\
-        \n common buttons:\
-        \n  %c %c %c\
-        \n  %c %c %c    %c %c %c\
-        \n  %s    %s\
-        \n other buttons:\
-        \n  %s\
-        \n buttons int\
-        \n  %i\
-        \n mouse\
-        \n x %i\
-        \n y %i\
-        \n cl angs\
-        \n x %.2f \
-        \n y %.2f \
-        \n z %.2f \
-        ",
-        clcmdnum[cl][0],
-        cltickcount[cl][0],
-        use,  fwd, reload,
-        left, back, right,    m1, m2, m3,
-        jump, duck,
-        IsActuallyNullString(strButtons) ? "N/A" : strButtons,
-        clbuttons[cl][0],
-        clmouse[cl][0], clmouse[cl][1],
-        clangles[cl][0][0], clangles[cl][0][1], clangles[cl][0][2]
-    );
-    DispatchKeyValue        (pointWorldTextEnts[cl][0], "message", msg);
-    TeleportEntity          (pointWorldTextEnts[cl][0], { 255.0, 255.0, 255.0 }, NULL_VECTOR, NULL_VECTOR);
-
-    Format(msg,  sizeof(msg),
-        "\
-        \nMisc Info:\
-        \n Approx client cmdrate: ≈%i cmd/sec\
-        \n Approx server tickrate: ≈%i tick/sec\
-        \n Failing lag check? %s\
-        \n HasValidAngles? %s\
-        \n SequentialCmdnum? %s\
-        \n OrderedTickcount? %s\
-        ",
-        tickspersec[cl],
-        tickspersec[0],
-        IsUserLagging(userid) ? "yes" : "no",
-        HasValidAngles(cl) ? "yes" : "no",
-        isCmdnumSequential(userid) ? "yes" : "no",
-        isTickcountInOrder(userid) ? "yes" : "no"
-    );
-    DispatchKeyValue        (pointWorldTextEnts[cl][1], "message", msg);
-
-
-    Format(msg,  sizeof(msg),
-        "\
-        \nClient: %N\
-        \n Index: %i\
-        \n Userid: %i\
-        \n Status: %s\
-        \n Connected for: %.0fs\
-        \n\
-        \nNetwork:\
-        \n %.2f ms ping\
-        \n %.2f loss\
-        \n %.2f inchoke\
-        \n %.2f outchoke\
-        \n %.2f totalchoke\
-        \n %.2f kbps rate\
-        \n %.2f pps rate\
-        ",
-        cl,
-        cl,
-        GetClientUserId(cl),
-        IsPlayerAlive(cl) ? "alive" : "dead",
-        GetClientTime(cl),
-        pingFor[cl],
-        lossFor[cl],
-        inchokeFor[cl],
-        outchokeFor[cl],
-        chokeFor[cl],
-        rateFor[cl],
-        ppsFor[cl]
-    );
-    DispatchKeyValue        (pointWorldTextEnts[cl][2], "message", msg);
-
-}
-*/

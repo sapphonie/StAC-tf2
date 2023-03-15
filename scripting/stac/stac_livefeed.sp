@@ -167,7 +167,7 @@ void LiveFeed_PlayerCmd(int userid)
                 IsActuallyNullString(strButtons) ? "N/A" : strButtons,
                 clbuttons[cl][0],
                 clmouse[cl][0], clmouse[cl][1],
-                clangles[cl][0][0], clangles[cl][0][1], clangles[cl][0][2]
+                clangles[cl][0][PITCH], clangles[cl][0][YAW], clangles[cl][0][ROLL]
                 //srvangles[0], srvangles[1], srvangles[2]
             );
             /*
@@ -198,14 +198,12 @@ void LiveFeed_PlayerCmd(int userid)
                 \n Approx client cmdrate: ≈%i cmd/sec\
                 \n Approx server tickrate: ≈%i tick/sec\
                 \n Failing lag check? %s\
-                \n HasValidAngles? %s\
                 \n SequentialCmdnum? %s\
                 \n OrderedTickcount? %s\
                 ",
                 tickspersec[cl],
                 tickspersec[0],
                 IsUserLagging(userid) ? "yes" : "no",
-                HasValidAngles(cl) ? "yes" : "no",
                 isCmdnumSequential(userid) ? "yes" : "no"
             );
         }
@@ -271,6 +269,7 @@ void LiveFeed_NetInfo(int userid)
         }
     }
 }
+
 
 bool IsValidLiveFeedViewer(int client)
 {

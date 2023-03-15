@@ -91,7 +91,6 @@ void ShowAllDetections(int callingCl)
                 || pSilentDetects          [cl] > 0
                 || cmdnumSpikeDetects      [cl] > 0
                 || tbotDetects             [cl] > 0
-                || userinfoSpamDetects     [cl] > 0
             )
             {
                 PrintToConsole

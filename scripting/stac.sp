@@ -11,7 +11,6 @@
 #include <sdkhooks>
 #include <tf2_stocks>
 #include <dhooks>
-#include <profiler>
 #define AUTOLOAD_EXTENSIONS
 // REQUIRED extensions:
 // SteamWorks for being able to make webrequests: https://forums.alliedmods.net/showthread.php?t=229556
@@ -43,7 +42,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "5.5.0"
+#define PLUGIN_VERSION  "6.0.0"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -166,8 +165,8 @@ public void OnPluginStart()
     CreateTimer(0.1, Timer_GetNetInfo, _, TIMER_REPEAT);
     Timer_GetNetInfo(null);
 
+    // For turning on and off livefeed
     CreateTimer(3.0, Timer_CheckLiveFeed, _, TIMER_REPEAT);
-
 
     // init hud sync stuff for livefeed
     HudSyncRunCmd       = CreateHudSynchronizer();
@@ -179,72 +178,8 @@ public void OnPluginStart()
 
     // jaypatch
     OnPluginStart_jaypatch();
-
-    // Conplex_RegisterProtocol("StAC", StAC_Detector, StAC_Handler);
-
-    // Profiling
-    // RegConsoleCmd("stac_prof",   stacProf, "stacProf");
 }
 
-/*
-Action stacProf(int callingCl, int args)
-{
-    static int runs = 50000000;
-
-
-
-    int cl = 1;
-
-    Profiler prof = CreateProfiler();
-    StartProfiling(prof);
-
-    for (int i = 0; i <= runs; i++)
-    {
-        // checkcmdnum =
-        // checktickcount =
-        IsUserLagging(cl, false,  false);
-    }
-
-    StopProfiling(prof);
-    float usTime = GetProfilerTime(prof) * 1000.0 * 1000.0;
-    LogMessage("%09.3fµs", usTime);
-    delete prof;
-
-
-
-    Profiler prof2 = CreateProfiler();
-    StartProfiling(prof2);
-
-    for (int i = 0; i <= runs; i++)
-    {
-        IsUserLagging(cl, true, false);
-    }
-
-
-    // THIS IS GOING TO LEAK HANDLES BECAUSE WE WONT ALWAYS GET HERE
-    // SHUT UP
-    StopProfiling(prof2);
-    usTime = GetProfilerTime(prof2) * 1000.0 * 1000.0;
-    LogMessage("%09.3fµs", usTime);
-    delete prof2;
-
-    return Plugin_Handled;
-}
-*/
-
-/*
-public ConplexProtocolDetectionState StAC_Detector(const char[] id, const char[] data, int length)
-{
-    LogMessage("[StAC Conplex Detector] id = %s, data = %s, len = %i", id, data, length);
-    return ConplexProtocolDetection_NoMatch;
-}
-
-public bool StAC_Handler(const char[] id, ConplexSocket socket, const char[] address)
-{
-    LogMessage("[StAC Conplex Handler] id = %s, data = , addr = %s", id, address);
-    return false;
-}
-*/
 
 public void OnPluginEnd()
 {
@@ -284,6 +219,8 @@ Action Timer_CheckLiveFeed(Handle timer)
 // monitor server tickrate
 public void OnGameFrame()
 {
+    servertick = GetGameTickCount();
+
     calcTPSfor(0);
 
     if (GetEngineTime() - 15.0 < timeSinceMapStart)

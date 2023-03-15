@@ -164,14 +164,12 @@ void StacLogNetData(int userid)
         \n Approx client cmdrate: ≈%i cmd/sec\
         \n Approx server tickrate: ≈%i tick/sec\
         \n Failing lag check? %s\
-        \n HasValidAngles? %s\
         \n SequentialCmdnum? %s\
         \n OrderedTickcount? %s\
         ",
         tickspersec[cl],
         tickspersec[0],
         IsUserLagging(cl) ? "yes" : "no",
-        HasValidAngles(cl) ? "yes" : "no",
         isCmdnumSequential(cl) ? "yes" : "no"
     );
 }
@@ -293,6 +291,14 @@ void StacLogTickcounts(int userid)
         cltickcount[cl][2],
         cltickcount[cl][3],
         cltickcount[cl][4]
+    );
+    StacLog
+    (
+        "\
+        \nCurrent server tick:\
+        \n%i\
+        ",
+        GetGameTickCount()
     );
 }
 
@@ -646,7 +652,6 @@ float RoundToPlace(float input, int decimalPlaces)
     float poweroften = Pow(10.0, float(decimalPlaces));
     return RoundToNearest(input * poweroften) / (poweroften);
 }
-*/
 
 bool IsZeroVector(const float vec[3])
 {
@@ -661,6 +666,8 @@ bool IsZeroVector(const float vec[3])
     }
     return false;
 }
+*/
+
 
 /********** UPDATER **********/
 
@@ -694,13 +701,14 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
                 { \"name\": \"Server IP\",          \"value\": \"%s\" },\
                 { \"name\": \"Current Demo\",       \"value\": \"%s\" },\
                 { \"name\": \"Demo Tick\",          \"value\": \"%i\" },\
+                { \"name\": \"Server tick\",        \"value\": \"%i\" },\
                 { \"name\": \"Unix timestamp\",     \"value\": \"%i\" }\
             ]\
         }],\
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
     }";
 
-    char[] msg = new char[ strlen(generalTemplate) ];
+    char msg[8192];
 
 
     char fmtmsg[256];
@@ -731,7 +739,7 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
     Format
     (
         msg,
-        4096,
+        sizeof(msg),
         generalTemplate,
         cl,
         steamid,
@@ -740,6 +748,7 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         hostipandport,
         demoname,
         demotick,
+        servertick,
         GetTime()
     );
 
@@ -767,6 +776,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
                 { \"name\": \"Server IP\",          \"value\": \"%s\" },\
                 { \"name\": \"Current Demo\",       \"value\": \"%s\" },\
                 { \"name\": \"Demo Tick\",          \"value\": \"%i\" },\
+                { \"name\": \"Server tick\",        \"value\": \"%i\" },\
                 { \"name\": \"Unix timestamp\",     \"value\": \"%i\" },\
                 { \"name\": \"viewangle history\",  \"value\":\
                \"```==----pitch---yaw-----roll-----\\n\
@@ -835,7 +845,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
     }";
 
 
-    char[] msg = new char[ strlen(detectionTemplate) ];
+    char msg[8192];
 
     int cl = GetClientOfUserId(userid);
     char ClName[64];
@@ -862,7 +872,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
     Format
     (
         msg,
-        4096,
+        sizeof(msg),
         detectionTemplate,
         cl,
         steamid,
@@ -872,6 +882,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
         hostipandport,
         demoname,
         demotick,
+        servertick,
         GetTime(),
 
         // angles
@@ -956,13 +967,14 @@ void StacGeneralMessageNotify(const char[] format, any ...)
                 { \"name\": \"Server IP\",          \"value\": \"%s\" },\
                 { \"name\": \"Current Demo\",       \"value\": \"%s\" },\
                 { \"name\": \"Demo Tick\",          \"value\": \"%i\" },\
+                { \"name\": \"Server Tick\",        \"value\": \"%i\" }\
                 { \"name\": \"Unix timestamp\",     \"value\": \"%i\" }\
             ]\
         }],\
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
     }";
 
-    char[] msg = new char[ strlen(bareTemplate) ];
+    char msg[8192];
 
 
     char fmtmsg[256];
@@ -975,13 +987,14 @@ void StacGeneralMessageNotify(const char[] format, any ...)
     Format
     (
         msg,
-        4096,
+        sizeof(msg),
         bareTemplate,
         fmtmsg,
         hostname,
         hostipandport,
         demoname,
         demotick,
+        servertick,
         GetTime()
     );
 

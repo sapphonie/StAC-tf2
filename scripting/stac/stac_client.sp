@@ -174,119 +174,8 @@ public Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
     {
         timeSinceSpawn[cl] = GetEngineTime();
     }
-
-    /*
-
-    TODO
-    point_worldtext replacement for livefeed
-
-    */
-    //if (IsFakeClient(cl))
-    //{
-    //    return Plugin_Continue;
-    //}
-    // CreateTimer(1.0, bleh, userid);
     return Plugin_Continue;
 }
-
-/*
-int test;
-Action bleh(Handle timer, int userid)
-{
-    int cl = GetClientOfUserId(userid);
-    //if (!IsFakeClient(cl))
-    //{
-    //    return Plugin_Continue;
-    //}
-    int vm = GetEntPropEnt(cl, Prop_Data, "m_hViewModel", 0);
-    float vec[3];
-    GetEntPropVector(vm, Prop_Data, "m_vecAbsOrigin", vec);
-
-    LogMessage("vec = %f %f %f", vec[0], vec[1], vec[2]);
-
-    int fl = GetEdictFlags(vm);
-    fl &= FL_EDICT_ALWAYS;
-    SetEdictFlags(vm, fl);
-    if (!vm || !IsValidEntity(vm))
-    {
-        return Plugin_Stop;
-    }
-
-    LogMessage("%i", vm);
-
-    int pwt;
-
-    //pwt = pointWorldTextEnts[cl][0];
-    //if (pwt && IsValidEntity(pwt))
-    //{
-    //    RemoveEntity(pwt);
-    //}
-    pwt = CreateEntityByName("point_worldtext");
-    pointWorldTextEnts[cl][0] = pwt;
-
-
-    DispatchKeyValue        (pwt, "message", "test");
-    DispatchKeyValueFloat   (pwt, "textsize", 1.75);
-    DispatchKeyValue        (pwt, "color", "255 255 255");
-    DispatchKeyValueInt     (pwt, "Orientation", 1);
-    // 8 looks pretty good, 9 looks good, 10 looks good, 11 is weirdly colored
-    DispatchKeyValueInt     (pwt, "font", 10);
-    DispatchSpawn           (pwt);
-
-    SetVariantString        ("!activator");
-    AcceptEntityInput       (pwt, "SetParent", vm, -1, -1);
-
-    // in z out, <- x ->, ^ y v
-    TeleportEntity          (pwt, { 128.0, 128.0, 128.0 }, NULL_VECTOR, NULL_VECTOR);
-    AcceptEntityInput       (pwt, "Enable");
-    SetEntityRenderMode     (pwt, RENDER_GLOW);
-
-    pwt = pointWorldTextEnts[cl][1];
-    if (pwt && IsValidEntity(pwt))
-    {
-        RemoveEntity(pwt);
-    }
-    pwt = CreateEntityByName("point_worldtext");
-    pointWorldTextEnts[cl][1] = pwt;
-
-    DispatchKeyValue        (pwt, "message", "test");
-    DispatchKeyValueFloat   (pwt, "textsize", 1.75);
-    DispatchKeyValue        (pwt, "color", "255 255 255");
-    DispatchKeyValueInt     (pwt, "Orientation", 1);
-    DispatchKeyValueInt     (pwt, "font", 10);
-    DispatchSpawn           (pwt);
-
-
-    SetVariantString        ("!activator");
-    AcceptEntityInput       (pwt, "SetParent", vm, cl);
-    TeleportEntity          (pwt, { 48.0, 22.0, -8.0 } , NULL_VECTOR, NULL_VECTOR);
-    AcceptEntityInput       (pwt, "Enable");
-    SetEntityRenderMode     (pwt, RENDER_GLOW);
-
-
-    pwt = pointWorldTextEnts[cl][2];
-    if (pwt && IsValidEntity(pwt))
-    {
-        RemoveEntity(pwt);
-    }
-    pwt = CreateEntityByName("point_worldtext");
-    pointWorldTextEnts[cl][2] = pwt;
-
-    DispatchKeyValue        (pwt, "message", "test");
-    DispatchKeyValueFloat   (pwt, "textsize", 1.75);
-    DispatchKeyValue        (pwt, "color", "255 255 255");
-    DispatchKeyValueInt     (pwt, "Orientation", 1);
-    DispatchKeyValueInt     (pwt, "font", 10);
-    DispatchSpawn           (pwt);
-
-
-    SetVariantString        ("!activator");
-    AcceptEntityInput       (pwt, "SetParent", vm, 0);
-    TeleportEntity          (pwt, { 48.0, -24.0, 24.0 } , NULL_VECTOR, NULL_VECTOR);
-    AcceptEntityInput       (pwt, "Enable");
-    SetEntityRenderMode     (pwt, RENDER_GLOW);
-}
-*/
 
 public Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3])
 {
@@ -424,44 +313,72 @@ void ClearClBasedVars(int userid)
     // get fresh cli id
     int cl = GetClientOfUserId(userid);
     // clear all old values for cli id based stuff
+    /***** client based stuff *****/
+
+    // cheat detections per client
     turnTimes               [cl] = 0;
     fakeAngDetects          [cl] = 0;
-    aimsnapDetects          [cl] = -1; // ignore first detect, it's prolly bunk
-    pSilentDetects          [cl] = -1; // ignore first detect, it's prolly bunk
+    aimsnapDetects          [cl] = -1; // set to -1 to ignore first detections, as theyre most likely junk
+    pSilentDetects          [cl] = -1; // ^
     bhopDetects             [cl] = -1; // set to -1 to ignore single jumps
     cmdnumSpikeDetects      [cl] = 0;
-    tbotDetects             [cl] = -1; // ignore first detect, it's prolly bunk
-    userinfoSpamDetects     [cl] = 0;
+    tbotDetects             [cl] = -1;
 
-
-    // TIME SINCE LAST ACTION PER CLIENT
+    // frames since client "did something"
+    //                      [ client index ][history]
     timeSinceSpawn          [cl] = 0.0;
     timeSinceTaunt          [cl] = 0.0;
     timeSinceTeled          [cl] = 0.0;
-    timeSinceNullCmd        [cl] = 0.0;
     timeSinceLastCommand    [cl] = 0.0;
+    // ticks since client "did something"
+    //                  [ client index ][history]
+    didBangThisFrame        [cl] = false;
+    didHurtThisFrame        [cl] = false;
 
-    lastCommandFor          [cl][0] = '\0';
-    // STORED GRAVITY STATE PER CLIENT
+    SteamAuthFor            [cl][0] = '\0';
+
     highGrav                [cl] = false;
-    // STORED MISC VARS PER CLIENT
     playerTaunting          [cl] = false;
     playerInBadCond         [cl] = 0;
     userBanQueued           [cl] = false;
-    // STORED SENS PER CLIENT
     sensFor                 [cl] = 0.0;
-    // don't bother clearing arrays
+    // weapon name, gets passed to aimsnap check
+    hurtWeapon              [cl][0] = '\0';
+    lastCommandFor          [cl][0] = '\0';
     LiveFeedOn              [cl] = false;
-
-    // reset namechanging var
     hasBadName              [cl] = false;
 
+    // network info
+    lossFor                 [cl] = 0.0;
+    chokeFor                [cl] = 0.0;
+    inchokeFor              [cl] = 0.0;
+    outchokeFor             [cl] = 0.0;
+    pingFor                 [cl] = 0.0;
+    avgPingFor              [cl] = 0.0;
+    rateFor                 [cl] = 0.0;
+    ppsFor                  [cl] = 0.0;
+
+    // time since the last stutter/lag spike occurred per client
+    timeSinceLagSpikeFor    [cl] = 0.0;
+
+    // do we need to do this
+    // QueryTimer           [cl] = null;
+
+    // for checking if we just fixed a client's network settings so we don't double detect
     justClamped             [cl] = false;
 
-    // has client has waited 60 seconds for their first cvar check
+    // tps etc
+    tickspersec             [cl] = 0;
+    // iterated tick num per client
+    t                       [cl] = 0;
+
+    secTime                 [cl] = 0.0;
+
     hasWaitedForCvarCheck   [cl] = false;
 
     signonStateFor          [cl] = -1;
+
+    timeSinceLastRecvFor    [cl] = 0.0;
 }
 
 /********** TIMER FOR NETINFO **********/

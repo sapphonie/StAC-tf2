@@ -200,6 +200,8 @@ public void OnClientSettingsChanged(int cl)
         return;
     }
     int userid = GetClientUserId(cl);
+
+    // TODO: do we still need to do this?
     if
     (
         // command occured recently
@@ -242,7 +244,7 @@ public void OnClientSettingsChanged(int cl)
     GetClientInfo( cl, "cl_updaterate",      cl_updaterate,      sizeof(cl_updaterate) );
     GetClientInfo( cl, "rate",               rate,               sizeof(rate) );
 
-    LogMessage("[1] cmdrate %s / updaterate %s / rate %s", cl_cmdrate, cl_updaterate, rate);
+    //LogMessage("[1] cmdrate %s / updaterate %s / rate %s", cl_cmdrate, cl_updaterate, rate);
 
     checkInterp(userid);
 
@@ -305,7 +307,7 @@ public void OnClientSettingsChanged(int cl)
     GetClientInfo( cl, "rate",               rate,               sizeof(rate) );
 
 
-    LogMessage("[2] cmdrate %s / updaterate %s / rate %s", cl_cmdrate, cl_updaterate, rate);
+    //LogMessage("[2] cmdrate %s / updaterate %s / rate %s", cl_cmdrate, cl_updaterate, rate);
 
     justClamped[cl] = true;
 }
