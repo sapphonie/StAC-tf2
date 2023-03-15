@@ -4,19 +4,44 @@
     {
         "Version"
         {
-            "Latest"    "5.4.4"
+            "Latest"    "6.0.0"
         }
 
-        "Notes"     "Changes in 5.4.3"
-        "Notes"     "- Changes to prevent cheats from bypassing StAC"
+        "Notes"     "Changes in 6.0.0"
+        "Notes"     "- Too many to count! Read the pull request here:"
+        "Notes"     "https://github.com/sapphonie/StAC-tf2/pull/139"
+        "Notes"     "Of note: StAC now requires 4 extensions and some gamedata to run, to prevent the latest exploits, including server crashers and admin spoofing. These will be automatically downloaded by Updater."
         "Notes"     "===== StAC is always looking for feedback! Got an issue, request, or wanna discuss? Open a GitHub issue and join the Discord server linked in the README, on GitHub! ====="
         "Notes"     "===== Thank you for using StAC. -sappho ===== "
     }
 
     "Files"
     {
+        // Plugin
         "Plugin"    "Path_SM/plugins/stac.smx"
+
+        // Translations
         "Plugin"    "Path_SM/translations/stac.phrases.txt"
+
+        // Extensions
+        "Plugin"    "PATH_SM/extensions/SteamWorks.ext.dll"
+        "Plugin"    "PATH_SM/extensions/SteamWorks.ext.so"
+        "Plugin"    "PATH_SM/extensions/connect.ext.2.ep2v.dll"
+        "Plugin"    "PATH_SM/extensions/connect.ext.2.ep2v.so"
+        "Plugin"    "PATH_SM/extensions/conplex.ext.dll"
+        "Plugin"    "PATH_SM/extensions/conplex.ext.so"
+        "Plugin"    "PATH_SM/extensions/sourcetvmanager.ext.2.tf2.dll"
+        "Plugin"    "PATH_SM/extensions/sourcetvmanager.ext.2.tf2.so"
+        "Plugin"    "PATH_SM/extensions/webcon.ext.dll"
+        "Plugin"    "PATH_SM/extensions/webcon.ext.so"
+
+        // Gamedata
+        "Plugin"    "PATH_SM/gamedata/connect.games.txt"
+        "Plugin"    "PATH_SM/gamedata/conplex.games.txt"
+        "Plugin"    "PATH_SM/gamedata/sourcetvmanager.games.txt"
+        "Plugin"    "PATH_SM/gamedata/stac.txt"
     }
 }
+
+
 
