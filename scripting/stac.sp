@@ -162,6 +162,7 @@ public void OnPluginStart()
     AddTempEntHook("Fire Bullets", Hook_TEFireBullets);
 
     // create global timer running every couple jiffys for getting all clients' network info
+    // This immediately populates the arrays instead of waiting a timer tick
     CreateTimer(0.1, Timer_GetNetInfo, _, TIMER_REPEAT);
     Timer_GetNetInfo(null);
 
