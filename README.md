@@ -28,6 +28,9 @@
 - "Ping reducing" cheats (and patches "pingmasking" by legit clients as well)
 - Clients purposefully not authorizing with Steam
 - Cheat to cheat communication
+- Several server crashing and server lagging exploits
+- Admin spoofing
+- Unkickable players
 
 ##
 I hate cheaters. Everyone does. But you know what I hate more? Taking the sweet time out of my day to catch them. A lot of TF2 cheats do a lot of the same things, and if you know what to look for, you can detect their patterns and ban them ***automatically***!
