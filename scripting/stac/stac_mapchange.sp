@@ -19,7 +19,7 @@ public void OnMapStart()
     }
     timeSinceMapStart = GetEngineTime();
     CreateTimer(0.1, checkNativesEtc);
-    CreateTimer(0.5, getIP);
+    CreateTimer(0.2, getIP);
 
 /*
     int ent = -1;
@@ -173,6 +173,11 @@ void DoTPSMath()
 {
     tickinterv = GetTickInterval();
     tps = Pow(tickinterv, -1.0);
+    //itps = RoundToNearest(tps);
+    //
+    //// max amt of time a client is allowed to be ahead of the server in terms of tickcount, in seconds
+    //static int maxAheadSeconds = 5;
+    //itps_maxaheadsecs = ( itps * maxAheadSeconds );
 
     if (DEBUG)
     {

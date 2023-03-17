@@ -166,9 +166,6 @@ public void OnPluginStart()
     CreateTimer(0.1, Timer_GetNetInfo, _, TIMER_REPEAT);
     Timer_GetNetInfo(null);
 
-    // For turning on and off livefeed
-    CreateTimer(3.0, Timer_CheckLiveFeed, _, TIMER_REPEAT);
-
     // init hud sync stuff for livefeed
     HudSyncRunCmd       = CreateHudSynchronizer();
     HudSyncRunCmdMisc   = CreateHudSynchronizer();
@@ -196,10 +193,16 @@ public void OnPluginEnd()
     OnMapEnd();
 }
 
-Action Timer_CheckLiveFeed(Handle timer)
+
+/********** ONGAMEFRAME **********/
+
+// monitor server tickrate
+public void OnGameFrame()
 {
-    // TODO: WE DONT NEED TO DO THIS EVERY FRAME YOU HEADASS
-    // TODONE: Stuck this in a timer
+    servertick = GetGameTickCount();
+
+    calcTPSfor(0);
+
     // LIVEFEED
     for (int cl = 1; cl <= MaxClients; cl++)
     {
@@ -211,18 +214,6 @@ Action Timer_CheckLiveFeed(Handle timer)
             }
         }
     }
-    return Plugin_Continue;
-}
-
-
-/********** ONGAMEFRAME **********/
-
-// monitor server tickrate
-public void OnGameFrame()
-{
-    servertick = GetGameTickCount();
-
-    calcTPSfor(0);
 
     if (GetEngineTime() - 15.0 < timeSinceMapStart)
     {

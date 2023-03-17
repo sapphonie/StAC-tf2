@@ -266,10 +266,10 @@
     }
     "illegalNameBanMsg"
     {
-        "en"        "[StAC] Banned for illegal chars in their name"
-        "pt"        "[StAC] Banido(a) por caracteres ilegais em seu nome"
+        "en"        "[StAC] Banned for illegal chars in name"
+        "pt"        "[StAC] Banido(a) por caracteres ilegais em nome"
         "chi"       "[StAC] 名称使用非法字符"
-        "es"        "[StAC] Baneado por caracteres no permitidos en su nombre"
+        "es"        "[StAC] Baneado por caracteres no permitidos en nombre"
         "de"        "[StAC] Gebannt für nicht erlaubte Character im Namen"
     }
     // out of bounds cvars

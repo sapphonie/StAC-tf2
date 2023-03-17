@@ -209,8 +209,13 @@ public Action Hook_TEFireBullets(const char[] te_name, const int[] players, int 
     didBangThisFrame[cl] = true;
 
     // For testing discord notifs
-    // StacDetectionNotify(GetClientUserId(cl), "test", 0);
-    // StacLogAngles(GetClientUserId(cl));
+    /*
+
+    StacDetectionNotify(GetClientUserId(cl), "test", 0);
+    StacGeneralPlayerNotify(GetClientUserId(cl), "test");
+    StacGeneralMessageNotify("test message");
+
+    */
 
     return Plugin_Continue;
 }

@@ -60,16 +60,17 @@ public Action OnPlayerRunCmd
     {
         // Todo; maybe KickClient for the IsClientInGame failing here?
         // Can this cause airstuck??
-        buttons = 0;
-        // impulse     = 0;
-        // vel         = {0.0, 0.0, 0.0};
-        // angles      = {0.0, 0.0, 0.0};
-        // weapon      = 0;
-        // subtype     = 0;
-        // cmdnum      = 0;
-        // tickcount   = 0;
-        // seed        = 0;
-        // mouse       = {0, 0};
+        // Update from the future; no.
+        buttons     = 0;
+        impulse     = 0;
+        vel         = {0.0, 0.0, 0.0};
+        angles      = {0.0, 0.0, 0.0};
+        weapon      = 0;
+        subtype     = 0;
+        cmdnum      = 0;
+        tickcount   = 0;
+        seed        = 0;
+        mouse       = {0, 0};
 
         return Plugin_Continue;
     }
@@ -77,10 +78,12 @@ public Action OnPlayerRunCmd
     OnPlayerRunCmd_jaypatch(cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
 
     // Don't allow clients to have both left and right turns active
+    // Legit clients can do this
     if (buttons & IN_LEFT && buttons & IN_RIGHT)
     {
         buttons &= ~( IN_LEFT | IN_RIGHT );
     }
+
     return Plugin_Continue;
 }
 
@@ -165,20 +168,32 @@ stock void PlayerRunCmd
            cmdnum       < 0
         // negative tickcount??
         || tickcount    < 0
-        // tickcount ahead of the server??
-        || tickcount    > servertick
-        // We should never see buttons >= (26 bits) since IN_ATTACK3 is (1 << 25)
-        // I've seen ucmds with 134217728 == (1 << 27)
-        // I need to make sure this isn't a fluke, so we're not banning anyone at the moment for it
-        || buttons      >= (1 << 26)
-
-        // MAYBE TODO: cmdnum > Client? Server? SeqNr
     )
     {
         int userid = GetClientUserId(cl);
-        StacDetectionNotify(userid, "Invalid usercmd data!", 1);
+        StacDetectionNotify(userid, "Invalid usercmd data! cmdnum or tickcount < 0!", 1);
         return;
     }
+
+    // tickcount ahead of the server by itps_maxaheadsecs or more?
+    // if ( tickcount > (servertick + itps_maxaheadsecs) )
+    // {
+    //     int userid = GetClientUserId(cl);
+    //     StacDetectionNotify(userid, "Invalid usercmd data! client tickcount ahead of the server's tickcount by more than 5 seconds!", 1);
+    //     return;
+    // }
+
+    // We should never see buttons >= (26 bits) since IN_ATTACK3 is (1 << 25)
+    // I've seen ucmds with 134217728 == (1 << 27)
+    // I need to make sure this isn't a fluke, so we're not banning anyone at the moment for it
+    if ( buttons      >= (1 << 26) )
+    {
+        int userid = GetClientUserId(cl);
+        StacDetectionNotify(userid, "Invalid usercmd data! client buttons are >= (1 << 26)!", 1);
+    }
+
+    // MAYBE TODO: cmdnum > Client? Server? SeqNr
+
 
     // + around 1µs
     // grab engine time
@@ -549,6 +564,12 @@ void cmdnumspikeCheck(int cl)
         return;
     }
 
+    // nullcmd, ignore
+    if (clcmdnum[cl][0] == 0 && cltickcount[cl][0] == 0)
+    {
+        return;
+    }
+
     int spikeamt = clcmdnum[cl][0] - clcmdnum[cl][1];
     // https://github.com/sapphonie/StAC-tf2/issues/74
     if (spikeamt >= 32 || spikeamt < 0)
@@ -707,7 +728,9 @@ void psilentCheck(int cl)
         }
         if (pSilentDetects[cl] % 5 == 0)
         {
-            StacDetectionNotify(userid, "psilent", pSilentDetects[cl]);
+            char dtype[128];
+            Format(dtype, sizeof(dtype), "psilent (snap of %.2f°)", aDiffReal);
+            StacDetectionNotify(userid, dtype, pSilentDetects[cl]);
         }
         // BAN USER if they trigger too many detections
         if (pSilentDetects[cl] >= maxPsilentDetections && maxPsilentDetections > 0)
@@ -758,12 +781,11 @@ void aimsnapCheck(int cl)
         return;
     }
 
-    // only check if we actually did hitscan dmg in the current frame
-    // thinking about removing this...
-    if (!didHurtOnFrame[cl][1] || !didBangOnFrame[cl][1])
-    {
-        return;
-    }
+    // if we didnt shoot, just bail
+    //if (!didBangOnFrame[cl][0] && !didBangOnFrame[cl][1] && !didBangOnFrame[cl][2])
+    //{
+    //    return;
+    //}
 
     float aDiff[4];
     aDiff[0] = NormalizeAngleDiff( CalcAngDeg( clangles[cl][0], clangles[cl][1] ) );
@@ -771,12 +793,14 @@ void aimsnapCheck(int cl)
     aDiff[2] = NormalizeAngleDiff( CalcAngDeg( clangles[cl][2], clangles[cl][3] ) );
     aDiff[3] = NormalizeAngleDiff( CalcAngDeg( clangles[cl][3], clangles[cl][4] ) );
 
+
     // example values of a snap:
     // 0.000000, 91.355995, 0.000000, 0.000000
     // 0.018540, 0.000000, 91.355995, 0.000000
 
-    static float snapsize  = 20.0;
-    static float noisesize = 1.0;
+    static float snapsize  = 10.0;
+    static float nonzero   = 0.001;
+    static float noisesize = 0.5;
 
     int aDiffToUse = -1;
 
@@ -793,22 +817,23 @@ void aimsnapCheck(int cl)
     //}
     if
     (
-           aDiff[0] < noisesize
-        && aDiff[1] > snapsize
-        && aDiff[2] < noisesize
-        && aDiff[3] < noisesize
+           ( aDiff[0] < noisesize && aDiff[0] > nonzero )
+        && ( aDiff[1] > snapsize )
+        && ( aDiff[2] < noisesize && aDiff[2] > nonzero )
+        && ( aDiff[3] < noisesize && aDiff[3] > nonzero )
     )
     {
         aDiffToUse = 1;
     }
     if
     (
-           aDiff[0] < noisesize
-        && aDiff[1] < noisesize
-        && aDiff[2] > snapsize
-        && aDiff[3] < noisesize
+           ( aDiff[0] < noisesize && aDiff[0] > nonzero )
+        && ( aDiff[1] < noisesize && aDiff[1] > nonzero )
+        && ( aDiff[2] > snapsize )
+        && ( aDiff[3] < noisesize && aDiff[3] > nonzero )
     )
     {
+
         aDiffToUse = 2;
     }
     //else if
@@ -868,7 +893,9 @@ void aimsnapCheck(int cl)
 
         if (aimsnapDetects[cl] % 5 == 0)
         {
-            StacDetectionNotify(userid, "aimsnap", aimsnapDetects[cl]);
+            char dtype[128];
+            Format(dtype, sizeof(dtype), "aimsnap (snap of %.2f°)", aDiffReal);
+            StacDetectionNotify(userid, dtype, aimsnapDetects[cl]);
         }
 
         // BAN USER if they trigger too many detections

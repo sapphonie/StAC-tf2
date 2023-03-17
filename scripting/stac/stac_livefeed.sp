@@ -129,7 +129,7 @@ void LiveFeed_PlayerCmd(int userid)
                 // x&y
                 0.0, 0.0,
                 // time to hold
-                0.20,
+                0.125,
                 // rgba
                 255, 255, 255, 255,
                 // effects
@@ -199,12 +199,11 @@ void LiveFeed_PlayerCmd(int userid)
                 \n Approx server tickrate: ≈%i tick/sec\
                 \n Failing lag check? %s\
                 \n SequentialCmdnum? %s\
-                \n OrderedTickcount? %s\
                 ",
                 tickspersec[cl],
                 tickspersec[0],
-                IsUserLagging(userid) ? "yes" : "no",
-                isCmdnumSequential(userid) ? "yes" : "no"
+                IsUserLagging(cl) ? "yes" : "no",
+                isCmdnumSequential(cl) ? "yes" : "no"
             );
         }
     }
@@ -227,7 +226,7 @@ void LiveFeed_NetInfo(int userid)
                 // x&y
                 0.85, 0.40,
                 // time to hold
-                2.0,
+                0.2,
                 // rgba
                 255, 255, 255, 255,
                 // effects
@@ -277,7 +276,7 @@ bool IsValidLiveFeedViewer(int client)
     (
         // only show to admins that are dead or in spec
         (
-            IsValidAdmin(client)
+            IsValidClient(client)
             /*
             &&
             (

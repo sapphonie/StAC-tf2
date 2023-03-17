@@ -87,12 +87,7 @@ void SaniNameAndBan(int userid, char name[64])
     (
         namemsg,
         sizeof(namemsg),
-        "Client %s had:\
-        \n%i newline chars,\
-        \n%i return chars,\
-        \n%i right2left chars,\
-        \n%i left2right chars",
-        SteamAuthFor[cl],
+        "Client had %i newline chars, %i return chars, %i right2left chars, and %i left2right chars in their name",
         newlines,
         returns,
         rtl,

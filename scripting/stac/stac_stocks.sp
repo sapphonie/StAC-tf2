@@ -165,7 +165,6 @@ void StacLogNetData(int userid)
         \n Approx server tickrate: ≈%i tick/sec\
         \n Failing lag check? %s\
         \n SequentialCmdnum? %s\
-        \n OrderedTickcount? %s\
         ",
         tickspersec[cl],
         tickspersec[0],
@@ -422,10 +421,10 @@ void BanUser(int userid, char[] reason, char[] pubreason)
             StrCat(reason, 256, demoname_plus);
             StacLog("Reason: %s", reason);
         }
-        else
-        {
-            StacLog("No STV demo is being recorded, no demo name will be printed to the ban reason!");
-        }
+        //else
+        //{
+        //    StacLog("No STV demo is being recorded, no demo name will be printed to the ban reason!");
+        //}
     }
     if (isAuthed)
     {
@@ -493,7 +492,6 @@ bool isDefaultTickrate()
     if (tps == 0)
     {
         DoTPSMath();
-        LogMessage("redoing tps math");
     }
     if (tps > 60.0 && tps < 70.0)
     {
@@ -692,17 +690,21 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
 
     static char generalTemplate[] = \
     "{ \"embeds\": \
-        [{ \"title\": \"StAC Message!\", \"color\": 16738740, \"fields\":\
+        [{ \"title\": \"StAC Client Message!\", \"color\": 16738740, \"fields\":\
             [\
-                { \"name\": \"Player\",             \"value\": \"%N\" },\
-                { \"name\": \"SteamID\",            \"value\": \"%s\" },\
-                { \"name\": \"Message\",            \"value\": \"%s\" },\
-                { \"name\": \"Hostname\",           \"value\": \"%s\" },\
-                { \"name\": \"Server IP\",          \"value\": \"%s\" },\
-                { \"name\": \"Current Demo\",       \"value\": \"%s\" },\
-                { \"name\": \"Demo Tick\",          \"value\": \"%i\" },\
-                { \"name\": \"Server tick\",        \"value\": \"%i\" },\
-                { \"name\": \"Unix timestamp\",     \"value\": \"%i\" }\
+                { \"name\": \"Player\",             \"value\": \"%N\", \"inline\": true },\
+                { \"name\": \"SteamID\",            \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Message\",            \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Hostname\",           \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \"Server IP\",          \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Current Demo\",       \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \"Demo Tick\",          \"value\": \"%i\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Server tick\",        \"value\": \"%i\", \"inline\": true },\
+                { \"name\": \"Unix timestamp\",     \"value\": \"%i\", \"inline\": true }\
             ]\
         }],\
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
@@ -768,30 +770,33 @@ void StacDetectionNotify(int userid, char[] type, int detections)
     "{ \"embeds\": \
         [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
             [\
-                { \"name\": \"Player\",             \"value\": \"%N\" },\
-                { \"name\": \"SteamID\",            \"value\": \"%s\" },\
-                { \"name\": \"Detection type\",     \"value\": \"%s\" },\
-                { \"name\": \"Detection\",          \"value\": \"%i\" },\
-                { \"name\": \"Hostname\",           \"value\": \"%s\" },\
-                { \"name\": \"Server IP\",          \"value\": \"%s\" },\
-                { \"name\": \"Current Demo\",       \"value\": \"%s\" },\
-                { \"name\": \"Demo Tick\",          \"value\": \"%i\" },\
-                { \"name\": \"Server tick\",        \"value\": \"%i\" },\
-                { \"name\": \"Unix timestamp\",     \"value\": \"%i\" },\
+                { \"name\": \"Player\",             \"value\": \"%N\", \"inline\": true },\
+                { \"name\": \"SteamID\",            \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Detection type\",     \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \"Detection #\",          \"value\": \"%i\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Hostname\",           \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \"Server IP\",          \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Current Demo\",       \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \"Demo Tick\",          \"value\": \"%i\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Server tick\",        \"value\": \"%i\", \"inline\": true },\
+                { \"name\": \"Unix timestamp\",     \"value\": \"%i\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
                 { \"name\": \"viewangle history\",  \"value\":\
                \"```==----pitch---yaw-----roll-----\\n\
                     0 | %7.2f %7.2f %7.2f\\n\
                     1 | %7.2f %7.2f %7.2f\\n\
                     2 | %7.2f %7.2f %7.2f\\n\
                     3 | %7.2f %7.2f %7.2f\\n\
-                    4 | %7.2f %7.2f %7.2f\\n```\",\
-                    \"inline\": false \
+                    4 | %7.2f %7.2f %7.2f\\n```\"\
                 }, \
                 { \"name\": \"eye position history\",  \"value\":\
                \"```==-----x--------y--------z---------\\n\
                     0 | %8.2f %8.2f %8.2f\\n\
-                    1 | %8.2f %8.2f %8.2f\\n```\",\
-                    \"inline\": false \
+                    1 | %8.2f %8.2f %8.2f\\n```\"\
                 }, \
                 { \
                 \"name\": \"cmdnum history\",       \"value\":\
@@ -836,8 +841,7 @@ void StacDetectionNotify(int userid, char[] type, int detections)
                     totalchoke         | %7.2f%%\\n\
                     rate               | %7.2fkbps\\n\
                     approx packets/sec | %7.2f\\n\
-                    approx usrcmds/sec | %7i\\n```\",\
-                    \"inline\": false \
+                    approx usrcmds/sec | %7i\\n```\"\
                 } \
             ]\
         }], \
@@ -958,24 +962,27 @@ void StacGeneralMessageNotify(const char[] format, any ...)
         return;
     }
 
+
     static char bareTemplate[] = \
     "{ \"embeds\": \
-        [{ \"title\": \"StAC Message!\", \"color\": 16738740, \"fields\":\
+        [{ \"title\": \"StAC General Message!\", \"color\": 16738740, \"fields\":\
             [\
                 { \"name\": \"Message\",            \"value\": \"%s\" },\
-                { \"name\": \"Hostname\",           \"value\": \"%s\" },\
-                { \"name\": \"Server IP\",          \"value\": \"%s\" },\
-                { \"name\": \"Current Demo\",       \"value\": \"%s\" },\
-                { \"name\": \"Demo Tick\",          \"value\": \"%i\" },\
-                { \"name\": \"Server Tick\",        \"value\": \"%i\" }\
-                { \"name\": \"Unix timestamp\",     \"value\": \"%i\" }\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Hostname\",           \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \"Server IP\",          \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Current Demo\",       \"value\": \"%s\", \"inline\": true },\
+                { \"name\": \"Demo Tick\",          \"value\": \"%i\", \"inline\": true },\
+                { \"name\": \" \",                  \"value\": \" \" },\
+                { \"name\": \"Server tick\",        \"value\": \"%i\", \"inline\": true },\
+                { \"name\": \"Unix timestamp\",     \"value\": \"%i\", \"inline\": true }\
             ]\
         }],\
         \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
     }";
 
     char msg[8192];
-
 
     char fmtmsg[256];
     VFormat(fmtmsg, sizeof(fmtmsg), format, 2);
