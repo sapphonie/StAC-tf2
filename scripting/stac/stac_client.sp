@@ -297,7 +297,7 @@ public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
 // Ignore cmds from unconnected clients
 Action OnAllClientCommands(int client, const char[] command, int argc)
 {
-    if (client == 0)
+    if (client == 0 || IsFakeClient(client)) 
     {
         return Plugin_Continue;
     }
