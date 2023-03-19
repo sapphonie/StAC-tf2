@@ -206,9 +206,10 @@ stock void PlayerRunCmd
     // calc client cmdrate
     calcTPSfor(cl);
 
-    // + around 4µs
     {
         // grab angles
+        // this could be optimized since we only use roll like. one time
+        // but i will do that at some later point
         for (int i = 4; i > 0; --i)
         {
             clangles[cl][i] = clangles[cl][i-1];
@@ -1044,7 +1045,7 @@ bool IsUserLagging(int cl, bool checkcmdnum = true)
         return true;
     }
 
-    static float maxPingDiff = 15.0;
+    static const float maxPingDiff = 15.0;
     float nowdiff = pingFor[cl] - avgPingFor[cl];
     // if jitter ping is 10ms more or less than avg...
     if ( nowdiff >= maxPingDiff || nowdiff <= -maxPingDiff )
@@ -1112,7 +1113,7 @@ bool isCmdnumSequential(int cl)
 // Is the 5th most recent tickcount at least kind of close (within wiggle - 5) to the current tick?
 bool isTickcountSanish(int cl)
 {
-    static int wiggle = 15;
+    static int wiggle = 10;
     if ( (cltickcount[cl][4] + wiggle) >= cltickcount[cl][0] )
     {
         return true;
