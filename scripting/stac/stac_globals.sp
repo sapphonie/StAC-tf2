@@ -71,11 +71,9 @@ int maxuserinfoSpamDetections   = 25;
 // tickrate stuff
 float tickinterv;
 float tps;
-//int itps;
+int itps;
 //int itps_maxaheadsecs;
 int servertick;
-
-int i_isDefaultTickrate = -1;
 
 // time to wait after server lags before checking all client's OnPlayerRunCmd
 float ServerLagWaitLength = 5.0;

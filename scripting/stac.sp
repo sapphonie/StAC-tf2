@@ -219,25 +219,22 @@ public void OnGameFrame()
     {
         return;
     }
-    if (isDefaultTickrate())
+    if (tickspersec[0] < (tps / 2.0))
     {
-        if (tickspersec[0] < (tps / 2.0))
+        // don't bother printing again lol
+        if (GetEngineTime() - ServerLagWaitLength < timeSinceLagSpikeFor[0])
         {
-            // don't bother printing again lol
-            if (GetEngineTime() - ServerLagWaitLength < timeSinceLagSpikeFor[0])
-            {
-                // silently refresh this var
-                timeSinceLagSpikeFor[0] = GetEngineTime();
-                return;
-            }
+            // silently refresh this var
             timeSinceLagSpikeFor[0] = GetEngineTime();
+            return;
+        }
+        timeSinceLagSpikeFor[0] = GetEngineTime();
 
-            StacLog("Server framerate stuttered. Expected: ~%.1f, got %i.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, tickspersec[0], ServerLagWaitLength);
-            if (DEBUG)
-            {
-                PrintToImportant("{hotpink}[StAC]{white} Server framerate stuttered. Expected: {palegreen}~%.1f{white}, got {fullred}%i{white}.\nDisabling OnPlayerRunCmd checks for %f seconds.",
-                tps, tickspersec[0], ServerLagWaitLength);
-            }
+        StacLog("Server framerate stuttered. Expected: ~%.1f, got %i.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, tickspersec[0], ServerLagWaitLength);
+        if (DEBUG)
+        {
+            PrintToImportant("{hotpink}[StAC]{white} Server framerate stuttered. Expected: {palegreen}~%.1f{white}, got {fullred}%i{white}.\nDisabling OnPlayerRunCmd checks for %f seconds.",
+            tps, tickspersec[0], ServerLagWaitLength);
         }
     }
 }

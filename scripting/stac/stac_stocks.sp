@@ -493,7 +493,8 @@ bool isDefaultTickrate()
     {
         DoTPSMath();
     }
-    if (i_isDefaultTickrate == 1)
+    // 66.66666 -> 67
+    if (itps == 67)
     {
         return true;
     }

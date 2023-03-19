@@ -401,7 +401,5 @@ void cheevCheck(int userid, int achieve_id)
         char message[256];
         Format(message, sizeof(message), "Client is cheating with bogus AchievementID %i (hex %X)", achieve_id, achieve_id);
         StacDetectionNotify(userid, message, 1);
-
     }
-
 }

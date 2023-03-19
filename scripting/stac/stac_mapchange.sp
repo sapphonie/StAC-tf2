@@ -171,27 +171,16 @@ Action getIP(Handle timer)
 
 void DoTPSMath()
 {
-    tickinterv  = GetTickInterval();
-    tps         = Pow(tickinterv, -1.0);
-    //itps = RoundToNearest(tps);
-    //
+    tickinterv = GetTickInterval();
+    tps = Pow(tickinterv, -1.0);
+    itps = RoundToNearest(tps);
+
     //// max amt of time a client is allowed to be ahead of the server in terms of tickcount, in seconds
     //static int maxAheadSeconds = 5;
     //itps_maxaheadsecs = ( itps * maxAheadSeconds );
 
-    if (i_isDefaultTickrate == -1)
-    {
-        if (tps > 60.0 && tps < 70.0)
-        {
-            i_isDefaultTickrate = 1;
-        }
-        else
-        {
-            i_isDefaultTickrate = 0;
-        }
-    }
     if (DEBUG)
     {
-        StacLog("tickinterv %f, tps %f", tickinterv, tps);
+        StacLog("tickinterv %f, tps %f, itps %i", tickinterv, tps, itps);
     }
 }
