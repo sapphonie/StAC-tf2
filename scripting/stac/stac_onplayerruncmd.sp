@@ -307,25 +307,7 @@ stock void PlayerRunCmd
     // dont check cmdnum here but check everything else
     if ( !IsUserLagging(cl, /* checkcmdnum = */ false) )
     {
-        // make sure we dont have any null values in here
-        if
-        (
-               clcmdnum[cl][0]
-            && clcmdnum[cl][1]
-            && clcmdnum[cl][2]
-            && clcmdnum[cl][3]
-            && clcmdnum[cl][4]
-            && cltickcount[cl][0]
-            && cltickcount[cl][1]
-            && cltickcount[cl][2]
-            && cltickcount[cl][3]
-            && cltickcount[cl][4]
-            // make sure our tickcount is vaguely close to normal
-            && isTickcountSanish(cl)
-        )
-        {
-            cmdnumspikeCheck(cl);
-        }
+        cmdnumspikeCheck(cl);
     }
 
     // time to wait after player lags before checking single client's OnPlayerRunCmd
@@ -1071,6 +1053,26 @@ bool IsUserLagging(int cl, bool checkcmdnum = true)
         return true;
     }
 
+    // make sure we dont have any null values in here
+    if
+    (
+           clcmdnum[cl][0]
+        && clcmdnum[cl][1]
+        && clcmdnum[cl][2]
+        && clcmdnum[cl][3]
+        && clcmdnum[cl][4]
+        && cltickcount[cl][0]
+        && cltickcount[cl][1]
+        && cltickcount[cl][2]
+        && cltickcount[cl][3]
+        && cltickcount[cl][4]
+        // make sure our tickcount is vaguely close to normal
+        && isTickcountSanish(cl)
+    )
+    {
+        // don't reset our lag spike counter so that we don't have cheaters spamming nullcmds
+        return true;
+    }
     return false;
 }
 
