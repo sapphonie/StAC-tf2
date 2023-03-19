@@ -596,7 +596,9 @@ void cmdnumspikeCheck(int cl)
 
         if (cmdnumSpikeDetects[cl] % 5 == 0)
         {
-            StacDetectionNotify(userid, "cmdnum spike", cmdnumSpikeDetects[cl]);
+            char dtype[128];
+            Format(dtype, sizeof(dtype), "cmdnum spike (of %i)", spikeamt);
+            StacDetectionNotify(userid, dtype, cmdnumSpikeDetects[cl]);
         }
 
         // punish if we reach limit set by cvar
@@ -1057,18 +1059,18 @@ bool IsUserLagging(int cl, bool checkcmdnum = true)
     // make sure we dont have any null values in here
     if
     (
-           clcmdnum[cl][0]
-        && clcmdnum[cl][1]
-        && clcmdnum[cl][2]
-        && clcmdnum[cl][3]
-        && clcmdnum[cl][4]
-        && cltickcount[cl][0]
-        && cltickcount[cl][1]
-        && cltickcount[cl][2]
-        && cltickcount[cl][3]
-        && cltickcount[cl][4]
+           !clcmdnum[cl][0]
+        || !clcmdnum[cl][1]
+        || !clcmdnum[cl][2]
+        || !clcmdnum[cl][3]
+        || !clcmdnum[cl][4]
+        || !cltickcount[cl][0]
+        || !cltickcount[cl][1]
+        || !cltickcount[cl][2]
+        || !cltickcount[cl][3]
+        || !cltickcount[cl][4]
         // make sure our tickcount is vaguely close to normal
-        && isTickcountSanish(cl)
+        || !isTickcountSanish(cl)
     )
     {
         // don't reset our lag spike counter so that we don't have cheaters spamming nullcmds
