@@ -493,7 +493,7 @@ bool isDefaultTickrate()
     {
         DoTPSMath();
     }
-    if (tps > 60.0 && tps < 70.0)
+    if (i_isDefaultTickrate == 1)
     {
         return true;
     }
