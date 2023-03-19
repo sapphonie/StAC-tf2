@@ -172,6 +172,8 @@ Handle HudSyncRunCmd;
 Handle HudSyncRunCmdMisc;
 Handle HudSyncNetwork;
 
+bool livefeedActive = false;
+
 // Timer handles
 Handle QueryTimer           [TFMAXPLAYERS+1];
 

@@ -204,13 +204,16 @@ public void OnGameFrame()
     calcTPSfor(0);
 
     // LIVEFEED
-    for (int cl = 1; cl <= MaxClients; cl++)
+    if (livefeedActive)
     {
-        if (IsValidClient(cl))
+        for (int cl = 1; cl <= MaxClients; cl++)
         {
-            if (LiveFeedOn[cl])
+            if (IsValidClient(cl))
             {
-                LiveFeed_PlayerCmd(GetClientUserId(cl));
+                if (LiveFeedOn[cl])
+                {
+                    LiveFeed_PlayerCmd(GetClientUserId(cl));
+                }
             }
         }
     }
@@ -219,6 +222,7 @@ public void OnGameFrame()
     {
         return;
     }
+
     if (tickspersec[0] < (tps / 2.0))
     {
         // don't bother printing again lol

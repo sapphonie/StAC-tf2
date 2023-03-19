@@ -351,6 +351,8 @@ void ClearClBasedVars(int userid)
     hurtWeapon              [cl][0] = '\0';
     lastCommandFor          [cl][0] = '\0';
     LiveFeedOn              [cl] = false;
+
+    checkLiveFeed();
     hasBadName              [cl] = false;
 
     // network info

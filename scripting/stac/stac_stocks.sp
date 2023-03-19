@@ -1035,3 +1035,17 @@ void checkOS()
         os = "unknown";
     }
 }
+
+// see if anyone is actively being viewed with livefeed so we dont have to loop every frame
+void checkLiveFeed()
+{
+    livefeedActive = false;
+    for (int k = 1; k <= MaxClients; k++)
+    {
+        if (LiveFeedOn[k])
+        {
+            livefeedActive = true;
+            break;
+        }
+    }
+}

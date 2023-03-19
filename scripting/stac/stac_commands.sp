@@ -189,6 +189,7 @@ void StacTargetCommand(int callingCl, const char[] arg0, const char[] arg1)
                     }
                 }
                 ReplyToCommand(callingCl, "[StAC] Toggled livefeed for \"%N\".", cl);
+                checkLiveFeed();
             }
         }
     }
