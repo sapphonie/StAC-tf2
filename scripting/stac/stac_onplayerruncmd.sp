@@ -307,7 +307,25 @@ stock void PlayerRunCmd
     // dont check cmdnum here but check everything else
     if ( !IsUserLagging(cl, /* checkcmdnum = */ false) )
     {
-        cmdnumspikeCheck(cl);
+        // make sure we dont have any null values in here
+        if
+        (
+               clcmdnum[cl][0]
+            && clcmdnum[cl][1]
+            && clcmdnum[cl][2]
+            && clcmdnum[cl][3]
+            && clcmdnum[cl][4]
+            && cltickcount[cl][0]
+            && cltickcount[cl][1]
+            && cltickcount[cl][2]
+            && cltickcount[cl][3]
+            && cltickcount[cl][4]
+            // make sure our tickcount is vaguely close to normal
+            && isTickcountSanish(cl)
+        )
+        {
+            cmdnumspikeCheck(cl);
+        }
     }
 
     // time to wait after player lags before checking single client's OnPlayerRunCmd
@@ -1021,13 +1039,11 @@ void triggerbotCheck(int cl)
 // TODO: we NEED to make this overlap
 bool IsUserLagging(int cl, bool checkcmdnum = true)
 {
-    /*
-    if ( lossFor[cl] >= 10.0 )
+    if ( lossFor[cl] >= 1.0 )
     {
         timeSinceLagSpikeFor[cl] = engineTime[cl][0];
         return true;
     }
-    */
 
     // check if we have sequential cmdnums
     if ( checkcmdnum && !isCmdnumSequential(cl) )
@@ -1091,7 +1107,16 @@ bool isCmdnumSequential(int cl)
     return false;
 }
 
-
+// Is the 5th most recent tickcount at least kind of close (within wiggle - 5) to the current tick?
+bool isTickcountSanish(int cl)
+{
+    static int wiggle = 15;
+    if ( (cltickcount[cl][4] + wiggle) >= cltickcount[cl][0] )
+    {
+        return true;
+    }
+    return false;
+}
 
 /*
 bool HasValidAngles(int cl)
@@ -1120,6 +1145,7 @@ bool isCmdnumInOrder(int cl)
     return false;
 }
 
+
 bool isTickcountInOrder(int cl)
 {
     if (cltickcount[cl][0] > cltickcount[cl][1] > cltickcount[cl][2] > cltickcount[cl][3] > cltickcount[cl][4])
@@ -1128,7 +1154,6 @@ bool isTickcountInOrder(int cl)
     }
     return false;
 }
-
 bool isTickcountRepeated(int cl)
 {
     if
