@@ -404,7 +404,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         return;
     }
 
-    StacGeneralPlayerNotify(userid, reason);
+    StacNotify(userid, reason);
     // make sure we dont detect on already banned players
     userBanQueued[cl] = true;
 
@@ -620,20 +620,20 @@ void PrintToConsoleAllAdmins(const char[] format, any ...)
 
 /********** MATH STUFF **********/
 
-int min(int a, int b)
+int math_min(int a, int b)
 {
     return a < b ? a : b;
 }
 
-int max(int a, int b)
+int math_max(int a, int b)
 {
     return a > b ? a : b;
 }
 
 int clamp(int num, int minnum, int maxnum)
 {
-    num  = max(num, minnum);
-    return min(num, maxnum);
+    num  = math_max(num, minnum);
+    return math_min(num, maxnum);
 }
 
 any abs(any x)
@@ -663,7 +663,6 @@ bool IsZeroVector(const float vec[3])
 }
 */
 
-
 /********** UPDATER **********/
 
 public void OnLibraryAdded(const char[] name)
@@ -676,7 +675,11 @@ public void OnLibraryAdded(const char[] name)
 
 /********** DETECTIONS & DISCORD **********/
 
-void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
+
+// if our userid is 0, it's a server message without a client
+// if our detections are 0, it's a client message without a detection
+// otherwise, it's a detection with a number of detections
+void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
 {
     StacLogDemo();
 
@@ -685,326 +688,513 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         return;
     }
 
-    static char generalTemplate[] = \
-    "{ \"embeds\": \
-        [{ \"title\": \"StAC Client Message!\", \"color\": 16738740, \"fields\":\
-            [\
-                { \"name\": \"Player\",             \"value\": \"%N\", \"inline\": true },\
-                { \"name\": \"SteamID\",            \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Message\",            \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Hostname\",           \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \"Server IP\",          \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Current Demo\",       \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \"Demo Tick\",          \"value\": \"%i\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Server tick\",        \"value\": \"%i\", \"inline\": true },\
-                { \"name\": \"Unix timestamp\",     \"value\": \"%i\", \"inline\": true }\
-            ]\
-        }],\
-        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
-    }";
+    char output[8192 * 2];
 
-    char msg[8192];
+    // individual fields
 
+    // empty fields for spacing
+    JSON_Object spacerField = new JSON_Object();
+    spacerField.EnableOrderedKeys();
+    spacerField.SetString("name",   " ");
+    spacerField.SetString("value",  " ");
+    spacerField.SetBool  ("inline", false);
 
-    char fmtmsg[8192];
-    VFormat(fmtmsg, sizeof(fmtmsg), format, 3);
+    JSON_Object spacerCpy1;
+    if (userid)
+    {
+        spacerCpy1 = spacerField.DeepCopy();
+    }
+
+    JSON_Object spacerCpy2 = spacerField.DeepCopy();
+    JSON_Object spacerCpy3 = spacerField.DeepCopy();
+    JSON_Object spacerCpy4 = spacerField.DeepCopy();
+    JSON_Object spacerCpy5 = spacerField.DeepCopy();
+    JSON_Object spacerCpy6;
+    JSON_Object spacerCpy7;
+    if (detections)
+    {
+        spacerCpy6 = spacerField.DeepCopy();
+        spacerCpy7 = spacerField.DeepCopy();
+    }
+
+    // this isn't used anywhere we're just using it to copy off of
+    json_cleanup_and_delete(spacerField);
 
     int cl = GetClientOfUserId(userid);
-    char ClName[64];
-    GetClientName(cl, ClName, sizeof(ClName));
-    Discord_EscapeString(ClName, sizeof(ClName));
 
-    // we technically store the url in this so it has to be bigger
-    char steamid[96];
-    // ok we store these on client connect & auth, this shouldn't be null
-    if (!IsActuallyNullString(SteamAuthFor[cl]))
+    JSON_Object nameField;
+    JSON_Object steamIDfield;
+    if (userid)
     {
-        // make this a clickable link in discord
-        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[cl], SteamAuthFor[cl]);
+        // playername
+        char ClName[64];
+        GetClientName(cl, ClName, sizeof(ClName));
+        Discord_EscapeString(ClName, sizeof(ClName));
+        json_escape_string(ClName, sizeof(ClName));
+
+        nameField = new JSON_Object();
+        nameField.EnableOrderedKeys();
+        nameField.SetString("name", "Player");
+        nameField.SetString("value", ClName);
+        nameField.SetBool("inline", true);
+
+
+        // steamid
+        // we technically store the url in this so it has to be bigger
+        char steamid[96];
+        // ok we store these on client connect & auth, this shouldn't be null
+        if (!SteamAuthFor[cl][0])
+        {
+            // make this a clickable link in discord
+            Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[cl], SteamAuthFor[cl]);
+        }
+        // if it is, that means we lateloaded and the client was unauth'd.
+        else
+        {
+            steamid = "N/A";
+        }
+
+        steamIDfield = new JSON_Object();
+        steamIDfield.EnableOrderedKeys();
+        steamIDfield.SetString("name", "SteamID");
+        steamIDfield.SetString("value", steamid);
+        steamIDfield.SetBool  ("inline", true);
     }
-    // if it is, that means the plugin reloaded or steam is being fussy.
+
+
+    // detection / notify fields
+    JSON_Object detectOrMsgfield = new JSON_Object();
+    detectOrMsgfield.EnableOrderedKeys();
+    if (!userid)
+    {
+        detectOrMsgfield.SetString("name", "Message");
+    }
+    else if (!detections)
+    {
+        detectOrMsgfield.SetString("name", "Notification");
+    }
     else
     {
-        steamid = "N/A";
+        detectOrMsgfield.SetString("name", "Detection");
+    }
+    detectOrMsgfield.SetString("value", prefmtedstring);
+    detectOrMsgfield.SetBool("inline", true);
+
+    // number of detections
+
+    JSON_Object detectNumfield;
+    if (detections)
+    {
+        detectNumfield = new JSON_Object();
+        detectNumfield.EnableOrderedKeys();
+        detectNumfield.SetString("name", "Detection #");
+        detectNumfield.SetInt("value", detections);
+        detectNumfield.SetBool("inline", true);
     }
 
+
+    // server hostname
     char hostname[256];
     GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
 
-    Format
-    (
-        msg,
-        sizeof(msg),
-        generalTemplate,
-        cl,
-        steamid,
-        fmtmsg,
-        hostname,
-        hostipandport,
-        demoname,
-        demotick,
-        servertick,
-        GetTime()
-    );
+    JSON_Object hostname_field = new JSON_Object();
+    hostname_field.EnableOrderedKeys();
+    hostname_field.SetString("name", "Hostname");
+    hostname_field.SetString("value", hostname);
+    hostname_field.SetBool  ("inline", true);
 
-    SendMessageToDiscord(msg);
-}
+    // server IP - steam:///connect ??
+    JSON_Object serverip_field = new JSON_Object();
+    serverip_field.EnableOrderedKeys();
+    serverip_field.SetString("name", "Server IP");
+    serverip_field.SetString("value", hostipandport);
+    serverip_field.SetBool  ("inline", true);
 
-void StacDetectionNotify(int userid, char[] type, int detections)
-{
-    StacLogDemo();
 
-    if (!DISCORD)
+    // STV
+    GetDemoName();
+
+
+    JSON_Object demoname_field = new JSON_Object();
+    demoname_field.EnableOrderedKeys();
+    demoname_field.SetString("name", "Demo name");
+    demoname_field.SetString("value", demoname);
+    demoname_field.SetBool  ("inline", true);
+
+
+    JSON_Object demotick_field = new JSON_Object();
+    demotick_field.EnableOrderedKeys();
+    demotick_field.SetString("name", "Demo tick");
+    demotick_field.SetInt   ("value", demotick);
+    demotick_field.SetBool  ("inline", true);
+
+    float tickedTime = GetTickedTime();
+    char tickedTimeStr[512];
+    // 1 day
+    if (tickedTime > 86400)
     {
-        return;
+        Format
+        (
+            tickedTimeStr,
+            sizeof(tickedTimeStr),
+            "%.2f minutes(!)\n\n\
+            Source Engine has memory leaks\n\
+            and suffers from \n\
+            [floating point precision loss](https://www.youtube.com/watch?v=RdTJHVG_IdU)\n\
+            after running for too long.\n\
+            You should restart your server ASAP,\n\
+            or it will become choppy,\n\
+            and StAC may not work correctly!",
+            tickedTime / 60.0
+        );
     }
-
-    static char detectionTemplate[] = \
-    "{ \"embeds\": \
-        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
-            [\
-                { \"name\": \"Player\",             \"value\": \"%N\", \"inline\": true },\
-                { \"name\": \"SteamID\",            \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Detection type\",     \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \"Detection #\",          \"value\": \"%i\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Hostname\",           \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \"Server IP\",          \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Current Demo\",       \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \"Demo Tick\",          \"value\": \"%i\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Server tick\",        \"value\": \"%i\", \"inline\": true },\
-                { \"name\": \"Unix timestamp\",     \"value\": \"%i\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"viewangle history\",  \"value\":\
-               \"```==----pitch---yaw-----roll-----\\n\
-                    0 | %7.2f %7.2f %7.2f\\n\
-                    1 | %7.2f %7.2f %7.2f\\n\
-                    2 | %7.2f %7.2f %7.2f\\n\
-                    3 | %7.2f %7.2f %7.2f\\n\
-                    4 | %7.2f %7.2f %7.2f\\n```\"\
-                }, \
-                { \"name\": \"eye position history\",  \"value\":\
-               \"```==-----x--------y--------z---------\\n\
-                    0 | %8.2f %8.2f %8.2f\\n\
-                    1 | %8.2f %8.2f %8.2f\\n```\"\
-                }, \
-                { \
-                \"name\": \"cmdnum history\",       \"value\":\
-                \"approx client sequence number\\n\
-                ```\
-                    0 | %i\\n\
-                    1 | %i\\n\
-                    2 | %i\\n\
-                    3 | %i\\n\
-                    4 | %i\\n```\",\
-                    \"inline\": true \
-                }, \
-                { \
-                \"name\": \"tickcount history\",    \"value\":\
-                \"approx client gpGlobals->tickcount\\n\
-                ```\
-                    0 | %i\\n\
-                    1 | %i\\n\
-                    2 | %i\\n\
-                    3 | %i\\n\
-                    4 | %i\\n```\",\
-                    \"inline\": true \
-                }, \
-                { \
-                \"name\": \"buttons history\",      \"value\":\
-                \"convert to button flags [here](https://sapphonie.github.io/flags.html)\\n\
-                    ```\
-                    0 | %i\\n\
-                    1 | %i\\n\
-                    2 | %i\\n\
-                    3 | %i\\n\
-                    4 | %i\\n```\",\
-                    \"inline\": true \
-                }, \
-                { \
-                \"name\": \"network info\",         \"value\":\
-                \"```\
-                    ping               | %7.2fms\\n\
-                    loss               | %7.2f%%\\n\
-                    inchoke            | %7.2f%%\\n\
-                    outchoke           | %7.2f%%\\n\
-                    totalchoke         | %7.2f%%\\n\
-                    rate               | %7.2fkbps\\n\
-                    approx packets/sec | %7.2f\\n\
-                    approx usrcmds/sec | %7i\\n```\"\
-                } \
-            ]\
-        }], \
-        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
-    }";
-
-
-    char msg[8192];
-
-    int cl = GetClientOfUserId(userid);
-    char ClName[64];
-    GetClientName(cl, ClName, sizeof(ClName));
-    Discord_EscapeString(ClName, sizeof(ClName));
-
-    // we technically store the url in this so it has to be bigger
-    char steamid[96];
-    // ok we store these on client connect & auth, this shouldn't be null
-    if (!IsActuallyNullString(SteamAuthFor[cl]))
-    {
-        // make this a clickable link in discord
-        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[cl], SteamAuthFor[cl]);
-    }
-    // if it is, that means the plugin reloaded or steam is being fussy.
     else
     {
-        steamid = "N/A";
+        Format
+        (
+            tickedTimeStr,
+            sizeof(tickedTimeStr),
+            "%.2f minutes",
+            tickedTime / 60.0
+        );
     }
 
-    char hostname[256];
-    GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
+    JSON_Object gametime_field = new JSON_Object();
+    gametime_field.EnableOrderedKeys();
+    gametime_field.SetString("name", "Approx server uptime");
+    gametime_field.SetString("value", tickedTimeStr);
+    gametime_field.SetBool  ("inline", true);
+
+
+    JSON_Object servertick_field = new JSON_Object();
+    servertick_field.EnableOrderedKeys();
+    servertick_field.SetString("name", "Server tick");
+    servertick_field.SetInt   ("value", servertick);
+    servertick_field.SetBool  ("inline", true);
+
+
+
+
+
+    int unixTimestamp = GetTime();
+    char discordTimestamp[512];
 
     Format
     (
-        msg,
-        sizeof(msg),
-        detectionTemplate,
-        cl,
-        steamid,
-        type,
-        detections,
-        hostname,
-        hostipandport,
-        demoname,
-        demotick,
-        servertick,
-        GetTime(),
-
-        // angles
-        clangles[cl][0][0],
-        clangles[cl][0][1],
-        clangles[cl][0][2],
-
-        clangles[cl][1][0],
-        clangles[cl][1][1],
-        clangles[cl][1][2],
-
-        clangles[cl][2][0],
-        clangles[cl][2][1],
-        clangles[cl][2][2],
-
-        clangles[cl][3][0],
-        clangles[cl][3][1],
-        clangles[cl][3][2],
-
-        clangles[cl][4][0],
-        clangles[cl][4][1],
-        clangles[cl][4][2],
-
-        // eye positions
-        clpos[cl][0][0],
-        clpos[cl][0][1],
-        clpos[cl][0][2],
-        clpos[cl][1][0],
-        clpos[cl][1][1],
-        clpos[cl][1][2],
-
-        // cmdnum
-        clcmdnum[cl][0],
-        clcmdnum[cl][1],
-        clcmdnum[cl][2],
-        clcmdnum[cl][3],
-        clcmdnum[cl][4],
-
-        // tickcount
-        cltickcount[cl][0],
-        cltickcount[cl][1],
-        cltickcount[cl][2],
-        cltickcount[cl][3],
-        cltickcount[cl][4],
-
-        // buttons
-        clbuttons[cl][0],
-        clbuttons[cl][1],
-        clbuttons[cl][2],
-        clbuttons[cl][3],
-        clbuttons[cl][4],
-
-        // network
-        pingFor[cl],
-        lossFor[cl],
-        inchokeFor[cl],
-        outchokeFor[cl],
-        chokeFor[cl],
-        rateFor[cl],
-        ppsFor[cl],
-        tickspersec[cl]
+        discordTimestamp,
+        sizeof(discordTimestamp),
+        "\
+        <t:%i:T> on <t:%i:D>\n\
+        <t:%i:R>\
+        ",
+        unixTimestamp,
+        unixTimestamp,
+        unixTimestamp
     );
 
-    SendMessageToDiscord(msg);
-}
 
-void StacGeneralMessageNotify(const char[] format, any ...)
-{
-    StacLogDemo();
 
-    if (!DISCORD)
+    JSON_Object discordtimestamp_field = new JSON_Object();
+    discordtimestamp_field.EnableOrderedKeys();
+    discordtimestamp_field.SetString("name", "Discord Timestamp");
+    discordtimestamp_field.SetString("value", discordTimestamp);
+    discordtimestamp_field.SetBool  ("inline", true);
+
+
+    JSON_Object unixtimestamp_field = new JSON_Object();
+    unixtimestamp_field.EnableOrderedKeys();
+    unixtimestamp_field.SetString("name", "Unix Timestamp");
+    unixtimestamp_field.SetInt   ("value", unixTimestamp);
+    unixtimestamp_field.SetBool  ("inline", true);
+
+
+
+    JSON_Object viewangle_field;
+    JSON_Object clpos_field;
+    JSON_Object tickcount_field;
+    JSON_Object cmdnum_field;
+    JSON_Object buttons_field;
+    JSON_Object netinfo_field;
+
+
+    if (detections)
     {
-        return;
+        // VIEWANGLES
+        char viewangleHistoryBuf[1024];
+        Format
+        (
+            viewangleHistoryBuf,
+            sizeof(viewangleHistoryBuf),
+            "```\
+                ==----pitch---yaw-----roll-----\n\
+                0 | %7.2f %7.2f %7.2f\n\
+                1 | %7.2f %7.2f %7.2f\n\
+                2 | %7.2f %7.2f %7.2f\n\
+                3 | %7.2f %7.2f %7.2f\n\
+                4 | %7.2f %7.2f %7.2f\n\
+            ```",
+
+                // angles
+                clangles[cl][0][0],
+                clangles[cl][0][1],
+                clangles[cl][0][2],
+
+                clangles[cl][1][0],
+                clangles[cl][1][1],
+                clangles[cl][1][2],
+
+                clangles[cl][2][0],
+                clangles[cl][2][1],
+                clangles[cl][2][2],
+
+                clangles[cl][3][0],
+                clangles[cl][3][1],
+                clangles[cl][3][2],
+
+                clangles[cl][4][0],
+                clangles[cl][4][1],
+                clangles[cl][4][2]
+        );
+
+
+        viewangle_field = new JSON_Object();
+        viewangle_field.EnableOrderedKeys();
+        viewangle_field.SetString("name", "viewangle history");
+        viewangle_field.SetString("value", viewangleHistoryBuf);
+        viewangle_field.SetBool  ("inline", false);
+
+
+        // EYE POSITIONS
+        char eyeposBuf[1024];
+        Format
+        (
+            eyeposBuf,
+            sizeof(eyeposBuf),
+
+            "```\
+            ==-----x--------y--------z---------\n\
+            0 | %8.2f %8.2f %8.2f\n\
+            1 | %8.2f %8.2f %8.2f\n\
+            ```",
+
+            // eye positions
+            clpos[cl][0][0],
+            clpos[cl][0][1],
+            clpos[cl][0][2],
+            clpos[cl][1][0],
+            clpos[cl][1][1],
+            clpos[cl][1][2]
+        );
+
+        clpos_field = new JSON_Object();
+        clpos_field.EnableOrderedKeys();
+        clpos_field.SetString("name", "eye position history");
+        clpos_field.SetString("value", eyeposBuf);
+        clpos_field.SetBool  ("inline", false);
+
+        // CMDNUMS
+        char cmdnumBuf[1024];
+        Format
+        (
+            cmdnumBuf,
+            sizeof(cmdnumBuf),
+
+            "[what's this?](https://github.com/VSES/SourceEngine2007/blob/43a5c90a5ada1e69ca044595383be67f40b33c61/se2007/game/client/in_main.cpp#L1008)\n```\
+                0 | %i\n\
+                1 | %i\n\
+                2 | %i\n\
+                3 | %i\n\
+                4 | %i\n\
+            ```",
+
+            // cmdnum
+            clcmdnum[cl][0],
+            clcmdnum[cl][1],
+            clcmdnum[cl][2],
+            clcmdnum[cl][3],
+            clcmdnum[cl][4]
+        );
+
+        cmdnum_field = new JSON_Object();
+        cmdnum_field.EnableOrderedKeys();
+        cmdnum_field.SetString("name", "cmdnum history");
+        cmdnum_field.SetString("value", cmdnumBuf);
+        cmdnum_field.SetBool  ("inline", true);
+
+        // TICKCOUNTS
+        char tickcountBuf[1024];
+        Format
+        (
+            tickcountBuf,
+            sizeof(tickcountBuf),
+
+            "[what's this?](https://github.com/VSES/SourceEngine2007/blob/43a5c90a5ada1e69ca044595383be67f40b33c61/se2007/game/client/in_main.cpp#L1009)\n```\
+                0 | %i\n\
+                1 | %i\n\
+                2 | %i\n\
+                3 | %i\n\
+                4 | %i\n\
+            ```",
+
+            // tickcount
+            cltickcount[cl][0],
+            cltickcount[cl][1],
+            cltickcount[cl][2],
+            cltickcount[cl][3],
+            cltickcount[cl][4]
+        );
+
+
+        tickcount_field = new JSON_Object();
+        tickcount_field.EnableOrderedKeys();
+        tickcount_field.SetString("name", "tickcount history");
+        tickcount_field.SetString("value", tickcountBuf);
+        tickcount_field.SetBool  ("inline", true);
+
+        // BUTTONS
+        char buttonsBuf[1024];
+        Format
+        (
+            buttonsBuf,
+            sizeof(buttonsBuf),
+
+            "[what's this?](https://sapphonie.github.io/flags.html)\n\
+            ```\
+                0 | %i\n\
+                1 | %i\n\
+                2 | %i\n\
+                3 | %i\n\
+                4 | %i\n\
+            ```",
+
+            // buttons
+            clbuttons[cl][0],
+            clbuttons[cl][1],
+            clbuttons[cl][2],
+            clbuttons[cl][3],
+            clbuttons[cl][4]
+        );
+
+
+        buttons_field = new JSON_Object();
+        buttons_field.EnableOrderedKeys();
+        buttons_field.SetString("name", "buttons history");
+        buttons_field.SetString("value", buttonsBuf);
+        buttons_field.SetBool  ("inline", true);
+
+        // NETWORK INFO
+        char netinfoBuf[1024];
+        Format
+        (
+            netinfoBuf,
+            sizeof(netinfoBuf),
+
+            "```\
+                ping               | %7.2fms\n\
+                loss               | %7.2f%%\n\
+                inchoke            | %7.2f%%\n\
+                outchoke           | %7.2f%%\n\
+                totalchoke         | %7.2f%%\n\
+                rate               | %7.2fkbps\n\
+                approx packets/sec | %7.2f\n\
+                approx usrcmds/sec | %7i\n\
+            ```",
+
+            // network
+            pingFor[cl],
+            lossFor[cl],
+            inchokeFor[cl],
+            outchokeFor[cl],
+            chokeFor[cl],
+            rateFor[cl],
+            ppsFor[cl],
+            tickspersec[cl]
+        );
+
+        netinfo_field = new JSON_Object();
+        netinfo_field.EnableOrderedKeys();
+        netinfo_field.SetString("name", "network info");
+        netinfo_field.SetString("value", netinfoBuf);
+        netinfo_field.SetBool  ("inline", false);
     }
 
 
-    static char bareTemplate[] = \
-    "{ \"embeds\": \
-        [{ \"title\": \"StAC General Message!\", \"color\": 16738740, \"fields\":\
-            [\
-                { \"name\": \"Message\",            \"value\": \"%s\" },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Hostname\",           \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \"Server IP\",          \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Current Demo\",       \"value\": \"%s\", \"inline\": true },\
-                { \"name\": \"Demo Tick\",          \"value\": \"%i\", \"inline\": true },\
-                { \"name\": \" \",                  \"value\": \" \" },\
-                { \"name\": \"Server tick\",        \"value\": \"%i\", \"inline\": true },\
-                { \"name\": \"Unix timestamp\",     \"value\": \"%i\", \"inline\": true }\
-            ]\
-        }],\
-        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
-    }";
+    // fields list
+    JSON_Array fieldArray = new JSON_Array();
+    if (userid)
+    {
+        fieldArray.PushObject(nameField);
+        fieldArray.PushObject(steamIDfield);
+        fieldArray.PushObject(spacerCpy1);
+    }
+    fieldArray.PushObject(detectOrMsgfield);
+    if (detections)
+    {
+        fieldArray.PushObject(detectNumfield);
+    }
+    fieldArray.PushObject(spacerCpy2);
+    fieldArray.PushObject(hostname_field);
+    fieldArray.PushObject(serverip_field);
+    fieldArray.PushObject(spacerCpy3);
+    fieldArray.PushObject(demoname_field);
+    fieldArray.PushObject(demotick_field);
+    fieldArray.PushObject(spacerCpy4);
+    fieldArray.PushObject(gametime_field);
+    fieldArray.PushObject(servertick_field);
+    fieldArray.PushObject(spacerCpy5);
+    fieldArray.PushObject(discordtimestamp_field);
+    fieldArray.PushObject(unixtimestamp_field);
+    if (detections)
+    {
+        fieldArray.PushObject(spacerCpy6);
+        fieldArray.PushObject(viewangle_field);
+        fieldArray.PushObject(clpos_field);
+        fieldArray.PushObject(spacerCpy7);
+        fieldArray.PushObject(cmdnum_field);
+        fieldArray.PushObject(tickcount_field);
+        fieldArray.PushObject(buttons_field);
+        fieldArray.PushObject(netinfo_field);
+    }
 
-    char msg[8192];
 
-    char fmtmsg[8192];
-    VFormat(fmtmsg, sizeof(fmtmsg), format, 2);
+    // embeds header info
+    JSON_Object embedsFields = new JSON_Object();
+    embedsFields.EnableOrderedKeys();
+
+    embedsFields.SetObject("fields", fieldArray);
+    char notifType[64];
+    if (!userid)
+    {
+        Format(notifType, sizeof(notifType), "StAC v%s %s", PLUGIN_VERSION, "Server Message");
+    }
+    else if (!detections)
+    {
+        Format(notifType, sizeof(notifType), "StAC v%s %s", PLUGIN_VERSION, "Client Notification");
+    }
+    else
+    {
+        Format(notifType, sizeof(notifType), "StAC v%s %s", PLUGIN_VERSION, "Client Detection");
+    }
+    embedsFields.SetString  ("title",       notifType);
+    embedsFields.SetInt     ("color",       16738740);
 
 
-    char hostname[256];
-    GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
+    // empty array including our embeds
+    JSON_Array finalArr = new JSON_Array();
+    finalArr.PushObject(embedsFields);
 
-    Format
-    (
-        msg,
-        sizeof(msg),
-        bareTemplate,
-        fmtmsg,
-        hostname,
-        hostipandport,
-        demoname,
-        demotick,
-        servertick,
-        GetTime()
-    );
+    // root
+    JSON_Object rootEmbeds = new JSON_Object();
+    rootEmbeds.EnableOrderedKeys();
+    rootEmbeds.SetObject("embeds", finalArr);
 
-    SendMessageToDiscord(msg);
+    rootEmbeds.Encode(output, sizeof(output));
+
+    json_cleanup_and_delete(rootEmbeds);
+    SendMessageToDiscord(output);
+
+    return;
 }
-
 
 void SendMessageToDiscord(char[] message)
 {

@@ -21,10 +21,11 @@ Action checkAdmin(int callingCl, int args)
         {
             PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
             StacLogSteam(GetClientUserId(callingCl));
-            StacGeneralPlayerNotify(GetClientUserId(callingCl), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
+            char fmtmsg[512];
+            Format(fmtmsg, sizeof(fmtmsg), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
+            StacNotify(GetClientUserId(callingCl), fmtmsg);
             return Plugin_Handled;
         }
-        StacGeneralPlayerNotify(GetClientUserId(callingCl), "Admin %N used %s", callingCl, arg0);
     }
 
     if (StrEqual(arg0, "sm_stac_checkall"))

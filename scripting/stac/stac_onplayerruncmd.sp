@@ -382,7 +382,7 @@ void bhopCheck(int cl)
             PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , cl, bhopDetects[cl]);
             if (bhopDetects[cl] % 5 == 0)
             {
-                StacDetectionNotify(userid, "consecutive tick perfect bhops", bhopDetects[cl]);
+                StacNotify(userid, "consecutive tick perfect bhops", bhopDetects[cl]);
             }
             StacLogSteam(userid);
 
@@ -466,7 +466,7 @@ void turnbindCheck(int cl)
         }
         else if (turnSec >= maxAllowedTurnSecs)
         {
-            StacGeneralPlayerNotify(userid, "Client was kicked for turn binds");
+            StacNotify(userid, "Client was kicked for turn binds");
             KickClient(cl, "%t", "turnbindKickMsg");
             MC_PrintToChatAll("%t", "turnbindAllChat", cl);
             StacLog("%t", "turnbindAllChat", cl);
@@ -531,7 +531,7 @@ void fakeangCheck(int cl)
             StacLogCmdnums(userid);
             StacLogTickcounts(userid);
 
-            StacDetectionNotify(userid, "fake angles", fakeAngDetects[cl]);
+            StacNotify(userid, "fake angles", fakeAngDetects[cl]);
         }
         if (fakeAngDetects[cl] >= maxFakeAngDetections && maxFakeAngDetections > 0)
         {
@@ -591,7 +591,7 @@ void cmdnumspikeCheck(int cl)
         {
             char dtype[128];
             Format(dtype, sizeof(dtype), "cmdnum spike (of %i)", spikeamt);
-            StacDetectionNotify(userid, dtype, cmdnumSpikeDetects[cl]);
+            StacNotify(userid, dtype, cmdnumSpikeDetects[cl]);
         }
 
         // punish if we reach limit set by cvar
@@ -726,7 +726,7 @@ void psilentCheck(int cl)
         {
             char dtype[128];
             Format(dtype, sizeof(dtype), "psilent (snap of %.2f°)", aDiffReal);
-            StacDetectionNotify(userid, dtype, pSilentDetects[cl]);
+            StacNotify(userid, dtype, pSilentDetects[cl]);
         }
         // BAN USER if they trigger too many detections
         if (pSilentDetects[cl] >= maxPsilentDetections && maxPsilentDetections > 0)
@@ -891,7 +891,7 @@ void aimsnapCheck(int cl)
         {
             char dtype[128];
             Format(dtype, sizeof(dtype), "aimsnap (snap of %.2f°)", aDiffReal);
-            StacDetectionNotify(userid, dtype, aimsnapDetects[cl]);
+            StacNotify(userid, dtype, aimsnapDetects[cl]);
         }
 
         // BAN USER if they trigger too many detections
@@ -997,7 +997,7 @@ void triggerbotCheck(int cl)
         }
         if (tbotDetects[cl] % 5 == 0)
         {
-            StacDetectionNotify(userid, "triggerbot", tbotDetects[cl]);
+            StacNotify(userid, "triggerbot", tbotDetects[cl]);
         }
         // BAN USER if they trigger too many detections
         if (tbotDetects[cl] >= maxTbotDetections && maxTbotDetections > 0)
@@ -1057,7 +1057,7 @@ void invalidUsercmdCheck(int cl)
             StacLogCmdnums(userid);
             StacLogTickcounts(userid);
 
-            StacDetectionNotify(userid, "Invalid usercmd data! cmdnum or tickcount < 0!", invalidUsercmdDetects[cl]);
+            StacNotify(userid, "Invalid usercmd data! cmdnum or tickcount < 0!", invalidUsercmdDetects[cl]);
         }
     }
 
@@ -1096,7 +1096,7 @@ void invalidUsercmdCheck(int cl)
             StacLogCmdnums(userid);
             StacLogTickcounts(userid);
 
-            StacDetectionNotify(userid, "Invalid usercmd data! client buttons are >= (1 << 26)!", invalidUsercmdDetects[cl]);
+            StacNotify(userid, "Invalid usercmd data! client buttons are >= (1 << 26)!", invalidUsercmdDetects[cl]);
         }
     }
 
@@ -1114,7 +1114,7 @@ void invalidUsercmdCheck(int cl)
     // if ( tickcount > (servertick + itps_maxaheadsecs) )
     // {
     //     int userid = GetClientUserId(cl);
-    //     StacDetectionNotify(userid, "Invalid usercmd data! client tickcount ahead of the server's tickcount by more than 5 seconds!", 1);
+    //     StacNotify(userid, "Invalid usercmd data! client tickcount ahead of the server's tickcount by more than 5 seconds!", 1);
     //     return;
     // }
 

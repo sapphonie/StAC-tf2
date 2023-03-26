@@ -276,11 +276,18 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     {
         if (StringToInt(cvarValue) >= 8)
         {
-            StacGeneralPlayerNotify
+            char fmtmsg[512];
+            Format
             (
-                userid,
+                fmtmsg,
+                sizeof(fmtmsg),
                 "Client %N has a value of \"%i\" for cvar \"%s\", which is out of bounds. Legit clients can set this, but most of the time, this is a bot. Kicked from server.",
                 cl, StringToInt(cvarValue), cvarName
+            );
+            StacNotify
+            (
+                userid,
+                fmtmsg
             );
             if (banForMiscCheats)
             {
@@ -303,8 +310,18 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     // log something about cvar errors
     else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName) && !StrEqual(cvarName, "windows_speaker_config"))
     {
-        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on player %N", cvarName, cl);
-        StacGeneralPlayerNotify(userid, "Could not query cvar %s on player %N! This person is probably cheating, but please verify this!", cvarName, cl);
+        char fmtmsg[512];
+        Format
+        (
+            fmtmsg,
+            sizeof(fmtmsg),
+            "Could not query cvar %s on player %N! This person is probably cheating, but please verify this!",
+            cvarName,
+            cl
+        );
+        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on player %N! This person is probably cheating, but please verify this!", cvarName, cl);
+        StacLog(fmtmsg);
+        StacNotify(userid, fmtmsg);
     }
 }
 
@@ -368,7 +385,7 @@ void oobVarsNotify(int userid, const char[] name, const char[] value)
     StacLogSteam(userid);
     char msg[128];
     Format(msg, sizeof(msg), "Client has OOB value %s for var %s!", value, name);
-    StacDetectionNotify(userid, msg, 1);
+    StacNotify(userid, msg, 1);
 }
 
 
@@ -380,7 +397,7 @@ void illegalVarsNotify(int userid, const char[] name)
     StacLogSteam(userid);
     char msg[128];
     Format(msg, sizeof(msg), "Known cheat var %s exists on client!", name);
-    StacDetectionNotify(userid, msg, 1);
+    StacNotify(userid, msg, 1);
 }
 
 

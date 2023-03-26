@@ -4,6 +4,8 @@
 
 #pragma semicolon 1
 #pragma newdecls required
+// For json
+#pragma dynamic 8192 * 4
 
 #include <sourcemod>
 #include <regex>
@@ -32,6 +34,7 @@
 #include <morecolors>
 #include <concolors>
 #include <autoexecconfig>
+#include <json>
 #undef REQUIRE_PLUGIN
 #tryinclude <updater>
 #tryinclude <sourcebanspp>
@@ -190,7 +193,7 @@ public void OnPluginEnd()
     MC_PrintToChatAll("{hotpink}StAC{white} version [%s] unloaded!!! If this wasn't intentional, something nefarious is afoot!", PLUGIN_VERSION);
     MC_PrintToChatAll("{hotpink}StAC{white} version [%s] unloaded!!! If this wasn't intentional, something nefarious is afoot!", PLUGIN_VERSION);
 
-    StacGeneralMessageNotify("StAC was just unloaded!!! Was this intentional??");
+    StacNotify(0, "StAC was just unloaded!!! Was this intentional??");
 
     NukeTimers();
     OnMapEnd();

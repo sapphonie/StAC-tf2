@@ -100,22 +100,23 @@ public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
             latestIP,
             clIP
         );
-        StacLog(dbginfo);
 
-        ReplaceString(dbginfo, sizeof(dbginfo), "\n", "\\n");
         char msg[2048];
         Format
         (
             msg,
             sizeof(msg),
-            "Client %L somehow triggered a race condition in OnClientConnect.\\n \
-            Please report this (along with a screenshot of this embed) on the StAC issue tracker on github:\\n \
-            https://github.com/sapphonie/StAC-tf2/issues\\n \
+            "Client %L somehow triggered a race condition in OnClientConnect.\n \
+            Please report this (along with a screenshot of this embed or error message) on the StAC issue tracker on github:\n \
+            https://github.com/sapphonie/StAC-tf2/issues\n \
             ```%s```",
             cl,
             dbginfo
         );
-        StacGeneralPlayerNotify(userid, msg);
+        StacNotify(userid, msg);
+
+        StacLog("Client %L somehow triggered a race condition in OnClientConnect. Report this error on the GitHub.", cl);
+        StacLog(dbginfo);
 
 #if defined( DC_ON_CONNECTION_RACECON )
         strcopy(rejectmsg, maxlen, "Didn't fire proper connection functions. Please reconnect");
@@ -226,7 +227,7 @@ void checkIP(int cl)
     {
         char msg[256];
         Format(msg, sizeof(msg), "Too many connections from the same IP address %s from client %N", clientIP, cl);
-        StacGeneralPlayerNotify(userid, msg);
+        StacNotify(userid, msg);
         PrintToImportant("{hotpink}[StAC]{white} Too many connections (%i) from the same IP address {mediumpurple}%s{white} from client %N!", sameip, clientIP, cl);
         StacLog(msg);
         KickClient(cl, "[StAC] Too many concurrent connections from your IP address!", maxip);
@@ -294,11 +295,9 @@ public Action Hook_TEFireBullets(const char[] te_name, const int[] players, int 
 
     // For testing discord notifs
     /*
-
-    StacDetectionNotify(GetClientUserId(cl), "test", 0);
-    StacGeneralPlayerNotify(GetClientUserId(cl), "test");
-    StacGeneralMessageNotify("test message");
-
+    StacNotify(0, "misc message no client");
+    StacNotify(GetClientUserId(cl), "detection", 1);
+    StacNotify(GetClientUserId(cl), "message");
     */
 
     return Plugin_Continue;
@@ -395,7 +394,7 @@ Action OnAllClientCommands(int cl, const char[] command, int argc)
         Format(msg, sizeof(msg), "Client %L sent cmd `%s` before signon", cl, command);
 
         StacLog(msg);
-        StacGeneralPlayerNotify(GetClientUserId(cl), msg);
+        StacNotify(GetClientUserId(cl), msg);
 
         return Plugin_Handled;
     }

@@ -31,7 +31,7 @@ public Action OnClientSayCommand(int cl, const char[] command, const char[] sArg
             PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Blocked newline print from player %N", cl);
             StacLogSteam(userid);
         }
-        StacDetectionNotify(userid, "Client tried to print a newline character", 1);
+        StacNotify(userid, "Client tried to print a newline character", 1);
         return Plugin_Stop;
     }
     return Plugin_Continue;
@@ -95,14 +95,13 @@ void SaniNameAndBan(int userid, char name[MAX_NAME_LENGTH])
     );
 
     StacLog(namemsg);
-    StacDetectionNotify(userid, namemsg, 1);
+    StacNotify(userid, namemsg, 1);
     CreateTimer(0.25, BanName, userid);
 }
 
 Action BanName(Handle timer, int userid)
 {
     int cl = GetClientOfUserId(userid);
-
 
     if (banForMiscCheats)
     {
@@ -126,7 +125,6 @@ public Action OnClientCommand(int cl, int args)
 {
     if (IsValidClient(cl))
     {
-        int userid = GetClientUserId(cl);
         // init var
         char ClientCommandChar[512];
         // gets the first command
@@ -142,20 +140,14 @@ public Action OnClientCommand(int cl, int args)
             GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
         }
 
-
         strcopy(lastCommandFor[cl], sizeof(lastCommandFor[]), ClientCommandChar);
         timeSinceLastCommand[cl] = engineTime[cl][0];
-
 
         // clean it up ( PROBABLY NOT NEEDED )
         // TrimString(ClientCommandChar);
 
         if (strlen(ClientCommandChar) > 255)
         {
-            StacGeneralPlayerNotify(userid, "Client sent a very large command - length %i - to the server! Next message is the command.", strlen(ClientCommandChar));
-            StacGeneralPlayerNotify(userid, "%s", ClientCommandChar);
-            StacLog("Client sent a very large command - length %i - to the server! Next message is the command.", strlen(ClientCommandChar));
-            StacLog("%s", ClientCommandChar);
             return Plugin_Stop;
         }
     }
@@ -354,7 +346,7 @@ void checkInterp(int userid)
         {
             char message[256];
             Format(message, sizeof(message), "Client was kicked for attempted interp exploitation. Their interp: %.2fms", lerp);
-            StacGeneralPlayerNotify(userid, message);
+            StacNotify(userid, message);
             KickClient(cl, "%t", "interpKickMsg", lerp, min_interp_ms, max_interp_ms);
             MC_PrintToChatAll("%t", "interpAllChat", cl, lerp);
             StacLog("%t", "interpAllChat", cl, lerp);
@@ -400,6 +392,6 @@ void cheevCheck(int userid, int achieve_id)
 
         char message[256];
         Format(message, sizeof(message), "Client is cheating with bogus AchievementID %i (hex %X)", achieve_id, achieve_id);
-        StacDetectionNotify(userid, message, 1);
+        StacNotify(userid, message, 1);
     }
 }
