@@ -154,16 +154,16 @@ public void OnClientPutInServer(int cl)
         return;
     }
 
-        // clear per client values
-        ClearClBasedVars(userid);
-        // clear timer
-        QueryTimer[cl] = null;
-        // query convars on player connect
-        if (DEBUG)
-        {
-            StacLog("%N joined. Checking cvars", cl);
-        }
-        QueryTimer[cl] = CreateTimer(30.0, Timer_CheckClientConVars_FirstTime, userid);
+    // clear per client values
+    ClearClBasedVars(userid);
+    // clear timer
+    QueryTimer[cl] = null;
+    // query convars on player connect
+    if (DEBUG)
+    {
+        StacLog("%N joined. Checking cvars", cl);
+    }
+    QueryTimer[cl] = CreateTimer( float_rand(30.0, 45.0), Timer_CheckClientConVars_FirstTime, userid );
 
     if (!SteamAuthFor[cl][0])
     {
@@ -186,13 +186,11 @@ public void OnClientPutInServer(int cl)
 
     LogMessage("OCPIS steamid = %s", SteamAuthFor[cl]);
 
-        // bail if cvar is set to 0
-        if (maxip > 0)
-        {
-            checkIP(cl);
-        }
+    // bail if cvar is set to 0
+    if (maxip > 0)
+    {
+        checkIP(cl);
     }
-    OnClientPutInServer_jaypatch(cl);
 }
 
 void checkIP(int cl)
@@ -377,9 +375,9 @@ public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
 }
 
 // Ignore cmds from unconnected clients
-Action OnAllClientCommands(int client, const char[] command, int argc)
+Action OnAllClientCommands(int cl, const char[] command, int argc)
 {
-    if (client == 0 || IsFakeClient(client)) 
+    if (cl == 0 || IsFakeClient(cl))
     {
         return Plugin_Continue;
     }
@@ -387,9 +385,14 @@ Action OnAllClientCommands(int client, const char[] command, int argc)
     {
         return Plugin_Continue;
     }
-    if (signonStateFor[client] <= SIGNONSTATE_SPAWN)
+    if (signonStateFor[cl] <= SIGNONSTATE_SPAWN)
     {
-        StacLog("Client %L sent cmd %s b4 signon???", client, command);
+        char msg[1024];
+        Format(msg, sizeof(msg), "Client %L sent cmd `%s` before signon", cl, command);
+
+        StacLog(msg);
+        StacGeneralPlayerNotify(GetClientUserId(cl), msg);
+
         return Plugin_Handled;
     }
     return Plugin_Continue;
@@ -410,6 +413,7 @@ void ClearClBasedVars(int userid)
     bhopDetects             [cl] = -1; // set to -1 to ignore single jumps
     cmdnumSpikeDetects      [cl] = 0;
     tbotDetects             [cl] = -1;
+    invalidUsercmdDetects   [cl] = 0;
 
     // frames since client "did something"
     //                      [ client index ][history]
