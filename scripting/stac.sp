@@ -131,6 +131,9 @@ public void OnPluginStart()
     // grab player spawns
     HookEvent("player_spawn", ePlayerSpawned);
     // hook real player disconnects
+    HookEvent("player_connect", ePlayerConnect);
+
+    // hook real player disconnects
     HookEvent("player_disconnect", ePlayerDisconnect);
     // grab player name changes
     HookEvent("player_changename", ePlayerChangedName, EventHookMode_Pre);
