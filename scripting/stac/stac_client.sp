@@ -184,7 +184,10 @@ public void OnClientPutInServer(int cl)
         }
     }
 
-    LogMessage("OCPIS steamid = %s", SteamAuthFor[cl]);
+    if (DEBUG)
+    {
+        StacLog("OCPIS steamid = %s", SteamAuthFor[cl]);
+    }
 
     // bail if cvar is set to 0
     if (maxip > 0)
