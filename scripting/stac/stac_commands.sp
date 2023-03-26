@@ -91,6 +91,7 @@ void ShowAllDetections(int callingCl)
                 || pSilentDetects          [cl] > 0
                 || cmdnumSpikeDetects      [cl] > 0
                 || tbotDetects             [cl] > 0
+                || invalidUsercmdDetects   [cl] > 0
             )
             {
                 PrintToConsole
@@ -98,12 +99,13 @@ void ShowAllDetections(int callingCl)
                     callingCl,
                     "\n\
                     Detections for %L -\
-                    \n Turn binds    %i\
-                    \n FakeAngs      %i\
-                    \n Aimsnaps      %i\
-                    \n pSilent       %i\
-                    \n Cmdnum spikes %i\
-                    \n Triggerbots   %i\
+                    \n Turn binds           %i\
+                    \n FakeAngs             %i\
+                    \n Aimsnaps             %i\
+                    \n pSilent              %i\
+                    \n Cmdnum spikes        %i\
+                    \n Triggerbots          %i\
+                    \n Invalid Usercmds     %i\
                     \n",
                     cl,
                     turnTimes               [cl],
@@ -111,7 +113,8 @@ void ShowAllDetections(int callingCl)
                     aimsnapDetects          [cl],
                     pSilentDetects          [cl],
                     cmdnumSpikeDetects      [cl],
-                    tbotDetects             [cl]
+                    tbotDetects             [cl],
+                    invalidUsercmdDetects   [cl]
                 );
             }
         }

@@ -56,11 +56,19 @@ public Action OnPlayerRunCmd
     int mouse[2]
 )
 {
-    if ( !IsClientConnected(cl) || !IsClientInGame(cl) || IsClientInKickQueue(cl) )
+    if
+    (
+           !IsClientConnected(cl)
+        || !IsClientInGame(cl)
+        || IsClientInKickQueue(cl)
+        // || !cmdnum
+        // || !tickcount
+    )
     {
         // Todo; maybe KickClient for the IsClientInGame failing here?
         // Can this cause airstuck??
         // Update from the future; no.
+        // This is basically MakeInert but with everything null'd out.
         buttons     = 0;
         impulse     = 0;
         vel         = {0.0, 0.0, 0.0};
@@ -160,39 +168,6 @@ stock void PlayerRunCmd
     {
         return;
     }
-
-    // originally from ssac - log invalid usercmds with invalid data
-    if
-    (
-        // negative cmdnum??
-           cmdnum       < 0
-        // negative tickcount??
-        || tickcount    < 0
-    )
-    {
-        int userid = GetClientUserId(cl);
-        StacDetectionNotify(userid, "Invalid usercmd data! cmdnum or tickcount < 0!", 1);
-        return;
-    }
-
-    // tickcount ahead of the server by itps_maxaheadsecs or more?
-    // if ( tickcount > (servertick + itps_maxaheadsecs) )
-    // {
-    //     int userid = GetClientUserId(cl);
-    //     StacDetectionNotify(userid, "Invalid usercmd data! client tickcount ahead of the server's tickcount by more than 5 seconds!", 1);
-    //     return;
-    // }
-
-    // We should never see buttons >= (26 bits) since IN_ATTACK3 is (1 << 25)
-    // I've seen ucmds with 134217728 == (1 << 27)
-    // I need to make sure this isn't a fluke, so we're not banning anyone at the moment for it
-    if ( buttons      >= (1 << 26) )
-    {
-        int userid = GetClientUserId(cl);
-        StacDetectionNotify(userid, "Invalid usercmd data! client buttons are >= (1 << 26)!", 1);
-    }
-
-    // MAYBE TODO: cmdnum > Client? Server? SeqNr
 
 
     // + around 1µs
@@ -304,6 +279,7 @@ stock void PlayerRunCmd
 
     // not really a lag dependant check
     fakeangCheck(cl);
+    invalidUsercmdCheck(cl);
 
     // dont check cmdnum here but check everything else
     if ( !IsUserLagging(cl, /* checkcmdnum = */ false) )
@@ -525,25 +501,42 @@ void fakeangCheck(int cl)
         FloatAbs(clangles[cl][0][ROLL ]) > 50.0001
     )
     {
-        int userid = GetClientUserId(cl);
-
         fakeAngDetects[cl]++;
-        PrintToImportant
+
+        // We CAN NOT spam clients and server log with this, or it WILL lag.
+        if
         (
-            "{hotpink}[StAC]{white} Player %N has {mediumpurple}invalid eye angles{white}!\nCurrent angles: {mediumpurple}%.2f %.2f %.2f{white}.\nDetections so far: {palegreen}%i",
-            cl,
-            clangles[cl][0][PITCH],
-            clangles[cl][0][YAW  ],
-            clangles[cl][0][ROLL ],
-            fakeAngDetects[cl]
-        );
-        StacLogSteam(userid);
-        if (fakeAngDetects[cl] == 1 || fakeAngDetects[cl] % 5 == 0)
+               fakeAngDetects[cl] == 1
+            || fakeAngDetects[cl] == 5
+            || fakeAngDetects[cl] == 10
+            || fakeAngDetects[cl] == 100
+            || fakeAngDetects[cl] == 500
+            || fakeAngDetects[cl] % 1000 == 0
+        )
         {
+            int userid = GetClientUserId(cl);
+
+            PrintToImportant
+            (
+                "{hotpink}[StAC]{white} Player %N has {mediumpurple}invalid eye angles{white}!\nCurrent angles: {mediumpurple}%.2f %.2f %.2f{white}.\nDetections so far: {palegreen}%i",
+                cl,
+                clangles[cl][0][PITCH],
+                clangles[cl][0][YAW  ],
+                clangles[cl][0][ROLL ],
+                fakeAngDetects[cl]
+            );
+            StacLogSteam(userid);
+            StacLogNetData(userid);
+            StacLogAngles(userid);
+            StacLogCmdnums(userid);
+            StacLogTickcounts(userid);
+
             StacDetectionNotify(userid, "fake angles", fakeAngDetects[cl]);
         }
         if (fakeAngDetects[cl] >= maxFakeAngDetections && maxFakeAngDetections > 0)
         {
+            int userid = GetClientUserId(cl);
+
             char reason[128];
             Format(reason, sizeof(reason), "%t", "fakeangBanMsg", fakeAngDetects[cl]);
             char pubreason[256];
@@ -1016,6 +1009,117 @@ void triggerbotCheck(int cl)
             BanUser(userid, reason, pubreason);
         }
     }
+}
+
+void invalidUsercmdCheck(int cl)
+{
+    // don't bother checking if fakeang detection is off
+    if (maxInvalidUsercmdDetections == -1)
+    {
+        return;
+    }
+
+    // originally from ssac - log invalid usercmds with invalid data
+    if
+    (
+        // negative cmdnum??
+           clcmdnum   [cl][0]   < 0
+        // negative tickcount??
+        || cltickcount[cl][0]   < 0
+    )
+    {
+        invalidUsercmdDetects[cl]++;
+        // We CAN NOT spam clients and server log with this, or it WILL lag.
+        if
+        (
+               invalidUsercmdDetects[cl] == 1
+            || invalidUsercmdDetects[cl] == 5
+            || invalidUsercmdDetects[cl] == 10
+            || invalidUsercmdDetects[cl] == 100
+            || invalidUsercmdDetects[cl] == 500
+            || invalidUsercmdDetects[cl] % 1000 == 0
+        )
+        {
+            int userid = GetClientUserId(cl);
+
+            PrintToImportant
+            (
+                "{hotpink}[StAC]{white} Player %N sent an {mediumpurple}invalid usercmd{white}!\n\
+                Cmdnum {yellow}%i{white} and/or tickcount {yellow}%i{white} was > 0!{white}.\nDetections so far: {palegreen}%i",
+                cl,
+                clcmdnum    [cl][0],
+                cltickcount [cl][0],
+                invalidUsercmdDetects[cl]
+            );
+            StacLogSteam(userid);
+            StacLogNetData(userid);
+            StacLogAngles(userid);
+            StacLogCmdnums(userid);
+            StacLogTickcounts(userid);
+
+            StacDetectionNotify(userid, "Invalid usercmd data! cmdnum or tickcount < 0!", invalidUsercmdDetects[cl]);
+        }
+    }
+
+    // We should never see buttons >= (26 bits) since IN_ATTACK3 is (1 << 25)
+    // I've seen ucmds with 134217728 == (1 << 27), which seem to be related to lmaobox
+    // I need to make sure this isn't a fluke, so we're not banning anyone at the moment for it
+    if ( cltickcount[cl][0] >= (1 << 26) )
+    {
+        invalidUsercmdDetects[cl]++;
+        // We CAN NOT spam clients and server log with this, or it WILL lag.
+        if
+        (
+               invalidUsercmdDetects[cl] == 1
+            || invalidUsercmdDetects[cl] == 5
+            || invalidUsercmdDetects[cl] == 10
+            || invalidUsercmdDetects[cl] == 50
+            || invalidUsercmdDetects[cl] == 100
+            || invalidUsercmdDetects[cl] == 500
+            || invalidUsercmdDetects[cl] % 1000 == 0
+        )
+        {
+            int userid = GetClientUserId(cl);
+
+            PrintToImportant
+            (
+                "{hotpink}[StAC]{white} Player %N sent an {mediumpurple}invalid usercmd{white}!\n\
+                Buttons {yellow}%i{white} were invalid, >= (1 << 26)!{white}.\nDetections so far: {palegreen}%i",
+                cl,
+                clbuttons[cl][0],
+                invalidUsercmdDetects[cl]
+            );
+
+            StacLogSteam(userid);
+            StacLogNetData(userid);
+            StacLogAngles(userid);
+            StacLogCmdnums(userid);
+            StacLogTickcounts(userid);
+
+            StacDetectionNotify(userid, "Invalid usercmd data! client buttons are >= (1 << 26)!", invalidUsercmdDetects[cl]);
+        }
+    }
+
+    if (invalidUsercmdDetects[cl] >= maxInvalidUsercmdDetections && maxInvalidUsercmdDetections > 0)
+    {
+        int userid = GetClientUserId(cl);
+        char reason[128];
+        Format(reason, sizeof(reason), "%t", "invalidUcmdBanMsg", invalidUsercmdDetects[cl]);
+        char pubreason[256];
+        Format(pubreason, sizeof(pubreason), "%t", "invalidUcmdBanAllChat", cl, invalidUsercmdDetects[cl]);
+        BanUser(userid, reason, pubreason);
+    }
+
+    // tickcount ahead of the server by itps_maxaheadsecs or more?
+    // if ( tickcount > (servertick + itps_maxaheadsecs) )
+    // {
+    //     int userid = GetClientUserId(cl);
+    //     StacDetectionNotify(userid, "Invalid usercmd data! client tickcount ahead of the server's tickcount by more than 5 seconds!", 1);
+    //     return;
+    // }
+
+    // MAYBE TODO: cmdnum > Client? Server? SeqNr
+
 }
 
 /********** OnPlayerRunCmd based helper functions **********/

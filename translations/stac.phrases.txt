@@ -196,6 +196,24 @@
         "de"        "[StAC] Gebannt für triggerbotting nach {1} Erkennungen"
     }
     /*
+        _                  ___     __                                           __
+       (_)___ _   ______ _/ (_)___/ /  __  __________  ______________ ___  ____/ /____
+      / / __ \ | / / __ `/ / / __  /  / / / / ___/ _ \/ ___/ ___/ __ `__ \/ __  / ___/
+     / / / / / |/ / /_/ / / / /_/ /  / /_/ (__  )  __/ /  / /__/ / / / / / /_/ (__  )
+    /_/_/ /_/|___/\__,_/_/_/\__,_/   \__,_/____/\___/_/   \___/_/ /_/ /_/\__,_/____/
+
+    */
+    "invalidUcmdBanAllChat"
+    {
+        "#format"   "{1:N},{2:i}"
+        "en"        "{hotpink}[StAC]{white} Player {1} sent too many {mediumpurple}invalid usercmds{white} to the server! Total detections: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+    }
+    "invalidUcmdBanMsg"
+    {
+        "#format"   "{1:i}"
+        "en"        "[StAC] Banned for {1} invalid usercmds"
+    }
+    /*
        __                      __    _           __
       / /___  ___________     / /_  (_)___  ____/ /____
      / __/ / / / ___/ __ \   / __ \/ / __ \/ __  / ___/

@@ -19,7 +19,7 @@ ConVar stac_max_bhop_detections;
 ConVar stac_max_fakeang_detections;
 ConVar stac_max_cmdnum_detections;
 ConVar stac_max_tbot_detections;
-ConVar stac_max_cmdrate_spam_detections;
+ConVar stac_max_invalid_usercmd_detections;
 ConVar stac_min_interp_ms;
 ConVar stac_max_interp_ms;
 ConVar stac_min_randomcheck_secs;
@@ -64,7 +64,7 @@ int maxFakeAngDetections        = 5;
 int maxBhopDetections           = 10;
 int maxCmdnumDetections         = 20;
 int maxTbotDetections           = 0;
-int maxuserinfoSpamDetections   = 25;
+int maxInvalidUsercmdDetections = 5;
 
 /***** Server based stuff *****/
 
@@ -111,6 +111,7 @@ int pSilentDetects          [TFMAXPLAYERS+1] = {-1, ...}; // ^
 int bhopDetects             [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore single jumps
 int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = {-1, ...};
+int invalidUsercmdDetects   [TFMAXPLAYERS+1];
 
 // frames since client "did something"
 //                          [ client index ][history]
@@ -136,7 +137,7 @@ float engineTime            [TFMAXPLAYERS+1][3];
 float clpos                 [TFMAXPLAYERS+1][2][3];
 
 // Misc stuff per client    [ client index ][char size]
-char SteamAuthFor           [TFMAXPLAYERS+1][64];
+char SteamAuthFor           [TFMAXPLAYERS+1][MAX_AUTHID_LENGTH];
 
 bool highGrav               [TFMAXPLAYERS+1];
 bool playerTaunting         [TFMAXPLAYERS+1];

@@ -42,7 +42,7 @@ void NameCheck(int userid)
     int cl = GetClientOfUserId(userid);
     if (IsValidClient(cl))
     {
-        char curName[64];
+        char curName[MAX_NAME_LENGTH];
         GetClientName(cl, curName, sizeof(curName));
         // ban for invalid characters in names
         if
@@ -63,7 +63,7 @@ void NameCheck(int userid)
     }
 }
 
-void SaniNameAndBan(int userid, char name[64])
+void SaniNameAndBan(int userid, char name[MAX_NAME_LENGTH])
 {
     int cl = GetClientOfUserId(userid);
 

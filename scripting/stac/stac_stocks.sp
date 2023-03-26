@@ -411,20 +411,13 @@ void BanUser(int userid, char[] reason, char[] pubreason)
     // check if client is authed before banning normally
     bool isAuthed = IsClientAuthorized(cl);
 
-    if (demonameInBanReason)
+    if (demonameInBanReason && SourceTV_IsRecording() && GetDemoName())
     {
-        if (GetDemoName())
-        {
-            char demoname_plus[256];
-            strcopy(demoname_plus, sizeof(demoname_plus), demoname);
-            Format(demoname_plus, sizeof(demoname_plus), ". Demo file: %s", demoname_plus);
-            StrCat(reason, 256, demoname_plus);
-            StacLog("Reason: %s", reason);
-        }
-        //else
-        //{
-        //    StacLog("No STV demo is being recorded, no demo name will be printed to the ban reason!");
-        //}
+        char demoname_plus[256];
+        strcopy(demoname_plus, sizeof(demoname_plus), demoname);
+        Format(demoname_plus, sizeof(demoname_plus), ". Demo file: %s", demoname_plus);
+        StrCat(reason, 256, demoname_plus);
+        StacLog("Reason: %s", reason);
     }
     if (isAuthed)
     {
@@ -434,14 +427,17 @@ void BanUser(int userid, char[] reason, char[] pubreason)
             // there's no return value for that native, so we have to just assume it worked lol
             return;
         }
-        if (MATERIALADMIN && MABanPlayer(0, cl, MA_BAN_STEAM, banDuration, reason))
+        if (MATERIALADMIN)
         {
+            MABanPlayer(0, cl, MA_BAN_STEAM, banDuration, reason);
             return;
         }
         if (GBANS)
         {
             ServerCommand("gb_ban %i, %i, %s", userid, banDuration, reason);
-            // there's no return value nor a native for gbans bans (YET), so we have to just assume it worked lol
+            // There is a native for gbans now but i don't think it can accept the server as an admin
+            // GB_BanClient(0 /* ? */, userid /* ? */, cheating, banDuration, BSBanned);
+
             return;
         }
         // stock tf2, no ext ban system. if we somehow fail here, keep going.
@@ -1048,4 +1044,11 @@ void checkLiveFeed()
             break;
         }
     }
+}
+
+// https://stackoverflow.com/a/44105089
+float float_rand( float min, float max )
+{
+    float scale = GetURandomFloat();    /* [0, 1.0] */
+    return min + scale * ( max - min ); /* [min, max] */
 }

@@ -245,6 +245,24 @@ void initCvars()
     );
     HookConVarChange(stac_max_tbot_detections, setStacVars);
 
+    // invalid usercmds
+    IntToString(maxInvalidUsercmdDetections, buffer, sizeof(buffer));
+    stac_max_invalid_usercmd_detections =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_max_invalid_usercmd_detections",
+        buffer,
+        "[StAC] maximum invalid usercmds a client can send before getting banned. This detects poorly coded cheats sending invalid data in their inputs to the server.\n\
+        -1 to disable even checking for invalid usercmds (saves cpu), 0 to print to admins/stv but never ban.\n\
+        (recommended 5)",
+        FCVAR_NONE,
+        true,
+        -1.0,
+        false,
+        _
+    );
+    HookConVarChange(stac_max_invalid_usercmd_detections, setStacVars);
+
     // min interp
     IntToString(min_interp_ms, buffer, sizeof(buffer));
     stac_min_interp_ms =
@@ -384,23 +402,6 @@ void initCvars()
         1.0
     );
     HookConVarChange(stac_fixpingmasking_enabled, setStacVars);
-
-    // pingreduce
-    IntToString(maxuserinfoSpamDetections, buffer, sizeof(buffer));
-    stac_max_cmdrate_spam_detections =
-    AutoExecConfig_CreateConVar
-    (
-        "stac_max_userinfo_spam_detections",
-        buffer,
-        "[StAC] maximum number of times a client can spam userinfo updates (over the course of 10 seconds) before getting banned.\n\
-        (recommended 10+)",
-        FCVAR_NONE,
-        true,
-        -1.0,
-        false,
-        _
-    );
-    HookConVarChange(stac_max_cmdrate_spam_detections, setStacVars);
 
     // reconnect unauthed clients
     if (kickUnauth)
@@ -542,7 +543,7 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     maxTbotDetections       = GetConVarInt(stac_max_tbot_detections);
 
     // max ping reduce detections - clamp to -1 if 0
-    maxuserinfoSpamDetections   = GetConVarInt(stac_max_cmdrate_spam_detections);
+    maxInvalidUsercmdDetections   = GetConVarInt(stac_max_invalid_usercmd_detections);
 
     // minterp var - clamp to -1 if 0
     min_interp_ms           = GetConVarInt(stac_min_interp_ms);
