@@ -714,7 +714,7 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
     char msg[8192];
 
 
-    char fmtmsg[256];
+    char fmtmsg[8192];
     VFormat(fmtmsg, sizeof(fmtmsg), format, 3);
 
     int cl = GetClientOfUserId(userid);
@@ -985,7 +985,7 @@ void StacGeneralMessageNotify(const char[] format, any ...)
 
     char msg[8192];
 
-    char fmtmsg[256];
+    char fmtmsg[8192];
     VFormat(fmtmsg, sizeof(fmtmsg), format, 2);
 
 

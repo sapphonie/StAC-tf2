@@ -2,17 +2,158 @@
 
 /********** MISC CLIENT JOIN/LEAVE **********/
 
+// THESE ARE IN ORDER OF OPERATION
+// OnClientPreConnectEx
+//      ~0.25 ms
+// -> player_connect event
+//      ~50 ms
+// -> OnClientConnect
+//      basically instant
+// -> OnClientConnected
+//      ~a few seconds
+// -> OnClientPutInServer
+
+// There is almost certainly no way to ever have a client ever trigger OCPCE -> EPC -> OCC out of order
+// But just in case we do a ton of checks
+
+static int  latestUserid;
+static char latestName     [MAX_NAME_LENGTH];
+static char latestIP       [16];
+static char latestSteamID  [MAX_AUTHID_LENGTH];
+
+public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255])
+{
+    if (DEBUG)
+    {
+        StacLog("-> OnClientPreConnectEx (name %s, ip %s) t=%f", name, ip, GetEngineTime());
+    }
+
+    strcopy(latestName,     sizeof(latestName),     name);
+    strcopy(latestIP,       sizeof(latestIP),       ip);
+    strcopy(latestSteamID,  sizeof(latestSteamID),  steamID);
+
+    return true;
+}
+
+// player is IN the server
+public void ePlayerConnect(Handle event, const char[] name, bool dontBroadcast)
+{
+    int userid = (GetEventInt(event, "userid"));
+    if (DEBUG)
+    {
+        StacLog("-> player_connect (userid %i) t=%f", userid, GetEngineTime());
+    }
+    latestUserid = userid;
+}
+
+public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
+{
+    if (DEBUG)
+    {
+        StacLog("-> OnClientConnect (index %i) t=%f", cl, GetEngineTime());
+    }
+
+    SteamAuthFor[cl][0] = '\0';
+    if (IsFakeClient(cl))
+    {
+        return true;
+    }
+    int userid = GetClientUserId(cl);
+
+    char clName[MAX_NAME_LENGTH];
+    GetClientName(cl, clName, sizeof(clName));
+
+    char clIP[16];
+    GetClientIP(cl, clIP, sizeof(clIP), /* removeport */ true);
+
+    if
+    (
+           latestUserid == userid
+        && StrEqual(latestName, clName)
+        && StrEqual(latestIP, clIP)
+    )
+    {
+        strcopy(SteamAuthFor[cl], sizeof(latestSteamID), latestSteamID);
+        LogMessage("OnClientConnect steamid = %s", SteamAuthFor[cl]);
+    }
+    else
+    {
+        char dbginfo[512];
+        Format
+        (
+            dbginfo,
+            sizeof(dbginfo),
+            "\n\
+            latestUserid    = %i \n\
+            userid          = %i \n\
+            latestName      = %s \n\
+            clName          = %s \n\
+            latestIP        = %s \n\
+            clIP            = %s \n",
+            userid,
+            latestUserid,
+            latestName,
+            clName,
+            latestIP,
+            clIP
+        );
+        StacLog(dbginfo);
+
+        ReplaceString(dbginfo, sizeof(dbginfo), "\n", "\\n");
+        char msg[2048];
+        Format
+        (
+            msg,
+            sizeof(msg),
+            "Client %L somehow triggered a race condition in OnClientConnect.\\n \
+            Please report this (along with a screenshot of this embed) on the StAC issue tracker on github:\\n \
+            https://github.com/sapphonie/StAC-tf2/issues\\n \
+            ```%s```",
+            cl,
+            dbginfo
+        );
+        StacGeneralPlayerNotify(userid, msg);
+
+#if defined( DC_ON_CONNECTION_RACECON )
+        strcopy(rejectmsg, maxlen, "Didn't fire proper connection functions. Please reconnect");
+        return false;
+#endif
+
+    }
+
+    return true;
+}
+
+public void OnClientConnected(int cl)
+{
+    if (DEBUG)
+    {
+        StacLog("-> OnClientConnected (index %i) t=%f", cl, GetEngineTime());
+    }
+}
+
 // client join
 public void OnClientPutInServer(int cl)
 {
+    if (DEBUG)
+    {
+        StacLog("-> OnClientPutInServer (index %i) t=%f", cl, GetEngineTime());
+    }
+
     int userid = GetClientUserId(cl);
 
     if (IsValidClientOrBot(cl))
     {
         SDKHook(cl, SDKHook_OnTakeDamage, hOnTakeDamage);
     }
-    if (IsValidClient(cl))
+
+    OnClientPutInServer_jaypatch(cl);
+
+    if (!IsValidClient(cl))
     {
+        return;
+    }
+
         // clear per client values
         ClearClBasedVars(userid);
         // clear timer
@@ -24,7 +165,26 @@ public void OnClientPutInServer(int cl)
         }
         QueryTimer[cl] = CreateTimer(30.0, Timer_CheckClientConVars_FirstTime, userid);
 
-        CreateTimer(10.0, CheckAuthOn, userid);
+    if (!SteamAuthFor[cl][0])
+    {
+        char steamid[MAX_AUTHID_LENGTH];
+
+        // let's try to get their auth
+        if (GetClientAuthId(cl, AuthId_Steam2, steamid, sizeof(steamid)))
+        {
+            // if we get it, copy to our global list
+            strcopy(SteamAuthFor[cl], sizeof(SteamAuthFor[]), steamid);
+        }
+        // We should only get here on lateload AND if a client is unauthorized
+        // Theoretically we could either not verify the client's steamid OR force reconnect clients
+        // But 1 is unsafe and 2 is annoying, especially for such a corner case
+        else
+        {
+            SteamAuthFor[cl][0] = '\0';
+        }
+    }
+
+    LogMessage("OCPIS steamid = %s", SteamAuthFor[cl]);
 
         // bail if cvar is set to 0
         if (maxip > 0)
@@ -69,79 +229,7 @@ void checkIP(int cl)
     }
 }
 
-Action CheckAuthOn(Handle timer, int userid)
-{
-    int cl = GetClientOfUserId(userid);
 
-    if (IsValidClient(cl))
-    {
-        // don't bother checking if already authed
-        if (!IsClientAuthorized(cl))
-        {
-            SteamAuthFor[cl][0] = '\0';
-            if (kickUnauth)
-            {
-                StacGeneralPlayerNotify(userid, "Reconnecting player for being unauthorized w/ Steam");
-                StacLog("Reconnecting %N for not being authorized with Steam.", cl);
-                PrintToChat(cl, "You are being reconnected to the server in an attempt to reauthorize you with the Steam network.");
-                ClientCommand(cl, "retry");
-                // Force clients who ignore the retry to do it anyway.
-                CreateTimer(1.0, Reconn, userid);
-                // TODO: detect clients that ignore this
-                // KickClient(cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
-            }
-            else if (DEBUG)
-            {
-                StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
-                StacLog("Client %N failed to authorize w/ Steam in a timely manner.", cl);
-                SteamAuthFor[cl][0] = '\0';
-            }
-        }
-        else
-        {
-            char steamid[64];
-
-            // let's try to get their auth
-            if (GetClientAuthId(cl, AuthId_Steam2, steamid, sizeof(steamid)))
-            {
-                // if we get it, copy to our global list
-                strcopy(SteamAuthFor[cl], sizeof(SteamAuthFor[]), steamid);
-            }
-            else
-            {
-                SteamAuthFor[cl][0] = '\0';
-            }
-        }
-    }
-
-    return Plugin_Continue;
-}
-
-Action Reconn(Handle timer, int userid)
-{
-    int cl = GetClientOfUserId(userid);
-    if (IsValidClient(cl))
-    {
-        StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam AND ignored a retry command?? Suspicious! Forcing a reconnection.");
-        // If we got this far they're probably cheating, but I need to verify that. Force them in the meantime.
-        ReconnectClient(cl);
-    }
-
-    return Plugin_Continue;
-}
-
-// cache this! we don't need to clear this because it gets overwritten when a new client connects with the same index
-public void OnClientAuthorized(int cl, const char[] auth)
-{
-    if (!IsFakeClient(cl))
-    {
-        strcopy(SteamAuthFor[cl], sizeof(SteamAuthFor[]), auth);
-        if (DEBUG)
-        {
-            StacLog("Client %N authorized with auth %s.", cl, auth);
-        }
-    }
-}
 
 // player left and mapchanges
 public void OnClientDisconnect(int cl)
@@ -157,12 +245,6 @@ public void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcas
 {
     int cl = GetClientOfUserId(GetEventInt(event, "userid"));
     SteamAuthFor[cl][0] = '\0';
-}
-
-// Just in case SourceMod whines about this not being used or we wanna do something with this later
-public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255])
-{
-    return true;
 }
 
 /********** CLIENT BASED EVENTS **********/
@@ -340,7 +422,7 @@ void ClearClBasedVars(int userid)
     didBangThisFrame        [cl] = false;
     didHurtThisFrame        [cl] = false;
 
-    SteamAuthFor            [cl][0] = '\0';
+    // SteamAuthFor            [cl][0] = '\0';
 
     highGrav                [cl] = false;
     playerTaunting          [cl] = false;
