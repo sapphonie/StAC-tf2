@@ -451,7 +451,7 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
         QueryTimer[cl] =
         CreateTimer
         (
-            GetRandomFloat(minRandCheckVal, maxRandCheckVal),
+            float_rand(minRandCheckVal, maxRandCheckVal),
             Timer_CheckClientConVars,
             userid
         );
@@ -483,7 +483,9 @@ void QueryCvarsEtc(int userid, int i)
             // reset pack pos to 0
             ResetPack(pack, false);
             // make data timer
-            CreateTimer(2.5, Timer_QueryNextCvar, pack, TIMER_DATA_HNDL_CLOSE);
+            // rand just in case theres some stupid way that cheaters use the nonrandom 2.5 seconds
+            // to do nefarious bullshit
+            CreateTimer( float_rand(2.5, 5.0), Timer_QueryNextCvar, pack, TIMER_DATA_HNDL_CLOSE);
         }
         // we checked all the cvars!
         else
