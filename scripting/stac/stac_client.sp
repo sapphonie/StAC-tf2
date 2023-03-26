@@ -74,7 +74,10 @@ public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
     )
     {
         strcopy(SteamAuthFor[cl], sizeof(latestSteamID), latestSteamID);
-        LogMessage("OnClientConnect steamid = %s", SteamAuthFor[cl]);
+        if (DEBUG)
+        {
+            StacLog("OnClientConnect steamid = %s", SteamAuthFor[cl]);
+        }
     }
     else
     {
@@ -229,8 +232,6 @@ void checkIP(int cl)
         KickClient(cl, "[StAC] Too many concurrent connections from your IP address!", maxip);
     }
 }
-
-
 
 // player left and mapchanges
 public void OnClientDisconnect(int cl)
