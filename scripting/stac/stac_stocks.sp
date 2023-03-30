@@ -683,10 +683,10 @@ void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
 {
     StacLogDemo();
 
-    if (!DISCORD)
-    {
-        return;
-    }
+    // if (!DISCORD)
+    // {
+    //     return;
+    // }
 
     char output[8192 * 2];
 
@@ -743,7 +743,7 @@ void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
         // we technically store the url in this so it has to be bigger
         char steamid[96];
         // ok we store these on client connect & auth, this shouldn't be null
-        if (!SteamAuthFor[cl][0])
+        if ( SteamAuthFor[cl][0] )
         {
             // make this a clickable link in discord
             Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[cl], SteamAuthFor[cl]);
@@ -1175,19 +1175,20 @@ void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
     {
         Format(notifType, sizeof(notifType), "StAC v%s %s", PLUGIN_VERSION, "Client Detection");
     }
+
+    static int color = 0xFF69B4;
     embedsFields.SetString  ("title",       notifType);
-    embedsFields.SetInt     ("color",       16738740);
+    embedsFields.SetInt     ("color",       color);
 
-
-    // empty array including our embeds
     JSON_Array finalArr = new JSON_Array();
+
     finalArr.PushObject(embedsFields);
 
     // root
     JSON_Object rootEmbeds = new JSON_Object();
     rootEmbeds.EnableOrderedKeys();
     rootEmbeds.SetObject("embeds", finalArr);
-
+    rootEmbeds.SetString("avatar_url", "https://i.imgur.com/RKRaLPl.png");
     rootEmbeds.Encode(output, sizeof(output));
 
     json_cleanup_and_delete(rootEmbeds);
@@ -1242,3 +1243,5 @@ float float_rand( float min, float max )
     float scale = GetURandomFloat();    /* [0, 1.0] */
     return min + scale * ( max - min ); /* [min, max] */
 }
+
+

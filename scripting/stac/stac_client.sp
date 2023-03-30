@@ -20,13 +20,20 @@ static int  latestUserid;
 static char latestName     [MAX_NAME_LENGTH];
 static char latestIP       [16];
 static char latestSteamID  [MAX_AUTHID_LENGTH];
+static float latestPreConnect;
+static float latesteConnect;
 
+// Fired before anything
+// CBaseServer::ConnectClient
+// Does NOT fire on map change
 public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255])
 {
     if (DEBUG)
     {
         StacLog("-> OnClientPreConnectEx (name %s, ip %s) t=%f", name, ip, GetEngineTime());
     }
+
+    latestPreConnect = GetEngineTime();
 
     strcopy(latestName,     sizeof(latestName),     name);
     strcopy(latestIP,       sizeof(latestIP),       ip);
@@ -35,9 +42,13 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
     return true;
 }
 
-// player is IN the server
+// Fired after client is allowed thru connect ext
+// CBaseClient::SendFullConnectEvent() ?
+// Does NOT fire on map change
 public void ePlayerConnect(Handle event, const char[] name, bool dontBroadcast)
 {
+    latesteConnect = GetEngineTime();
+
     int userid = (GetEventInt(event, "userid"));
     if (DEBUG)
     {
@@ -46,18 +57,37 @@ public void ePlayerConnect(Handle event, const char[] name, bool dontBroadcast)
     latestUserid = userid;
 }
 
+// After player_connect
+// DOES fire on map change
 public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
 {
+    float nowTime = GetEngineTime();
+
     if (DEBUG)
     {
-        StacLog("-> OnClientConnect (index %i) t=%f", cl, GetEngineTime());
+        StacLog("-> OnClientConnect (index %i)", cl);
+        StacLog("-> OnClientConnect     t=%f", nowTime);
+        StacLog("-> latestPreConnect    t=%f", latestPreConnect);
+        StacLog("-> latesteConnect      t=%f", latesteConnect);
     }
 
-    SteamAuthFor[cl][0] = '\0';
-    if (IsFakeClient(cl))
+    // OCPCE   t=2940.308837
+    // eCC     t=2940.309082
+    // OCC     t=2940.383789
+    if
+    (
+        // Bot
+        IsFakeClient(cl)
+        // don't rerun logic if we didn't JUST fire preconnect AND player_connect
+        || (nowTime - 0.5 >= latestPreConnect)
+        || (nowTime - 0.5 >= latesteConnect)
+    )
     {
         return true;
     }
+
+    SteamAuthFor[cl][0] = '\0';
+
     int userid = GetClientUserId(cl);
 
     char clName[MAX_NAME_LENGTH];
@@ -171,6 +201,17 @@ public void OnClientPutInServer(int cl)
 
     if (!SteamAuthFor[cl][0])
     {
+        LogMessage("NO STEAMAUTH IN ONCLIENTPUTINSERVER");
+        char msg[2048];
+        Format
+        (
+            msg,
+            sizeof(msg),
+            "Client %L had no SteamID in OnClientPutInServer ???\n\
+            This should never happen unless the plugin was reloaded!\n",
+            cl
+        );
+        StacNotify(userid, msg);
         char steamid[MAX_AUTHID_LENGTH];
 
         // let's try to get their auth
@@ -182,10 +223,12 @@ public void OnClientPutInServer(int cl)
         // We should only get here on lateload AND if a client is unauthorized
         // Theoretically we could either not verify the client's steamid OR force reconnect clients
         // But 1 is unsafe and 2 is annoying, especially for such a corner case
+        /*
         else
         {
             SteamAuthFor[cl][0] = '\0';
         }
+        */
     }
 
     if (DEBUG)
@@ -294,11 +337,9 @@ public Action Hook_TEFireBullets(const char[] te_name, const int[] players, int 
     didBangThisFrame[cl] = true;
 
     // For testing discord notifs
-    /*
     StacNotify(0, "misc message no client");
     StacNotify(GetClientUserId(cl), "detection", 1);
     StacNotify(GetClientUserId(cl), "message");
-    */
 
     return Plugin_Continue;
 }
