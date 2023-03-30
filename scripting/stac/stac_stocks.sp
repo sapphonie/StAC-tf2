@@ -683,10 +683,10 @@ void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
 {
     StacLogDemo();
 
-    // if (!DISCORD)
-    // {
-    //     return;
-    // }
+    if (!DISCORD)
+    {
+        return;
+    }
 
     char output[8192 * 2];
 
