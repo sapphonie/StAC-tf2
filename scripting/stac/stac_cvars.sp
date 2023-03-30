@@ -542,7 +542,7 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     // tbot var
     maxTbotDetections       = GetConVarInt(stac_max_tbot_detections);
 
-    // max ping reduce detections - clamp to -1 if 0
+    // invalid usercmds var
     maxInvalidUsercmdDetections   = GetConVarInt(stac_max_invalid_usercmd_detections);
 
     // minterp var - clamp to -1 if 0
