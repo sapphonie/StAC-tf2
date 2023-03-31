@@ -17,9 +17,8 @@
 // But just in case we do a ton of checks
 
 static int  latestUserid;
-static char latestName     [MAX_NAME_LENGTH];
-static char latestIP       [16];
-static char latestSteamID  [MAX_AUTHID_LENGTH];
+static char latestIP        [16];
+static char latestSteamID   [MAX_AUTHID_LENGTH];
 static float latestPreConnect;
 static float latesteConnect;
 
@@ -35,7 +34,8 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
 
     latestPreConnect = GetEngineTime();
 
-    strcopy(latestName,     sizeof(latestName),     name);
+    // cant use name since some plugins will alter clients' names on connect
+    // strcopy(latestName,     sizeof(latestName),     name);
     strcopy(latestIP,       sizeof(latestIP),       ip);
     strcopy(latestSteamID,  sizeof(latestSteamID),  steamID);
 
@@ -99,8 +99,8 @@ public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
     if
     (
            latestUserid == userid
-        && StrEqual(latestName, clName)
         && StrEqual(latestIP, clIP)
+        // latestSteamID = GetClientAuthId(verify = false ?)
     )
     {
         strcopy(SteamAuthFor[cl], sizeof(latestSteamID), latestSteamID);
@@ -119,14 +119,10 @@ public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
             "\n\
             latestUserid    = %i \n\
             userid          = %i \n\
-            latestName      = %s \n\
-            clName          = %s \n\
             latestIP        = %s \n\
             clIP            = %s \n",
             userid,
             latestUserid,
-            latestName,
-            clName,
             latestIP,
             clIP
         );
@@ -201,17 +197,17 @@ public void OnClientPutInServer(int cl)
 
     if (!SteamAuthFor[cl][0])
     {
-        LogMessage("NO STEAMAUTH IN ONCLIENTPUTINSERVER");
-        char msg[2048];
-        Format
-        (
-            msg,
-            sizeof(msg),
-            "Client %L had no SteamID in OnClientPutInServer ???\n\
-            This should never happen unless the plugin was reloaded!\n",
-            cl
-        );
-        StacNotify(userid, msg);
+        // LogMessage("NO STEAMAUTH IN ONCLIENTPUTINSERVER");
+        // char msg[2048];
+        // Format
+        // (
+        //     msg,
+        //     sizeof(msg),
+        //     "Client %L had no SteamID in OnClientPutInServer ???\n
+        //     This should never happen unless the plugin was reloaded!\n",
+        //     cl
+        // );
+        // StacNotify(userid, msg);
         char steamid[MAX_AUTHID_LENGTH];
 
         // let's try to get their auth
@@ -223,12 +219,22 @@ public void OnClientPutInServer(int cl)
         // We should only get here on lateload AND if a client is unauthorized
         // Theoretically we could either not verify the client's steamid OR force reconnect clients
         // But 1 is unsafe and 2 is annoying, especially for such a corner case
-        /*
         else
         {
+            char msg[2048];
+            Format
+            (
+                msg,
+                sizeof(msg),
+                "Client %L had no SteamID in OnClientPutInServer AND GetClientAuthId failed???\n\
+                This should never happen unless the plugin was reloaded AND Steam is down?!\n",
+                cl
+            );
+            StacLog("NO STEAMAUTH IN ONCLIENTPUTINSERVER");
+            StacNotify(userid, msg);
+
             SteamAuthFor[cl][0] = '\0';
         }
-        */
     }
 
     if (DEBUG)
@@ -337,9 +343,9 @@ public Action Hook_TEFireBullets(const char[] te_name, const int[] players, int 
     didBangThisFrame[cl] = true;
 
     // For testing discord notifs
-    StacNotify(0, "misc message no client");
-    StacNotify(GetClientUserId(cl), "detection", 1);
-    StacNotify(GetClientUserId(cl), "message");
+    // StacNotify(0, "misc message no client");
+    // StacNotify(GetClientUserId(cl), "detection", 1);
+    // StacNotify(GetClientUserId(cl), "message");
 
     return Plugin_Continue;
 }
