@@ -87,6 +87,7 @@ public Plugin myinfo =
 
 /********** PLUGIN LOAD & UNLOAD **********/
 
+
 public void OnPluginStart()
 {
     StopIncompatPlugins();
@@ -127,7 +128,7 @@ public void OnPluginStart()
     RegConsoleCmd("sm_stac_getauth",    checkAdmin, "Print StAC's cached auth for a client");
     RegConsoleCmd("sm_stac_livefeed",   checkAdmin, "Show live feed (debug info etc) for a client. This gets printed to SourceTV if available.");
 
-
+    // steamidRegex = CompileRegex("^STEAM_[0-5]:[0-1]:[0-9]+$");
 
     // grab round start events for calculating tps
     HookEvent("teamplay_round_start", eRoundStart);

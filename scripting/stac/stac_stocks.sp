@@ -688,7 +688,8 @@ void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
         return;
     }
 
-    char output[8192 * 2];
+    static char output[8192 * 2];
+    output[0] = 0x0;
 
     // individual fields
 
@@ -871,10 +872,6 @@ void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
     servertick_field.SetString("name", "Server tick");
     servertick_field.SetInt   ("value", servertick);
     servertick_field.SetBool  ("inline", true);
-
-
-
-
 
     int unixTimestamp = GetTime();
     char discordTimestamp[512];
@@ -1199,7 +1196,7 @@ void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
 
 void SendMessageToDiscord(char[] message)
 {
-    char webhook[8] = "stac";
+    static char webhook[8] = "stac";
     Discord_SendMessage(webhook, message);
 }
 
@@ -1238,10 +1235,24 @@ void checkLiveFeed()
 }
 
 // https://stackoverflow.com/a/44105089
-float float_rand( float min, float max )
+float float_rand(float min, float max)
 {
     float scale = GetURandomFloat();    /* [0, 1.0] */
     return min + scale * ( max - min ); /* [min, max] */
 }
 
+// https://forums.alliedmods.net/showpost.php?p=2698561&postcount=2
+// STEAM_1:1:23456789 to 23456789
+/*
+int GetAccountIdFromSteam2(const char[] steam_id)
+{
+    int matches = MatchRegex(steamidRegex, steam_id);
 
+    if (matches != 1)
+    {
+        return 0;
+    }
+
+    return StringToInt(steam_id[10]) * 2 + (steam_id[8] - 48);
+}
+*/

@@ -4,7 +4,7 @@
 #define TFMAXPLAYERS 33
 
 /********** GLOBAL VARS **********/
-
+// Regex steamidRegex;
 
 /***** Cvar Handles *****/
 ConVar stac_enabled;

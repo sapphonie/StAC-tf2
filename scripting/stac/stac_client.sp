@@ -3,39 +3,37 @@
 /********** MISC CLIENT JOIN/LEAVE **********/
 
 // THESE ARE IN ORDER OF OPERATION
-// OnClientPreConnectEx
-//      ~0.25 ms
-// -> player_connect event
-//      ~50 ms
-// -> OnClientConnect
-//      basically instant
-// -> OnClientConnected
-//      ~a few seconds
-// -> OnClientPutInServer
+// -> OnClientPreConnectEx is called
+//      ~0.25 ms pass
+// -> player_connect event is called
+//      ~50 ms pass
+// -> OnClientConnect is called
+//      then basically
+// -> OnClientConnected is called
+//      ~a few seconds pass
+// -> OnClientPutInServer is called
 
 // There is almost certainly no way to ever have a client ever trigger OCPCE -> EPC -> OCC out of order
 // But just in case we do a ton of checks
 
-static int  latestUserid;
+
+
 static char latestIP        [16];
 static char latestSteamID   [MAX_AUTHID_LENGTH];
-static float latestPreConnect;
-static float latesteConnect;
 
 // Fired before anything
 // CBaseServer::ConnectClient
+// which calls (CGameClient*)client->Connect
 // Does NOT fire on map change
 public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255])
 {
     if (DEBUG)
     {
         StacLog("-> OnClientPreConnectEx (name %s, ip %s) t=%f", name, ip, GetEngineTime());
+        StacLog("-> OnClientPreConnectEx (steamid = %s)", steamID);
     }
 
-    latestPreConnect = GetEngineTime();
-
     // cant use name since some plugins will alter clients' names on connect
-    // strcopy(latestName,     sizeof(latestName),     name);
     strcopy(latestIP,       sizeof(latestIP),       ip);
     strcopy(latestSteamID,  sizeof(latestSteamID),  steamID);
 
@@ -43,21 +41,102 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
 }
 
 // Fired after client is allowed thru connect ext
-// CBaseClient::SendFullConnectEvent() ?
+// CGameClient::Connect() ?
 // Does NOT fire on map change
 public void ePlayerConnect(Handle event, const char[] name, bool dontBroadcast)
 {
-    latesteConnect = GetEngineTime();
+    /*
 
-    int userid = (GetEventInt(event, "userid"));
-    if (DEBUG)
+        player_connect
+
+        Note:   A new client connected
+        Name:   player_connect
+        Structure:
+        string  name        player name
+        byte    index       player slot (entity index-1)
+        short   userid      user ID on server (unique on server)
+        string  networkid   player network (i.e steam) id
+        string  address     ip:port
+        short   bot         is a bot
+
+    */
+    // it says index. it is the client slot. it is lying.
+    // actual client index = slot + 1
+    int cl = ( GetEventInt(event, "index") + 1 );
+
+    // wipe the steamid for this client no matter what
+    SteamAuthFor[cl][0] = '\0';
+
+    // Don't run any more logic if we're a bot
+    bool bot = GetEventBool(event, "bot");
+    if (bot)
     {
-        StacLog("-> player_connect (userid %i) t=%f", userid, GetEngineTime());
+        return;
     }
-    latestUserid = userid;
+
+    char ipWithPort[24];
+    GetEventString(event, "address", ipWithPort, sizeof(ipWithPort), /* default value */ "junk");
+
+    if
+    (
+        // ip matches - latestIP has no port (for now)
+        StrContains(ipWithPort, latestIP) != -1
+    )
+    {
+        strcopy(SteamAuthFor[cl], sizeof(latestSteamID), latestSteamID);
+        if (DEBUG)
+        {
+            StacLog("\n\nplayer_connect steamid = %s\n", SteamAuthFor[cl]);
+        }
+    }
+    // this should LITERALLY NEVER HAPPEN
+    else
+    {
+        char netid[MAX_AUTHID_LENGTH];
+        GetEventString(event, "networkid", netid, sizeof(netid), /* default value */ "junk");
+
+        char cname[MAX_NAME_LENGTH];
+        GetEventString(event, "name", cname, sizeof(cname), /* default value */ "junk");
+
+        char dbginfo[512];
+        Format
+        (
+            dbginfo,
+            sizeof(dbginfo),
+            "\n\
+            latestIP            = %s \n\
+            ipWithPort          = %s \n\
+            latestSteamID       = %s \n\
+            netid               = %s \n",
+
+            latestIP,
+            ipWithPort,
+            latestSteamID,
+            netid
+        );
+
+        char msg[2048];
+        Format
+        (
+            msg,
+            sizeof(msg),
+            "Client %s somehow triggered a race condition in player_connect.\n \
+            Please report this (along with a screenshot of this embed or error message) on the StAC issue tracker on github:\n \
+            https://github.com/sapphonie/StAC-tf2/issues\n \
+            ```%s```",
+            cname,
+            dbginfo
+        );
+        StacNotify(0, msg);
+
+        StacLog("Client %s somehow triggered a race condition in OnClientConnect. Report this error on the GitHub.", cname);
+        StacLog(dbginfo);
+    }
 }
 
 // After player_connect
+// CGameClient::CheckConnect which calls
+// CServerPlugin::ClientConnect(edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen)
 // DOES fire on map change
 public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
 {
@@ -66,89 +145,7 @@ public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
     if (DEBUG)
     {
         StacLog("-> OnClientConnect (index %i)", cl);
-        StacLog("-> OnClientConnect     t=%f", nowTime);
-        StacLog("-> latestPreConnect    t=%f", latestPreConnect);
-        StacLog("-> latesteConnect      t=%f", latesteConnect);
-    }
-
-    // OCPCE   t=2940.308837
-    // eCC     t=2940.309082
-    // OCC     t=2940.383789
-    if
-    (
-        // Bot
-        IsFakeClient(cl)
-        // don't rerun logic if we didn't JUST fire preconnect AND player_connect
-        || (nowTime - 0.5 >= latestPreConnect)
-        || (nowTime - 0.5 >= latesteConnect)
-    )
-    {
-        return true;
-    }
-
-    SteamAuthFor[cl][0] = '\0';
-
-    int userid = GetClientUserId(cl);
-
-    char clName[MAX_NAME_LENGTH];
-    GetClientName(cl, clName, sizeof(clName));
-
-    char clIP[16];
-    GetClientIP(cl, clIP, sizeof(clIP), /* removeport */ true);
-
-    if
-    (
-           latestUserid == userid
-        && StrEqual(latestIP, clIP)
-        // latestSteamID = GetClientAuthId(verify = false ?)
-    )
-    {
-        strcopy(SteamAuthFor[cl], sizeof(latestSteamID), latestSteamID);
-        if (DEBUG)
-        {
-            StacLog("OnClientConnect steamid = %s", SteamAuthFor[cl]);
-        }
-    }
-    else
-    {
-        char dbginfo[512];
-        Format
-        (
-            dbginfo,
-            sizeof(dbginfo),
-            "\n\
-            latestUserid    = %i \n\
-            userid          = %i \n\
-            latestIP        = %s \n\
-            clIP            = %s \n",
-            userid,
-            latestUserid,
-            latestIP,
-            clIP
-        );
-
-        char msg[2048];
-        Format
-        (
-            msg,
-            sizeof(msg),
-            "Client %L somehow triggered a race condition in OnClientConnect.\n \
-            Please report this (along with a screenshot of this embed or error message) on the StAC issue tracker on github:\n \
-            https://github.com/sapphonie/StAC-tf2/issues\n \
-            ```%s```",
-            cl,
-            dbginfo
-        );
-        StacNotify(userid, msg);
-
-        StacLog("Client %L somehow triggered a race condition in OnClientConnect. Report this error on the GitHub.", cl);
-        StacLog(dbginfo);
-
-#if defined( DC_ON_CONNECTION_RACECON )
-        strcopy(rejectmsg, maxlen, "Didn't fire proper connection functions. Please reconnect");
-        return false;
-#endif
-
+        StacLog("-> OnClientConnect t=%f", nowTime);
     }
 
     return true;
@@ -431,7 +428,13 @@ Action OnAllClientCommands(int cl, const char[] command, int argc)
     {
         return Plugin_Continue;
     }
-    if (StrEqual(command, "menuclosed") || StrEqual(command, "vmodenable"))
+    if
+    (
+           StrEqual(command, "menuclosed")
+        || StrEqual(command, "vmodenable")
+        || StrEqual(command, "vban")
+        || StrEqual(command, "timeleft")
+    )
     {
         return Plugin_Continue;
     }
@@ -472,7 +475,7 @@ void ClearClBasedVars(int userid)
     timeSinceTeled          [cl] = 0.0;
     timeSinceLastCommand    [cl] = 0.0;
     // ticks since client "did something"
-    //                  [ client index ][history]
+    //                      [ client index ][history]
     didBangThisFrame        [cl] = false;
     didHurtThisFrame        [cl] = false;
 
