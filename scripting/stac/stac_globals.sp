@@ -4,7 +4,7 @@
 #define TFMAXPLAYERS 33
 
 /********** GLOBAL VARS **********/
-
+// Regex steamidRegex;
 
 /***** Cvar Handles *****/
 ConVar stac_enabled;
@@ -19,7 +19,7 @@ ConVar stac_max_bhop_detections;
 ConVar stac_max_fakeang_detections;
 ConVar stac_max_cmdnum_detections;
 ConVar stac_max_tbot_detections;
-ConVar stac_max_cmdrate_spam_detections;
+ConVar stac_max_invalid_usercmd_detections;
 ConVar stac_min_interp_ms;
 ConVar stac_max_interp_ms;
 ConVar stac_min_randomcheck_secs;
@@ -64,40 +64,32 @@ int maxFakeAngDetections        = 5;
 int maxBhopDetections           = 10;
 int maxCmdnumDetections         = 20;
 int maxTbotDetections           = 0;
-int maxuserinfoSpamDetections   = 25;
+int maxInvalidUsercmdDetections = 5;
 
 /***** Server based stuff *****/
 
 // tickrate stuff
 float tickinterv;
 float tps;
+int itps;
+//int itps_maxaheadsecs;
+int servertick;
 
 // time to wait after server lags before checking all client's OnPlayerRunCmd
 float ServerLagWaitLength = 5.0;
-// time to wait after player lags before checking single client's OnPlayerRunCmd
-float PlayerLagWaitLength = 1.0;
 
 // misc server info
-char hostname[64];
 char hostipandport[24];
 char demoname[128];
 int demotick = -1;
 
 // server cvar values
 bool waitStatus;
-int imaxcmdrate;
-int imincmdrate;
-int imaxupdaterate;
-int iminupdaterate;
-int imaxrate;
-int iminrate;
 float timescale;
 
 // time since some server event happened
 // time since the map started
 float timeSinceMapStart;
-// time since the last stutter/lag spike occurred per client
-float timeSinceLagSpikeFor[TFMAXPLAYERS + 1];
 
 // native/gamemode/plugin etc bools
 bool configsExecuted = false;
@@ -108,11 +100,9 @@ bool GBANS;
 bool AIMPLOTTER;
 bool DISCORD;
 bool MVM;
-bool SOURCETVMGR;
-bool STEAMWORKS;
 
 /***** client based stuff *****/
-
+// This insane shit will eventually be an enum struct
 // cheat detections per client
 int turnTimes               [TFMAXPLAYERS+1];
 int fakeAngDetects          [TFMAXPLAYERS+1];
@@ -121,14 +111,13 @@ int pSilentDetects          [TFMAXPLAYERS+1] = {-1, ...}; // ^
 int bhopDetects             [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore single jumps
 int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = {-1, ...};
-int userinfoSpamDetects     [TFMAXPLAYERS+1];
+int invalidUsercmdDetects   [TFMAXPLAYERS+1];
 
 // frames since client "did something"
 //                          [ client index ][history]
 float timeSinceSpawn        [TFMAXPLAYERS+1];
 float timeSinceTaunt        [TFMAXPLAYERS+1];
 float timeSinceTeled        [TFMAXPLAYERS+1];
-float timeSinceNullCmd      [TFMAXPLAYERS+1];
 float timeSinceLastCommand  [TFMAXPLAYERS+1];
 // ticks since client "did something"
 //                          [ client index ][history]
@@ -139,17 +128,16 @@ bool didHurtThisFrame       [TFMAXPLAYERS+1];
 
 // OnPlayerRunCmd vars      [ client index ][history][ang/pos/etc]
 float clangles              [TFMAXPLAYERS+1][5][3];
-int   clcmdnum              [TFMAXPLAYERS+1][6];
-int   cltickcount           [TFMAXPLAYERS+1][6];
-int   clbuttons             [TFMAXPLAYERS+1][6];
+int   clcmdnum              [TFMAXPLAYERS+1][5];
+int   cltickcount           [TFMAXPLAYERS+1][5];
+int   clbuttons             [TFMAXPLAYERS+1][5];
 int   clmouse               [TFMAXPLAYERS+1]   [2];
 // OnPlayerRunCmd misc
 float engineTime            [TFMAXPLAYERS+1][3];
-float fuzzyClangles         [TFMAXPLAYERS+1][5][2];
 float clpos                 [TFMAXPLAYERS+1][2][3];
 
 // Misc stuff per client    [ client index ][char size]
-char SteamAuthFor           [TFMAXPLAYERS+1][64];
+char SteamAuthFor           [TFMAXPLAYERS+1][MAX_AUTHID_LENGTH];
 
 bool highGrav               [TFMAXPLAYERS+1];
 bool playerTaunting         [TFMAXPLAYERS+1];
@@ -168,83 +156,30 @@ float chokeFor              [TFMAXPLAYERS+1];
 float inchokeFor            [TFMAXPLAYERS+1];
 float outchokeFor           [TFMAXPLAYERS+1];
 float pingFor               [TFMAXPLAYERS+1];
+float avgPingFor            [TFMAXPLAYERS+1];
 float rateFor               [TFMAXPLAYERS+1];
 float ppsFor                [TFMAXPLAYERS+1];
+
+// time since the last stutter/lag spike occurred per client
+float timeSinceLagSpikeFor  [TFMAXPLAYERS+1];
 
 /***** Misc other handles *****/
 
 // Log file
 File StacLogFile;
 
-// regex for getting demoname and server pub ip
-Regex demonameRegex;
-Regex demonameRegexFINAL;
-Regex publicIPRegex;
-Regex IPRegex;
-
 // hud sync handles for livefeed
 Handle HudSyncRunCmd;
 Handle HudSyncRunCmdMisc;
 Handle HudSyncNetwork;
 
+bool livefeedActive = false;
+
 // Timer handles
 Handle QueryTimer           [TFMAXPLAYERS+1];
-Handle TriggerTimedStuffTimer;
-
-/*
-    "cl_interp_npcs",
-    "cl_flipviewmodels",
-    "cl_predict",
-    "cl_interp_ratio",
-    "cl_interp",
-    "cl_team",
-    "cl_class",
-    "hap_HasDevice",
-    "cl_showhelp",
-    "english",
-    "cl_predictweapons",
-    "cl_lagcompensation",
-    "hud_classautokill",
-    "cl_spec_mode",
-    "cl_autorezoom",
-    "tf_remember_activeweapon",
-    "tf_remember_lastswitched",
-    "cl_autoreload",
-    "fov_desired",
-    "hud_combattext",
-    "hud_combattext_healing",
-    "hud_combattext_batching",
-    "hud_combattext_doesnt_block_overhead_text",
-    "hud_combattext_green",
-    "hud_combattext_red",
-    "hud_combattext_blue",
-    "tf_medigun_autoheal",
-    "voice_loopback",
-    "name",
-    "tv_nochat",
-    "cl_language",
-    "rate",
-    "cl_cmdrate",
-    "cl_updaterate",
-    "closecaption",
-    "net_maxroutable"
-*/
-
-char userinfoToCheck[][] =
-{
-    "cl_cmdrate",       // for fixpingmasking, check for invalid values, check for spamming
-    "cl_updaterate",    // for fixpingmasking, for interp check
-    "rate",             // for fixpingmasking
-    //"cl_autoreload",     // check for spamming
-    "cl_interp",        // for interp check
-    "cl_interp_ratio"   // for interp check
-};
-
-//  [cvarvalue][history][charsize]
-char userinfoValues[64][TFMAXPLAYERS+1][4][64];
 
 // for checking if we just fixed a client's network settings so we don't double detect
-bool justclamped        [TFMAXPLAYERS+1];
+bool justClamped        [TFMAXPLAYERS+1];
 
 // tps etc
 int tickspersec        [TFMAXPLAYERS+1];
@@ -257,3 +192,49 @@ char os                [16];
 
 // client has waited the full 60 seconds for their first convar check
 bool hasWaitedForCvarCheck[TFMAXPLAYERS+1];
+
+
+/*
+TODO: point_worldtext entities
+
+this will be an array, probably
+int pointWorldTextEnts[TFMAXPLAYERS+1][5];
+
+*/
+
+// int pwt = 0;
+// int pwt2 = 0;
+// int pwt3 = 0;
+
+/* stac memory stuff */
+// signon state per client
+int signonStateFor[TFMAXPLAYERS+1] = {-1, ...};
+
+
+#define SIGNONSTATE_NONE        0   // no state yet, about to connect
+#define SIGNONSTATE_CHALLENGE   1   // client challenging server, all OOB packets
+#define SIGNONSTATE_CONNECTED   2   // client is connected to server, netchans ready
+#define SIGNONSTATE_NEW         3   // just got serverinfo and string tables
+#define SIGNONSTATE_PRESPAWN    4   // received signon buffers
+#define SIGNONSTATE_SPAWN       5   // ready to receive entity packets
+#define SIGNONSTATE_FULL        6   // we are fully connected, first non-delta packet received
+#define SIGNONSTATE_CHANGELEVEL 7   // server is changing level, please wait
+
+
+// Address Offset_PacketSize;
+Address Offset_SignonState;
+Address Offset_IClient_HACK;
+
+GameData stac_gamedata;
+
+Handle SDKCall_GetPlayerSlot;
+Handle SDKCall_GetMsgHandler;
+Handle SDKCall_GetTimeSinceLastReceived;
+
+float   timeSinceLastRecvFor    [TFMAXPLAYERS+1];
+int Offset_m_fFlags;
+
+
+int PITCH   = 0;
+int YAW     = 1;
+int ROLL    = 2;

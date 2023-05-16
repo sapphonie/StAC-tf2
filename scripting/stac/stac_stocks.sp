@@ -120,21 +120,21 @@ void StacLogDemo()
 
 void StacLogSteam(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
     StacLog
     ("\
         \n Player: %L\
         \n StAC cached SteamID: %s\
         ",
-        Cl,
-        SteamAuthFor[Cl]
+        cl,
+        SteamAuthFor[cl]
     );
 }
 
 void StacLogNetData(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
     StacLog
     (
@@ -148,13 +148,13 @@ void StacLogNetData(int userid)
         \n %.2f kbps rate\
         \n %.2f pps rate\
         ",
-        pingFor[Cl],
-        lossFor[Cl],
-        inchokeFor[Cl],
-        outchokeFor[Cl],
-        chokeFor[Cl],
-        rateFor[Cl],
-        ppsFor[Cl]
+        pingFor[cl],
+        lossFor[cl],
+        inchokeFor[cl],
+        outchokeFor[cl],
+        chokeFor[cl],
+        rateFor[cl],
+        ppsFor[cl]
     );
 
     StacLog
@@ -164,22 +164,18 @@ void StacLogNetData(int userid)
         \n Approx client cmdrate: ≈%i cmd/sec\
         \n Approx server tickrate: ≈%i tick/sec\
         \n Failing lag check? %s\
-        \n HasValidAngles? %s\
         \n SequentialCmdnum? %s\
-        \n OrderedTickcount? %s\
         ",
-        tickspersec[Cl],
+        tickspersec[cl],
         tickspersec[0],
-        IsUserLagging(userid) ? "yes" : "no",
-        HasValidAngles(Cl) ? "yes" : "no",
-        isCmdnumSequential(userid) ? "yes" : "no",
-        isTickcountInOrder(userid) ? "yes" : "no"
+        IsUserLagging(cl) ? "yes" : "no",
+        isCmdnumSequential(cl) ? "yes" : "no"
     );
 }
 
 void StacLogMouse(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     //if (GetRandomInt(1, 5) == 1)
     //{
     //    QueryClientConVar(Cl, "sensitivity", ConVarCheck);
@@ -188,10 +184,10 @@ void StacLogMouse(int userid)
     int wx;
     int wy;
     // scale mouse movement to sensitivity
-    if (sensFor[Cl] != 0.0)
+    if (sensFor[cl] != 0.0)
     {
-        wx = abs(RoundFloat(clmouse[Cl][0] * ( 1 / sensFor[Cl])));
-        wy = abs(RoundFloat(clmouse[Cl][1] * ( 1 / sensFor[Cl])));
+        wx = abs(RoundFloat(clmouse[cl][0] * ( 1 / sensFor[cl])));
+        wy = abs(RoundFloat(clmouse[cl][1] * ( 1 / sensFor[cl])));
     }
     StacLog
     (
@@ -207,9 +203,9 @@ void StacLogMouse(int userid)
         ",
         wx,
         wy,
-        clmouse[Cl][0],
-        clmouse[Cl][1],
-        sensFor[Cl]
+        clmouse[cl][0],
+        clmouse[cl][1],
+        sensFor[cl]
     );
     // log buttons whenever we log mouse
     StacLogButtons(userid);
@@ -217,7 +213,7 @@ void StacLogMouse(int userid)
 
 void StacLogAngles(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     StacLog
     (
         "\
@@ -228,22 +224,36 @@ void StacLogAngles(int userid)
         \n angles3: x %f y %f\
         \n angles4: x %f y %f\
         ",
-        clangles[Cl][0][0],
-        clangles[Cl][0][1],
-        clangles[Cl][1][0],
-        clangles[Cl][1][1],
-        clangles[Cl][2][0],
-        clangles[Cl][2][1],
-        clangles[Cl][3][0],
-        clangles[Cl][3][1],
-        clangles[Cl][4][0],
-        clangles[Cl][4][1]
+        clangles[cl][0][0],
+        clangles[cl][0][1],
+        clangles[cl][1][0],
+        clangles[cl][1][1],
+        clangles[cl][2][0],
+        clangles[cl][2][1],
+        clangles[cl][3][0],
+        clangles[cl][3][1],
+        clangles[cl][4][0],
+        clangles[cl][4][1]
+    );
+    StacLog
+    (
+        "\
+        \nClient eye positions:\
+        \n eyepos 0: x %.3f y %.3f z %.3f\
+        \n eyepos 1: x %.3f y %.3f z %.3f\
+        ",
+        clpos[cl][0][0],
+        clpos[cl][0][1],
+        clpos[cl][0][2],
+        clpos[cl][1][0],
+        clpos[cl][1][1],
+        clpos[cl][1][2]
     );
 }
 
 void StacLogCmdnums(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     StacLog
     (
         "\
@@ -253,20 +263,18 @@ void StacLogCmdnums(int userid)
         \n2 %i\
         \n3 %i\
         \n4 %i\
-        \n5 %i\
         ",
-        clcmdnum[Cl][0],
-        clcmdnum[Cl][1],
-        clcmdnum[Cl][2],
-        clcmdnum[Cl][3],
-        clcmdnum[Cl][4],
-        clcmdnum[Cl][5]
+        clcmdnum[cl][0],
+        clcmdnum[cl][1],
+        clcmdnum[cl][2],
+        clcmdnum[cl][3],
+        clcmdnum[cl][4]
     );
 }
 
 void StacLogTickcounts(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     StacLog
     (
         "\
@@ -276,20 +284,26 @@ void StacLogTickcounts(int userid)
         \n2 %i\
         \n3 %i\
         \n4 %i\
-        \n5 %i\
         ",
-        cltickcount[Cl][0],
-        cltickcount[Cl][1],
-        cltickcount[Cl][2],
-        cltickcount[Cl][3],
-        cltickcount[Cl][4],
-        cltickcount[Cl][5]
+        cltickcount[cl][0],
+        cltickcount[cl][1],
+        cltickcount[cl][2],
+        cltickcount[cl][3],
+        cltickcount[cl][4]
+    );
+    StacLog
+    (
+        "\
+        \nCurrent server tick:\
+        \n%i\
+        ",
+        GetGameTickCount()
     );
 }
 
 void StacLogButtons(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
     StacLog
     (
@@ -300,28 +314,26 @@ void StacLogButtons(int userid)
         \n2 %i\
         \n3 %i\
         \n4 %i\
-        \n5 %i\
         ",
-        clbuttons[Cl][0],
-        clbuttons[Cl][1],
-        clbuttons[Cl][2],
-        clbuttons[Cl][3],
-        clbuttons[Cl][4],
-        clbuttons[Cl][5]
+        clbuttons[cl][0],
+        clbuttons[cl][1],
+        clbuttons[cl][2],
+        clbuttons[cl][3],
+        clbuttons[cl][4]
     );
 }
 
 /********** ISVALIDCLIENT STUFF *********/
 
-bool IsValidClient(int client)
+bool IsValidClient(int cl)
 {
     if
     (
-        (0 < client <= MaxClients)
-        && IsClientInGame(client)
-        && !IsClientInKickQueue(client)
-        && !userBanQueued[client]
-        && !IsFakeClient(client)
+        (0 < cl <= MaxClients)
+        && IsClientInGame(cl)
+        && !IsClientInKickQueue(cl)
+        && !userBanQueued[cl]
+        && !IsFakeClient(cl)
     )
     {
         return true;
@@ -329,17 +341,17 @@ bool IsValidClient(int client)
     return false;
 }
 
-bool IsValidClientOrBot(int client)
+bool IsValidClientOrBot(int cl)
 {
     if
     (
-        (0 < client <= MaxClients)
-        && IsClientInGame(client)
-        && !IsClientInKickQueue(client)
-        && !userBanQueued[client]
+        (0 < cl <= MaxClients)
+        && IsClientInGame(cl)
+        && !IsClientInKickQueue(cl)
+        && !userBanQueued[cl]
         // don't bother sdkhooking stv or replay bots lol
-        && !IsClientSourceTV(client)
-        && !IsClientReplay(client)
+        && !IsClientSourceTV(cl)
+        && !IsClientReplay(cl)
     )
     {
         return true;
@@ -347,16 +359,16 @@ bool IsValidClientOrBot(int client)
     return false;
 }
 
-bool IsValidAdmin(int Cl)
+bool IsValidAdmin(int cl)
 {
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
         // can this client ban, or are they me, sappho?
         if
         (
-            CheckCommandAccess(Cl, "sm_ban", ADMFLAG_GENERIC)
+            CheckCommandAccess(cl, "sm_ban", ADMFLAG_GENERIC)
             //|| Maybe someday, w/ stac_telemetry. Not today. -sappho
-            //StrEqual(SteamAuthFor[Cl], "STEAM_0:1:124178191")
+            //StrEqual(SteamAuthFor[cl], "STEAM_0:1:124178191")
         )
         {
             return true;
@@ -383,79 +395,75 @@ bool IsValidSrcTV(int client)
 
 void BanUser(int userid, char[] reason, char[] pubreason)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
     // prevent double bans
-    if (userBanQueued[Cl])
+    if (userBanQueued[cl])
     {
-        KickClient(Cl, "Banned by StAC");
+        KickClient(cl, "Banned by StAC");
         return;
     }
 
-    StacGeneralPlayerNotify(userid, reason);
+    StacNotify(userid, reason);
     // make sure we dont detect on already banned players
-    userBanQueued[Cl] = true;
+    userBanQueued[cl] = true;
 
     // check if client is authed before banning normally
-    bool isAuthed = IsClientAuthorized(Cl);
+    bool isAuthed = IsClientAuthorized(cl);
 
-    if (demonameInBanReason)
+    if (demonameInBanReason && SourceTV_IsRecording() && GetDemoName())
     {
-        if (GetDemoName())
-        {
-            char demoname_plus[256];
-            strcopy(demoname_plus, sizeof(demoname_plus), demoname);
-            Format(demoname_plus, sizeof(demoname_plus), ". Demo file: %s", demoname_plus);
-            StrCat(reason, 256, demoname_plus);
-            StacLog("Reason: %s", reason);
-        }
-        else
-        {
-            StacLog("No STV demo is being recorded, no demo name will be printed to the ban reason!");
-        }
+        char demoname_plus[256];
+        strcopy(demoname_plus, sizeof(demoname_plus), demoname);
+        Format(demoname_plus, sizeof(demoname_plus), ". Demo file: %s", demoname_plus);
+        StrCat(reason, 256, demoname_plus);
+        StacLog("Reason: %s", reason);
     }
     if (isAuthed)
     {
         if (SOURCEBANS)
         {
-            SBPP_BanPlayer(0, Cl, banDuration, reason);
+            SBPP_BanPlayer(0, cl, banDuration, reason);
             // there's no return value for that native, so we have to just assume it worked lol
             return;
         }
-        if (MATERIALADMIN && MABanPlayer(0, Cl, MA_BAN_STEAM, banDuration, reason))
+        if (MATERIALADMIN)
         {
+            MABanPlayer(0, cl, MA_BAN_STEAM, banDuration, reason);
             return;
         }
         if (GBANS)
         {
             ServerCommand("gb_ban %i, %i, %s", userid, banDuration, reason);
-            // there's no return value nor a native for gbans bans (YET), so we have to just assume it worked lol
+            // There is a native for gbans now but i don't think it can accept the server as an admin
+            // GB_BanClient(0 /* ? */, userid /* ? */, cheating, banDuration, BSBanned);
+
             return;
         }
         // stock tf2, no ext ban system. if we somehow fail here, keep going.
-        if (BanClient(Cl, banDuration, BANFLAG_AUTO, reason, reason, _, _))
+        if (BanClient(cl, banDuration, BANFLAG_AUTO, reason, reason, _, _))
         {
             return;
         }
     }
     // if we got here steam is being fussy or the client is not auth'd in some way, or the stock tf2 ban failed somehow.
-    StacLog("Client %N is not authorized, steam is down, or the ban failed for some other reason. Attempting to ban with cached SteamID...", Cl);
+    StacLog("Client %N is not authorized, steam is down, or the ban failed for some other reason. Attempting to ban with cached SteamID...", cl);
     // if this returns true, we can still ban the client with their steamid in a roundabout and annoying way.
-    if (!IsActuallyNullString(SteamAuthFor[Cl]))
+    if (!IsActuallyNullString(SteamAuthFor[cl]))
     {
-        ServerCommand("sm_addban %i \"%s\" %s", banDuration, SteamAuthFor[Cl], reason);
-        KickClient(Cl, "%s", reason);
+        ServerCommand("sm_addban %i \"%s\" %s", banDuration, SteamAuthFor[cl], reason);
+        KickClient(cl, "%s", reason);
     }
     // if the above returns false, we can only do ip :/
     else
     {
         char ip[16];
-        GetClientIP(Cl, ip, sizeof(ip));
+        GetClientIP(cl, ip, sizeof(ip));
 
-        StacLog("No cached SteamID for %N! Banning with IP %s...", Cl, ip);
+        StacLog("No cached SteamID for %N! Banning with IP %s...", cl, ip);
         ServerCommand("sm_banip %s %i %s", ip, banDuration, reason);
         // this kick client might not be needed - you get kicked by "being added to ban list"
-        // KickClient(Cl, "%s", reason);
+        // KickClient(cl, "%s", reason);
     }
 
     MC_PrintToChatAll("%s", pubreason);
@@ -464,44 +472,14 @@ void BanUser(int userid, char[] reason, char[] pubreason)
 
 bool GetDemoName()
 {
-    if (SOURCETVMGR)
+    demotick = SourceTV_GetRecordingTick();
+    if (!SourceTV_GetDemoFileName(demoname, sizeof(demoname)))
     {
-        demotick = SourceTV_GetRecordingTick();
-        if (!SourceTV_GetDemoFileName(demoname, sizeof(demoname)))
-        {
-            demoname = "N/A";
-            return false;
-        }
-
-        return true;
-    }
-
-    else
-    {
-        char tvStatus[512];
-        ServerCommandEx(tvStatus, sizeof(tvStatus), "tv_status");
-        char demoname_etc[128];
-        if (MatchRegex(demonameRegex, tvStatus) > 0)
-        {
-            if (GetRegexSubString(demonameRegex, 0, demoname_etc, sizeof(demoname_etc)))
-            {
-                TrimString(demoname_etc);
-                if (MatchRegex(demonameRegexFINAL, demoname_etc) > 0)
-                {
-                    if (GetRegexSubString(demonameRegexFINAL, 0, demoname, sizeof(demoname)))
-                    {
-                        TrimString(demoname);
-                        StripQuotes(demoname);
-                        return true;
-                    }
-                }
-            }
-        }
         demoname = "N/A";
-        demotick = -1;
-
         return false;
     }
+
+    return true;
 }
 
 bool isDefaultTickrate()
@@ -510,23 +488,23 @@ bool isDefaultTickrate()
     if (tps == 0)
     {
         DoTPSMath();
-        LogMessage("redoing tps math");
     }
-    if (tps > 60.0 && tps < 70.0)
+    // 66.66666 -> 67
+    if (itps == 67)
     {
         return true;
     }
     return false;
 }
 
-void calcTPSfor(int Cl)
+void calcTPSfor(int cl)
 {
-    t[Cl]++;
-    if (GetEngineTime() - 1.0 >= secTime[Cl])
+    t[cl]++;
+    if (GetEngineTime() - 1.0 >= secTime[cl])
     {
-        secTime[Cl] = GetEngineTime();
-        tickspersec[Cl] = t[Cl];
-        t[Cl] = 0;
+        secTime[cl] = GetEngineTime();
+        tickspersec[cl] = t[cl];
+        t[cl] = 0;
     }
 }
 
@@ -572,15 +550,14 @@ bool IsClientPlaying(int client)
         IsPlayerAlive(client)
         &&
         (
-            team != TFTeam_Unassigned
-            &&
-            team != TFTeam_Spectator
+            team != TFTeam_Unassigned && team != TFTeam_Spectator
         )
     )
     {
         return true;
     }
     return false;
+
 }
 
 /********** PRINT HELPER FUNCS **********/
@@ -643,20 +620,20 @@ void PrintToConsoleAllAdmins(const char[] format, any ...)
 
 /********** MATH STUFF **********/
 
-int min(int a, int b)
+int math_min(int a, int b)
 {
     return a < b ? a : b;
 }
 
-int max(int a, int b)
+int math_max(int a, int b)
 {
     return a > b ? a : b;
 }
 
 int clamp(int num, int minnum, int maxnum)
 {
-    num  = max(num, minnum);
-    return min(num, maxnum);
+    num  = math_max(num, minnum);
+    return math_min(num, maxnum);
 }
 
 any abs(any x)
@@ -664,6 +641,7 @@ any abs(any x)
     return x > 0 ? x : -x;
 }
 
+/*
 float RoundToPlace(float input, int decimalPlaces)
 {
     float poweroften = Pow(10.0, float(decimalPlaces));
@@ -683,6 +661,7 @@ bool IsZeroVector(const float vec[3])
     }
     return false;
 }
+*/
 
 /********** UPDATER **********/
 
@@ -696,7 +675,11 @@ public void OnLibraryAdded(const char[] name)
 
 /********** DETECTIONS & DISCORD **********/
 
-void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
+
+// if our userid is 0, it's a server message without a client
+// if our detections are 0, it's a client message without a detection
+// otherwise, it's a detection with a number of detections
+void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
 {
     StacLogDemo();
 
@@ -705,134 +688,515 @@ void StacGeneralPlayerNotify(int userid, const char[] format, any ...)
         return;
     }
 
-    static char generalTemplate[2048] = \
-    "{ \"embeds\": \
-        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
-            [\
-                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
-                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Message\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
-                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
-                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
-            ]\
-        }],\
-        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
-    }";
+    static char output[8192 * 2];
+    output[0] = 0x0;
 
-    char msg[1024];
+    // individual fields
 
-    char message[256];
-    VFormat(message, sizeof(message), format, 3);
+    // empty fields for spacing
+    JSON_Object spacerField = new JSON_Object();
+    spacerField.EnableOrderedKeys();
+    spacerField.SetString("name",   " ");
+    spacerField.SetString("value",  " ");
+    spacerField.SetBool  ("inline", false);
 
-    int Cl = GetClientOfUserId(userid);
-    char ClName[64];
-    GetClientName(Cl, ClName, sizeof(ClName));
-    Discord_EscapeString(ClName, sizeof(ClName));
-
-    // we technically store the url in this so it has to be bigger
-    char steamid[96];
-    // ok we store these on client connect & auth, this shouldn't be null
-    if (!IsActuallyNullString(SteamAuthFor[Cl]))
+    JSON_Object spacerCpy1;
+    if (userid)
     {
-        // make this a clickable link in discord
-        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
+        spacerCpy1 = spacerField.DeepCopy();
     }
-    // if it is, that means the plugin reloaded or steam is being fussy.
+
+    JSON_Object spacerCpy2 = spacerField.DeepCopy();
+    JSON_Object spacerCpy3 = spacerField.DeepCopy();
+    JSON_Object spacerCpy4 = spacerField.DeepCopy();
+    JSON_Object spacerCpy5 = spacerField.DeepCopy();
+    JSON_Object spacerCpy6;
+    JSON_Object spacerCpy7;
+    if (detections)
+    {
+        spacerCpy6 = spacerField.DeepCopy();
+        spacerCpy7 = spacerField.DeepCopy();
+    }
+
+    // this isn't used anywhere we're just using it to copy off of
+    json_cleanup_and_delete(spacerField);
+
+    int cl = GetClientOfUserId(userid);
+
+    JSON_Object nameField;
+    JSON_Object steamIDfield;
+    if (userid)
+    {
+        // playername
+        char ClName[64];
+        GetClientName(cl, ClName, sizeof(ClName));
+        Discord_EscapeString(ClName, sizeof(ClName));
+        json_escape_string(ClName, sizeof(ClName));
+
+        nameField = new JSON_Object();
+        nameField.EnableOrderedKeys();
+        nameField.SetString("name", "Player");
+        nameField.SetString("value", ClName);
+        nameField.SetBool("inline", true);
+
+
+        // steamid
+        // we technically store the url in this so it has to be bigger
+        char steamid[96];
+        // ok we store these on client connect & auth, this shouldn't be null
+        if ( SteamAuthFor[cl][0] )
+        {
+            // make this a clickable link in discord
+            Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[cl], SteamAuthFor[cl]);
+        }
+        // if it is, that means we lateloaded and the client was unauth'd.
+        else
+        {
+            steamid = "N/A";
+        }
+
+        steamIDfield = new JSON_Object();
+        steamIDfield.EnableOrderedKeys();
+        steamIDfield.SetString("name", "SteamID");
+        steamIDfield.SetString("value", steamid);
+        steamIDfield.SetBool  ("inline", true);
+    }
+
+
+    // detection / notify fields
+    JSON_Object detectOrMsgfield = new JSON_Object();
+    detectOrMsgfield.EnableOrderedKeys();
+    if (!userid)
+    {
+        detectOrMsgfield.SetString("name", "Message");
+    }
+    else if (!detections)
+    {
+        detectOrMsgfield.SetString("name", "Notification");
+    }
     else
     {
-        steamid = "N/A";
+        detectOrMsgfield.SetString("name", "Detection");
     }
-    Format
-    (
-        msg,
-        sizeof(msg),
-        generalTemplate,
-        Cl,
-        steamid,
-        message,
-        hostname,
-        hostipandport,
-        demoname,
-        demotick,
-        GetTime()
-    );
+    detectOrMsgfield.SetString("value", prefmtedstring);
+    detectOrMsgfield.SetBool("inline", true);
 
-    SendMessageToDiscord(msg);
-}
+    // number of detections
 
-void StacDetectionNotify(int userid, char[] type, int detections)
-{
-    StacLogDemo();
-
-    if (!DISCORD)
+    JSON_Object detectNumfield;
+    if (detections)
     {
-        return;
+        detectNumfield = new JSON_Object();
+        detectNumfield.EnableOrderedKeys();
+        detectNumfield.SetString("name", "Detection #");
+        detectNumfield.SetInt("value", detections);
+        detectNumfield.SetBool("inline", true);
     }
 
-    static char detectionTemplate[2048] = \
-    "{ \"embeds\": \
-        [{ \"title\": \"StAC Detection!\", \"color\": 16738740, \"fields\":\
-            [\
-                { \"name\": \"Player\",         \"value\": \"%N\" } ,\
-                { \"name\": \"SteamID\",        \"value\": \"%s\" } ,\
-                { \"name\": \"Detection type\", \"value\": \"%s\" } ,\
-                { \"name\": \"Detection\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Hostname\",       \"value\": \"%s\" } ,\
-                { \"name\": \"Server IP\",      \"value\": \"%s\" } ,\
-                { \"name\": \"Current Demo\",   \"value\": \"%s\" } ,\
-                { \"name\": \"Demo Tick\",      \"value\": \"%i\" } ,\
-                { \"name\": \"Unix timestamp\", \"value\": \"%i\" } \
-            ]\
-        }],\
-        \"avatar_url\": \"https://i.imgur.com/RKRaLPl.png\"\
-    }";
 
-    char msg[1024];
+    // server hostname
+    char hostname[256];
+    GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
 
-    int Cl = GetClientOfUserId(userid);
-    char ClName[64];
-    GetClientName(Cl, ClName, sizeof(ClName));
-    Discord_EscapeString(ClName, sizeof(ClName));
+    JSON_Object hostname_field = new JSON_Object();
+    hostname_field.EnableOrderedKeys();
+    hostname_field.SetString("name", "Hostname");
+    hostname_field.SetString("value", hostname);
+    hostname_field.SetBool  ("inline", true);
 
-    // we technically store the url in this so it has to be bigger
-    char steamid[96];
-    // ok we store these on client connect & auth, this shouldn't be null
-    if (!IsActuallyNullString(SteamAuthFor[Cl]))
+    // server IP - steam:///connect ??
+    JSON_Object serverip_field = new JSON_Object();
+    serverip_field.EnableOrderedKeys();
+    serverip_field.SetString("name", "Server IP");
+    serverip_field.SetString("value", hostipandport);
+    serverip_field.SetBool  ("inline", true);
+
+
+    // STV
+    GetDemoName();
+
+
+    JSON_Object demoname_field = new JSON_Object();
+    demoname_field.EnableOrderedKeys();
+    demoname_field.SetString("name", "Demo name");
+    demoname_field.SetString("value", demoname);
+    demoname_field.SetBool  ("inline", true);
+
+
+    JSON_Object demotick_field = new JSON_Object();
+    demotick_field.EnableOrderedKeys();
+    demotick_field.SetString("name", "Demo tick");
+    demotick_field.SetInt   ("value", demotick);
+    demotick_field.SetBool  ("inline", true);
+
+    float tickedTime = GetTickedTime();
+    char tickedTimeStr[512];
+    // 1 day
+    if (tickedTime > 86400)
     {
-        // make this a clickable link in discord
-        Format(steamid, sizeof(steamid), "[%s](https://steamid.io/lookup/%s)", SteamAuthFor[Cl], SteamAuthFor[Cl]);
+        Format
+        (
+            tickedTimeStr,
+            sizeof(tickedTimeStr),
+            "%.2f minutes(!)\n\n\
+            Source Engine has memory leaks\n\
+            and suffers from \n\
+            [floating point precision loss](https://www.youtube.com/watch?v=RdTJHVG_IdU)\n\
+            after running for too long.\n\
+            You should restart your server ASAP,\n\
+            or it will become choppy,\n\
+            and StAC may not work correctly!",
+            tickedTime / 60.0
+        );
     }
-    // if it is, that means the plugin reloaded or steam is being fussy.
     else
     {
-        steamid = "N/A";
+        Format
+        (
+            tickedTimeStr,
+            sizeof(tickedTimeStr),
+            "%.2f minutes",
+            tickedTime / 60.0
+        );
     }
+
+    JSON_Object gametime_field = new JSON_Object();
+    gametime_field.EnableOrderedKeys();
+    gametime_field.SetString("name", "Approx server uptime");
+    gametime_field.SetString("value", tickedTimeStr);
+    gametime_field.SetBool  ("inline", true);
+
+
+    JSON_Object servertick_field = new JSON_Object();
+    servertick_field.EnableOrderedKeys();
+    servertick_field.SetString("name", "Server tick");
+    servertick_field.SetInt   ("value", servertick);
+    servertick_field.SetBool  ("inline", true);
+
+    int unixTimestamp = GetTime();
+    char discordTimestamp[512];
 
     Format
     (
-        msg,
-        sizeof(msg),
-        detectionTemplate,
-        Cl,
-        steamid,
-        type,
-        detections,
-        hostname,
-        hostipandport,
-        demoname,
-        demotick,
-        GetTime()
+        discordTimestamp,
+        sizeof(discordTimestamp),
+        "\
+        <t:%i:T> on <t:%i:D>\n\
+        <t:%i:R>\
+        ",
+        unixTimestamp,
+        unixTimestamp,
+        unixTimestamp
     );
 
-    SendMessageToDiscord(msg);
+
+
+    JSON_Object discordtimestamp_field = new JSON_Object();
+    discordtimestamp_field.EnableOrderedKeys();
+    discordtimestamp_field.SetString("name", "Discord Timestamp");
+    discordtimestamp_field.SetString("value", discordTimestamp);
+    discordtimestamp_field.SetBool  ("inline", true);
+
+
+    JSON_Object unixtimestamp_field = new JSON_Object();
+    unixtimestamp_field.EnableOrderedKeys();
+    unixtimestamp_field.SetString("name", "Unix Timestamp");
+    unixtimestamp_field.SetInt   ("value", unixTimestamp);
+    unixtimestamp_field.SetBool  ("inline", true);
+
+
+
+    JSON_Object viewangle_field;
+    JSON_Object clpos_field;
+    JSON_Object tickcount_field;
+    JSON_Object cmdnum_field;
+    JSON_Object buttons_field;
+    JSON_Object netinfo_field;
+
+
+    if (detections)
+    {
+        // VIEWANGLES
+        char viewangleHistoryBuf[1024];
+        Format
+        (
+            viewangleHistoryBuf,
+            sizeof(viewangleHistoryBuf),
+            "```\
+                ==----pitch---yaw-----roll-----\n\
+                0 | %7.2f %7.2f %7.2f\n\
+                1 | %7.2f %7.2f %7.2f\n\
+                2 | %7.2f %7.2f %7.2f\n\
+                3 | %7.2f %7.2f %7.2f\n\
+                4 | %7.2f %7.2f %7.2f\n\
+            ```",
+
+                // angles
+                clangles[cl][0][0],
+                clangles[cl][0][1],
+                clangles[cl][0][2],
+
+                clangles[cl][1][0],
+                clangles[cl][1][1],
+                clangles[cl][1][2],
+
+                clangles[cl][2][0],
+                clangles[cl][2][1],
+                clangles[cl][2][2],
+
+                clangles[cl][3][0],
+                clangles[cl][3][1],
+                clangles[cl][3][2],
+
+                clangles[cl][4][0],
+                clangles[cl][4][1],
+                clangles[cl][4][2]
+        );
+
+
+        viewangle_field = new JSON_Object();
+        viewangle_field.EnableOrderedKeys();
+        viewangle_field.SetString("name", "viewangle history");
+        viewangle_field.SetString("value", viewangleHistoryBuf);
+        viewangle_field.SetBool  ("inline", false);
+
+
+        // EYE POSITIONS
+        char eyeposBuf[1024];
+        Format
+        (
+            eyeposBuf,
+            sizeof(eyeposBuf),
+
+            "```\
+            ==-----x--------y--------z---------\n\
+            0 | %8.2f %8.2f %8.2f\n\
+            1 | %8.2f %8.2f %8.2f\n\
+            ```",
+
+            // eye positions
+            clpos[cl][0][0],
+            clpos[cl][0][1],
+            clpos[cl][0][2],
+            clpos[cl][1][0],
+            clpos[cl][1][1],
+            clpos[cl][1][2]
+        );
+
+        clpos_field = new JSON_Object();
+        clpos_field.EnableOrderedKeys();
+        clpos_field.SetString("name", "eye position history");
+        clpos_field.SetString("value", eyeposBuf);
+        clpos_field.SetBool  ("inline", false);
+
+        // CMDNUMS
+        char cmdnumBuf[1024];
+        Format
+        (
+            cmdnumBuf,
+            sizeof(cmdnumBuf),
+
+            "[what's this?](https://github.com/VSES/SourceEngine2007/blob/43a5c90a5ada1e69ca044595383be67f40b33c61/se2007/game/client/in_main.cpp#L1008)\n```\
+                0 | %i\n\
+                1 | %i\n\
+                2 | %i\n\
+                3 | %i\n\
+                4 | %i\n\
+            ```",
+
+            // cmdnum
+            clcmdnum[cl][0],
+            clcmdnum[cl][1],
+            clcmdnum[cl][2],
+            clcmdnum[cl][3],
+            clcmdnum[cl][4]
+        );
+
+        cmdnum_field = new JSON_Object();
+        cmdnum_field.EnableOrderedKeys();
+        cmdnum_field.SetString("name", "cmdnum history");
+        cmdnum_field.SetString("value", cmdnumBuf);
+        cmdnum_field.SetBool  ("inline", true);
+
+        // TICKCOUNTS
+        char tickcountBuf[1024];
+        Format
+        (
+            tickcountBuf,
+            sizeof(tickcountBuf),
+
+            "[what's this?](https://github.com/VSES/SourceEngine2007/blob/43a5c90a5ada1e69ca044595383be67f40b33c61/se2007/game/client/in_main.cpp#L1009)\n```\
+                0 | %i\n\
+                1 | %i\n\
+                2 | %i\n\
+                3 | %i\n\
+                4 | %i\n\
+            ```",
+
+            // tickcount
+            cltickcount[cl][0],
+            cltickcount[cl][1],
+            cltickcount[cl][2],
+            cltickcount[cl][3],
+            cltickcount[cl][4]
+        );
+
+
+        tickcount_field = new JSON_Object();
+        tickcount_field.EnableOrderedKeys();
+        tickcount_field.SetString("name", "tickcount history");
+        tickcount_field.SetString("value", tickcountBuf);
+        tickcount_field.SetBool  ("inline", true);
+
+        // BUTTONS
+        char buttonsBuf[1024];
+        Format
+        (
+            buttonsBuf,
+            sizeof(buttonsBuf),
+
+            "[what's this?](https://sapphonie.github.io/flags.html)\n\
+            ```\
+                0 | %i\n\
+                1 | %i\n\
+                2 | %i\n\
+                3 | %i\n\
+                4 | %i\n\
+            ```",
+
+            // buttons
+            clbuttons[cl][0],
+            clbuttons[cl][1],
+            clbuttons[cl][2],
+            clbuttons[cl][3],
+            clbuttons[cl][4]
+        );
+
+
+        buttons_field = new JSON_Object();
+        buttons_field.EnableOrderedKeys();
+        buttons_field.SetString("name", "buttons history");
+        buttons_field.SetString("value", buttonsBuf);
+        buttons_field.SetBool  ("inline", true);
+
+        // NETWORK INFO
+        char netinfoBuf[1024];
+        Format
+        (
+            netinfoBuf,
+            sizeof(netinfoBuf),
+
+            "```\
+                ping               | %7.2fms\n\
+                loss               | %7.2f%%\n\
+                inchoke            | %7.2f%%\n\
+                outchoke           | %7.2f%%\n\
+                totalchoke         | %7.2f%%\n\
+                rate               | %7.2fkbps\n\
+                approx packets/sec | %7.2f\n\
+                approx usrcmds/sec | %7i\n\
+            ```",
+
+            // network
+            pingFor[cl],
+            lossFor[cl],
+            inchokeFor[cl],
+            outchokeFor[cl],
+            chokeFor[cl],
+            rateFor[cl],
+            ppsFor[cl],
+            tickspersec[cl]
+        );
+
+        netinfo_field = new JSON_Object();
+        netinfo_field.EnableOrderedKeys();
+        netinfo_field.SetString("name", "network info");
+        netinfo_field.SetString("value", netinfoBuf);
+        netinfo_field.SetBool  ("inline", false);
+    }
+
+
+    // fields list
+    JSON_Array fieldArray = new JSON_Array();
+    if (userid)
+    {
+        fieldArray.PushObject(nameField);
+        fieldArray.PushObject(steamIDfield);
+        fieldArray.PushObject(spacerCpy1);
+    }
+    fieldArray.PushObject(detectOrMsgfield);
+    if (detections)
+    {
+        fieldArray.PushObject(detectNumfield);
+    }
+    fieldArray.PushObject(spacerCpy2);
+    fieldArray.PushObject(hostname_field);
+    fieldArray.PushObject(serverip_field);
+    fieldArray.PushObject(spacerCpy3);
+    fieldArray.PushObject(demoname_field);
+    fieldArray.PushObject(demotick_field);
+    fieldArray.PushObject(spacerCpy4);
+    fieldArray.PushObject(gametime_field);
+    fieldArray.PushObject(servertick_field);
+    fieldArray.PushObject(spacerCpy5);
+    fieldArray.PushObject(discordtimestamp_field);
+    fieldArray.PushObject(unixtimestamp_field);
+    if (detections)
+    {
+        fieldArray.PushObject(spacerCpy6);
+        fieldArray.PushObject(viewangle_field);
+        fieldArray.PushObject(clpos_field);
+        fieldArray.PushObject(spacerCpy7);
+        fieldArray.PushObject(cmdnum_field);
+        fieldArray.PushObject(tickcount_field);
+        fieldArray.PushObject(buttons_field);
+        fieldArray.PushObject(netinfo_field);
+    }
+
+
+    // embeds header info
+    JSON_Object embedsFields = new JSON_Object();
+    embedsFields.EnableOrderedKeys();
+
+    embedsFields.SetObject("fields", fieldArray);
+    char notifType[64];
+    if (!userid)
+    {
+        Format(notifType, sizeof(notifType), "StAC v%s %s", PLUGIN_VERSION, "Server Message");
+    }
+    else if (!detections)
+    {
+        Format(notifType, sizeof(notifType), "StAC v%s %s", PLUGIN_VERSION, "Client Notification");
+    }
+    else
+    {
+        Format(notifType, sizeof(notifType), "StAC v%s %s", PLUGIN_VERSION, "Client Detection");
+    }
+
+    static int color = 0xFF69B4;
+    embedsFields.SetString  ("title",       notifType);
+    embedsFields.SetInt     ("color",       color);
+
+    JSON_Array finalArr = new JSON_Array();
+
+    finalArr.PushObject(embedsFields);
+
+    // root
+    JSON_Object rootEmbeds = new JSON_Object();
+    rootEmbeds.EnableOrderedKeys();
+    rootEmbeds.SetObject("embeds", finalArr);
+    rootEmbeds.SetString("avatar_url", "https://i.imgur.com/RKRaLPl.png");
+    rootEmbeds.Encode(output, sizeof(output));
+
+    json_cleanup_and_delete(rootEmbeds);
+    SendMessageToDiscord(output);
+
+    return;
 }
 
 void SendMessageToDiscord(char[] message)
 {
-    char webhook[32] = "stac";
+    static char webhook[8] = "stac";
     Discord_SendMessage(webhook, message);
 }
 
@@ -855,3 +1219,40 @@ void checkOS()
         os = "unknown";
     }
 }
+
+// see if anyone is actively being viewed with livefeed so we dont have to loop every frame
+void checkLiveFeed()
+{
+    livefeedActive = false;
+    for (int k = 1; k <= MaxClients; k++)
+    {
+        if (LiveFeedOn[k])
+        {
+            livefeedActive = true;
+            break;
+        }
+    }
+}
+
+// https://stackoverflow.com/a/44105089
+float float_rand(float min, float max)
+{
+    float scale = GetURandomFloat();    /* [0, 1.0] */
+    return min + scale * ( max - min ); /* [min, max] */
+}
+
+// https://forums.alliedmods.net/showpost.php?p=2698561&postcount=2
+// STEAM_1:1:23456789 to 23456789
+/*
+int GetAccountIdFromSteam2(const char[] steam_id)
+{
+    int matches = MatchRegex(steamidRegex, steam_id);
+
+    if (matches != 1)
+    {
+        return 0;
+    }
+
+    return StringToInt(steam_id[10]) * 2 + (steam_id[8] - 48);
+}
+*/

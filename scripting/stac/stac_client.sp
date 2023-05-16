@@ -2,44 +2,255 @@
 
 /********** MISC CLIENT JOIN/LEAVE **********/
 
-// client join
-public void OnClientPutInServer(int Cl)
+// THESE ARE IN ORDER OF OPERATION
+// -> OnClientPreConnectEx is called
+//      ~0.25 ms pass
+// -> player_connect event is called
+//      ~50 ms pass
+// -> OnClientConnect is called
+//      then basically
+// -> OnClientConnected is called
+//      ~a few seconds pass
+// -> OnClientPutInServer is called
+
+// There is almost certainly no way to ever have a client ever trigger OCPCE -> EPC -> OCC out of order
+// But just in case we do a ton of checks
+
+
+
+static char latestIP        [16];
+static char latestSteamID   [MAX_AUTHID_LENGTH];
+
+// Fired before anything
+// CBaseServer::ConnectClient
+// which calls (CGameClient*)client->Connect
+// Does NOT fire on map change
+public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255])
 {
-    int userid = GetClientUserId(Cl);
-
-    if (IsValidClientOrBot(Cl))
+    if (DEBUG)
     {
-        SDKHook(Cl, SDKHook_OnTakeDamage, hOnTakeDamage);
+        StacLog("-> OnClientPreConnectEx (name %s, ip %s) t=%f", name, ip, GetEngineTime());
+        StacLog("-> OnClientPreConnectEx (steamid = %s)", steamID);
     }
-    if (IsValidClient(Cl))
-    {
-        // clear per client values
-        ClearClBasedVars(userid);
-        // clear timer
-        QueryTimer[Cl] = null;
-        // query convars on player connect
-        if (DEBUG)
-        {
-            StacLog("%N joined. Checking cvars", Cl);
-        }
-        QueryTimer[Cl] = CreateTimer(30.0, Timer_CheckClientConVars_FirstTime, userid);
 
-        CreateTimer(10.0, CheckAuthOn, userid);
+    // cant use name since some plugins will alter clients' names on connect
+    strcopy(latestIP,       sizeof(latestIP),       ip);
+    strcopy(latestSteamID,  sizeof(latestSteamID),  steamID);
 
-        // bail if cvar is set to 0
-        if (maxip > 0)
-        {
-            checkIP(Cl);
-        }
-    }
-    OnClientPutInServer_jaypatch(Cl);
+    return true;
 }
 
-void checkIP(int Cl)
+// Fired after client is allowed thru connect ext
+// CGameClient::Connect() ?
+// Does NOT fire on map change
+public void ePlayerConnect(Handle event, const char[] name, bool dontBroadcast)
 {
-    int userid = GetClientUserId(Cl);
+    /*
+
+        player_connect
+
+        Note:   A new client connected
+        Name:   player_connect
+        Structure:
+        string  name        player name
+        byte    index       player slot (entity index-1)
+        short   userid      user ID on server (unique on server)
+        string  networkid   player network (i.e steam) id
+        string  address     ip:port
+        short   bot         is a bot
+
+    */
+    // it says index. it is the client slot. it is lying.
+    // actual client index = slot + 1
+    int cl = ( GetEventInt(event, "index") + 1 );
+
+    // wipe the steamid for this client no matter what
+    SteamAuthFor[cl][0] = '\0';
+
+    // Don't run any more logic if we're a bot
+    bool bot = GetEventBool(event, "bot");
+    if (bot)
+    {
+        return;
+    }
+
+    char ipWithPort[24];
+    GetEventString(event, "address", ipWithPort, sizeof(ipWithPort), /* default value */ "junk");
+
+    if
+    (
+        // ip matches - latestIP has no port (for now)
+        StrContains(ipWithPort, latestIP) != -1
+    )
+    {
+        strcopy(SteamAuthFor[cl], sizeof(latestSteamID), latestSteamID);
+        if (DEBUG)
+        {
+            StacLog("\n\nplayer_connect steamid = %s\n", SteamAuthFor[cl]);
+        }
+    }
+    // this should LITERALLY NEVER HAPPEN
+    else
+    {
+        char netid[MAX_AUTHID_LENGTH];
+        GetEventString(event, "networkid", netid, sizeof(netid), /* default value */ "junk");
+
+        char cname[MAX_NAME_LENGTH];
+        GetEventString(event, "name", cname, sizeof(cname), /* default value */ "junk");
+
+        char dbginfo[512];
+        Format
+        (
+            dbginfo,
+            sizeof(dbginfo),
+            "\n\
+            latestIP            = %s \n\
+            ipWithPort          = %s \n\
+            latestSteamID       = %s \n\
+            netid               = %s \n",
+
+            latestIP,
+            ipWithPort,
+            latestSteamID,
+            netid
+        );
+
+        char msg[2048];
+        Format
+        (
+            msg,
+            sizeof(msg),
+            "Client %s somehow triggered a race condition in player_connect.\n \
+            Please report this (along with a screenshot of this embed or error message) on the StAC issue tracker on github:\n \
+            https://github.com/sapphonie/StAC-tf2/issues\n \
+            ```%s```",
+            cname,
+            dbginfo
+        );
+        StacNotify(0, msg);
+
+        StacLog("Client %s somehow triggered a race condition in OnClientConnect. Report this error on the GitHub.", cname);
+        StacLog(dbginfo);
+    }
+}
+
+// After player_connect
+// CGameClient::CheckConnect which calls
+// CServerPlugin::ClientConnect(edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen)
+// DOES fire on map change
+public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
+{
+    float nowTime = GetEngineTime();
+
+    if (DEBUG)
+    {
+        StacLog("-> OnClientConnect (index %i)", cl);
+        StacLog("-> OnClientConnect t=%f", nowTime);
+    }
+
+    return true;
+}
+
+public void OnClientConnected(int cl)
+{
+    if (DEBUG)
+    {
+        StacLog("-> OnClientConnected (index %i) t=%f", cl, GetEngineTime());
+    }
+}
+
+// client join
+public void OnClientPutInServer(int cl)
+{
+    if (DEBUG)
+    {
+        StacLog("-> OnClientPutInServer (index %i) t=%f", cl, GetEngineTime());
+    }
+
+    int userid = GetClientUserId(cl);
+
+    if (IsValidClientOrBot(cl))
+    {
+        SDKHook(cl, SDKHook_OnTakeDamage, hOnTakeDamage);
+    }
+
+    OnClientPutInServer_jaypatch(cl);
+
+    if (!IsValidClient(cl))
+    {
+        return;
+    }
+
+    // clear per client values
+    ClearClBasedVars(userid);
+    // clear timer
+    QueryTimer[cl] = null;
+    // query convars on player connect
+    if (DEBUG)
+    {
+        StacLog("%N joined. Checking cvars", cl);
+    }
+    QueryTimer[cl] = CreateTimer( float_rand(30.0, 45.0), Timer_CheckClientConVars_FirstTime, userid );
+
+    if (!SteamAuthFor[cl][0])
+    {
+        // LogMessage("NO STEAMAUTH IN ONCLIENTPUTINSERVER");
+        // char msg[2048];
+        // Format
+        // (
+        //     msg,
+        //     sizeof(msg),
+        //     "Client %L had no SteamID in OnClientPutInServer ???\n
+        //     This should never happen unless the plugin was reloaded!\n",
+        //     cl
+        // );
+        // StacNotify(userid, msg);
+        char steamid[MAX_AUTHID_LENGTH];
+
+        // let's try to get their auth
+        if (GetClientAuthId(cl, AuthId_Steam2, steamid, sizeof(steamid)))
+        {
+            // if we get it, copy to our global list
+            strcopy(SteamAuthFor[cl], sizeof(SteamAuthFor[]), steamid);
+        }
+        // We should only get here on lateload AND if a client is unauthorized
+        // Theoretically we could either not verify the client's steamid OR force reconnect clients
+        // But 1 is unsafe and 2 is annoying, especially for such a corner case
+        else
+        {
+            char msg[2048];
+            Format
+            (
+                msg,
+                sizeof(msg),
+                "Client %L had no SteamID in OnClientPutInServer AND GetClientAuthId failed???\n\
+                This should never happen unless the plugin was reloaded AND Steam is down?!\n",
+                cl
+            );
+            StacLog("NO STEAMAUTH IN ONCLIENTPUTINSERVER");
+            StacNotify(userid, msg);
+
+            SteamAuthFor[cl][0] = '\0';
+        }
+    }
+
+    if (DEBUG)
+    {
+        StacLog("OCPIS steamid = %s", SteamAuthFor[cl]);
+    }
+
+    // bail if cvar is set to 0
+    if (maxip > 0)
+    {
+        checkIP(cl);
+    }
+}
+
+void checkIP(int cl)
+{
+    int userid = GetClientUserId(cl);
     char clientIP[16];
-    GetClientIP(Cl, clientIP, sizeof(clientIP));
+    GetClientIP(cl, clientIP, sizeof(clientIP));
 
     int sameip;
 
@@ -61,115 +272,39 @@ void checkIP(int Cl)
     if (sameip > maxip)
     {
         char msg[256];
-        Format(msg, sizeof(msg), "Too many connections from the same IP address %s from client %N", clientIP, Cl);
-        StacGeneralPlayerNotify(userid, msg);
-        PrintToImportant("{hotpink}[StAC]{white} Too many connections (%i) from the same IP address {mediumpurple}%s{white} from client %N!", sameip, clientIP, Cl);
+        Format(msg, sizeof(msg), "Too many connections from the same IP address %s from client %N", clientIP, cl);
+        StacNotify(userid, msg);
+        PrintToImportant("{hotpink}[StAC]{white} Too many connections (%i) from the same IP address {mediumpurple}%s{white} from client %N!", sameip, clientIP, cl);
         StacLog(msg);
-        KickClient(Cl, "[StAC] Too many concurrent connections from your IP address!", maxip);
-    }
-}
-
-Action CheckAuthOn(Handle timer, int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-
-    if (IsValidClient(Cl))
-    {
-        // don't bother checking if already authed
-        if (!IsClientAuthorized(Cl))
-        {
-            SteamAuthFor[Cl][0] = '\0';
-            if (kickUnauth)
-            {
-                StacGeneralPlayerNotify(userid, "Reconnecting player for being unauthorized w/ Steam");
-                StacLog("Reconnecting %N for not being authorized with Steam.", Cl);
-                PrintToChat(Cl, "You are being reconnected to the server in an attempt to reauthorize you with the Steam network.");
-                ClientCommand(Cl, "retry");
-                // Force clients who ignore the retry to do it anyway.
-                CreateTimer(1.0, Reconn, userid);
-                // TODO: detect clients that ignore this
-                // KickClient(Cl, "[StAC] Not authorized with Steam Network, please authorize and reconnect");
-            }
-            else
-            {
-                StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam in a timely manner");
-                StacLog("Client %N failed to authorize w/ Steam in a timely manner.", Cl);
-                // SteamAuthFor[Cl][0] = '\0'; ?
-            }
-        }
-        else
-        {
-            char steamid[64];
-
-            // let's try to get their auth
-            if (GetClientAuthId(Cl, AuthId_Steam2, steamid, sizeof(steamid)))
-            {
-                // if we get it, copy to our global list
-                strcopy(SteamAuthFor[Cl], sizeof(SteamAuthFor[]), steamid);
-            }
-            else
-            {
-                SteamAuthFor[Cl][0] = '\0';
-            }
-        }
-    }
-
-    return Plugin_Continue;
-}
-
-Action Reconn(Handle timer, int userid)
-{
-    int Cl = GetClientOfUserId(userid);
-    if (IsValidClient(Cl))
-    {
-        StacGeneralPlayerNotify(userid, "Client failed to authorize w/ Steam AND ignored a retry command?? Suspicious! Forcing a reconnection.");
-        // If we got this far they're probably cheating, but I need to verify that. Force them in the meantime.
-        ReconnectClient(Cl);
-    }
-
-    return Plugin_Continue;
-}
-
-// cache this! we don't need to clear this because it gets overwritten when a new client connects with the same index
-public void OnClientAuthorized(int Cl, const char[] auth)
-{
-    if (!IsFakeClient(Cl))
-    {
-        strcopy(SteamAuthFor[Cl], sizeof(SteamAuthFor[]), auth);
-        if (DEBUG)
-        {
-            StacLog("Client %N authorized with auth %s.", Cl, auth);
-        }
+        KickClient(cl, "[StAC] Too many concurrent connections from your IP address!", maxip);
     }
 }
 
 // player left and mapchanges
-public void OnClientDisconnect(int Cl)
+public void OnClientDisconnect(int cl)
 {
-    int userid = GetClientUserId(Cl);
+    int userid = GetClientUserId(cl);
     // clear per client values
     ClearClBasedVars(userid);
-    delete QueryTimer[Cl];
+    delete QueryTimer[cl];
 }
 
 // player is OUT of the server
 public void ePlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
 {
-    int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
-    SteamAuthFor[Cl][0] = '\0';
+    int cl = GetClientOfUserId(GetEventInt(event, "userid"));
+    SteamAuthFor[cl][0] = '\0';
 }
 
 /********** CLIENT BASED EVENTS **********/
-
 public Action ePlayerSpawned(Handle event, char[] name, bool dontBroadcast)
 {
-    int Cl = GetClientOfUserId(GetEventInt(event, "userid"));
-    //int userid = GetEventInt(event, "userid");
-    if (IsValidClient(Cl))
+    int userid = GetEventInt(event, "userid");
+    int cl = GetClientOfUserId(userid);
+    if (IsValidClient(cl))
     {
-        timeSinceSpawn[Cl] = GetEngineTime();
+        timeSinceSpawn[cl] = GetEngineTime();
     }
-
     return Plugin_Continue;
 }
 
@@ -200,52 +335,57 @@ public Action hOnTakeDamage(int victim, int& attacker, int& inflictor, float& da
 
 public Action Hook_TEFireBullets(const char[] te_name, const int[] players, int numClients, float delay)
 {
-    int Cl = TE_ReadNum("m_iPlayer") + 1;
+    int cl = TE_ReadNum("m_iPlayer") + 1;
     // this user fired a bullet this frame!
-    didBangThisFrame[Cl] = true;
+    didBangThisFrame[cl] = true;
+
+    // For testing discord notifs
+    // StacNotify(0, "misc message no client");
+    // StacNotify(GetClientUserId(cl), "detection", 1);
+    // StacNotify(GetClientUserId(cl), "message");
 
     return Plugin_Continue;
 }
 
-public Action TF2_OnPlayerTeleport(int Cl, int teleporter, bool& result)
+public Action TF2_OnPlayerTeleport(int cl, int teleporter, bool& result)
 {
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
-        timeSinceTeled[Cl] = GetEngineTime();
+        timeSinceTeled[cl] = GetEngineTime();
     }
 
     return Plugin_Continue;
 }
 
-public void TF2_OnConditionAdded(int Cl, TFCond condition)
+public void TF2_OnConditionAdded(int cl, TFCond condition)
 {
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
         if (condition == TFCond_Taunting)
         {
-            playerTaunting[Cl] = true;
+            playerTaunting[cl] = true;
         }
         else if (IsHalloweenCond(condition))
         {
-            playerInBadCond[Cl]++;
+            playerInBadCond[cl]++;
         }
     }
 }
 
-public void TF2_OnConditionRemoved(int Cl, TFCond condition)
+public void TF2_OnConditionRemoved(int cl, TFCond condition)
 {
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
         if (condition == TFCond_Taunting)
         {
-            timeSinceTaunt[Cl] = GetEngineTime();
-            playerTaunting[Cl] = false;
+            timeSinceTaunt[cl] = GetEngineTime();
+            playerTaunting[cl] = false;
         }
         else if (IsHalloweenCond(condition))
         {
-            if (playerInBadCond[Cl] > 0)
+            if (playerInBadCond[cl] > 0)
             {
-                playerInBadCond[Cl]--;
+                playerInBadCond[cl]--;
             }
         }
     }
@@ -255,11 +395,12 @@ public Action ePlayerChangedName(Handle event, char[] name, bool dontBroadcast)
 {
     int userid = GetEventInt(event, "userid");
 
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
-    if (hasBadName[Cl])
+    // I dont remember why this is here..........
+    if (hasBadName[cl])
     {
-        hasBadName[Cl] = false;
+        hasBadName[cl] = false;
         return Plugin_Continue;
     }
     NameCheck(userid);
@@ -270,8 +411,8 @@ public Action ePlayerChangedName(Handle event, char[] name, bool dontBroadcast)
 public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
 {
     // ent index of achievement earner
-    int Cl              = GetEventInt(event, "player");
-    int userid          = GetClientUserId(Cl);
+    int cl              = GetEventInt(event, "player");
+    int userid          = GetClientUserId(cl);
 
     // id of our achievement
     int achieve_id      = GetEventInt(event, "achievement");
@@ -280,78 +421,135 @@ public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
     return Plugin_Continue;
 }
 
+// Ignore cmds from unconnected clients
+Action OnAllClientCommands(int cl, const char[] command, int argc)
+{
+    if (cl == 0 || IsFakeClient(cl))
+    {
+        return Plugin_Continue;
+    }
+    if
+    (
+           StrEqual(command, "menuclosed")
+        || StrEqual(command, "vmodenable")
+        || StrEqual(command, "vban")
+        || StrEqual(command, "timeleft")
+    )
+    {
+        return Plugin_Continue;
+    }
+    if (signonStateFor[cl] <= SIGNONSTATE_SPAWN)
+    {
+        /*
+        char msg[1024];
+        Format(msg, sizeof(msg), "Client %L sent cmd `%s` before signon", cl, command);
+
+        StacLog(msg);
+        StacNotify(GetClientUserId(cl), msg);
+        */
+        return Plugin_Handled;
+    }
+    return Plugin_Continue;
+}
+
 void ClearClBasedVars(int userid)
 {
     // get fresh cli id
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     // clear all old values for cli id based stuff
-    turnTimes               [Cl] = 0;
-    fakeAngDetects          [Cl] = 0;
-    aimsnapDetects          [Cl] = -1; // ignore first detect, it's prolly bunk
-    pSilentDetects          [Cl] = -1; // ignore first detect, it's prolly bunk
-    bhopDetects             [Cl] = -1; // set to -1 to ignore single jumps
-    cmdnumSpikeDetects      [Cl] = 0;
-    tbotDetects             [Cl] = -1; // ignore first detect, it's prolly bunk
-    userinfoSpamDetects     [Cl] = 0;
+    /***** client based stuff *****/
 
+    // cheat detections per client
+    turnTimes               [cl] = 0;
+    fakeAngDetects          [cl] = 0;
+    aimsnapDetects          [cl] = -1; // set to -1 to ignore first detections, as theyre most likely junk
+    pSilentDetects          [cl] = -1; // ^
+    bhopDetects             [cl] = -1; // set to -1 to ignore single jumps
+    cmdnumSpikeDetects      [cl] = 0;
+    tbotDetects             [cl] = -1;
+    invalidUsercmdDetects   [cl] = 0;
 
-    // TIME SINCE LAST ACTION PER CLIENT
-    timeSinceSpawn          [Cl] = 0.0;
-    timeSinceTaunt          [Cl] = 0.0;
-    timeSinceTeled          [Cl] = 0.0;
-    timeSinceNullCmd        [Cl] = 0.0;
-    timeSinceLastCommand    [Cl] = 0.0;
+    // frames since client "did something"
+    //                      [ client index ][history]
+    timeSinceSpawn          [cl] = 0.0;
+    timeSinceTaunt          [cl] = 0.0;
+    timeSinceTeled          [cl] = 0.0;
+    timeSinceLastCommand    [cl] = 0.0;
+    // ticks since client "did something"
+    //                      [ client index ][history]
+    didBangThisFrame        [cl] = false;
+    didHurtThisFrame        [cl] = false;
 
-    lastCommandFor          [Cl][0] = '\0';
-    // STORED GRAVITY STATE PER CLIENT
-    highGrav                [Cl] = false;
-    // STORED MISC VARS PER CLIENT
-    playerTaunting          [Cl] = false;
-    playerInBadCond         [Cl] = 0;
-    userBanQueued           [Cl] = false;
-    // STORED SENS PER CLIENT
-    sensFor                 [Cl] = 0.0;
-    // don't bother clearing arrays
-    LiveFeedOn              [Cl] = false;
+    // SteamAuthFor            [cl][0] = '\0';
 
-    // reset namechanging var
-    hasBadName              [Cl] = false;
+    highGrav                [cl] = false;
+    playerTaunting          [cl] = false;
+    playerInBadCond         [cl] = 0;
+    userBanQueued           [cl] = false;
+    sensFor                 [cl] = 0.0;
+    // weapon name, gets passed to aimsnap check
+    hurtWeapon              [cl][0] = '\0';
+    lastCommandFor          [cl][0] = '\0';
+    LiveFeedOn              [cl] = false;
 
+    checkLiveFeed();
+    hasBadName              [cl] = false;
 
-    for (int cvar; cvar < sizeof(userinfoToCheck); cvar++)
-    {
-        userinfoValues[cvar][Cl][0][0] = '\0';
-        userinfoValues[cvar][Cl][1][0] = '\0';
-        userinfoValues[cvar][Cl][2][0] = '\0';
-        userinfoValues[cvar][Cl][3][0] = '\0';
-    }
-    justclamped             [Cl] = false;
+    // network info
+    lossFor                 [cl] = 0.0;
+    chokeFor                [cl] = 0.0;
+    inchokeFor              [cl] = 0.0;
+    outchokeFor             [cl] = 0.0;
+    pingFor                 [cl] = 0.0;
+    avgPingFor              [cl] = 0.0;
+    rateFor                 [cl] = 0.0;
+    ppsFor                  [cl] = 0.0;
 
-    // has client has waited 60 seconds for their first cvar check
-    hasWaitedForCvarCheck   [Cl] = false;
+    // time since the last stutter/lag spike occurred per client
+    timeSinceLagSpikeFor    [cl] = 0.0;
+
+    // do we need to do this
+    // QueryTimer           [cl] = null;
+
+    // for checking if we just fixed a client's network settings so we don't double detect
+    justClamped             [cl] = false;
+
+    // tps etc
+    tickspersec             [cl] = 0;
+    // iterated tick num per client
+    t                       [cl] = 0;
+
+    secTime                 [cl] = 0.0;
+
+    hasWaitedForCvarCheck   [cl] = false;
+
+    signonStateFor          [cl] = -1;
+
+    timeSinceLastRecvFor    [cl] = 0.0;
 }
 
 /********** TIMER FOR NETINFO **********/
-
+// CNetChan::FlowUpdate
 public Action Timer_GetNetInfo(Handle timer)
 {
     // reset all client based vars on plugin reload
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    for (int cl = 1; cl <= MaxClients; cl++)
     {
-        if (IsValidClient(Cl))
+        if (IsValidClient(cl))
         {
             // convert to percentages
-            lossFor[Cl]      = GetClientAvgLoss(Cl, NetFlow_Both) * 100.0;
-            chokeFor[Cl]     = GetClientAvgChoke(Cl, NetFlow_Both) * 100.0;
-            inchokeFor[Cl]   = GetClientAvgChoke(Cl, NetFlow_Incoming) * 100.0;
-            outchokeFor[Cl]  = GetClientAvgChoke(Cl, NetFlow_Outgoing) * 100.0;
+            lossFor[cl]      = GetClientAvgLoss(cl, NetFlow_Incoming)   * 100.0;
+            chokeFor[cl]     = GetClientAvgChoke(cl, NetFlow_Both)      * 100.0;
+            inchokeFor[cl]   = GetClientAvgChoke(cl, NetFlow_Incoming)  * 100.0;
+            outchokeFor[cl]  = GetClientAvgChoke(cl, NetFlow_Outgoing)  * 100.0;
             // convert to ms
-            pingFor[Cl]      = GetClientLatency(Cl, NetFlow_Both) * 1000.0;
-            rateFor[Cl]      = GetClientAvgData(Cl, NetFlow_Both) / 125.0;
-            ppsFor[Cl]       = GetClientAvgPackets(Cl, NetFlow_Both);
-            if (LiveFeedOn[Cl])
+            pingFor[cl]      = GetClientLatency(cl, NetFlow_Both)       * 1000.0;
+            avgPingFor[cl]   = GetClientAvgLatency(cl, NetFlow_Both)    * 1000.0;
+            rateFor[cl]      = GetClientAvgData(cl, NetFlow_Both)       / 125.0;
+            ppsFor[cl]       = GetClientAvgPackets(cl, NetFlow_Both);
+            if (LiveFeedOn[cl])
             {
-                LiveFeed_NetInfo(GetClientUserId(Cl));
+                LiveFeed_NetInfo(GetClientUserId(cl));
             }
         }
     }

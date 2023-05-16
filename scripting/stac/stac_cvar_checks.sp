@@ -30,6 +30,8 @@ char miscVars[][] =
     "r_portalsopenall",
     // must be == 1.0
     "host_timescale",
+    // if this is >= 8 just kick them, cathook uses this to "spoof" windows
+    "windows_speaker_config"
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
     // tf_showspeed ?
@@ -44,10 +46,10 @@ char cheatVars[][] =
     // lith
     // "lithium_disable_party_bypass",
     // rijin
-    // "rijin_load",
+    "rijin_load",
     // "rijin_save",
-    // lmaobox apparently uses this? haven't seen it
-    // "setcvar",
+    // plenty of idiot cheats use this
+    "setcvar",
     // ncc doesn't have any that i can find lol
     // cathook
     "cat_load",
@@ -57,6 +59,8 @@ char cheatVars[][] =
     // "melancholy",
     // general
     // "hook"
+    // fware
+    "crash",
 };
 
 
@@ -80,23 +84,23 @@ void InitCvarArray()
 }
 
 // Some day I will clean this up so it's not just a billion elseifs.
-public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
+public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
 {
     // make sure client is valid
-    if (!IsValidClient(Cl))
+    if (!IsValidClient(cl))
     {
         return;
     }
-    int userid = GetClientUserId(Cl);
+    int userid = GetClientUserId(cl);
 
     if (DEBUG)
     {
-        StacLog("Checked cvar %s value %s on %N", cvarName, cvarValue, Cl);
+        StacLog("Checked cvar %s value %s on %N", cvarName, cvarValue, cl);
     }
 
     if (StrEqual(cvarName, "sensitivity"))
     {
-        sensFor[Cl] = StringToFloat(cvarValue);
+        sensFor[cl] = StringToFloat(cvarValue);
     }
 
     // TODO: yaw and pitch checks?
@@ -267,6 +271,31 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         }
     }
 
+    // chook does this. we cant ban since technically legit clients can set this, but we can kick em out
+    else if (StrEqual(cvarName, "windows_speaker_config"))
+    {
+        if (StringToInt(cvarValue) >= 8)
+        {
+            char fmtmsg[512];
+            Format
+            (
+                fmtmsg,
+                sizeof(fmtmsg),
+                "Client %N has a value of \"%i\" for cvar \"%s\", which is out of bounds. Legit clients can set this, but most of the time, this is a bot. Kicked from server.",
+                cl, StringToInt(cvarValue), cvarName
+            );
+            StacNotify
+            (
+                userid,
+                fmtmsg
+            );
+            if (banForMiscCheats)
+            {
+                KickClient(cl, "#GameUI_ServerInsecure");
+            }
+        }
+    }
+
     /*
         cheat program only cvars
     */
@@ -279,20 +308,30 @@ public void ConVarCheck(QueryCookie cookie, int Cl, ConVarQueryResult result, co
         }
     }
     // log something about cvar errors
-    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
+    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName) && !StrEqual(cvarName, "windows_speaker_config"))
     {
-        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on Player %N", cvarName, Cl);
-        StacLog("Could not query cvar %s on player %L", cvarName, Cl);
+        char fmtmsg[512];
+        Format
+        (
+            fmtmsg,
+            sizeof(fmtmsg),
+            "Could not query cvar %s on player %N! This person is probably cheating, but please verify this!",
+            cvarName,
+            cl
+        );
+        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on player %N! This person is probably cheating, but please verify this!", cvarName, cl);
+        StacLog(fmtmsg);
+        StacNotify(userid, fmtmsg);
     }
 }
 
 void oobVarBan(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     char reason[128];
     Format(reason, sizeof(reason), "%t", "oobVarBanMsg");
     char pubreason[256];
-    Format(pubreason, sizeof(pubreason), "%t", "oobVarBanAllChat", Cl);
+    Format(pubreason, sizeof(pubreason), "%t", "oobVarBanAllChat", cl);
     // we have to do extra bullshit here so we don't crash when banning clients out of this callback
     // make a pack
     DataPack pack = CreateDataPack();
@@ -308,11 +347,11 @@ void oobVarBan(int userid)
 
 void illegalVarBan(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     char reason[128];
     Format(reason, sizeof(reason), "%t", "cheatVarBanMsg");
     char pubreason[256];
-    Format(pubreason, sizeof(pubreason), "%t", "cheatVarBanAllChat", Cl);
+    Format(pubreason, sizeof(pubreason), "%t", "cheatVarBanAllChat", cl);
     // we have to do extra bullshit here so we don't crash when banning clients out of this callback
     // make a pack
     DataPack pack = CreateDataPack();
@@ -341,24 +380,24 @@ bool IsCheatOnlyVar(const char[] cvarName)
 // oob cvar values
 void oobVarsNotify(int userid, const char[] name, const char[] value)
 {
-    int Cl = GetClientOfUserId(userid);
-    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N is cheating - OOB cvar/netvar value {blue}%s{white} on var {blue}%s{white}!", Cl, value, name);
+    int cl = GetClientOfUserId(userid);
+    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N is cheating - OOB cvar/netvar value {blue}%s{white} on var {blue}%s{white}!", cl, value, name);
     StacLogSteam(userid);
     char msg[128];
     Format(msg, sizeof(msg), "Client has OOB value %s for var %s!", value, name);
-    StacDetectionNotify(userid, msg, 1);
+    StacNotify(userid, msg, 1);
 }
 
 
 // cheatonly cvars/concmds/etc
 void illegalVarsNotify(int userid, const char[] name)
 {
-    int Cl = GetClientOfUserId(userid);
-    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N is cheating - detected known cheat var/concommand {blue}%s{white}!", Cl, name);
+    int cl = GetClientOfUserId(userid);
+    PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Player %N is cheating - detected known cheat var/concommand {blue}%s{white}!", cl, name);
     StacLogSteam(userid);
     char msg[128];
     Format(msg, sizeof(msg), "Known cheat var %s exists on client!", name);
-    StacDetectionNotify(userid, msg, 1);
+    StacNotify(userid, msg, 1);
 }
 
 
@@ -372,10 +411,10 @@ Action Timer_BanUser(Handle timer, DataPack pack)
     ReadPackString(pack, pubreason, sizeof(pubreason));
 
     // get client index out of userid
-    int Cl              = GetClientOfUserId(userid);
+    int cl              = GetClientOfUserId(userid);
 
     // check validity of client index
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
         BanUser(userid, reason, pubreason);
     }
@@ -387,12 +426,12 @@ Action Timer_BanUser(Handle timer, DataPack pack)
 Action Timer_CheckClientConVars_FirstTime(Handle timer, int userid)
 {
     // get actual client index
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     // null out timer here
-    QueryTimer[Cl] = null;
-    if (IsValidClient(Cl))
+    QueryTimer[cl] = null;
+    if (IsValidClient(cl))
     {
-        hasWaitedForCvarCheck[Cl] = true;
+        hasWaitedForCvarCheck[cl] = true;
         CreateTimer(0.1, Timer_CheckClientConVars, userid);
     }
 
@@ -403,22 +442,22 @@ Action Timer_CheckClientConVars_FirstTime(Handle timer, int userid)
 Action Timer_CheckClientConVars(Handle timer, int userid)
 {
     // get actual client index
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     // null out timer here
-    QueryTimer[Cl] = null;
-    if (IsValidClient(Cl))
+    QueryTimer[cl] = null;
+    if (IsValidClient(cl))
     {
-        if (!hasWaitedForCvarCheck[Cl])
+        if (!hasWaitedForCvarCheck[cl])
         {
             if (DEBUG)
             {
-                StacLog("Client %N can't be checked because they haven't waited 60 seconds for their first cvar check!", Cl);
+                StacLog("Client %N can't be checked because they haven't waited 60 seconds for their first cvar check!", cl);
             }
             return Plugin_Continue;
         }
         if (DEBUG)
         {
-            StacLog("Checking client id, %i, %L", Cl, Cl);
+            StacLog("Checking client id, %i, %L", cl, cl);
         }
         // init variable to pass to QueryCvarsEtc
         int i;
@@ -426,10 +465,10 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
         QueryCvarsEtc(userid, i);
         // we just checked, but we want to check again eventually
         // lets redo this timer in a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
-        QueryTimer[Cl] =
+        QueryTimer[cl] =
         CreateTimer
         (
-            GetRandomFloat(minRandCheckVal, maxRandCheckVal),
+            float_rand(minRandCheckVal, maxRandCheckVal),
             Timer_CheckClientConVars,
             userid
         );
@@ -442,9 +481,9 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
 void QueryCvarsEtc(int userid, int i)
 {
     // get client index of userid
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
     // don't go no further if client isn't valid!
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
         // check cvars!
         if (i < sizeof(cvarsToCheck))
@@ -452,7 +491,7 @@ void QueryCvarsEtc(int userid, int i)
             // make pack
             DataPack pack = CreateDataPack();
             // actually query the cvar here based on pos in convar array
-            QueryClientConVar(Cl, cvarsToCheck[i], ConVarCheck);
+            QueryClientConVar(cl, cvarsToCheck[i], ConVarCheck);
             // increase pos in convar array
             i++;
             // prepare pack
@@ -461,7 +500,9 @@ void QueryCvarsEtc(int userid, int i)
             // reset pack pos to 0
             ResetPack(pack, false);
             // make data timer
-            CreateTimer(2.5, Timer_QueryNextCvar, pack, TIMER_DATA_HNDL_CLOSE);
+            // rand just in case theres some stupid way that cheaters use the nonrandom 2.5 seconds
+            // to do nefarious bullshit
+            CreateTimer( float_rand(2.5, 5.0), Timer_QueryNextCvar, pack, TIMER_DATA_HNDL_CLOSE);
         }
         // we checked all the cvars!
         else
@@ -481,10 +522,10 @@ Action Timer_QueryNextCvar(Handle timer, DataPack pack)
     int i      = ReadPackCell(pack);
 
     // get client index out of userid
-    int Cl     = GetClientOfUserId(userid);
+    int cl     = GetClientOfUserId(userid);
 
     // check validity of client index
-    if (IsValidClient(Cl))
+    if (IsValidClient(cl))
     {
         QueryCvarsEtc(userid, i);
     }
@@ -500,12 +541,12 @@ void QueryEverythingAllClients()
         StacLog("Querying all clients");
     }
     // loop thru all clients
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    for (int cl = 1; cl <= MaxClients; cl++)
     {
-        if (IsValidClient(Cl))
+        if (IsValidClient(cl))
         {
             // get userid of this client index
-            int userid = GetClientUserId(Cl);
+            int userid = GetClientUserId(cl);
             // init variable to pass to QueryCvarsEtc
             int i;
             // query the client!

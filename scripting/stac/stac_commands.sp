@@ -21,10 +21,11 @@ Action checkAdmin(int callingCl, int args)
         {
             PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
             StacLogSteam(GetClientUserId(callingCl));
-            StacGeneralPlayerNotify(GetClientUserId(callingCl), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
+            char fmtmsg[512];
+            Format(fmtmsg, sizeof(fmtmsg), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
+            StacNotify(GetClientUserId(callingCl), fmtmsg);
             return Plugin_Handled;
         }
-        StacGeneralPlayerNotify(GetClientUserId(callingCl), "Admin %N used %s", callingCl, arg0);
     }
 
     if (StrEqual(arg0, "sm_stac_checkall"))
@@ -78,20 +79,20 @@ void ShowAllDetections(int callingCl)
         ReplyToCommand(callingCl, "[StAC] Check your console!");
     }
     PrintToConsole(callingCl, "[StAC] === Printing current detections ===");
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    for (int cl = 1; cl <= MaxClients; cl++)
     {
-        if (IsValidClient(Cl))
+        if (IsValidClient(cl))
         {
             // we don't check everything because some checks are "in the moment" and can expire very quickly
             if
             (
-                   turnTimes               [Cl] > 0
-                || fakeAngDetects          [Cl] > 0
-                || aimsnapDetects          [Cl] > 0
-                || pSilentDetects          [Cl] > 0
-                || cmdnumSpikeDetects      [Cl] > 0
-                || tbotDetects             [Cl] > 0
-                || userinfoSpamDetects     [Cl] > 0
+                   turnTimes               [cl] > 0
+                || fakeAngDetects          [cl] > 0
+                || aimsnapDetects          [cl] > 0
+                || pSilentDetects          [cl] > 0
+                || cmdnumSpikeDetects      [cl] > 0
+                || tbotDetects             [cl] > 0
+                || invalidUsercmdDetects   [cl] > 0
             )
             {
                 PrintToConsole
@@ -99,20 +100,22 @@ void ShowAllDetections(int callingCl)
                     callingCl,
                     "\n\
                     Detections for %L -\
-                    \n Turn binds    %i\
-                    \n FakeAngs      %i\
-                    \n Aimsnaps      %i\
-                    \n pSilent       %i\
-                    \n Cmdnum spikes %i\
-                    \n Triggerbots   %i\
+                    \n Turn binds           %i\
+                    \n FakeAngs             %i\
+                    \n Aimsnaps             %i\
+                    \n pSilent              %i\
+                    \n Cmdnum spikes        %i\
+                    \n Triggerbots          %i\
+                    \n Invalid Usercmds     %i\
                     \n",
-                    Cl,
-                    turnTimes               [Cl],
-                    fakeAngDetects          [Cl],
-                    aimsnapDetects          [Cl],
-                    pSilentDetects          [Cl],
-                    cmdnumSpikeDetects      [Cl],
-                    tbotDetects             [Cl]
+                    cl,
+                    turnTimes               [cl],
+                    fakeAngDetects          [cl],
+                    aimsnapDetects          [cl],
+                    pSilentDetects          [cl],
+                    cmdnumSpikeDetects      [cl],
+                    tbotDetects             [cl],
+                    invalidUsercmdDetects   [cl]
                 );
             }
         }
@@ -170,26 +173,27 @@ void StacTargetCommand(int callingCl, const char[] arg0, const char[] arg1)
 
     for (int i = 0; i < target_count; i++)
     {
-        int Cl = target_list[i];
-        if (IsValidClient(Cl))
+        int cl = target_list[i];
+        if (IsValidClient(cl))
         {
             // getauth
             if (getauth)
             {
-                ReplyToCommand(callingCl, "[StAC] Auth for \"%N\" - %s", Cl, SteamAuthFor[Cl]);
+                ReplyToCommand(callingCl, "[StAC] Auth for \"%N\" - %s", cl, SteamAuthFor[cl]);
             }
             if (livefeed)
             {
                 // livefeed
-                LiveFeedOn[Cl] = !LiveFeedOn[Cl];
+                LiveFeedOn[cl] = !LiveFeedOn[cl];
                 for (int j = 1; j <= MaxClients; j++)
                 {
-                    if (j != Cl)
+                    if (j != cl)
                     {
                         LiveFeedOn[j] = false;
                     }
                 }
-                ReplyToCommand(callingCl, "[StAC] Toggled livefeed for \"%N\".", Cl);
+                ReplyToCommand(callingCl, "[StAC] Toggled livefeed for \"%N\".", cl);
+                checkLiveFeed();
             }
         }
     }

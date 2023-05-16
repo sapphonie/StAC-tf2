@@ -4,10 +4,10 @@
 
 void LiveFeed_PlayerCmd(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
+    int cl = GetClientOfUserId(userid);
 
     float srvangles[3];
-    GetClientEyeAngles(Cl, srvangles);
+    GetClientEyeAngles(cl, srvangles);
 
     // this is so ugly lol
     static char RareButtonNames[][] =
@@ -41,7 +41,7 @@ void LiveFeed_PlayerCmd(int userid)
     };
 
 
-    int buttons = clbuttons[Cl][0];
+    int buttons = clbuttons[cl][0];
 
     char fwd    [4] = "_";
     if (buttons & IN_FORWARD)
@@ -129,7 +129,7 @@ void LiveFeed_PlayerCmd(int userid)
                 // x&y
                 0.0, 0.0,
                 // time to hold
-                0.20,
+                0.125,
                 // rgba
                 255, 255, 255, 255,
                 // effects
@@ -159,15 +159,15 @@ void LiveFeed_PlayerCmd(int userid)
                 \n y %.2f \
                 \n z %.2f \
                 ",
-                clcmdnum[Cl][0],
-                cltickcount[Cl][0],
+                clcmdnum[cl][0],
+                cltickcount[cl][0],
                 use,  fwd, reload,
                 left, back, right,    m1, m2, m3,
                 jump, duck,
                 IsActuallyNullString(strButtons) ? "N/A" : strButtons,
-                clbuttons[Cl][0],
-                clmouse[Cl][0], clmouse[Cl][1],
-                clangles[Cl][0][0], clangles[Cl][0][1], clangles[Cl][0][2]
+                clbuttons[cl][0],
+                clmouse[cl][0], clmouse[cl][1],
+                clangles[cl][0][PITCH], clangles[cl][0][YAW], clangles[cl][0][ROLL]
                 //srvangles[0], srvangles[1], srvangles[2]
             );
             /*
@@ -198,16 +198,12 @@ void LiveFeed_PlayerCmd(int userid)
                 \n Approx client cmdrate: ≈%i cmd/sec\
                 \n Approx server tickrate: ≈%i tick/sec\
                 \n Failing lag check? %s\
-                \n HasValidAngles? %s\
                 \n SequentialCmdnum? %s\
-                \n OrderedTickcount? %s\
                 ",
-                tickspersec[Cl],
+                tickspersec[cl],
                 tickspersec[0],
-                IsUserLagging(userid) ? "yes" : "no",
-                HasValidAngles(Cl) ? "yes" : "no",
-                isCmdnumSequential(userid) ? "yes" : "no",
-                isTickcountInOrder(userid) ? "yes" : "no"
+                IsUserLagging(cl) ? "yes" : "no",
+                isCmdnumSequential(cl) ? "yes" : "no"
             );
         }
     }
@@ -215,8 +211,8 @@ void LiveFeed_PlayerCmd(int userid)
 
 void LiveFeed_NetInfo(int userid)
 {
-    int Cl = GetClientOfUserId(userid);
-    if (!IsValidClient(Cl))
+    int cl = GetClientOfUserId(userid);
+    if (!IsValidClient(cl))
     {
         return;
     }
@@ -230,7 +226,7 @@ void LiveFeed_NetInfo(int userid)
                 // x&y
                 0.85, 0.40,
                 // time to hold
-                2.0,
+                0.2,
                 // rgba
                 255, 255, 255, 255,
                 // effects
@@ -256,22 +252,23 @@ void LiveFeed_NetInfo(int userid)
                 \n %.2f kbps rate\
                 \n %.2f pps rate\
                 ",
-                Cl,
-                Cl,
-                GetClientUserId(Cl),
-                IsPlayerAlive(Cl) ? "alive" : "dead",
-                GetClientTime(Cl),
-                pingFor[Cl],
-                lossFor[Cl],
-                inchokeFor[Cl],
-                outchokeFor[Cl],
-                chokeFor[Cl],
-                rateFor[Cl],
-                ppsFor[Cl]
+                cl,
+                cl,
+                GetClientUserId(cl),
+                IsPlayerAlive(cl) ? "alive" : "dead",
+                GetClientTime(cl),
+                pingFor[cl],
+                lossFor[cl],
+                inchokeFor[cl],
+                outchokeFor[cl],
+                chokeFor[cl],
+                rateFor[cl],
+                ppsFor[cl]
             );
         }
     }
 }
+
 
 bool IsValidLiveFeedViewer(int client)
 {
@@ -279,13 +276,15 @@ bool IsValidLiveFeedViewer(int client)
     (
         // only show to admins that are dead or in spec
         (
-            IsValidAdmin(client)
+            IsValidClient(client)
+            /*
             &&
             (
                 TF2_GetClientTeam(client) == TFTeam_Spectator
                 ||
                 !IsPlayerAlive(client)
             )
+            */
         )
         ||
         // and sourcetv

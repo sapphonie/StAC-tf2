@@ -6,12 +6,11 @@ public void OnConfigsExecuted()
 {
     checkNativesEtc(null);
     configsExecuted = true;
-}    
+}
 
 public void OnMapStart()
 {
     OpenStacLog();
-    ActuallySetRandomSeed();
     DoTPSMath();
     ResetTimers();
     if (optimizeCvars)
@@ -20,16 +19,23 @@ public void OnMapStart()
     }
     timeSinceMapStart = GetEngineTime();
     CreateTimer(0.1, checkNativesEtc);
-    CreateTimer(0.5, getIP);
+    CreateTimer(0.2, getIP);
 
-    GetConVarString(FindConVar("hostname"), hostname, sizeof(hostname));
+/*
+    int ent = -1;
+    while ((ent = FindEntityByClassname(ent, "point_worldtext")) != -1)
+    {
+        if (IsValidEntity(ent))
+        {
+            RemoveEntity(ent);
+        }
+    }
+*/
 }
 
 public Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
 {
     DoTPSMath();
-    // might as well do this here!
-    ActuallySetRandomSeed();
     // this counts
     timeSinceMapStart = GetEngineTime();
 
@@ -38,7 +44,6 @@ public Action eRoundStart(Handle event, char[] name, bool dontBroadcast)
 
 public void OnMapEnd()
 {
-    ActuallySetRandomSeed();
     DoTPSMath();
     NukeTimers();
     CloseStacLog();
@@ -105,16 +110,6 @@ Action checkNativesEtc(Handle timer)
     {
         DISCORD = true;
     }
-    // srctvmgr functionality, for demo ticks
-    if (GetFeatureStatus(FeatureType_Native, "SourceTV_GetDemoFileName") == FeatureStatus_Available)
-    {
-        SOURCETVMGR = true;
-    }
-    // steamworks
-    if (GetFeatureStatus(FeatureType_Native, "SteamWorks_GetPublicIP") == FeatureStatus_Available)
-    {
-        STEAMWORKS = true;
-    }
 
     return Plugin_Continue;
 }
@@ -122,28 +117,27 @@ Action checkNativesEtc(Handle timer)
 // NUKE the client timers from orbit on plugin and map reload
 void NukeTimers()
 {
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    for (int cl = 1; cl <= MaxClients; cl++)
     {
-        delete QueryTimer[Cl];
+        delete QueryTimer[cl];
     }
-    delete TriggerTimedStuffTimer;
 }
 
 // recreate the timers we just nuked
 void ResetTimers()
 {
-    for (int Cl = 1; Cl <= MaxClients; Cl++)
+    for (int cl = 1; cl <= MaxClients; cl++)
     {
-        if (IsValidClient(Cl))
+        if (IsValidClient(cl))
         {
-            int userid = GetClientUserId(Cl);
+            int userid = GetClientUserId(cl);
 
             if (DEBUG)
             {
-                StacLog("Creating timer for %L", Cl);
+                StacLog("Creating timer for %L", cl);
             }
             // lets make a timer with a random length between stac_min_randomcheck_secs and stac_max_randomcheck_secs
-            QueryTimer[Cl] =
+            QueryTimer[cl] =
             CreateTimer
             (
                 GetRandomFloat
@@ -156,62 +150,18 @@ void ResetTimers()
             );
         }
     }
-    // create timer to reset seed every 15 mins
-    TriggerTimedStuffTimer = CreateTimer(900.0, Timer_TriggerTimedStuff, _, TIMER_REPEAT);
 }
 
-// reseed random server seed to help prevent certain nospread stuff from working.
-// this probably doesn't do anything, but it makes me feel better.
-void ActuallySetRandomSeed()
-{
-    int seed = GetURandomInt();
-    if (DEBUG)
-    {
-        StacLog("setting random server seed to %i", seed);
-    }
-    SetRandomSeed(seed);
-}
-
-// jesus this is ugly
 Action getIP(Handle timer)
 {
     // get our host port
     char hostport[8];
     GetConVarString(FindConVar("hostport"), hostport, sizeof(hostport));
 
-    // if we have steamworks we can get our ip ez pz
-    if (STEAMWORKS)
-    {
-        int sw_ip[4];
-        SteamWorks_GetPublicIP(sw_ip);
-        Format(hostipandport, sizeof(hostipandport), "%i.%i.%i.%i:%s", sw_ip[0], sw_ip[1], sw_ip[2], sw_ip[3], hostport);
-    }
-    // otherwise we have to scrape the status command (ugly and frightening)
-    else
-    {
-        char status_out[2048];
-        ServerCommandEx(status_out, sizeof(status_out), "status");
+    int sw_ip[4];
+    SteamWorks_GetPublicIP(sw_ip);
+    Format(hostipandport, sizeof(hostipandport), "%i.%i.%i.%i:%s", sw_ip[0], sw_ip[1], sw_ip[2], sw_ip[3], hostport);
 
-        char ipetc[128];
-        char ip[24];
-
-        Format(hostipandport, sizeof(hostipandport), "un.known.ip.addr:%s", hostport);
-
-        if (MatchRegex(publicIPRegex, status_out) > 0)
-        {
-            if (GetRegexSubString(publicIPRegex, 0, ipetc, sizeof(ipetc)))
-            {
-                TrimString(ipetc);
-                if (MatchRegex(IPRegex, ipetc) > 0)
-                {
-                    if (GetRegexSubString(IPRegex, 0, ip, sizeof(ip)))
-                    {
-                        Format(hostipandport, sizeof(hostipandport), "%s:%s", ip, hostport);
-                    }
-                }
-            }
-        }
-    }
     if (DEBUG)
     {
         StacLog("Server IP + Port = %s", hostipandport);
@@ -223,9 +173,14 @@ void DoTPSMath()
 {
     tickinterv = GetTickInterval();
     tps = Pow(tickinterv, -1.0);
+    itps = RoundToNearest(tps);
+
+    //// max amt of time a client is allowed to be ahead of the server in terms of tickcount, in seconds
+    //static int maxAheadSeconds = 5;
+    //itps_maxaheadsecs = ( itps * maxAheadSeconds );
 
     if (DEBUG)
     {
-        StacLog("tickinterv %f, tps %f", tickinterv, tps);
+        StacLog("tickinterv %f, tps %f, itps %i", tickinterv, tps, itps);
     }
 }
