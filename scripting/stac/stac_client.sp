@@ -440,12 +440,13 @@ Action OnAllClientCommands(int cl, const char[] command, int argc)
     }
     if (signonStateFor[cl] <= SIGNONSTATE_SPAWN)
     {
+        /*
         char msg[1024];
         Format(msg, sizeof(msg), "Client %L sent cmd `%s` before signon", cl, command);
 
         StacLog(msg);
         StacNotify(GetClientUserId(cl), msg);
-
+        */
         return Plugin_Handled;
     }
     return Plugin_Continue;
