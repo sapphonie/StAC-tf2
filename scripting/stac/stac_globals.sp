@@ -1,7 +1,8 @@
 #pragma semicolon 1
 
 // we don't need 64 maxplayers because this is only for tf2. saves some memory.
-#define TFMAXPLAYERS 33
+// 34 == 32 + stv + replay
+#define TFMAXPLAYERS 34
 
 /********** GLOBAL VARS **********/
 // Regex steamidRegex;

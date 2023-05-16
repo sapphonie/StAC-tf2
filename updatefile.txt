@@ -4,13 +4,14 @@
     {
         "Version"
         {
-            "Latest"    "6.0.0"
+            "Latest"    "6.0.1"
         }
 
-        "Notes"     "Changes in 6.0.0"
+        "Notes"     "Changes in 6.0.0/6.0.1"
         "Notes"     "- Too many to count! Read the pull request here:"
         "Notes"     "https://github.com/sapphonie/StAC-tf2/pull/139"
         "Notes"     "Of note: StAC now requires 4 extensions and some gamedata to run, to prevent the latest exploits, including server crashers and admin spoofing. These will be automatically downloaded by Updater."
+        "Notes"     "- 6.0.1 properly disables support for servers with more than 32 human players instead of throwing errors and continuing to run."
         "Notes"     "===== StAC is always looking for feedback! Got an issue, request, or wanna discuss? Open a GitHub issue and join the Discord server linked in the README, on GitHub! ====="
         "Notes"     "===== Thank you for using StAC. -sappho ===== "
     }
