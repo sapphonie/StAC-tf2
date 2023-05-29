@@ -20,6 +20,7 @@ public void OnMapStart()
     timeSinceMapStart = GetEngineTime();
     CreateTimer(0.1, checkNativesEtc);
     CreateTimer(0.2, getIP);
+    EngineSanityChecks();
 
 /*
     int ent = -1;

@@ -45,7 +45,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "6.0.1"
+#define PLUGIN_VERSION  "6.0.2"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -293,13 +293,15 @@ void StopIncompatPlugins()
 void EngineSanityChecks()
 {
     // check if tf2, unload if not
+    // strip when sdk13 support
     if (GetEngineVersion() != Engine_TF2)
     {
         SetFailState("[StAC] This plugin is only supported for TF2! Aborting!");
     }
 
-    if ( MaxClients > TFMAXPLAYERS || GetMaxHumanPlayers() > (TFMAXPLAYERS - 2) )
+    if ( MaxClients > TFMAXPLAYERS || GetMaxHumanPlayers() > TFMAXPLAYERS )
     {
-        SetFailState("[StAC] This plugin (and TF2 in general) does not support more than 34 players (32 + 1 for STV + 1 for the Replay bot). Aborting!");
+        SetFailState("[StAC] This plugin (and TF2 in general) does not support more than 34 players; 32, + 1 for STV, + 1 for the Replay bot. MaxClients = %i, GetMaxHumanPlayers = %i. Aborting!",
+        MaxClients, GetMaxHumanPlayers());
     }
 }
