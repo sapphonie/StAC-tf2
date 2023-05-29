@@ -323,6 +323,19 @@ void StacLogButtons(int userid)
     );
 }
 
+void StacLogAll(int userid)
+{
+    StacLogSteam(userid);
+    StacLogDemo();
+    StacLogAngles(userid);
+    StacLogCmdnums(userid);
+    StacLogTickcounts(userid);
+    StacLogButtons(userid);
+    StacLogNetData(userid);
+    StacLogMouse(userid);
+}    
+
+
 /********** ISVALIDCLIENT STUFF *********/
 
 bool IsValidClient(int cl)

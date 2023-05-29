@@ -384,7 +384,7 @@ void bhopCheck(int cl)
             {
                 StacNotify(userid, "consecutive tick perfect bhops", bhopDetects[cl]);
             }
-            StacLogSteam(userid);
+            StacLogAll(userid);
 
             if (bhopDetects[cl] >= maxBhopDetections)
             {
@@ -458,7 +458,7 @@ void turnbindCheck(int cl)
         turnTimes[cl]++;
         float turnSec = turnTimes[cl] * tickinterv;
         PrintToImportant("%t", "turnbindAdminMsg", cl, turnSec);
-        StacLogSteam(userid);
+        StacLogAll(userid);
 
         if (turnSec < maxAllowedTurnSecs)
         {
@@ -525,11 +525,7 @@ void fakeangCheck(int cl)
                 clangles[cl][0][ROLL ],
                 fakeAngDetects[cl]
             );
-            StacLogSteam(userid);
-            StacLogNetData(userid);
-            StacLogAngles(userid);
-            StacLogCmdnums(userid);
-            StacLogTickcounts(userid);
+            StacLogAll(userid);
 
             StacNotify(userid, "fake angles", fakeAngDetects[cl]);
         }
@@ -581,10 +577,7 @@ void cmdnumspikeCheck(int cl)
             cl,
             cmdnumSpikeDetects[cl]
         );
-        StacLogSteam(userid);
-        StacLogNetData(userid);
-        StacLogCmdnums(userid);
-        StacLogTickcounts(userid);
+        StacLogAll(userid);
         StacLog("Held weapon: %s", heldWeapon);
 
         if (cmdnumSpikeDetects[cl] % 5 == 0)
@@ -712,12 +705,8 @@ void psilentCheck(int cl)
             aDiffReal, cl,
             pSilentDetects[cl], aDiffReal <= 3.0 ? "yes" : "no"
         );
-        StacLogSteam(userid);
-        StacLogNetData(userid);
-        StacLogAngles(userid);
-        StacLogCmdnums(userid);
-        StacLogTickcounts(userid);
-        StacLogMouse(userid);
+        StacLogAll(userid);
+
         if (AIMPLOTTER)
         {
             ServerCommand("sm_aimplot #%i on", userid);
@@ -867,12 +856,7 @@ void aimsnapCheck(int cl)
             cl,
             aimsnapDetects[cl]
         );
-        StacLogSteam(userid);
-        StacLogNetData(userid);
-        StacLogAngles(userid);
-        StacLogCmdnums(userid);
-        StacLogTickcounts(userid);
-        StacLogMouse(userid);
+        StacLogAll(userid);
         StacLog
         (
             "\nAngle deltas:\n0 %f\n1 %f\n2 %f\n3 %f\n",
@@ -979,12 +963,7 @@ void triggerbotCheck(int cl)
             tbotDetects[cl],
             attack
         );
-        StacLogSteam(userid);
-        StacLogNetData(userid);
-        StacLogAngles(userid);
-        StacLogCmdnums(userid);
-        StacLogTickcounts(userid);
-        StacLogMouse(userid);
+        StacLogAll(userid);
         StacLog
         (
             "Weapon used: %s",
@@ -1045,19 +1024,17 @@ void invalidUsercmdCheck(int cl)
             PrintToImportant
             (
                 "{hotpink}[StAC]{white} Player %N sent an {mediumpurple}invalid usercmd{white}!\n\
-                Cmdnum {yellow}%i{white} and/or tickcount {yellow}%i{white} was > 0!{white}.\nDetections so far: {palegreen}%i",
+                Cmdnum {yellow}%i{white} and/or tickcount {yellow}%i{white} was < 0!{white}.\nDetections so far: {palegreen}%i",
                 cl,
                 clcmdnum    [cl][0],
                 cltickcount [cl][0],
                 invalidUsercmdDetects[cl]
             );
-            StacLogSteam(userid);
-            StacLogNetData(userid);
-            StacLogAngles(userid);
-            StacLogCmdnums(userid);
-            StacLogTickcounts(userid);
+            StacLogAll(userid);
 
-            StacNotify(userid, "Invalid usercmd data! cmdnum or tickcount < 0!", invalidUsercmdDetects[cl]);
+            char dtype[128];
+            Format(dtype, sizeof(dtype), "invalid ucmd (tickcount/buttons < 0)");
+            StacNotify(userid, dtype, invalidUsercmdDetects[cl]);
         }
     }
 
@@ -1090,13 +1067,11 @@ void invalidUsercmdCheck(int cl)
                 invalidUsercmdDetects[cl]
             );
 
-            StacLogSteam(userid);
-            StacLogNetData(userid);
-            StacLogAngles(userid);
-            StacLogCmdnums(userid);
-            StacLogTickcounts(userid);
+            StacLogAll(userid);
 
-            StacNotify(userid, "Invalid usercmd data! client buttons are >= (1 << 26)!", invalidUsercmdDetects[cl]);
+            char dtype[128];
+            Format(dtype, sizeof(dtype), "invalid ucmd (buttons >= (1 << 26)");
+            StacNotify(userid, dtype, invalidUsercmdDetects[cl]);
         }
     }
 
