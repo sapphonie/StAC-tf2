@@ -1064,7 +1064,7 @@ void invalidUsercmdCheck(int cl)
     // We should never see buttons >= (26 bits) since IN_ATTACK3 is (1 << 25)
     // I've seen ucmds with 134217728 == (1 << 27), which seem to be related to lmaobox
     // I need to make sure this isn't a fluke, so we're not banning anyone at the moment for it
-    if ( cltickcount[cl][0] >= (1 << 26) )
+    if ( clbuttons[cl][0] >= (1 << 26) )
     {
         invalidUsercmdDetects[cl]++;
         // We CAN NOT spam clients and server log with this, or it WILL lag.
