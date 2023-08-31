@@ -92,7 +92,6 @@ public void OnPluginStart()
 {
     StopIncompatPlugins();
     StacLog("\n\n----> StAC version [%s] loaded\n", PLUGIN_VERSION);
-    EngineSanityChecks();
     DoStACGamedata();
 
     if (!AddCommandListener(OnAllClientCommands))
@@ -143,6 +142,8 @@ public void OnPluginStart()
 
     // Create Stac ConVars for adjusting settings
     initCvars();
+
+    EngineSanityChecks();
 
     // redo all client based stuff on plugin reload
     for (int cl = 1; cl <= MaxClients; cl++)
@@ -301,7 +302,13 @@ void EngineSanityChecks()
 
     if ( MaxClients > TFMAXPLAYERS || GetMaxHumanPlayers() > TFMAXPLAYERS )
     {
-        SetFailState("[StAC] This plugin (and TF2 in general) does not support more than 34 players; 32, + 1 for STV, + 1 for the Replay bot. MaxClients = %i, GetMaxHumanPlayers = %i. Aborting!",
-        MaxClients, GetMaxHumanPlayers());
+        if (highPlayerServer)
+        {
+            StacLog("Running StAC with high maxplayers. Things will break!");
+            return;
+        }
+        SetFailState("[StAC] This plugin (and TF2 in general) does not support unrestricted_maxplayers.\
+            To bypass this, set stac_work_with_unrestricted_maxplayers. MaxClients = %i, GetMaxHumanPlayers = %i. Aborting!",
+            MaxClients, GetMaxHumanPlayers());
     }
 }

@@ -1,8 +1,6 @@
 #pragma semicolon 1
-
-// we don't need 64 maxplayers because this is only for tf2. saves some memory.
-// 34 == 32 + stv + replay
-#define TFMAXPLAYERS 34
+// formerly custom defined, now at 101 as of unrestricted_maxplayers update
+#define TFMAXPLAYERS 101
 
 /********** GLOBAL VARS **********/
 // Regex steamidRegex;
@@ -32,6 +30,7 @@ ConVar stac_kick_unauthed_clients;
 ConVar stac_silent;
 ConVar stac_max_connections_from_ip;
 ConVar stac_work_with_sv_cheats;
+ConVar stac_work_with_unrestricted_maxplayers;
 
 /***** Misc cheat defaults *****/
 // ban duration
@@ -57,6 +56,7 @@ bool optimizeCvars              = true;
 int silent                      = 0;
 int maxip                       = 0;
 bool ignore_sv_cheats           = false;
+bool highPlayerServer           = false;
 
 /***** Detection based cheat defaults *****/
 int maxAimsnapDetections        = 20;
