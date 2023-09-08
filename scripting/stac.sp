@@ -45,7 +45,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "6.0.4"
+#define PLUGIN_VERSION  "6.0.5"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
@@ -255,15 +255,15 @@ void StopIncompatPlugins()
         // I will not provide any support for you or your annoying server if you do this.
         if
         (
-               StrContains("Simple block",  plName, false)  != -1 /* SM Plugins blocker */
-            || StrContains("Block SM",      plName, false)  != -1 /* wildcard for blocking sm plugins */
+               StrContains(plName, "Simple block",  false)  != -1 /* SM Plugins blocker */
+            || StrContains(plName, "Block SM",      false)  != -1 /* wildcard for blocking sm plugins */
         )
         {
             delete plugini;
             SetFailState("[StAC] Refusing to load with malicious plugins.");
             return;
         }
-        else if (StrContains("SMAC", plName, false) != -1) /* SMAC */
+        else if (StrContains(plName, "SMAC", false) != -1) /* SMAC */
         {
             delete plugini;
             SetFailState("[StAC] Refusing to load with SMAC. SMAC is outdated and is actively harmful to server performance as well as StAC's operation. Uninstall SMAC and try again.");
@@ -271,8 +271,8 @@ void StopIncompatPlugins()
         }
         else if
         (
-               StrContains("Backtrack Patch",       plName, false)  != -1 /* JTanz backtrack fix */
-            || StrContains("Backtrack Elimination", plName, false)  != -1 /* Shavit backtrack fix */
+               StrContains(plName, "Backtrack Patch",       false)  != -1 /* JTanz backtrack fix */
+            || StrContains(plName, "Backtrack Elimination", false)  != -1 /* Shavit backtrack fix */
         )
         {
             delete plugini;
