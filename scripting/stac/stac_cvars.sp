@@ -521,6 +521,7 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
     optimizeCvars           = GetConVarBool(stac_optimize_cvars);
     if (optimizeCvars)
     {
+        EngineSanityChecks();
         RunOptimizeCvars();
     }
 
