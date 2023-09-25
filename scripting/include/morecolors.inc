@@ -21,7 +21,11 @@
 
 #define MC_GAME_DODS           0
 
-bool MC_SkipList[MAXPLAYERS + 1];
+// hack for no sm 1.12
+// -sappho
+#define TFMAXPLAYERS 101
+
+bool MC_SkipList[TFMAXPLAYERS + 1];
 StringMap MC_Trie;
 int MC_TeamColors[][] = {{0xCCCCCC, 0x4D7942, 0xFF4040}}; // Multi-dimensional array for games that don't support SayText2. First index is the game index (as defined by the GAME_ defines), second index is team. 0 = spectator, 1 = team1, 2 = team2
 

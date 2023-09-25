@@ -29,10 +29,10 @@
 
 
 int backtrack_ticks = 0;
-int prev_tickcount[MAXPLAYERS + 1];
-int diff_tickcount[MAXPLAYERS + 1];
-float time_timeout[MAXPLAYERS + 1];
-float time_teleport[MAXPLAYERS + 1];
+int prev_tickcount[TFMAXPLAYERS + 1];
+int diff_tickcount[TFMAXPLAYERS + 1];
+float time_timeout[TFMAXPLAYERS + 1];
+float time_teleport[TFMAXPLAYERS + 1];
 
 Handle hcvar[CVAR_MAX];
 int icvar[CVAR_MAX];
@@ -135,7 +135,7 @@ stock Action OnPlayerRunCmd_jaypatch(int client, int& buttons, int& impulse,
 // 	we are storing before patching.
 void store_tickcount(int client, int tickcount)
 {
-	static int tmp[MAXPLAYERS + 1];
+	static int tmp[TFMAXPLAYERS + 1];
 
 	prev_tickcount[client] = tmp[client];
 	tmp[client] = tickcount;
