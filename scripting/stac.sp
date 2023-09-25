@@ -302,13 +302,7 @@ void EngineSanityChecks()
 
     if ( MaxClients > TFMAXPLAYERS || GetMaxHumanPlayers() > TFMAXPLAYERS )
     {
-        if (highPlayerServer)
-        {
-            StacLog("Running StAC with high maxplayers. Things will break!");
-            return;
-        }
-        SetFailState("[StAC] This plugin (and TF2 in general) does not support unrestricted_maxplayers.\
-            To bypass this, set stac_work_with_unrestricted_maxplayers. MaxClients = %i, GetMaxHumanPlayers = %i. Aborting!",
-            MaxClients, GetMaxHumanPlayers());
+        highPlayerServer = true;
+        StacLog("Running StAC with high maxplayers. Things will break!");
     }
 }

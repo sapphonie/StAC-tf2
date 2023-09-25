@@ -482,24 +482,6 @@ void initCvars()
     HookConVarChange(stac_work_with_sv_cheats, setStacVars);
 
 
-    // work with high maxplayers
-    IntToString(highPlayerServer, buffer, sizeof(buffer));
-    stac_work_with_unrestricted_maxplayers =
-    AutoExecConfig_CreateConVar
-    (
-        "stac_work_with_unrestricted_maxplayers",
-        buffer,
-        "[StAC] allow StAC to work when maxplayers is above 32. WARNING; you might get false positives, and I will not provide support for servers running this cvar!\n\
-        (recommended 0)",
-        FCVAR_NONE,
-        true,
-        0.0,
-        true,
-        1.0
-    );
-    HookConVarChange(stac_work_with_unrestricted_maxplayers, setStacVars);
-
-
     // actually exec the cfg after initing cvars lol
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
@@ -600,13 +582,6 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
 
     // should stac work with sv_cheats or not
     ignore_sv_cheats        = GetConVarBool(stac_work_with_sv_cheats);
-
-    // should stac work with maxplayers above 32
-    highPlayerServer        = GetConVarBool(stac_work_with_unrestricted_maxplayers);
-    if (!highPlayerServer)
-    {
-        EngineSanityChecks();
-    }
 }
 
 public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
@@ -639,7 +614,8 @@ public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[
 
 void RunOptimizeCvars()
 {
-    if (highPlayerServer)
+    // don't optimize anything if we have high players, let server ops override
+    if ( highPlayerServer )
     {
         return;
     }

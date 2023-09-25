@@ -30,7 +30,6 @@ ConVar stac_kick_unauthed_clients;
 ConVar stac_silent;
 ConVar stac_max_connections_from_ip;
 ConVar stac_work_with_sv_cheats;
-ConVar stac_work_with_unrestricted_maxplayers;
 
 /***** Misc cheat defaults *****/
 // ban duration
@@ -56,7 +55,6 @@ bool optimizeCvars              = true;
 int silent                      = 0;
 int maxip                       = 0;
 bool ignore_sv_cheats           = false;
-bool highPlayerServer           = false;
 
 /***** Detection based cheat defaults *****/
 int maxAimsnapDetections        = 20;
@@ -75,6 +73,7 @@ float tps;
 int itps;
 //int itps_maxaheadsecs;
 int servertick;
+bool highPlayerServer           = false;
 
 // time to wait after server lags before checking all client's OnPlayerRunCmd
 float ServerLagWaitLength = 5.0;
