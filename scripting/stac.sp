@@ -4,6 +4,7 @@
 
 #pragma semicolon 1
 #pragma newdecls required
+
 // For json
 #pragma dynamic 8192 * 4
 
@@ -13,6 +14,13 @@
 #include <sdkhooks>
 #include <tf2_stocks>
 #include <dhooks>
+
+// hack for unrestricted maxplayers. sorry.
+#if defined (MAXPLAYERS)
+    #undef MAXPLAYERS
+    #define MAXPLAYERS 101
+#endif
+
 #define AUTOLOAD_EXTENSIONS
 // REQUIRED extensions:
 // SteamWorks for being able to make webrequests: https://forums.alliedmods.net/showthread.php?t=229556
@@ -300,7 +308,7 @@ void EngineSanityChecks()
         SetFailState("[StAC] This plugin is only supported for TF2! Aborting!");
     }
 
-    if ( MaxClients > TFMAXPLAYERS || GetMaxHumanPlayers() > TFMAXPLAYERS )
+    if ( MaxClients > 33 || GetMaxHumanPlayers() > 33 )
     {
         highPlayerServer = true;
         StacLog("Running StAC with high maxplayers. Things will break!");
