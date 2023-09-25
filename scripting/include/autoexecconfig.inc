@@ -1,7 +1,7 @@
 /**
  * AutoExecConfig 
  *
- * Copyright (C) 2013-2019 Impact
+ * Copyright (C) 2013-2023 Impact
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,10 @@
 
 #include <sourcemod>
 
-#define AUTOEXECCONFIG_VERSION "0.1.5"
+#pragma semicolon 1
+#pragma newdecls required
+
+#define AUTOEXECCONFIG_VERSION "0.1.6"
 #define AUTOEXECCONFIG_URL     "https://forums.alliedmods.net/showthread.php?t=204254"
 
 // Append
@@ -252,7 +255,7 @@ stock ConVar AutoExecConfig_CreateConVar(const char[] name, const char[] default
 		char buffer[64];
 		
 		g_iLastFindResult = AutoExecConfig_FindValue(name, buffer, sizeof(buffer), true);
-		
+
 		// We only add this convar if it doesn't exist, or the file doesn't exist and it should be auto-generated
 		if (g_iLastFindResult == AUTOEXEC_FIND_NOT_FOUND || (g_iLastFindResult == AUTOEXEC_FIND_FILE_NOT_FOUND && g_bCreateFile))
 		{
@@ -401,7 +404,7 @@ stock int AutoExecConfig_AppendValue(const char[] name, const char[] defaultValu
 			
 			GetPluginFilename(g_hPluginHandle, writebuffer, sizeof(writebuffer));
 			Format(writebuffer, sizeof(writebuffer), "// ConVars for plugin \"%s\"", writebuffer);
-			fFile.WriteLine(writebuffer);
+			fFile.WriteLine("%s", writebuffer);
 		}
 		
 		// Spacer
@@ -414,7 +417,7 @@ stock int AutoExecConfig_AppendValue(const char[] name, const char[] defaultValu
 		{
 			// We have no newlines, we can write the description to the file as is
 			Format(writebuffer, sizeof(writebuffer), "// %s", description);
-			fFile.WriteLine(writebuffer);
+			fFile.WriteLine("%s", writebuffer);
 		}
 		else
 		{
@@ -438,14 +441,14 @@ stock int AutoExecConfig_AppendValue(const char[] name, const char[] defaultValu
 		
 		// Default
 		Format(writebuffer, sizeof(writebuffer), "// Default: \"%s\"", defaultValue);
-		fFile.WriteLine(writebuffer);
+		fFile.WriteLine("%s", writebuffer);
 		
 		
 		// Minimum
 		if (hasMin)
 		{		
 			Format(writebuffer, sizeof(writebuffer), "// Minimum: \"%f\"", min);
-			fFile.WriteLine(writebuffer);
+			fFile.WriteLine("%s", writebuffer);
 		}
 		
 		
@@ -453,13 +456,13 @@ stock int AutoExecConfig_AppendValue(const char[] name, const char[] defaultValu
 		if (hasMax)
 		{
 			Format(writebuffer, sizeof(writebuffer), "// Maximum: \"%f\"", max);
-			fFile.WriteLine(writebuffer);
+			fFile.WriteLine("%s", writebuffer);
 		}
 		
 		
 		// Write end and defaultvalue
 		Format(writebuffer, sizeof(writebuffer), "%s \"%s\"", name, defaultValue);
-		fFile.WriteLine(writebuffer);
+		fFile.WriteLine("%s", writebuffer);
 		
 		
 		fFile.Close();		
@@ -520,7 +523,7 @@ stock int AutoExecConfig_FindValue(const char[] cvar, char[] value, int size, bo
 		int valueend;
 		int cvarend;
 		
-		// Just an reminder to self, leave the values that high
+		// Just a reminder to self, leave the values that high
 		char sConvar[64];
 		char sValue[64];
 		char readbuffer[2048];
@@ -535,7 +538,7 @@ stock int AutoExecConfig_FindValue(const char[] cvar, char[] value, int size, bo
 		while (!fFile.EndOfFile() && fFile.ReadLine(readbuffer, sizeof(readbuffer)))
 		{
 			// Is a comment or not valid
-			if (IsCharSpace(readbuffer[0]) || readbuffer[0] == '/' || (!IsCharNumeric(readbuffer[0]) && !IsCharAlpha(readbuffer[0])) )
+			if (IsCharSpace(readbuffer[0]) || readbuffer[0] == '/')
 			{
 				continue;
 			}
@@ -610,7 +613,7 @@ stock int AutoExecConfig_FindValue(const char[] cvar, char[] value, int size, bo
 				return AUTOEXEC_FIND_SUCCESS;
 			}					
 		}
-		
+
 		fFile.Close();	
 		return AUTOEXEC_FIND_NOT_FOUND;
 	}
@@ -703,7 +706,7 @@ stock int AutoExecConfig_CleanFile()
 		if (count < 2 || !firstreached)
 		{
 			ReplaceString(readbuffer, sizeof(readbuffer), "\n", "");
-			fFile2.WriteLine(readbuffer);
+			fFile2.WriteLine("%s", readbuffer);
 		}
 		
 		
