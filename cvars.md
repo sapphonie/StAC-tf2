@@ -1,12 +1,5 @@
 ## Cvars
 
-// [StAC] enable/disable plugin (setting this to 0 immediately unloads stac)
-// (recommended 1)
-// -
-// Default: "1"
-// Minimum: "0.000000"
-// Maximum: "1.000000"
-stac_enabled "1"
 
 // [StAC] enable/disable showing verbose info about players' cvars and other similar info in admin and server console
 // (recommended 0 unless you want spam in console)
