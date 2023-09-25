@@ -26,7 +26,6 @@ ConVar stac_max_randomcheck_secs;
 ConVar stac_include_demoname_in_banreason;
 ConVar stac_log_to_file;
 ConVar stac_fixpingmasking_enabled;
-ConVar stac_kick_unauthed_clients;
 ConVar stac_silent;
 ConVar stac_max_connections_from_ip;
 ConVar stac_work_with_sv_cheats;
@@ -48,7 +47,6 @@ bool demonameInBanReason        = true;
 bool logtofile                  = true;
 // fix pingmasking - required for pingreduce check
 bool fixpingmasking             = true;
-bool kickUnauth                 = false;
 float maxAllowedTurnSecs        = -1.0;
 bool banForMiscCheats           = true;
 bool optimizeCvars              = true;

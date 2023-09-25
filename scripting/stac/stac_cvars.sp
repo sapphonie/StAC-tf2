@@ -403,30 +403,6 @@ void initCvars()
     );
     HookConVarChange(stac_fixpingmasking_enabled, setStacVars);
 
-    // reconnect unauthed clients
-    if (kickUnauth)
-    {
-        buffer = "1";
-    }
-    else
-    {
-        buffer = "0";
-    }
-    stac_kick_unauthed_clients =
-    AutoExecConfig_CreateConVar
-    (
-        "stac_kick_unauthed_clients",
-        buffer,
-        "[StAC] forcibly reconnect clients unauthorized with steam - this protects against cheat clients not setting steamids, at the cost of making your server inaccessible when Steam is down.\n\
-        (recommended 0, only enable this if you have consistent issues with unauthed cheaters!)",
-        FCVAR_NONE,
-        true,
-        0.0,
-        true,
-        1.0
-    );
-    HookConVarChange(stac_kick_unauthed_clients, setStacVars);
-
     // shut up!
     IntToString(silent, buffer, sizeof(buffer));
     stac_silent =
@@ -571,9 +547,6 @@ void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
 
     // properly fix pingmasking
     fixpingmasking          = GetConVarBool(stac_fixpingmasking_enabled);
-
-    // kick unauthed clients
-    kickUnauth              = GetConVarBool(stac_kick_unauthed_clients);
 
     // silent mode
     silent                  = GetConVarInt(stac_silent);
