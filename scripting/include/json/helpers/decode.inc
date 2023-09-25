@@ -116,7 +116,7 @@ stock bool json_is_int(const char[] buffer)
     return true;
 }
 
-#if SM_INT64_SUPPORTED
+#if defined (SM_INT64_SUPPORTED)
 /**
  * Checks whether the buffer provided contains an int64, assuming it has
  * already been validated as an int and attempted to convert to an int32.

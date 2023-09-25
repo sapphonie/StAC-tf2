@@ -1,8 +1,6 @@
 #pragma semicolon 1
-
-// we don't need 64 maxplayers because this is only for tf2. saves some memory.
-// 34 == 32 + stv + replay
-#define TFMAXPLAYERS 34
+// formerly custom defined, now at 101 as of unrestricted_maxplayers update
+#define TFMAXPLAYERS 101
 
 /********** GLOBAL VARS **********/
 // Regex steamidRegex;
@@ -75,6 +73,7 @@ float tps;
 int itps;
 //int itps_maxaheadsecs;
 int servertick;
+bool highPlayerServer           = false;
 
 // time to wait after server lags before checking all client's OnPlayerRunCmd
 float ServerLagWaitLength = 5.0;

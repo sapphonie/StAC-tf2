@@ -83,7 +83,11 @@ public Action OnPlayerRunCmd
         return Plugin_Continue;
     }
 
-    OnPlayerRunCmd_jaypatch(cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
+    if (!highPlayerServer)
+    {
+        OnPlayerRunCmd_jaypatch(cl, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse);
+    }
+
 
     // Don't allow clients to have both left and right turns active
     // Legit clients can do this
@@ -280,6 +284,13 @@ stock void PlayerRunCmd
     // not really a lag dependant check
     fakeangCheck(cl);
     invalidUsercmdCheck(cl);
+
+    // not feasible
+    if (highPlayerServer)
+    {
+        return;
+    }
+
 
     // dont check cmdnum here but check everything else
     if ( !IsUserLagging(cl, /* checkcmdnum = */ false) )
@@ -974,7 +985,7 @@ void triggerbotCheck(int cl)
     {
         PrintToImportant
         (
-            "{hotpink}[StAC]{white} Triggerbot detection on %N.\nDetections so far: {palegreen}%i{white}. Type: +attack{blue}%i",
+            "{hotpink}[StAC]{white} Possible triggerbot detection on %N.\nDetections so far: {palegreen}%i{white}. Type: +attack{blue}%i",
             cl,
             tbotDetects[cl],
             attack
