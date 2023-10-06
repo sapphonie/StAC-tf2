@@ -12,6 +12,9 @@
 <img src="https://i.imgur.com/RKRaLPl.png" alt="StAC" width="256" style="float: center;"/>
 </div>
 
+#### Support me on [Patreon](https://www.patreon.com/sapphonie)!
+
+
 ### This plugin - "StAC" - and the ones bundled with it, can detect, log, patch, and punish for a majority of the cheats, macros, and unfair scripts available for Team Fortress 2, including:
 - pSilentAim / NoRecoil / Angle Repeat cheats
 - Plain aimsnap / Aimbot cheats
