@@ -4,7 +4,11 @@
         - kick and ban messages already have a period at the end of them in TF2, so don't add one
         - ban messages get printed to banned client as the kick reason if not using sourcebans and posted to sourcebans as the "ban reason" if you have it installed
     */
-
+    "GenericBanAllChat"
+    {
+        "#format"    "{1:N}"
+        "en"         "{hotpink}[StAC]{white} Player {1} was {palegreen}BANNED{white} for {mediumpurple}cheating{white}!"
+    }
     /*
 
             ____  __      _                _

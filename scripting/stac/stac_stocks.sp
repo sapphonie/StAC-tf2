@@ -393,7 +393,7 @@ bool IsValidSrcTV(int client)
 
 /********** MISC FUNCS **********/
 
-void BanUser(int userid, char[] reason, char[] pubreason)
+void BanUser(int userid, char reason[128], char pubreason[256])
 {
     int cl = GetClientOfUserId(userid);
 
@@ -405,6 +405,20 @@ void BanUser(int userid, char[] reason, char[] pubreason)
     }
 
     StacNotify(userid, reason);
+    
+    ConVar stac_generic_ban_msgs;
+
+    char cleaned_pubreason[256];
+    if ( stac_generic_ban_msgs.BoolValue )
+    {
+        Format(reason,              sizeof(reason),             "%t", "GenericBanMsg", cl);
+        Format(cleaned_pubreason,   sizeof(cleaned_pubreason),  "%t", "GenericBanMsg", cl);
+    }
+    else
+    {
+        strcopy(cleaned_pubreason, sizeof(cleaned_pubreason), pubreason);
+    }
+
     // make sure we dont detect on already banned players
     userBanQueued[cl] = true;
 
@@ -466,7 +480,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         // KickClient(cl, "%s", reason);
     }
 
-    MC_PrintToChatAll("%s", pubreason);
+    MC_PrintToChatAll("%s", cleaned_pubreason);
     StacLog("%s", pubreason);
 }
 
