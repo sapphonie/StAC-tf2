@@ -309,11 +309,11 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     {
         if (result == ConVarQuery_NotFound)
         {
-            clientOS[Cl] = 0;
+            clientOS[cl] = 0;
         }
         else
         {
-            clientOS[Cl] = 1;
+            clientOS[cl] = 1;
         }
     }
 
@@ -321,15 +321,15 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "joystick"))
     {
         bool joy = (0.0 <= StringToFloat(cvarValue) < 1.0)?false:true;
-        joystick[Cl] = joy;
-        joystickQueried[Cl] = true;
+        joystick[cl] = joy;
+        joystickQueried[cl] = true;
     }
     // joy_xcontroller_found
     else if (StrEqual(cvarName, "joy_xcontroller_found"))
     {
         bool joy = (0.0 <= StringToFloat(cvarValue) < 1.0)?false:true;
-        joy_xcon[Cl] = joy;
-        joy_xconQueried[Cl] = true;
+        joy_xcon[cl] = joy;
+        joy_xconQueried[cl] = true;
         return;
     }
 

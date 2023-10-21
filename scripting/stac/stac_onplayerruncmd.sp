@@ -332,7 +332,7 @@ stock void PlayerRunCmd
     aimsnapCheck(cl);
     psilentCheck(cl);
 
-    invalidWishVelCheck(cl, vel[0], vel[1], buttons); // In theory, this doesn't need to be down here. I'm only worried about halloween conditions causing issues for this.
+    invalidWishVelCheck(cl, vel[0], vel[1]); // In theory, this doesn't need to be down here. I'm only worried about halloween conditions causing issues for this.
     unsynchronizedMoveCheck(cl, buttons, vel[0], vel[1]);
 
     return;
@@ -345,7 +345,7 @@ stock void PlayerRunCmd
     *  Copyright (C) 2018  Nolan O.
     *  Copyright (C) 2018  shavit.
 */
-void invalidWishVelCheck(int cl, float forwardmove, float sidemove, int buttons) 
+void invalidWishVelCheck(int cl, float forwardmove, float sidemove) 
 {
     int attack = 0;
     if ((clbuttons[cl][0] & IN_ATTACK))

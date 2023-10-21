@@ -513,6 +513,15 @@ void ClearClBasedVars(int userid)
     rateFor                 [cl] = 0.0;
     ppsFor                  [cl] = 0.0;
 
+    clientOS                [cl] = 2;
+
+    printedOnce             [cl] = false;
+
+    // STORED JOYSTICK SHIT
+    joystick                [cl] = false;
+    joy_xcon                [cl] = false;
+    waitTillNextQuery       [cl] = true;
+
     // time since the last stutter/lag spike occurred per client
     timeSinceLagSpikeFor    [cl] = 0.0;
 

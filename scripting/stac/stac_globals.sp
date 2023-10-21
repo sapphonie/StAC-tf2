@@ -9,6 +9,7 @@
 ConVar stac_enabled;
 ConVar stac_ban_duration;
 ConVar stac_verbose_info;
+ConVar stac_generic_ban_msgs;
 ConVar stac_max_allowed_turn_secs;
 ConVar stac_ban_for_misccheats;
 ConVar stac_optimize_cvars;
@@ -150,13 +151,14 @@ bool playerTaunting         [TFMAXPLAYERS+1];
 int playerInBadCond         [TFMAXPLAYERS+1];
 bool userBanQueued          [TFMAXPLAYERS+1];
 float sensFor               [TFMAXPLAYERS+1];
+int clientOS                [TFMAXPLAYERS+1] = { 2, ...};
 
 bool  joystickQueried       [TFMAXPLAYERS+1];
 bool  joy_xconQueried       [TFMAXPLAYERS+1];
 bool  joystick              [TFMAXPLAYERS+1];
 bool  joy_xcon              [TFMAXPLAYERS+1];
 bool  printedOnce           [TFMAXPLAYERS+1];
-bool  waitTillNextQuery     [TFMAXPLAYERS+1];
+bool  waitTillNextQuery     [TFMAXPLAYERS+1] = { true, ... };
 
 // weapon name, gets passed to aimsnap check
 char hurtWeapon             [TFMAXPLAYERS+1][256];

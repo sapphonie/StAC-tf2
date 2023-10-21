@@ -21,7 +21,10 @@
     #define MAXPLAYERS 101
 #endif
 
+#if !defined AUTOLOAD_EXTENSIONS
 #define AUTOLOAD_EXTENSIONS
+#endif
+
 // REQUIRED extensions:
 // SteamWorks for being able to make webrequests: https://forums.alliedmods.net/showthread.php?t=229556
 // Get latest version from here: https://github.com/KyleSanderson/SteamWorks/releases
