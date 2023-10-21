@@ -406,8 +406,6 @@ void BanUser(int userid, char reason[128], char pubreason[256])
 
     StacNotify(userid, reason);
     
-    ConVar stac_generic_ban_msgs;
-
     char cleaned_pubreason[256];
     if ( stac_generic_ban_msgs.BoolValue )
     {
