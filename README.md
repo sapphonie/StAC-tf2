@@ -25,7 +25,7 @@
 ### It also prevents and/or detects:
 - Newlines/invalid characters in chat messages
 - Cmdnum manipulation (clientside nospread)
-- Tickcount manipulation (backtracking) - [Thank you to JTanzinite, author of LilAC](https://github.com/J-Tanzanite/Backtrack-Patch)!
+- Tickcount manipulation (backtracking) - [Thank you to J_Tanzanite, author of LilAC](https://github.com/J-Tanzanite/Backtrack-Patch)!
 - Interp/lerp abuse
 - Clients using +right/+left inputs
 - "Ping reducing" cheats (and patches "pingmasking" by legit clients as well)
