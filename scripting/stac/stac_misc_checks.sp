@@ -40,26 +40,27 @@ public Action OnClientSayCommand(int cl, const char[] command, const char[] sArg
 void NameCheck(int userid)
 {
     int cl = GetClientOfUserId(userid);
-    if (IsValidClient(cl))
+    if (!IsValidClient(cl))
     {
-        char curName[MAX_NAME_LENGTH];
-        GetClientName(cl, curName, sizeof(curName));
-        // ban for invalid characters in names
-        if
-        (
-            StrContains(curName, "\n")  != -1
-            ||
-            StrContains(curName, "\r")  != -1
-            ||
-            // right to left char
-            StrContains(curName, "\xE2\x80\x8F") != -1
-            ||
-            // left to right char
-            StrContains(curName, "\xE2\x80\x8E") != -1
-        )
-        {
-            SaniNameAndBan(userid, curName);
-        }
+        return;
+    }
+    char curName[MAX_NAME_LENGTH];
+    GetClientName(cl, curName, sizeof(curName));
+    // ban for invalid characters in names
+    if
+    (
+        StrContains(curName, "\n")  != -1
+        ||
+        StrContains(curName, "\r")  != -1
+        ||
+        // right to left char
+        StrContains(curName, "\xE2\x80\x8F") != -1
+        ||
+        // left to right char
+        StrContains(curName, "\xE2\x80\x8E") != -1
+    )
+    {
+        SaniNameAndBan(userid, curName);
     }
 }
 
@@ -102,7 +103,11 @@ void SaniNameAndBan(int userid, char name[MAX_NAME_LENGTH])
 Action BanName(Handle timer, int userid)
 {
     int cl = GetClientOfUserId(userid);
-
+    if (!IsValidClient(userid))
+    {
+        // client must've left
+        return Plugin_Continue;
+    }
     if (banForMiscCheats)
     {
         char reason[128];
@@ -123,33 +128,31 @@ Action BanName(Handle timer, int userid)
 // block long commands - i don't know if this actually does anything but it makes me feel better
 public Action OnClientCommand(int cl, int args)
 {
-    if (IsValidClient(cl))
+    if (!IsValidClient(cl))
     {
-        // init var
-        char ClientCommandChar[512];
-        // gets the first command
-        GetCmdArg(0, ClientCommandChar, sizeof(ClientCommandChar));
-        // get length of string
-        int len = strlen(ClientCommandChar);
+        return Plugin_Continue;
+    }
 
-        // is there more after this command?
-        if (GetCmdArgs() > 0)
-        {
-            // add a space at the end of it
-            ClientCommandChar[len++] = ' ';
-            GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
-        }
-
-        strcopy(lastCommandFor[cl], sizeof(lastCommandFor[]), ClientCommandChar);
-        timeSinceLastCommand[cl] = engineTime[cl][0];
-
-        // clean it up ( PROBABLY NOT NEEDED )
-        // TrimString(ClientCommandChar);
-
-        if (strlen(ClientCommandChar) > 255)
-        {
-            return Plugin_Stop;
-        }
+    // init var
+    char ClientCommandChar[512];
+    // gets the first command
+    GetCmdArg(0, ClientCommandChar, sizeof(ClientCommandChar));
+    // get length of string
+    int len = strlen(ClientCommandChar);
+    // is there more after this command?
+    if (GetCmdArgs() > 0)
+    {
+        // add a space at the end of it
+        ClientCommandChar[len++] = ' ';
+        GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
+    }
+    strcopy(lastCommandFor[cl], sizeof(lastCommandFor[]), ClientCommandChar);
+    timeSinceLastCommand[cl] = engineTime[cl][0];
+    // clean it up ( PROBABLY NOT NEEDED )
+    // TrimString(ClientCommandChar);
+    if (strlen(ClientCommandChar) > 255)
+    {
+        return Plugin_Stop;
     }
     return Plugin_Continue;
 }
@@ -158,19 +161,21 @@ public Action OnClientCommand(int cl, int args)
 // if there are upgrades to the call/response bullshit in chook i can and will make this iterate thru every single kv
 public Action OnClientCommandKeyValues(int cl, KeyValues kv)
 {
-    if (IsValidClient(cl))
+    if (!IsValidClient(cl))
     {
-        if (KvJumpToKey(kv, "achievementID", false))
+        return Plugin_Continue;
+    }
+
+    if (KvJumpToKey(kv, "achievementID", false))
+    {
+        if (KvGetDataType(kv, NULL_STRING) == KvData_Int)
         {
-            if (KvGetDataType(kv, NULL_STRING) == KvData_Int)
+            // hack because KvGetNum doesn't just return a bool with an int&
+            int id = KvGetNum(kv, NULL_STRING, -123456789);
+            if (id != -123456789)
             {
-                // hack because KvGetNum doesn't just return a bool with an int&
-                int id = KvGetNum(kv, NULL_STRING, -123456789);
-                if (id != -123456789)
-                {
-                    int userid = GetClientUserId(cl);
-                    cheevCheck(userid, id);
-                }
+                int userid = GetClientUserId(cl);
+                cheevCheck(userid, id);
             }
         }
     }
