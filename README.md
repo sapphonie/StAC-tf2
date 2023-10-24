@@ -12,6 +12,9 @@
 <img src="https://i.imgur.com/RKRaLPl.png" alt="StAC" width="256" style="float: center;"/>
 </div>
 
+#### Support me on [Patreon](https://www.patreon.com/sapphonie)!
+
+
 ### This plugin - "StAC" - and the ones bundled with it, can detect, log, patch, and punish for a majority of the cheats, macros, and unfair scripts available for Team Fortress 2, including:
 - pSilentAim / NoRecoil / Angle Repeat cheats
 - Plain aimsnap / Aimbot cheats
@@ -22,7 +25,7 @@
 ### It also prevents and/or detects:
 - Newlines/invalid characters in chat messages
 - Cmdnum manipulation (clientside nospread)
-- Tickcount manipulation (backtracking) - [Thank you to JTanzinite, author of LilAC](https://github.com/J-Tanzanite/Backtrack-Patch)!
+- Tickcount manipulation (backtracking) - [Thank you to J_Tanzanite, author of LilAC](https://github.com/J-Tanzanite/Backtrack-Patch)!
 - Interp/lerp abuse
 - Clients using +right/+left inputs
 - "Ping reducing" cheats (and patches "pingmasking" by legit clients as well)

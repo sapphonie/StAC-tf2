@@ -22,6 +22,8 @@
 #endif
 #define _autoexecconfig_included
 
+#pragma semicolon 1
+#pragma newdecls required
 
 #include <sourcemod>
 

@@ -10,6 +10,7 @@ ConVar stac_ban_duration;
 ConVar stac_debug;
 ConVar stac_max_allowed_turn_secs;
 ConVar stac_ban_for_misccheats;
+ConVar stac_generic_ban_msgs;
 ConVar stac_optimize_cvars;
 ConVar stac_max_aimsnap_detections;
 ConVar stac_max_psilent_detections;

@@ -3,6 +3,9 @@
 #endif
 #define _materialadmin_included
 
+#pragma semicolon 1
+#pragma newdecls required
+
 public SharedPlugin __pl_materialadmin = 
 {
 	name = "materialadmin",
@@ -15,7 +18,7 @@ public SharedPlugin __pl_materialadmin =
 };
 
 #if !defined REQUIRE_PLUGIN
-public __pl_materialadmin_SetNTVOptional()
+public void __pl_materialadmin_SetNTVOptional()
 {
 	MarkNativeAsOptional("MAOffBanPlayer");
 	MarkNativeAsOptional("MABanPlayer");

@@ -3,6 +3,9 @@
 #endif
 #define _updater_included
 
+#pragma semicolon 1
+#pragma newdecls required
+
 /**
  * Adds your plugin to the updater. The URL will be updated if
  * your plugin was previously added.

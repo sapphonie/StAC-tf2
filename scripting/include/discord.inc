@@ -3,6 +3,9 @@
 #endif
 #define _discord_included
 
+#pragma semicolon 1
+#pragma newdecls required
+
 native void Discord_SendMessage(const char[] webhook, const char[] message);
 
 public SharedPlugin __pl_discord =

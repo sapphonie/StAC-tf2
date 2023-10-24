@@ -3,6 +3,9 @@
 #endif
 #define _conplex_included
 
+#pragma semicolon 1
+#pragma newdecls required
+
 methodmap ConplexSocket < Handle
 {
 	public native int Send(const char[] data, int length, int flags);

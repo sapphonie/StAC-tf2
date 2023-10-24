@@ -4,10 +4,11 @@
     {
         "Version"
         {
-            "Latest"    "6.1.0"
+            "Latest"    "6.1.1"
         }
 
-        "Notes"     "Changes in 6.1.0"
+        "Notes"     "Changes in 6.1.0/6.1.1"
+        "Notes"     "- Update for SourceTVManager extension to prevent crashes on windows"
         "Notes"     "- StAC now supports 100 player servers!"
         "Notes"     "===== StAC is always looking for feedback! Got an issue, request, or wanna discuss? Open a GitHub issue and join the Discord server linked in the README, on GitHub! ====="
         "Notes"     "===== Thank you for using StAC. -sappho ===== "

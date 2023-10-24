@@ -20,6 +20,20 @@ void initUsercmdCvars()
         _
     );
 
+    stac_generic_ban_msgs =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_generic_ban_msgs",
+        "1",
+        "[StAC] Use a generic message when banning clients - this goes in SourceBans, chat, and other public places, but it does NOT change your logs.\n\
+        You should almost always leave this alone.\n\
+        (recommended 1)",
+        FCVAR_NONE,
+        true,
+        0.0,
+        true,
+        1.0
+    );
 
     // aimsnap detections
     stac_max_aimsnap_detections =
