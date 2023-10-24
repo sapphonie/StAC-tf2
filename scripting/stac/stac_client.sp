@@ -276,7 +276,7 @@ void checkIP(int cl)
         StacNotify(userid, msg);
         PrintToImportant("{hotpink}[StAC]{white} Too many connections (%i) from the same IP address {mediumpurple}%s{white} from client %N!", sameip, clientIP, cl);
         StacLog(msg);
-        KickClient(cl, "[StAC] Too many concurrent connections from your IP address!", stac_max_connections_from_ip.IntValue);
+        KickClient(cl, "[StAC] Too many concurrent connections from your IP address!");
     }
 }
 
