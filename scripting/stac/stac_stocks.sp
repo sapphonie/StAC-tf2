@@ -25,8 +25,11 @@ void OpenStacLog()
     if (!DirExists(path, false))
     {
         LogMessage("[StAC] StAC directory not extant! Creating...");
-        // 511 = unix 775 ?
-        if (!CreateDirectory(path, 511, false))
+        // chmod perms - rwxrwxr-x . it needs to be octal.
+        // yes I could use the FPERM flags but pawn doesn't have constexpr and i don't want to make a mess
+        // with a bunch of ORs and not being able to check it in my IDE
+        static int perms = 0o775;
+        if (!CreateDirectory(path, perms, false))
         {
             LogMessage("[StAC] StAC directory could not be created!");
         }
@@ -47,6 +50,10 @@ void CloseStacLog()
 }
 
 // log to StAC log file
+// This strips color strings, e.g.
+// {color}test{color2}
+// will become
+// test
 void StacLog(const char[] format, any ...)
 {
     // crutch for reloading the plugin and still printing to our log file
