@@ -400,7 +400,7 @@ void BanUser(int userid, char reason[128], char pubreason[256])
     // prevent double bans
     if (userBanQueued[cl])
     {
-        KickClient(cl, "Banned by StAC");
+        KickClient(cl, "Banned from server");
         return;
     }
 
@@ -409,8 +409,8 @@ void BanUser(int userid, char reason[128], char pubreason[256])
     char cleaned_pubreason[256];
     if ( stac_generic_ban_msgs.BoolValue )
     {
-        Format(reason,              sizeof(reason),             "%t", "GenericBanMsg", cl);
-        Format(cleaned_pubreason,   sizeof(cleaned_pubreason),  "%t", "GenericBanMsg", cl);
+        Format(reason,              sizeof(reason),             "%t", "GenericBanAllChat", cl);
+        Format(cleaned_pubreason,   sizeof(cleaned_pubreason),  "%t", "GenericBanAllChat", cl);
     }
     else
     {
