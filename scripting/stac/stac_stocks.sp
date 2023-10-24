@@ -80,6 +80,8 @@ void StacLog(const char[] format, any ...)
     char colored_buffer[254];
     strcopy(colored_buffer, sizeof(colored_buffer), buffer);
 
+    // strip out any instances of "[StAC] " at the front of the string so we don't get double instances of it later
+    ReplaceStringEx(colored_buffer, sizeof(colored_buffer), "[StAC] ", "", 7, -1, true);
 
     if (StrEqual(os, "linux"))
     {
