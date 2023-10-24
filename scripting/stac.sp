@@ -21,7 +21,9 @@
     #define MAXPLAYERS 101
 #endif
 
+#if !defined (AUTOLOAD_EXTENSIONS)
 #define AUTOLOAD_EXTENSIONS
+#endif
 // REQUIRED extensions:
 // SteamWorks for being able to make webrequests: https://forums.alliedmods.net/showthread.php?t=229556
 // Get latest version from here: https://github.com/KyleSanderson/SteamWorks/releases
@@ -53,7 +55,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "6.1.1"
+#define PLUGIN_VERSION  "6.1.2"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
