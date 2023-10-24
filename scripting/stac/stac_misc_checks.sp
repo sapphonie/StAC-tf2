@@ -18,7 +18,7 @@ public Action OnClientSayCommand(int cl, const char[] command, const char[] sArg
     )
     {
         int userid = GetClientUserId(cl);
-        if (banForMiscCheats)
+        if (stac_ban_for_misccheats.BoolValue)
         {
             char reason[128];
             Format(reason, sizeof(reason), "%t", "newlineBanMsg");
@@ -40,26 +40,27 @@ public Action OnClientSayCommand(int cl, const char[] command, const char[] sArg
 void NameCheck(int userid)
 {
     int cl = GetClientOfUserId(userid);
-    if (IsValidClient(cl))
+    if (!IsValidClient(cl))
     {
-        char curName[MAX_NAME_LENGTH];
-        GetClientName(cl, curName, sizeof(curName));
-        // ban for invalid characters in names
-        if
-        (
-            StrContains(curName, "\n")  != -1
-            ||
-            StrContains(curName, "\r")  != -1
-            ||
-            // right to left char
-            StrContains(curName, "\xE2\x80\x8F") != -1
-            ||
-            // left to right char
-            StrContains(curName, "\xE2\x80\x8E") != -1
-        )
-        {
-            SaniNameAndBan(userid, curName);
-        }
+        return;
+    }
+    char curName[MAX_NAME_LENGTH];
+    GetClientName(cl, curName, sizeof(curName));
+    // ban for invalid characters in names
+    if
+    (
+        StrContains(curName, "\n")  != -1
+        ||
+        StrContains(curName, "\r")  != -1
+        ||
+        // right to left char
+        StrContains(curName, "\xE2\x80\x8F") != -1
+        ||
+        // left to right char
+        StrContains(curName, "\xE2\x80\x8E") != -1
+    )
+    {
+        SaniNameAndBan(userid, curName);
     }
 }
 
@@ -103,7 +104,12 @@ Action BanName(Handle timer, int userid)
 {
     int cl = GetClientOfUserId(userid);
 
-    if (banForMiscCheats)
+    if (!IsValidClient(userid))
+    {
+        // client must've left
+        return Plugin_Continue;
+    }
+    if (stac_ban_for_misccheats.BoolValue)
     {
         char reason[128];
         Format(reason, sizeof(reason), "%t", "illegalNameBanMsg");
@@ -123,33 +129,31 @@ Action BanName(Handle timer, int userid)
 // block long commands - i don't know if this actually does anything but it makes me feel better
 public Action OnClientCommand(int cl, int args)
 {
-    if (IsValidClient(cl))
+    if (!IsValidClient(cl))
     {
-        // init var
-        char ClientCommandChar[512];
-        // gets the first command
-        GetCmdArg(0, ClientCommandChar, sizeof(ClientCommandChar));
-        // get length of string
-        int len = strlen(ClientCommandChar);
+        return Plugin_Continue;
+    }
 
-        // is there more after this command?
-        if (GetCmdArgs() > 0)
-        {
-            // add a space at the end of it
-            ClientCommandChar[len++] = ' ';
-            GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
-        }
-
-        strcopy(lastCommandFor[cl], sizeof(lastCommandFor[]), ClientCommandChar);
-        timeSinceLastCommand[cl] = engineTime[cl][0];
-
-        // clean it up ( PROBABLY NOT NEEDED )
-        // TrimString(ClientCommandChar);
-
-        if (strlen(ClientCommandChar) > 255)
-        {
-            return Plugin_Stop;
-        }
+    // init var
+    char ClientCommandChar[512];
+    // gets the first command
+    GetCmdArg(0, ClientCommandChar, sizeof(ClientCommandChar));
+    // get length of string
+    int len = strlen(ClientCommandChar);
+    // is there more after this command?
+    if (GetCmdArgs() > 0)
+    {
+        // add a space at the end of it
+        ClientCommandChar[len++] = ' ';
+        GetCmdArgString(ClientCommandChar[len++], sizeof(ClientCommandChar));
+    }
+    strcopy(lastCommandFor[cl], sizeof(lastCommandFor[]), ClientCommandChar);
+    timeSinceLastCommand[cl] = engineTime[cl][0];
+    // clean it up ( PROBABLY NOT NEEDED )
+    // TrimString(ClientCommandChar);
+    if (strlen(ClientCommandChar) > 255)
+    {
+        return Plugin_Stop;
     }
     return Plugin_Continue;
 }
@@ -158,19 +162,21 @@ public Action OnClientCommand(int cl, int args)
 // if there are upgrades to the call/response bullshit in chook i can and will make this iterate thru every single kv
 public Action OnClientCommandKeyValues(int cl, KeyValues kv)
 {
-    if (IsValidClient(cl))
+    if (!IsValidClient(cl))
     {
-        if (KvJumpToKey(kv, "achievementID", false))
+        return Plugin_Continue;
+    }
+
+    if (KvJumpToKey(kv, "achievementID", false))
+    {
+        if (KvGetDataType(kv, NULL_STRING) == KvData_Int)
         {
-            if (KvGetDataType(kv, NULL_STRING) == KvData_Int)
+            // hack because KvGetNum doesn't just return a bool with an int&
+            int id = KvGetNum(kv, NULL_STRING, -123456789);
+            if (id != -123456789)
             {
-                // hack because KvGetNum doesn't just return a bool with an int&
-                int id = KvGetNum(kv, NULL_STRING, -123456789);
-                if (id != -123456789)
-                {
-                    int userid = GetClientUserId(cl);
-                    cheevCheck(userid, id);
-                }
+                int userid = GetClientUserId(cl);
+                cheevCheck(userid, id);
             }
         }
     }
@@ -200,14 +206,14 @@ public void OnClientSettingsChanged(int cl)
         )
     )
     {
-        if (DEBUG)
+        if (stac_debug.BoolValue)
         {
             StacLog("Ignoring demorestart settings change for %N", cl);
         }
         return;
     }
 
-    if (!fixpingmasking)
+    if (!stac_fixpingmasking_enabled.BoolValue)
     {
         return;
     }
@@ -239,7 +245,7 @@ public void OnClientSettingsChanged(int cl)
     if ( StringToInt(cl_cmdrate) < 10 )
     {
         oobVarsNotify(userid, "cl_cmdrate", cl_cmdrate);
-        if (banForMiscCheats)
+        if (stac_ban_for_misccheats.BoolValue)
         {
             oobVarBan(userid);
         }
@@ -249,8 +255,8 @@ public void OnClientSettingsChanged(int cl)
     static int MIN_RATE = 1000;
 
     // This isn't expensive. See Handle_t ConVarManager::FindConVar(const char *name):
-    // https://cs.alliedmods.net/sourcemod/source/core/ConVarManager.cpp#427
-    // Not only is this cached, icvar->FindVar is fast enough anyway
+    // https://cs.alliedmods.net/sourcemod/rev/50b4ad4e11f038ffae2f6e109cf338074e8dee97/core/ConVarManager.cpp#450-454
+    // Not only is this cached by sourcemod, icvar->FindVar is fast enough anyway
     static int imincmdrate    ;
     static int imaxcmdrate    ;
     static int iminupdaterate ;
@@ -315,13 +321,29 @@ void MiscCheatsEtcsCheck(int userid)
 
 void checkInterp(int userid)
 {
+    // minterp var - clamp to -1 if 0
+    int min_interp_ms           = GetConVarInt(stac_min_interp_ms);
+    if (min_interp_ms == 0)
+    {
+        min_interp_ms = -1;
+    }
+
+    // maxterp var - clamp to -1 if 0
+    int max_interp_ms           = GetConVarInt(stac_max_interp_ms);
+    if (max_interp_ms == 0)
+    {
+        max_interp_ms = -1;
+    }
+
+
+
     int cl = GetClientOfUserId(userid);
     // lerp check - we check the netprop
     // don't check if not default tickrate
     if (isDefaultTickrate())
     {
         float lerp = GetEntPropFloat(cl, Prop_Data, "m_fLerpTime") * 1000;
-        if (DEBUG)
+        if (stac_debug.BoolValue)
         {
             StacLog("%.2f ms interp on %N", lerp, cl);
         }
@@ -332,7 +354,7 @@ void checkInterp(int userid)
             char lerpStr[16];
             FloatToString(lerp, lerpStr, sizeof(lerpStr));
             oobVarsNotify(userid, "m_fLerpTime", lerpStr);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -376,7 +398,7 @@ void cheevCheck(int userid, int achieve_id)
         // uid for passing to GenPlayerNotify
         StacLogSteam(userid);
 
-        if (banForMiscCheats)
+        if (stac_ban_for_misccheats.BoolValue)
         {
             PrintToImportant("{hotpink}[StAC] {white} User %N earned BOGUS achievement ID %i (hex %X)", cl, achieve_id, achieve_id);
             char reason[128];

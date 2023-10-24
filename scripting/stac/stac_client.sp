@@ -27,7 +27,7 @@ static char latestSteamID   [MAX_AUTHID_LENGTH];
 // Does NOT fire on map change
 public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255])
 {
-    if (DEBUG)
+    if (stac_debug.BoolValue)
     {
         StacLog("-> OnClientPreConnectEx (name %s, ip %s) t=%f", name, ip, GetEngineTime());
         StacLog("-> OnClientPreConnectEx (steamid = %s)", steamID);
@@ -84,7 +84,7 @@ public void ePlayerConnect(Handle event, const char[] name, bool dontBroadcast)
     )
     {
         strcopy(SteamAuthFor[cl], sizeof(latestSteamID), latestSteamID);
-        if (DEBUG)
+        if (stac_debug.BoolValue)
         {
             StacLog("\n\nplayer_connect steamid = %s\n", SteamAuthFor[cl]);
         }
@@ -142,7 +142,7 @@ public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
 {
     float nowTime = GetEngineTime();
 
-    if (DEBUG)
+    if (stac_debug.BoolValue)
     {
         StacLog("-> OnClientConnect (index %i)", cl);
         StacLog("-> OnClientConnect t=%f", nowTime);
@@ -153,7 +153,7 @@ public bool OnClientConnect(int cl, char[] rejectmsg, int maxlen)
 
 public void OnClientConnected(int cl)
 {
-    if (DEBUG)
+    if (stac_debug.BoolValue)
     {
         StacLog("-> OnClientConnected (index %i) t=%f", cl, GetEngineTime());
     }
@@ -162,7 +162,7 @@ public void OnClientConnected(int cl)
 // client join
 public void OnClientPutInServer(int cl)
 {
-    if (DEBUG)
+    if (stac_debug.BoolValue)
     {
         StacLog("-> OnClientPutInServer (index %i) t=%f", cl, GetEngineTime());
     }
@@ -186,7 +186,7 @@ public void OnClientPutInServer(int cl)
     // clear timer
     QueryTimer[cl] = null;
     // query convars on player connect
-    if (DEBUG)
+    if (stac_debug.BoolValue)
     {
         StacLog("%N joined. Checking cvars", cl);
     }
@@ -234,13 +234,13 @@ public void OnClientPutInServer(int cl)
         }
     }
 
-    if (DEBUG)
+    if (stac_debug.BoolValue)
     {
         StacLog("OCPIS steamid = %s", SteamAuthFor[cl]);
     }
 
     // bail if cvar is set to 0
-    if (maxip > 0)
+    if (stac_max_connections_from_ip.IntValue > 0)
     {
         checkIP(cl);
     }
@@ -269,14 +269,14 @@ void checkIP(int cl)
     }
 
     // maxip is our cached stac_max_connections_from_ip
-    if (sameip > maxip)
+    if (sameip > stac_max_connections_from_ip.IntValue)
     {
         char msg[256];
         Format(msg, sizeof(msg), "Too many connections from the same IP address %s from client %N", clientIP, cl);
         StacNotify(userid, msg);
         PrintToImportant("{hotpink}[StAC]{white} Too many connections (%i) from the same IP address {mediumpurple}%s{white} from client %N!", sameip, clientIP, cl);
         StacLog(msg);
-        KickClient(cl, "[StAC] Too many concurrent connections from your IP address!", maxip);
+        KickClient(cl, "[StAC] Too many concurrent connections from your IP address!");
     }
 }
 

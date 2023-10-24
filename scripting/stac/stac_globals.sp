@@ -6,9 +6,8 @@
 // Regex steamidRegex;
 
 /***** Cvar Handles *****/
-ConVar stac_enabled;
 ConVar stac_ban_duration;
-ConVar stac_verbose_info;
+ConVar stac_debug;
 ConVar stac_max_allowed_turn_secs;
 ConVar stac_ban_for_misccheats;
 ConVar stac_generic_ban_msgs;
@@ -27,44 +26,11 @@ ConVar stac_max_randomcheck_secs;
 ConVar stac_include_demoname_in_banreason;
 ConVar stac_log_to_file;
 ConVar stac_fixpingmasking_enabled;
-ConVar stac_kick_unauthed_clients;
 ConVar stac_silent;
 ConVar stac_max_connections_from_ip;
 ConVar stac_work_with_sv_cheats;
 
-/***** Misc cheat defaults *****/
-// ban duration
-int banDuration                 = 0;
-// verbose mode
-bool DEBUG                      = false;
-// interp
-int min_interp_ms               = -1;
-int max_interp_ms               = 101;
-// random misccheats check (in secs)
-float minRandCheckVal           = 60.0;
-float maxRandCheckVal           = 300.0;
-// demoname in sourcebans / gbans?
-bool demonameInBanReason        = true;
-// log to file
-bool logtofile                  = true;
-// fix pingmasking - required for pingreduce check
-bool fixpingmasking             = true;
-bool kickUnauth                 = false;
-float maxAllowedTurnSecs        = -1.0;
-bool banForMiscCheats           = true;
-bool optimizeCvars              = true;
-int silent                      = 0;
-int maxip                       = 0;
-bool ignore_sv_cheats           = false;
 
-/***** Detection based cheat defaults *****/
-int maxAimsnapDetections        = 20;
-int maxPsilentDetections        = 10;
-int maxFakeAngDetections        = 5;
-int maxBhopDetections           = 10;
-int maxCmdnumDetections         = 20;
-int maxTbotDetections           = 0;
-int maxInvalidUsercmdDetections = 5;
 
 /***** Server based stuff *****/
 

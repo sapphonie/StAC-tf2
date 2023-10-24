@@ -59,10 +59,10 @@ void StacLog(const char[] format, any ...)
     // crutch for reloading the plugin and still printing to our log file
     if (StacLogFile == null)
     {
-        ConVar temp_staclogtofile = FindConVar("stac_log_to_file");
-        if (temp_staclogtofile != null)
+        stac_log_to_file = FindConVar("stac_log_to_file");
+        if (stac_log_to_file != null)
         {
-            if (GetConVarBool(temp_staclogtofile))
+            if (stac_log_to_file.BoolValue)
             {
                 OpenStacLog();
             }
@@ -432,7 +432,9 @@ void BanUser(int userid, char reason[128], char pubreason[256])
     // check if client is authed before banning normally
     bool isAuthed = IsClientAuthorized(cl);
 
-    if (demonameInBanReason && SourceTV_IsRecording() && GetDemoName())
+    int banDuration = stac_ban_duration.IntValue;
+
+    if (stac_include_demoname_in_banreason.BoolValue && SourceTV_IsRecording() && GetDemoName())
     {
         char demoname_plus[256];
         strcopy(demoname_plus, sizeof(demoname_plus), demoname);
@@ -609,11 +611,11 @@ void PrintToImportant(const char[] format, any ...)
 
         if
         (
-            (silent == -1 && (IsValidClient(i) || IsValidSrcTV(i)))
+            (stac_silent.IntValue == -1 && (IsValidClient(i) || IsValidSrcTV(i)))
             ||
-            (silent == 0 && (IsValidAdmin(i) || IsValidSrcTV(i)))
+            (stac_silent.IntValue == 0 && (IsValidAdmin(i) || IsValidSrcTV(i)))
             ||
-            (silent == 1 && IsValidSrcTV(i))
+            (stac_silent.IntValue == 1 && IsValidSrcTV(i))
         )
         {
             SetGlobalTransTarget(i);
