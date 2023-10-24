@@ -249,8 +249,8 @@ public void OnClientSettingsChanged(int cl)
     static int MIN_RATE = 1000;
 
     // This isn't expensive. See Handle_t ConVarManager::FindConVar(const char *name):
-    // https://cs.alliedmods.net/sourcemod/source/core/ConVarManager.cpp#427
-    // Not only is this cached, icvar->FindVar is fast enough anyway
+    // https://cs.alliedmods.net/sourcemod/rev/50b4ad4e11f038ffae2f6e109cf338074e8dee97/core/ConVarManager.cpp#450-454
+    // Not only is this cached by sourcemod, icvar->FindVar is fast enough anyway
     static int imincmdrate    ;
     static int imaxcmdrate    ;
     static int iminupdaterate ;
