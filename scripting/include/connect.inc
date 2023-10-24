@@ -4,6 +4,9 @@
 
 #define _connect_included
 
+#pragma semicolon 1
+#pragma newdecls required
+
 forward bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255]);
 
 public Extension __ext_Connect =
