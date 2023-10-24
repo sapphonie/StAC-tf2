@@ -243,7 +243,7 @@ public void OnGameFrame()
         timeSinceLagSpikeFor[0] = GetEngineTime();
 
         StacLog("Server framerate stuttered. Expected: ~%.1f, got %i.\nDisabling OnPlayerRunCmd checks for %.2f seconds.", tps, tickspersec[0], ServerLagWaitLength);
-        if (DEBUG)
+        if (stac_debug.BoolValue)
         {
             PrintToImportant("{hotpink}[StAC]{white} Server framerate stuttered. Expected: {palegreen}~%.1f{white}, got {fullred}%i{white}.\nDisabling OnPlayerRunCmd checks for %f seconds.",
             tps, tickspersec[0], ServerLagWaitLength);

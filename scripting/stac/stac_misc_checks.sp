@@ -18,7 +18,7 @@ public Action OnClientSayCommand(int cl, const char[] command, const char[] sArg
     )
     {
         int userid = GetClientUserId(cl);
-        if (banForMiscCheats)
+        if (stac_ban_for_misccheats.BoolValue)
         {
             char reason[128];
             Format(reason, sizeof(reason), "%t", "newlineBanMsg");
@@ -103,12 +103,13 @@ void SaniNameAndBan(int userid, char name[MAX_NAME_LENGTH])
 Action BanName(Handle timer, int userid)
 {
     int cl = GetClientOfUserId(userid);
+
     if (!IsValidClient(userid))
     {
         // client must've left
         return Plugin_Continue;
     }
-    if (banForMiscCheats)
+    if (stac_ban_for_misccheats.BoolValue)
     {
         char reason[128];
         Format(reason, sizeof(reason), "%t", "illegalNameBanMsg");
@@ -205,14 +206,14 @@ public void OnClientSettingsChanged(int cl)
         )
     )
     {
-        if (DEBUG)
+        if (stac_debug.BoolValue)
         {
             StacLog("Ignoring demorestart settings change for %N", cl);
         }
         return;
     }
 
-    if (!fixpingmasking)
+    if (!stac_fixpingmasking_enabled.BoolValue)
     {
         return;
     }
@@ -244,7 +245,7 @@ public void OnClientSettingsChanged(int cl)
     if ( StringToInt(cl_cmdrate) < 10 )
     {
         oobVarsNotify(userid, "cl_cmdrate", cl_cmdrate);
-        if (banForMiscCheats)
+        if (stac_ban_for_misccheats.BoolValue)
         {
             oobVarBan(userid);
         }
@@ -254,8 +255,8 @@ public void OnClientSettingsChanged(int cl)
     static int MIN_RATE = 1000;
 
     // This isn't expensive. See Handle_t ConVarManager::FindConVar(const char *name):
-    // https://cs.alliedmods.net/sourcemod/source/core/ConVarManager.cpp#427
-    // Not only is this cached, icvar->FindVar is fast enough anyway
+    // https://cs.alliedmods.net/sourcemod/rev/50b4ad4e11f038ffae2f6e109cf338074e8dee97/core/ConVarManager.cpp#450-454
+    // Not only is this cached by sourcemod, icvar->FindVar is fast enough anyway
     static int imincmdrate    ;
     static int imaxcmdrate    ;
     static int iminupdaterate ;
@@ -320,13 +321,29 @@ void MiscCheatsEtcsCheck(int userid)
 
 void checkInterp(int userid)
 {
+    // minterp var - clamp to -1 if 0
+    int min_interp_ms           = GetConVarInt(stac_min_interp_ms);
+    if (min_interp_ms == 0)
+    {
+        min_interp_ms = -1;
+    }
+
+    // maxterp var - clamp to -1 if 0
+    int max_interp_ms           = GetConVarInt(stac_max_interp_ms);
+    if (max_interp_ms == 0)
+    {
+        max_interp_ms = -1;
+    }
+
+
+
     int cl = GetClientOfUserId(userid);
     // lerp check - we check the netprop
     // don't check if not default tickrate
     if (isDefaultTickrate())
     {
         float lerp = GetEntPropFloat(cl, Prop_Data, "m_fLerpTime") * 1000;
-        if (DEBUG)
+        if (stac_debug.BoolValue)
         {
             StacLog("%.2f ms interp on %N", lerp, cl);
         }
@@ -337,7 +354,7 @@ void checkInterp(int userid)
             char lerpStr[16];
             FloatToString(lerp, lerpStr, sizeof(lerpStr));
             oobVarsNotify(userid, "m_fLerpTime", lerpStr);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -381,7 +398,7 @@ void cheevCheck(int userid, int achieve_id)
         // uid for passing to GenPlayerNotify
         StacLogSteam(userid);
 
-        if (banForMiscCheats)
+        if (stac_ban_for_misccheats.BoolValue)
         {
             PrintToImportant("{hotpink}[StAC] {white} User %N earned BOGUS achievement ID %i (hex %X)", cl, achieve_id, achieve_id);
             char reason[128];
