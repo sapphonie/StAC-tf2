@@ -577,7 +577,7 @@ void cmdnumspikeCheck(int cl)
 
     int spikeamt = clcmdnum[cl][0] - clcmdnum[cl][1];
     // https://github.com/sapphonie/StAC-tf2/issues/74
-    if (spikeamt >= 32 || spikeamt < 0)
+    if (spikeamt >= 32 || spikeamt <= -32)
     {
         int userid = GetClientUserId(cl);
 
