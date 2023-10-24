@@ -3,6 +3,9 @@
 #endif
 #define _stvmngr_included
 
+#pragma semicolon 1
+#pragma newdecls required
+
 // Some guidelines from the SDK about director camera shot durations
 #define MIN_SHOT_LENGTH				4.0  // minimum time of a cut (seconds)
 #define MAX_SHOT_LENGTH				8.0  // maximum time of a cut (seconds)

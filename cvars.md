@@ -1,12 +1,5 @@
 ## Cvars
 
-// [StAC] enable/disable plugin (setting this to 0 immediately unloads stac)
-// (recommended 1)
-// -
-// Default: "1"
-// Minimum: "0.000000"
-// Maximum: "1.000000"
-stac_enabled "1"
 
 // [StAC] enable/disable showing verbose info about players' cvars and other similar info in admin and server console
 // (recommended 0 unless you want spam in console)
@@ -151,13 +144,6 @@ stac_log_to_file "1"
 // Maximum: "1.000000"
 stac_fixpingmasking_enabled "1"
 
-// [StAC] forcibly reconnect clients unauthorized with steam - this protects against cheat clients not setting steamids, at the cost of making your server inaccessible when Steam is down.
-// (recommended 0, only enable this if you have consistent issues with unauthed cheaters!)
-// -
-// Default: "0"
-// Minimum: "0.000000"
-// Maximum: "1.000000"
-stac_kick_unauthed_clients "0"
 
 // [StAC] if this cvar is 0 (default), StAC will print detections to admins with sm_ban access and to SourceTV, if it exists.
 // if this cvar is 1, it will print only to SourceTV.

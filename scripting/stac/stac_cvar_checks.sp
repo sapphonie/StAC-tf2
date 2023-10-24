@@ -101,7 +101,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     }
     int userid = GetClientUserId(cl);
 
-    if (DEBUG)
+    if (stac_debug.BoolValue)
     {
         StacLog("Checked cvar %s value %s on %N", cvarName, cvarValue, cl);
     }
@@ -122,12 +122,12 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "sv_cheats"))
     {
         // if we're ignoring sv_cheats being on, obviously don't check this cvar
-        if (configsExecuted && !ignore_sv_cheats)
+        if (configsExecuted && !stac_work_with_sv_cheats.BoolValue)
         {
             if (StringToInt(cvarValue) != 0)
             {
                 oobVarsNotify(userid, cvarName, cvarValue);
-                if (banForMiscCheats)
+                if (stac_ban_for_misccheats.BoolValue)
                 {
                     oobVarBan(userid);
                 }
@@ -142,7 +142,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         if (StringToInt(cvarValue) != 1)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -158,7 +158,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         if (fovDesired < 20 || fovDesired > 90)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -173,7 +173,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         if (clcmdrate < 10)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -187,7 +187,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         if (StringToInt(cvarValue) != 1)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -201,7 +201,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         if (StringToInt(cvarValue) != 0)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -215,7 +215,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         if (StringToInt(cvarValue) != 0)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -229,7 +229,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         if (StringToInt(cvarValue) != 1)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -243,7 +243,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         if (StringToInt(cvarValue) != 0)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -258,7 +258,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         if (StringToInt(cvarValue) != 0)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -272,7 +272,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         if (StringToFloat(cvarValue) != timescale)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 oobVarBan(userid);
             }
@@ -297,7 +297,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
                 userid,
                 fmtmsg
             );
-            if (banForMiscCheats)
+            if (stac_ban_for_misccheats.BoolValue)
             {
                 KickClient(cl, "#GameUI_ServerInsecure");
             }
@@ -339,7 +339,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     if (result != ConVarQuery_NotFound && IsCheatOnlyVar(cvarName))
     {
         illegalVarsNotify(userid, cvarName);
-        if (banForMiscCheats)
+        if (stac_ban_for_misccheats.BoolValue)
         {
             illegalVarBan(userid);
         }
@@ -496,13 +496,13 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
     {
         if (!hasWaitedForCvarCheck[cl])
         {
-            if (DEBUG)
+            if (stac_debug.BoolValue)
             {
                 StacLog("Client %N can't be checked because they haven't waited 60 seconds for their first cvar check!", cl);
             }
             return Plugin_Continue;
         }
-        if (DEBUG)
+        if (stac_debug.BoolValue)
         {
             StacLog("Checking client id, %i, %L", cl, cl);
         }
@@ -515,7 +515,10 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
         QueryTimer[cl] =
         CreateTimer
         (
-            float_rand(minRandCheckVal, maxRandCheckVal),
+            float_rand
+            (
+                stac_min_randomcheck_secs.FloatValue, stac_max_randomcheck_secs.FloatValue
+            ),
             Timer_CheckClientConVars,
             userid
         );
@@ -589,7 +592,7 @@ Action Timer_QueryNextCvar(Handle timer, DataPack pack)
 // expensive!
 void QueryEverythingAllClients()
 {
-    if (DEBUG)
+    if (stac_debug.BoolValue)
     {
         StacLog("Querying all clients");
     }

@@ -2,80 +2,16 @@
 
 /********** STAC CONVAR RELATED STUFF **********/
 
-void initCvars()
+void initUsercmdCvars()
 {
-    AutoExecConfig_SetFile("stac");
-    AutoExecConfig_SetCreateFile(true);
-
-    char buffer[16];
-
-    // plugin enabled
-    stac_enabled =
-    AutoExecConfig_CreateConVar
-    (
-        "stac_enabled",
-        "1",
-        "[StAC] enable/disable plugin (setting this to 0 immediately unloads stac)\n\
-        (recommended 1)",
-        FCVAR_NONE,
-        true,
-        0.0,
-        true,
-        1.0
-    );
-    //SetConVarFlags(stac_enabled, FCVAR_NONE);
-    HookConVarChange(stac_enabled, setStacVars);
-
-    // verbose mode
-    if (DEBUG)
-    {
-        buffer = "1";
-    }
-    else
-    {
-        buffer = "0";
-    }
-    stac_verbose_info =
-    AutoExecConfig_CreateConVar
-    (
-        "stac_verbose_info",
-        buffer,
-        "[StAC] enable/disable showing verbose info about players' cvars and other similar info in admin and server console\n\
-        (recommended 0 unless you want spam in console)",
-        FCVAR_NONE,
-        true,
-        0.0,
-        true,
-        1.0
-    );
-    HookConVarChange(stac_verbose_info, setStacVars);
-
-    // ban duration
-    IntToString(banDuration, buffer, sizeof(buffer));
-    stac_ban_duration =
-    AutoExecConfig_CreateConVar
-    (
-        "stac_ban_duration",
-        buffer,
-        "[StAC] ban duration that StAC will use upon banning cheating clients. 0 = permanent.\n\
-        (recommended 0)",
-        FCVAR_NONE,
-        true,
-        0.0,
-        false,
-        _
-    );
-    HookConVarChange(stac_verbose_info, setStacVars);
-
     // turn seconds
-    FloatToString(maxAllowedTurnSecs, buffer, sizeof(buffer));
     stac_max_allowed_turn_secs =
     AutoExecConfig_CreateConVar
     (
         "stac_max_allowed_turn_secs",
-        buffer,
+        "-1.0",
         "[StAC] maximum allowed time in seconds before client is autokicked for using turn binds (+right/+left inputs).\n\
-        -1 to disable autokicking, 0 instakicks\n\
+        -1.0 to disable autokicking, 0 instakicks\n\
         (recommended -1.0 unless you're using this in a competitive setting)",
         FCVAR_NONE,
         true,
@@ -83,23 +19,14 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_allowed_turn_secs, setStacVars);
 
-    // cheatvars ban bool
-    if (banForMiscCheats)
-    {
-        buffer = "1";
-    }
-    else
-    {
-        buffer = "0";
-    }
-    stac_ban_for_misccheats =
+    stac_generic_ban_msgs =
     AutoExecConfig_CreateConVar
     (
-        "stac_ban_for_misccheats",
-        buffer,
-        "[StAC] ban clients for non usercommand based cheats, aka cheat locked cvars, netprops, invalid names, invalid chat characters, etc.\n\
+        "stac_generic_ban_msgs",
+        "1",
+        "[StAC] Use a generic message when banning clients - this goes in SourceBans, chat, and other public places, but it does NOT change your logs.\n\
+        You should almost always leave this alone.\n\
         (recommended 1)",
         FCVAR_NONE,
         true,
@@ -107,75 +34,45 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_ban_for_misccheats, setStacVars);
-
-    // cheatvars ban bool
-    if (optimizeCvars)
-    {
-        buffer = "1";
-    }
-    else
-    {
-        buffer = "0";
-    }
-    stac_optimize_cvars =
-    AutoExecConfig_CreateConVar
-    (
-        "stac_optimize_cvars",
-        buffer,
-        "[StAC] optimize cvars related to patching \"server laggers\", patching backtracking, mostly patching doubletap, limiting fakelag, patching any possible tele expoits, etc.\n\
-        (recommended 1)",
-        FCVAR_NONE,
-        true,
-        0.0,
-        true,
-        1.0
-    );
-    HookConVarChange(stac_optimize_cvars, setStacVars);
 
     // aimsnap detections
-    IntToString(maxAimsnapDetections, buffer, sizeof(buffer));
     stac_max_aimsnap_detections =
     AutoExecConfig_CreateConVar
     (
         "stac_max_aimsnap_detections",
-        buffer,
+        "10",
         "[StAC] maximum aimsnap detections before banning a client.\n\
         -1 to disable even checking angles (saves cpu), 0 to print to admins/stv but never ban.\n\
-        (recommended 20 or higher)",
+        (recommended 10 or higher)",
         FCVAR_NONE,
         true,
         -1.0,
         false,
         _
     );
-    HookConVarChange(stac_max_aimsnap_detections, setStacVars);
 
     // psilent detections
-    IntToString(maxPsilentDetections, buffer, sizeof(buffer));
     stac_max_psilent_detections =
     AutoExecConfig_CreateConVar
     (
         "stac_max_psilent_detections",
-        buffer,
+        "10",
         "[StAC] maximum silent aim/norecoil detections before banning a client.\n\
         -1 to disable even checking angles (saves cpu), 0 to print to admins/stv but never ban.\n\
-        (recommended 15 or higher)",
+        (recommended 10 or higher)",
         FCVAR_NONE,
         true,
         -1.0,
         false,
         _
     );
-    HookConVarChange(stac_max_psilent_detections, setStacVars);
 
     // bhop detections
-    IntToString(maxBhopDetections, buffer, sizeof(buffer));
     stac_max_bhop_detections =
     AutoExecConfig_CreateConVar
     (
         "stac_max_bhop_detections",
-        buffer,
+        "10",
         "[StAC] maximum consecutive bhop detections on a client before they get \"antibhopped\", aka they get their gravity set to 8x.\n\
         client will get banned on this value + 2 (meaning they did 2 more perfect bhops on 8x gravity), so for default cvar settings, client will get banned on 12 tick perfect bhops.\n\
         ctrl + f for \"antibhop\" in stac.sp for more detailed info.\n\
@@ -187,15 +84,13 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_bhop_detections, setStacVars);
 
     // fakeang detections
-    IntToString(maxFakeAngDetections, buffer, sizeof(buffer));
     stac_max_fakeang_detections =
     AutoExecConfig_CreateConVar
     (
         "stac_max_fakeang_detections",
-        buffer,
+        "5",
         "[StAC] maximum fake angle / wrong / OOB angle detections before banning a client.\n\
         -1 to disable even checking angles (saves cpu), 0 to print to admins/stv but never ban\n\
         (recommended 5)",
@@ -205,15 +100,13 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_fakeang_detections, setStacVars);
 
     // cmdnum spike detections
-    IntToString(maxCmdnumDetections, buffer, sizeof(buffer));
     stac_max_cmdnum_detections =
     AutoExecConfig_CreateConVar
     (
         "stac_max_cmdnum_detections",
-        buffer,
+        "20",
         "[StAC] maximum cmdnum spikes a client can have before getting banned.\n\
         lmaobox does this with nospread on certain weapons, other cheats utilize it for other stuff, like sequence breaking on nullcore.\n\
         legit users should never ever trigger this!\n\
@@ -224,15 +117,13 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_cmdnum_detections, setStacVars);
 
     // triggerbot detections
-    IntToString(maxTbotDetections, buffer, sizeof(buffer));
     stac_max_tbot_detections =
     AutoExecConfig_CreateConVar
     (
         "stac_max_tbot_detections",
-        buffer,
+        "0",
         "[StAC] maximum triggerbot detections before banning a client. This can, has, and will pick up clients using macro software as well as run of the mill cheaters.\n\
         This check also DOES NOT RUN if the wait command is enabled on your server, as wait allows in-game macroing, making this a nonsensical check in that case.\n\
         defaults 0 - aka, it never bans, only logs.\n\
@@ -243,15 +134,13 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_tbot_detections, setStacVars);
 
     // invalid usercmds
-    IntToString(maxInvalidUsercmdDetections, buffer, sizeof(buffer));
     stac_max_invalid_usercmd_detections =
     AutoExecConfig_CreateConVar
     (
         "stac_max_invalid_usercmd_detections",
-        buffer,
+        "5",
         "[StAC] maximum invalid usercmds a client can send before getting banned. This detects poorly coded cheats sending invalid data in their inputs to the server.\n\
         -1 to disable even checking for invalid usercmds (saves cpu), 0 to print to admins/stv but never ban.\n\
         (recommended 5)",
@@ -261,15 +150,78 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_invalid_usercmd_detections, setStacVars);
+}
+
+
+void initCvars()
+{
+    AutoExecConfig_SetFile("stac");
+    AutoExecConfig_SetCreateFile(true);
+
+
+    stac_debug =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_debug",
+        "0",
+        "[StAC] enable/disable showing verbose info about players' cvars and other similar info in admin and server console\n\
+        (recommended 0 unless you want spam in console)",
+        FCVAR_NONE,
+        true,
+        0.0,
+        true,
+        1.0
+    );
+
+    stac_ban_for_misccheats =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_ban_for_misccheats",
+        "1",
+        "[StAC] ban clients for non usercommand based cheats, aka cheat locked cvars, netprops, invalid names, invalid chat characters, etc.\n\
+        (recommended 1)",
+        FCVAR_NONE,
+        true,
+        0.0,
+        true,
+        1.0
+    );
+
+    stac_ban_duration = 
+    AutoExecConfig_CreateConVar
+    (
+        "stac_ban_duration",
+        "0",
+        "[StAC] ban duration that StAC will use upon banning cheating clients. 0 = permanent.\n\
+        (recommended 0)",
+        FCVAR_NONE,
+        true,
+        0.0,
+        false,
+        _
+    );
+
+
+    stac_optimize_cvars =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_optimize_cvars",
+        "1",
+        "[StAC] optimize cvars related to patching \"server laggers\", patching backtracking, mostly patching doubletap, limiting fakelag, patching any possible tele expoits, etc.\n\
+        (recommended 1)",
+        FCVAR_NONE,
+        true,
+        0.0,
+        true,
+        1.0
+    );
 
     // min interp
-    IntToString(min_interp_ms, buffer, sizeof(buffer));
     stac_min_interp_ms =
     AutoExecConfig_CreateConVar
     (
         "stac_min_interp_ms",
-        buffer,
+        "-1.0",
         "[StAC] minimum interp (lerp) in milliseconds that a client is allowed to have before getting autokicked. set this to -1 to disable having a min interp\n\
         (recommended -1.0, but if you want to enable it, feel free. interp values below 15.1515151 ms don't seem to have any noticable effects on anything meaningful)",
         FCVAR_NONE,
@@ -278,15 +230,13 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_min_interp_ms, setStacVars);
 
     // min interp
-    IntToString(max_interp_ms, buffer, sizeof(buffer));
     stac_max_interp_ms =
     AutoExecConfig_CreateConVar
     (
         "stac_max_interp_ms",
-        buffer,
+        "101.0",
         "[StAC] maximum interp (lerp) in milliseconds that a client is allowed to have before getting autokicked. set this to -1 to disable having a max interp\n\
         (recommended 101.0)",
         FCVAR_NONE,
@@ -295,15 +245,13 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_interp_ms, setStacVars);
 
     // min random check secs
-    FloatToString(minRandCheckVal, buffer, sizeof(buffer));
     stac_min_randomcheck_secs =
     AutoExecConfig_CreateConVar
     (
         "stac_min_randomcheck_secs",
-        buffer,
+        "60.0",
         "[StAC] check AT LEAST this often in seconds for clients with violating cvar values/netprops\n\
         (recommended 60)",
         FCVAR_NONE,
@@ -312,15 +260,13 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_min_randomcheck_secs, setStacVars);
 
     // min random check secs
-    FloatToString(maxRandCheckVal, buffer, sizeof(buffer));
     stac_max_randomcheck_secs =
     AutoExecConfig_CreateConVar
     (
         "stac_max_randomcheck_secs",
-        buffer,
+        "300.0",
         "[StAC] check AT MOST this often in seconds for clients with violating cvar values/netprops\n\
         (recommended 300)",
         FCVAR_NONE,
@@ -329,22 +275,12 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_randomcheck_secs, setStacVars);
 
-    // demoname in ban reason
-    if (demonameInBanReason)
-    {
-        buffer = "1";
-    }
-    else
-    {
-        buffer = "0";
-    }
     stac_include_demoname_in_banreason =
     AutoExecConfig_CreateConVar
     (
         "stac_include_demoname_in_banreason",
-        buffer,
+        "1",
         "[StAC] enable/disable putting the currently recording demo in the SourceBans / gbans ban reason\n\
         (recommended 1)",
         FCVAR_NONE,
@@ -353,22 +289,12 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_include_demoname_in_banreason, setStacVars);
 
-    // log to file
-    if (logtofile)
-    {
-        buffer = "1";
-    }
-    else
-    {
-        buffer = "0";
-    }
     stac_log_to_file =
     AutoExecConfig_CreateConVar
     (
         "stac_log_to_file",
-        buffer,
+        "1",
         "[StAC] enable/disable logging to file\n\
         (recommended 1)",
         FCVAR_NONE,
@@ -377,22 +303,12 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_log_to_file, setStacVars);
 
-    // fixpingmasking
-    if (fixpingmasking)
-    {
-        buffer = "1";
-    }
-    else
-    {
-        buffer = "0";
-    }
     stac_fixpingmasking_enabled =
     AutoExecConfig_CreateConVar
     (
         "stac_fixpingmasking_enabled",
-        buffer,
+        "1",
         "[StAC] enable fixing clients \"pingmasking\". this also allows StAC to ban cheating clients attempting to reduce their reported ping.\n\
         (recommended 1)",
         FCVAR_NONE,
@@ -401,39 +317,12 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_fixpingmasking_enabled, setStacVars);
 
-    // reconnect unauthed clients
-    if (kickUnauth)
-    {
-        buffer = "1";
-    }
-    else
-    {
-        buffer = "0";
-    }
-    stac_kick_unauthed_clients =
-    AutoExecConfig_CreateConVar
-    (
-        "stac_kick_unauthed_clients",
-        buffer,
-        "[StAC] forcibly reconnect clients unauthorized with steam - this protects against cheat clients not setting steamids, at the cost of making your server inaccessible when Steam is down.\n\
-        (recommended 0, only enable this if you have consistent issues with unauthed cheaters!)",
-        FCVAR_NONE,
-        true,
-        0.0,
-        true,
-        1.0
-    );
-    HookConVarChange(stac_kick_unauthed_clients, setStacVars);
-
-    // shut up!
-    IntToString(silent, buffer, sizeof(buffer));
     stac_silent =
     AutoExecConfig_CreateConVar
     (
         "stac_silent",
-        buffer,
+        "0",
         "[StAC] if this cvar is 0 (default), StAC will print detections to admins with sm_ban access and to SourceTV, if it exists.\n\
         if this cvar is 1, it will print only to SourceTV.\n\
         if this cvar is 2, StAC never print anything in chat to anyone, ever.\n\
@@ -445,15 +334,13 @@ void initCvars()
         true,
         2.0
     );
-    HookConVarChange(stac_silent, setStacVars);
 
     // max connections from the same ip
-    IntToString(maxip, buffer, sizeof(buffer));
     stac_max_connections_from_ip =
     AutoExecConfig_CreateConVar
     (
         "stac_max_connections_from_ip",
-        buffer,
+        "0",
         "[StAC] max connections allowed from the same IP address. useful for autokicking bots, though StAC should do that with cvar checks anyway.\n\
         (recommended 0, you should really only enable this if you're getting swarmed by bots, and StAC isn't doing much against them, in which case, consider opening a bug report!)",
         FCVAR_NONE,
@@ -462,15 +349,12 @@ void initCvars()
         false,
         _
     );
-    HookConVarChange(stac_max_connections_from_ip, setStacVars);
 
-    // work with sv_cheats
-    IntToString(ignore_sv_cheats, buffer, sizeof(buffer));
     stac_work_with_sv_cheats =
     AutoExecConfig_CreateConVar
     (
         "stac_work_with_sv_cheats",
-        buffer,
+        "0",
         "[StAC] allow StAC to work when sv_cheats is 1. WARNING; you might get false positives, and I will not provide support for servers running this cvar!\n\
         (recommended 0)",
         FCVAR_NONE,
@@ -479,115 +363,18 @@ void initCvars()
         true,
         1.0
     );
-    HookConVarChange(stac_work_with_sv_cheats, setStacVars);
 
 
+    initUsercmdCvars();
     // actually exec the cfg after initing cvars lol
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
-    setStacVars(null, "", "");
 }
 
-void setStacVars(ConVar convar, const char[] oldValue, const char[] newValue)
-{
-    // this regrabs all cvar values but it's neater than having two similar functions that do the same thing
-    // now covers late loads
-
-    // enabled var
-    if (!GetConVarBool(stac_enabled))
-    {
-        //SetConVarFlags(stac_enabled, FCVAR_NOTIFY);
-        OnPluginEnd();
-        SetFailState("[StAC] stac_enabled is set to 0 - aborting!");
-    }
-
-    // ban duration var
-    banDuration             = GetConVarInt(stac_ban_duration);
-
-    // verbose info var
-    DEBUG                   = GetConVarBool(stac_verbose_info);
-
-    // turn seconds var
-    maxAllowedTurnSecs      = GetConVarFloat(stac_max_allowed_turn_secs);
-    if (maxAllowedTurnSecs < 0.0 && maxAllowedTurnSecs != -1.0)
-    {
-        maxAllowedTurnSecs = 0.0;
-    }
-
-    // misccheats
-    banForMiscCheats        = GetConVarBool(stac_ban_for_misccheats);
-
-    // optimizecvars
-    optimizeCvars           = GetConVarBool(stac_optimize_cvars);
-    if (optimizeCvars)
-    {
-        EngineSanityChecks();
-        RunOptimizeCvars();
-    }
-
-    // aimsnap var
-    maxAimsnapDetections    = GetConVarInt(stac_max_aimsnap_detections);
-
-    // psilent var
-    maxPsilentDetections    = GetConVarInt(stac_max_psilent_detections);
-
-    // bhop var
-    maxBhopDetections       = GetConVarInt(stac_max_bhop_detections);
-
-    // fakeang var
-    maxFakeAngDetections    = GetConVarInt(stac_max_fakeang_detections);
-
-    // cmdnum spikes var
-    maxCmdnumDetections     = GetConVarInt(stac_max_cmdnum_detections);
-
-    // tbot var
-    maxTbotDetections       = GetConVarInt(stac_max_tbot_detections);
-
-    // invalid usercmds var
-    maxInvalidUsercmdDetections = GetConVarInt(stac_max_invalid_usercmd_detections);
-
-    // minterp var - clamp to -1 if 0
-    min_interp_ms           = GetConVarInt(stac_min_interp_ms);
-    if (min_interp_ms == 0)
-    {
-        min_interp_ms = -1;
-    }
-
-    // maxterp var - clamp to -1 if 0
-    max_interp_ms           = GetConVarInt(stac_max_interp_ms);
-    if (max_interp_ms == 0)
-    {
-        max_interp_ms = -1;
-    }
-
-    // min check sec var
-    minRandCheckVal         = GetConVarFloat(stac_min_randomcheck_secs);
-
-    // max check sec var
-    maxRandCheckVal         = GetConVarFloat(stac_max_randomcheck_secs);
-
-    // log to file
-    logtofile               = GetConVarBool(stac_log_to_file);
-
-    // properly fix pingmasking
-    fixpingmasking          = GetConVarBool(stac_fixpingmasking_enabled);
-
-    // kick unauthed clients
-    kickUnauth              = GetConVarBool(stac_kick_unauthed_clients);
-
-    // silent mode
-    silent                  = GetConVarInt(stac_silent);
-
-    // max conns from same ip
-    maxip                   = GetConVarInt(stac_max_connections_from_ip);
-
-    // should stac work with sv_cheats or not
-    ignore_sv_cheats        = GetConVarBool(stac_work_with_sv_cheats);
-}
 
 public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    if (configsExecuted && !ignore_sv_cheats && convar == FindConVar("sv_cheats") && StringToInt(newValue) != 0)
+    if (configsExecuted && !stac_work_with_sv_cheats.BoolValue && convar == FindConVar("sv_cheats") && StringToInt(newValue) != 0)
     {
         OnPluginEnd();
         SetFailState("[StAC] sv_cheats set to 1! Aborting!");

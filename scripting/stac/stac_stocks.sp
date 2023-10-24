@@ -25,8 +25,11 @@ void OpenStacLog()
     if (!DirExists(path, false))
     {
         LogMessage("[StAC] StAC directory not extant! Creating...");
-        // 511 = unix 775 ?
-        if (!CreateDirectory(path, 511, false))
+        // chmod perms - rwxrwxr-x . it needs to be octal.
+        // yes I could use the FPERM flags but pawn doesn't have constexpr and i don't want to make a mess
+        // with a bunch of ORs and not being able to check it in my IDE
+        static int perms = 0o775;
+        if (!CreateDirectory(path, perms, false))
         {
             LogMessage("[StAC] StAC directory could not be created!");
         }
@@ -47,15 +50,19 @@ void CloseStacLog()
 }
 
 // log to StAC log file
+// This strips color strings, e.g.
+// {color}test{color2}
+// will become
+// test
 void StacLog(const char[] format, any ...)
 {
     // crutch for reloading the plugin and still printing to our log file
     if (StacLogFile == null)
     {
-        ConVar temp_staclogtofile = FindConVar("stac_log_to_file");
-        if (temp_staclogtofile != null)
+        stac_log_to_file = FindConVar("stac_log_to_file");
+        if (stac_log_to_file != null)
         {
-            if (GetConVarBool(temp_staclogtofile))
+            if (stac_log_to_file.BoolValue)
             {
                 OpenStacLog();
             }
@@ -80,6 +87,8 @@ void StacLog(const char[] format, any ...)
     char colored_buffer[254];
     strcopy(colored_buffer, sizeof(colored_buffer), buffer);
 
+    // strip out any instances of "[StAC] " at the front of the string so we don't get double instances of it later
+    ReplaceStringEx(colored_buffer, sizeof(colored_buffer), "[StAC] ", "", 7, -1, true);
 
     if (StrEqual(os, "linux"))
     {
@@ -393,25 +402,39 @@ bool IsValidSrcTV(int client)
 
 /********** MISC FUNCS **********/
 
-void BanUser(int userid, char[] reason, char[] pubreason)
+void BanUser(int userid, char reason[128], char pubreason[256])
 {
     int cl = GetClientOfUserId(userid);
 
     // prevent double bans
     if (userBanQueued[cl])
     {
-        KickClient(cl, "Banned by StAC");
+        KickClient(cl, "Banned from server");
         return;
     }
 
     StacNotify(userid, reason);
+    
+    char cleaned_pubreason[256];
+    if ( stac_generic_ban_msgs.BoolValue )
+    {
+        Format(reason,              sizeof(reason),             "%t", "GenericBanMsg", cl);
+        Format(cleaned_pubreason,   sizeof(cleaned_pubreason),  "%t", "GenericBanAllChat", cl);
+    }
+    else
+    {
+        strcopy(cleaned_pubreason, sizeof(cleaned_pubreason), pubreason);
+    }
+
     // make sure we dont detect on already banned players
     userBanQueued[cl] = true;
 
     // check if client is authed before banning normally
     bool isAuthed = IsClientAuthorized(cl);
 
-    if (demonameInBanReason && SourceTV_IsRecording() && GetDemoName())
+    int banDuration = stac_ban_duration.IntValue;
+
+    if (stac_include_demoname_in_banreason.BoolValue && SourceTV_IsRecording() && GetDemoName())
     {
         char demoname_plus[256];
         strcopy(demoname_plus, sizeof(demoname_plus), demoname);
@@ -466,7 +489,7 @@ void BanUser(int userid, char[] reason, char[] pubreason)
         // KickClient(cl, "%s", reason);
     }
 
-    MC_PrintToChatAll("%s", pubreason);
+    MC_PrintToChatAll("%s", cleaned_pubreason);
     StacLog("%s", pubreason);
 }
 
@@ -588,11 +611,11 @@ void PrintToImportant(const char[] format, any ...)
 
         if
         (
-            (silent == -1 && (IsValidClient(i) || IsValidSrcTV(i)))
+            (stac_silent.IntValue == -1 && (IsValidClient(i) || IsValidSrcTV(i)))
             ||
-            (silent == 0 && (IsValidAdmin(i) || IsValidSrcTV(i)))
+            (stac_silent.IntValue == 0 && (IsValidAdmin(i) || IsValidSrcTV(i)))
             ||
-            (silent == 1 && IsValidSrcTV(i))
+            (stac_silent.IntValue == 1 && IsValidSrcTV(i))
         )
         {
             SetGlobalTransTarget(i);

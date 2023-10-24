@@ -13,7 +13,7 @@ public void OnMapStart()
     OpenStacLog();
     DoTPSMath();
     ResetTimers();
-    if (optimizeCvars)
+    if (stac_optimize_cvars.BoolValue)
     {
         RunOptimizeCvars();
     }
@@ -58,7 +58,7 @@ Action checkNativesEtc(Handle timer)
     }
 
     // check sv cheats
-    if (!ignore_sv_cheats)
+    if ( !stac_work_with_sv_cheats.BoolValue )
     {
         if (GetConVarBool(FindConVar("sv_cheats")))
         {
@@ -133,7 +133,7 @@ void ResetTimers()
         {
             int userid = GetClientUserId(cl);
 
-            if (DEBUG)
+            if (stac_debug.BoolValue)
             {
                 StacLog("Creating timer for %L", cl);
             }
@@ -143,8 +143,8 @@ void ResetTimers()
             (
                 GetRandomFloat
                 (
-                    minRandCheckVal,
-                    maxRandCheckVal
+                    stac_min_randomcheck_secs.FloatValue,
+                    stac_max_randomcheck_secs.FloatValue
                 ),
                 Timer_CheckClientConVars,
                 userid
@@ -163,7 +163,7 @@ Action getIP(Handle timer)
     SteamWorks_GetPublicIP(sw_ip);
     Format(hostipandport, sizeof(hostipandport), "%i.%i.%i.%i:%s", sw_ip[0], sw_ip[1], sw_ip[2], sw_ip[3], hostport);
 
-    if (DEBUG)
+    if (stac_debug.BoolValue)
     {
         StacLog("Server IP + Port = %s", hostipandport);
     }
@@ -180,7 +180,7 @@ void DoTPSMath()
     //static int maxAheadSeconds = 5;
     //itps_maxaheadsecs = ( itps * maxAheadSeconds );
 
-    if (DEBUG)
+    if (stac_debug.BoolValue)
     {
         StacLog("tickinterv %f, tps %f, itps %i", tickinterv, tps, itps);
     }
