@@ -29,6 +29,9 @@
 #endif
 #define _sourcebanspp_included
 
+#pragma semicolon 1
+#pragma newdecls required
+
 public SharedPlugin __pl_sourcebanspp =
 {
 	name = "sourcebans++",
