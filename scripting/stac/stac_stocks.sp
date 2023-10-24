@@ -409,7 +409,7 @@ void BanUser(int userid, char reason[128], char pubreason[256])
     char cleaned_pubreason[256];
     if ( stac_generic_ban_msgs.BoolValue )
     {
-        Format(reason,              sizeof(reason),             "%t", "GenericBanAllChat", cl);
+        Format(reason,              sizeof(reason),             "%t", "GenericBanMsg", cl);
         Format(cleaned_pubreason,   sizeof(cleaned_pubreason),  "%t", "GenericBanAllChat", cl);
     }
     else

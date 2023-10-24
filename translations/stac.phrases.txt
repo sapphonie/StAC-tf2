@@ -9,6 +9,10 @@
         "#format"    "{1:N}"
         "en"         "{hotpink}[StAC]{white} Player {1} was {palegreen}BANNED{white} for {mediumpurple}cheating{white}!"
     }
+    "GenericBanMsg"
+    {
+        "en"         "[StAC] Banned for cheating"
+    }
     /*
 
             ____  __      _                _
