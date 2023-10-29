@@ -606,8 +606,8 @@ void cmdnumspikeCheck(int cl)
         }
 
         // punish if we reach limit set by cvar
-        if (cmdnumSpikeDetects[cl] >= stac_max_fakeang_detections.IntValue
-        && stac_max_fakeang_detections.IntValue > 0)
+        if (cmdnumSpikeDetects[cl] >= stac_max_cmdnum_detections.IntValue
+        && stac_max_cmdnum_detections.IntValue > 0)
         {
             char reason[128];
             Format(reason, sizeof(reason), "%t", "cmdnumSpikesBanMsg", cmdnumSpikeDetects[cl]);
