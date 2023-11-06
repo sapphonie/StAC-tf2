@@ -269,22 +269,19 @@ void LiveFeed_NetInfo(int userid)
     }
 }
 
-
 bool IsValidLiveFeedViewer(int client)
 {
     if
     (
         // only show to admins that are dead or in spec
         (
-            IsValidClient(client)
-            /*
+            IsValidAdmin(client)
             &&
             (
                 TF2_GetClientTeam(client) == TFTeam_Spectator
-                ||
-                !IsPlayerAlive(client)
+                // ||
+                // !IsPlayerAlive(client)
             )
-            */
         )
         ||
         // and sourcetv
