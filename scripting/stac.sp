@@ -189,6 +189,10 @@ public void OnPluginStart()
 
 public void OnPluginEnd()
 {
+    // do this to make sure we don't try and fail to send discord messages if the server is restarting
+    // we need to use OnLibraryLoad/Unload eventually...
+    CheckNatives();
+
     StacLog("\n\n----> StAC version [%s] unloaded\n", PLUGIN_VERSION);
 
     MC_PrintToChatAll("{hotpink}StAC{white} version [%s] unloaded!!! If this wasn't intentional, something nefarious is afoot!", PLUGIN_VERSION);

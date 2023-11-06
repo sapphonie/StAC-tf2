@@ -50,8 +50,69 @@ public void OnMapEnd()
     CloseStacLog();
 }
 
+void CheckNatives()
+{
+    // check natives!
+
+    // sourcebans
+    if (GetFeatureStatus(FeatureType_Native, "SBPP_BanPlayer") == FeatureStatus_Available)
+    {
+        SOURCEBANS = true;
+    }
+    else
+    {
+        SOURCEBANS = false;
+    }
+
+
+    // materialadmin
+    if (GetFeatureStatus(FeatureType_Native, "MABanPlayer") == FeatureStatus_Available)
+    {
+        MATERIALADMIN = true;
+    }
+    else
+    {
+        MATERIALADMIN = false;
+    }
+
+
+    // gbans
+    if (CommandExists("gb_ban"))
+    {
+        GBANS = true;
+    }
+    else
+    {
+        GBANS = false;
+    }
+
+
+    // sourcemod aimplotter
+    if (CommandExists("sm_aimplot"))
+    {
+        AIMPLOTTER = true;
+    }
+    else
+    {
+        AIMPLOTTER = false;
+    }
+
+
+    // discord functionality
+    if (GetFeatureStatus(FeatureType_Native, "Discord_SendMessage") == FeatureStatus_Available)
+    {
+        DISCORD = true;
+    }
+    else
+    {
+        DISCORD = false;
+    }
+}
+
 Action checkNativesEtc(Handle timer)
 {
+    CheckNatives();
+
     if (!configsExecuted)
     {
         return Plugin_Handled;
@@ -82,34 +143,6 @@ Action checkNativesEtc(Handle timer)
     else
     {
         MVM = false;
-    }
-
-    // check natives!
-
-    // sourcebans
-    if (GetFeatureStatus(FeatureType_Native, "SBPP_BanPlayer") == FeatureStatus_Available)
-    {
-        SOURCEBANS = true;
-    }
-    // materialadmin
-    if (GetFeatureStatus(FeatureType_Native, "MABanPlayer") == FeatureStatus_Available)
-    {
-        MATERIALADMIN = true;
-    }
-    // gbans
-    if (CommandExists("gb_ban"))
-    {
-        GBANS = true;
-    }
-    // sourcemod aimplotter
-    if (CommandExists("sm_aimplot"))
-    {
-        AIMPLOTTER = true;
-    }
-    // discord functionality
-    if (GetFeatureStatus(FeatureType_Native, "Discord_SendMessage") == FeatureStatus_Available)
-    {
-        DISCORD = true;
     }
 
     return Plugin_Continue;
