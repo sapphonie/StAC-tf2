@@ -391,18 +391,17 @@ void bhopCheck(int cl)
         {
             int userid = GetClientUserId(cl);
             PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , cl, bhopDetects[cl]);
-            if (bhopDetects[cl] % 5 == 0)
-            {
-                StacNotify(userid, "consecutive tick perfect bhops", bhopDetects[cl]);
-            }
+            StacNotify(userid, "consecutive tick perfect bhops", bhopDetects[cl]);
             StacLogSteam(userid);
 
             if (bhopDetects[cl] >= stac_max_bhop_detections.IntValue)
             {
-                // punish on maxBhopDetections + 2 (for the extra TWO tick perfect bhops at 8x grav with no warning - no human can do this!)
+                static int extraHighGravHops = 3;
+                // punish on maxBhopDetections + extraHighGravHops for the extra TWO extraHighGravHops perfect bhops at 8x grav with no warning
+                // no human should ever be able to do this!
                 if
                 (
-                    (bhopDetects[cl] >= (stac_max_bhop_detections.IntValue + 2))
+                    (bhopDetects[cl] >= (stac_max_bhop_detections.IntValue + extraHighGravHops))
                     &&
                     !noban
                 )
@@ -421,10 +420,13 @@ void bhopCheck(int cl)
                 if (stac_max_bhop_detections.IntValue > 0)
                 {
                     /* ANTIBHOP */
-                    // set the player's gravity to 8x.
-                    // if idiot cheaters keep holding their spacebar for an extra second and do 2 tick perfect bhops WHILE at 8x gravity...
+                    // set the player's gravity to ~8x.
+                    // if idiot cheaters keep holding their spacebar for an extra second and do 3(ish) tick perfect bhops WHILE at ~8x gravity...
                     // ...we will catch them autohopping and ban them!
-                    SetEntityGravity(cl, 8.0);
+                    // we're doing a random float between 6.1 and 7.9 so we can try to avoid people trying to game the anticheat
+                    // as well as dispell any possible "oh i was just using a bhop script" complaints
+                    float newGrav = float_rand(6.1, 7.9);
+                    SetEntityGravity(cl, newGrav);
                     highGrav[cl] = true;
                 }
             }
