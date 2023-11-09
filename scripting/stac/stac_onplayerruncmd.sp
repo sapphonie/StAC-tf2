@@ -397,7 +397,7 @@ void bhopCheck(int cl)
             if (bhopDetects[cl] >= stac_max_bhop_detections.IntValue)
             {
                 static int extraHighGravHops = 3;
-                // punish on maxBhopDetections + extraHighGravHops for the extra TWO extraHighGravHops perfect bhops at 8x grav with no warning
+                // punish on maxBhopDetections + extraHighGravHops for the extraHighGravHops perfect bhops at 8x grav with no warning
                 // no human should ever be able to do this!
                 if
                 (
