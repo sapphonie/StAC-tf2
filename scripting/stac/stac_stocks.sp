@@ -49,11 +49,13 @@ void CloseStacLog()
     delete StacLogFile;
 }
 
-// log to StAC log file
-// This strips color strings, e.g.
-// {color}test{color2}
-// will become
-// test
+/*
+    log to StAC log file
+    This strips color strings, e.g.
+    {color}test{color2}
+    will become
+    [StAC] test
+*/
 void StacLog(const char[] format, any ...)
 {
     // crutch for reloading the plugin and still printing to our log file
