@@ -650,10 +650,10 @@ void cmdnumspikeCheck(int cl)
 
 // https://bitbashing.io/comparing-floats.html
 // DON'T use prec values above ~2, even ~1 was giving me weird issues
-bool floatcmpreal( float a, float b, float precision = 0.001 )
-{
-    return FloatAbs( a - b ) <= precision;
-}
+//bool floatcmpreal( float a, float b, float precision = 0.001 )
+//{
+//    return FloatAbs( a - b ) <= precision;
+//}
 
 void psilentCheck(int cl)
 {

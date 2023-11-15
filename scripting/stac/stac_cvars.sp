@@ -381,10 +381,10 @@ public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[
     }
 
     // set timescale so we don't ban clients if its not default
-    if (convar == FindConVar("host_timescale"))
-    {
-        timescale = GetConVarFloat(convar);
-    }
+    // if (convar == FindConVar("host_timescale"))
+    //{
+    //    timescale = GetConVarFloat(convar);
+    //}
 
     if (convar == FindConVar("sv_allow_wait_command"))
     {

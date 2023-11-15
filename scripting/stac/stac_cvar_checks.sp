@@ -261,7 +261,9 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     // used to bypass VAC: https://github.com/ValveSoftware/Source-1-Games/issues/3911
     else if (StrEqual(cvarName, "host_timescale"))
     {
-        if (StringToFloat(cvarValue) != timescale)
+        // floatcmpreal is just a ==
+        // if the values don't match, whack 'em
+        if ( !floatcmpreal(StringToFloat(cvarValue), host_timescale.FloatValue) )
         {
             oobVarsNotify(userid, cvarName, cvarValue);
             if (stac_ban_for_misccheats.BoolValue)

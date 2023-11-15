@@ -1266,6 +1266,14 @@ float float_rand(float min, float max)
     return min + scale * ( max - min ); /* [min, max] */
 }
 
+
+// https://bitbashing.io/comparing-floats.html
+// DON'T use prec values above ~2, even ~1 was giving me weird issues
+bool floatcmpreal( float a, float b, float precision = 0.001 )
+{
+    return FloatAbs( a - b ) <= precision;
+}
+
 // https://forums.alliedmods.net/showpost.php?p=2698561&postcount=2
 // STEAM_1:1:23456789 to 23456789
 /*
