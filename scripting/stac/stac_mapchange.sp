@@ -181,11 +181,7 @@ void ResetTimers()
             QueryTimer[cl] =
             CreateTimer
             (
-                GetRandomFloat
-                (
-                    stac_min_randomcheck_secs.FloatValue,
-                    stac_max_randomcheck_secs.FloatValue
-                ),
+                float_rand( stac_min_randomcheck_secs.FloatValue, stac_max_randomcheck_secs.FloatValue ),
                 Timer_CheckClientConVars,
                 userid
             );
