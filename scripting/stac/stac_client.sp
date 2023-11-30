@@ -44,8 +44,14 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
     strcopy(latestIP,       sizeof(latestIP),       ip);
     strcopy(latestSteamID,  sizeof(latestSteamID),  steamID);
 
-    static int threshold = 5;
 
+    if (!stac_prevent_connect_spam.BoolValue)
+    {
+        return true;
+    }
+
+    // TODO: does this need to be higher? or lower? or...?
+    static int threshold = 5;
     int connects;
     IPBuckets.GetValue(ip, connects); // 0 if not present
     connects++;
@@ -53,11 +59,14 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
     {
         rejectReason = "Rate limited.";
         
-        
         // BanIdentity(steamID, 60, BANFLAG_AUTHID, "");
         // BanIdentity(ip, 60, BANFLAG_IP, "");
 
-
+        // THE REASON we are doing this, is so that we hook into srcds's built in
+        // "firewall", basically, where with the default game banning system,
+        // srcds will ignore packets from banned ips.
+        // this prevents any clients from spamming, in a way that would otherwise not really be possible,
+        // without stupid memory hacks that would be overcomplicated anyway since this already exists
         if ( CommandExists("sm_banip") && CommandExists("sm_addban") )
         {
             ServerCommand("sm_addban 60 %s %s", steamID,    "Rate limited");
@@ -73,15 +82,21 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
     }
     IPBuckets.SetValue(ip, connects);
 
-
-    StacLog("-> connects from ip %s %i", ip, connects);
-
+    if (stac_debug.BoolValue)
+    {
+        StacLog("-> connects from ip %s %i", ip, connects);
+    }
 
     return true;
 }
 
 Action LeakIPConnectBucket(Handle timer)
 {
+    if (!stac_prevent_connect_spam.BoolValue)
+    {
+        return Plugin_Continue;
+    }
+
     StringMapSnapshot snap = IPBuckets.Snapshot();
     
     for (int i = 0; i < snap.Length; i++)
@@ -93,11 +108,17 @@ Action LeakIPConnectBucket(Handle timer)
         IPBuckets.GetValue(ip, connects); // 0 if not present per zero-init above
         connects--;
 
-        StacLog("-> connects from ip %s %i", ip, connects);
+        if (stac_debug.BoolValue)
+        {
+            StacLog("(LeakIPConnectBucket) connects from ip %s %i", ip, connects);
+        }
 
         if (connects <= 0)
         {
-            StacLog("-> connects from ip %s %i [ REMOVING ] ", ip, connects);
+            if (stac_debug.BoolValue)
+            {
+                StacLog("-> connects from ip %s %i [ REMOVING ] ", ip, connects);
+            }
 
             IPBuckets.Remove(ip);
             continue;
