@@ -52,7 +52,8 @@ int demotick = -1;
 
 // server cvar values
 bool waitStatus;
-float timescale;
+// float timescale;
+ConVar host_timescale;
 
 // time since some server event happened
 // time since the map started

@@ -1267,6 +1267,13 @@ float float_rand(float min, float max)
 }
 
 
+// https://bitbashing.io/comparing-floats.html
+// DON'T use prec values above ~2, even ~1 was giving me weird issues
+bool floatcmpreal( float a, float b, float precision = 0.001 )
+{
+    return FloatAbs( a - b ) <= precision;
+}
+
 
 bool KthBitOfN(int n, int k)
 {
@@ -1288,7 +1295,6 @@ int GetSRandomInt()
 
     return random;
 }
-
 
 
 // https://forums.alliedmods.net/showpost.php?p=2698561&postcount=2
