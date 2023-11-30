@@ -1274,6 +1274,29 @@ bool floatcmpreal( float a, float b, float precision = 0.001 )
     return FloatAbs( a - b ) <= precision;
 }
 
+
+bool KthBitOfN(int n, int k)
+{
+    int bit = (n >> k) & 1;
+    return !!bit;
+}
+
+
+// Signed version of GetURandomInt
+int GetSRandomInt()
+{
+    bool sign = KthBitOfN(GetURandomInt(), 0);
+    int random = GetURandomInt();
+
+    if (sign)
+    {
+        random = -random;
+    }
+
+    return random;
+}
+
+
 // https://forums.alliedmods.net/showpost.php?p=2698561&postcount=2
 // STEAM_1:1:23456789 to 23456789
 /*

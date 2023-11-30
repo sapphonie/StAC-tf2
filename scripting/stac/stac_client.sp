@@ -16,10 +16,17 @@
 // There is almost certainly no way to ever have a client ever trigger OCPCE -> EPC -> OCC out of order
 // But just in case we do a ton of checks
 
-
-
 static char latestIP        [16];
 static char latestSteamID   [MAX_AUTHID_LENGTH];
+
+StringMap IPBuckets = null;
+// runs on plugin start
+void SetUpIPConnectLeakyBucket()
+{
+    IPBuckets = new StringMap();
+    CreateTimer(5.0, LeakIPConnectBucket, _, TIMER_REPEAT);
+    IPBuckets.Clear();
+}
 
 // Fired before anything
 // CBaseServer::ConnectClient
@@ -37,7 +44,70 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
     strcopy(latestIP,       sizeof(latestIP),       ip);
     strcopy(latestSteamID,  sizeof(latestSteamID),  steamID);
 
+    static int threshold = 5;
+
+    int connects;
+    IPBuckets.GetValue(ip, connects); // 0 if not present
+    connects++;
+    if (connects >= threshold)
+    {
+        rejectReason = "Rate limited.";
+        
+        
+        // BanIdentity(steamID, 60, BANFLAG_AUTHID, "");
+        // BanIdentity(ip, 60, BANFLAG_IP, "");
+
+
+        if ( CommandExists("sm_banip") && CommandExists("sm_addban") )
+        {
+            ServerCommand("sm_addban 60 %s %s", steamID,    "Rate limited");
+            ServerCommand("sm_banip %s 60 %s",  ip,         "Rate limited");
+        }
+        else
+        {
+            ServerCommand("addip 60 %s", ip);
+            ServerCommand("banid 60 %s", steamID);
+        }
+
+        return false;
+    }
+    IPBuckets.SetValue(ip, connects);
+
+
+    StacLog("-> connects from ip %s %i", ip, connects);
+
+
     return true;
+}
+
+Action LeakIPConnectBucket(Handle timer)
+{
+    StringMapSnapshot snap = IPBuckets.Snapshot();
+    
+    for (int i = 0; i < snap.Length; i++)
+    {
+        char ip[32];
+        snap.GetKey(i, ip, sizeof(ip));
+
+        int connects;
+        IPBuckets.GetValue(ip, connects); // 0 if not present per zero-init above
+        connects--;
+
+        StacLog("-> connects from ip %s %i", ip, connects);
+
+        if (connects <= 0)
+        {
+            StacLog("-> connects from ip %s %i [ REMOVING ] ", ip, connects);
+
+            IPBuckets.Remove(ip);
+            continue;
+        }
+        IPBuckets.SetValue(ip, connects);
+    }
+
+    delete snap;
+
+    return Plugin_Continue;
 }
 
 // Fired after client is allowed thru connect ext
