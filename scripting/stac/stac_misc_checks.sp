@@ -171,10 +171,20 @@ public Action OnClientCommandKeyValues(int cl, KeyValues kv)
     {
         if (KvGetDataType(kv, NULL_STRING) == KvData_Int)
         {
-            // hack because KvGetNum doesn't just return a bool with an int&
-            int id = KvGetNum(kv, NULL_STRING, -123456789);
-            if (id != -123456789)
+            // randomize this once on plugin load so cheaters cant do clever things by using a constant we use
+            static int rand = 0;
+            if (rand == 0)
             {
+                rand = GetSRandomInt();
+            }
+
+            // hack because KvGetNum doesn't just return a bool with an int&
+            int id = KvGetNum(kv, NULL_STRING, rand);
+
+            // does this achiev id exist?
+            if (id != rand)
+            {
+                // yes? check the achievement id
                 int userid = GetClientUserId(cl);
                 cheevCheck(userid, id);
             }
