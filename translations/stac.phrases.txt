@@ -350,7 +350,7 @@
     "bogusAchieveBanAllChat"
     {
         "#format"   "{1:N}"
-        "en"        "{hotpink}[StAC]{white} Player {1} unlocked {mediumpurple}a invalid achievement{white}! {palegreen}BANNED from server!"
+        "en"        "{hotpink}[StAC]{white} Player {1} unlocked {mediumpurple}an invalid achievement{white}! {palegreen}BANNED from server!"
         "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) alcançou {mediumpurple}uma conquista inválida{white}! {palegreen}BANIDO(A) do servidor!"
         "en"        "{hotpink}[StAC]{white} 检测到玩家 {1} 解锁了 {mediumpurple}一个无效成就{white}! {palegreen}已被服务器封禁!"
         "es"        "{hotpink}[StAC]{white} El jugador {1} desbloqueo {mediumpurple}un logro invalido{white}! {palegreen}BANEADO del servidor!"
