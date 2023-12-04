@@ -92,7 +92,7 @@
     "bhopBanAllChat"
     {
         "#format"   "{1:N},{2:i}"
-        "en"        "{hotpink}[StAC]{white} Player {1} was using a {mediumpurple}bhop cheat/macro program{white}. Total consecutive bhops: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
+        "en"        "{hotpink}[StAC]{white} Player {1} was using a {mediumpurple}bhop cheat/macro{white}. Total consecutive bhops: {mediumpurple}{2}{white}. {palegreen}BANNED from server!"
         "da"        "{hotpink}[StAC]{white} Spiller {1} brugte {mediumpurple}bhopping{white} ved hjælp af et {mediumpurple}cheat program{white}. Total antal bhops: {mediumpurple}{2}{white}. {palegreen}BANNED fra serveren!"
         "ru"        "{hotpink}[StAC]{white} Игрок {1} использовал {mediumpurple}читы распрыжки{white}. Всего последовательных распрыжек: {mediumpurple}{2}{white}. {palegreen}ЗАБАНЕН с сервера!"
         "pt"        "{hotpink}[StAC]{white} O(A) jogador(a) {1} estava usando uma {mediumpurple}trapaça/macro de bhop{white}. Total de bhops consecutivos: {mediumpurple}{2}{white}. {palegreen}BANIDO(A) do servidor!"
