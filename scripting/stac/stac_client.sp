@@ -605,6 +605,8 @@ void ClearClBasedVars(int userid)
     cmdnumSpikeDetects      [cl] = 0;
     tbotDetects             [cl] = -1;
     invalidUsercmdDetects   [cl] = 0;
+    invalidWishVelDetects   [cl] = -1; // first detect is likely bunk
+    unsyncMoveDetects       [cl] = 0;
 
     // frames since client "did something"
     //                      [ client index ][history]
@@ -641,6 +643,15 @@ void ClearClBasedVars(int userid)
     avgPingFor              [cl] = 0.0;
     rateFor                 [cl] = 0.0;
     ppsFor                  [cl] = 0.0;
+
+    clientOS                [cl] = 2;
+
+    printedOnce             [cl] = false;
+
+    // STORED JOYSTICK SHIT
+    joystick                [cl] = false;
+    joy_xcon                [cl] = false;
+    waitTillNextQuery       [cl] = true;
 
     // time since the last stutter/lag spike occurred per client
     timeSinceLagSpikeFor    [cl] = 0.0;

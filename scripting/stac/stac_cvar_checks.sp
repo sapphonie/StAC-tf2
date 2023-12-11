@@ -31,7 +31,14 @@ char miscVars[][] =
     // must be == 1.0
     "host_timescale",
     // if this is >= 8 just kick them, cathook uses this to "spoof" windows
-    "windows_speaker_config"
+    "windows_speaker_config",
+    // Exists on Linux only
+    "dxa_nullrefresh_capslock",
+    // Refresh this every once in a while
+    // (Supposedly) using the controller
+    "joystick",
+    // Controller plugged in
+    "joy_xcontroller_found",
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
     // tf_showspeed ?
@@ -39,8 +46,9 @@ char miscVars[][] =
 };
 
 // DEFINITE cheat vars get appended to this array.
-// Every cheat except cathook is smart enough to not have queryable cvars.
+// Every cheat except fedoraware (dead) is smart enough to not have queryable cvars.
 // For now.
+// Cathook fixed their cvars being queryable but I'll keep the query in for now.
 char cheatVars[][] =
 {
     // lith
@@ -298,6 +306,35 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         }
     }
 
+    // dxa_nullrefresh_capslock
+    else if (StrEqual(cvarName, "dxa_nullrefresh_capslock"))
+    {
+        if (result == ConVarQuery_NotFound)
+        {
+            clientOS[cl] = 0;
+        }
+        else
+        {
+            clientOS[cl] = 1;
+        }
+    }
+
+    // joystick
+    else if (StrEqual(cvarName, "joystick"))
+    {
+        bool joy = (0.0 <= StringToFloat(cvarValue) < 1.0)?false:true;
+        joystick[cl] = joy;
+        joystickQueried[cl] = true;
+    }
+    // joy_xcontroller_found
+    else if (StrEqual(cvarName, "joy_xcontroller_found"))
+    {
+        bool joy = (0.0 <= StringToFloat(cvarValue) < 1.0)?false:true;
+        joy_xcon[cl] = joy;
+        joy_xconQueried[cl] = true;
+        return;
+    }
+
     /*
         cheat program only cvars
     */
@@ -310,7 +347,17 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         }
     }
     // log something about cvar errors
-    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName) && !StrEqual(cvarName, "windows_speaker_config"))
+    else if
+    (
+        result != ConVarQuery_Okay
+        && !IsCheatOnlyVar(cvarName)
+        &&
+        (
+            !StrEqual(cvarName, "windows_speaker_config")
+            ||
+            !StrEqual(cvarName, "dxa_nullrefresh_capslock")
+        )
+    )
     {
         char fmtmsg[512];
         Format
@@ -485,6 +532,12 @@ Action Timer_CheckClientConVars(Handle timer, int userid)
 // query all cvars and netprops for userid
 void QueryCvarsEtc(int userid, int i)
 {
+    // No point in running this if only one player is on.
+    if (GetClientCount(true) == 1 && !DEBUG)
+    {
+        return;
+    }
+    
     // get client index of userid
     int cl = GetClientOfUserId(userid);
     // don't go no further if client isn't valid!

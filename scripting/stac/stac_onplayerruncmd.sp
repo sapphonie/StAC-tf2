@@ -9,6 +9,9 @@
     - AIM SNAPS
     - FAKE ANGLES
     - TURN BINDS
+    - BHOP CHEATS
+    - INVALID WISH VELOCITY (can and will false positive on +strafe (left alt key by default))
+    - UNSYNCHRONIZED MOVEMENT (will false positive if cl_yawspeed = 0 and client uses turnbinds (+right, +left) and +strafe.)
 */
 
 /*
@@ -329,11 +332,185 @@ stock void PlayerRunCmd
     aimsnapCheck(cl);
     psilentCheck(cl);
 
+    invalidWishVelCheck(cl, vel[0], vel[1]); // In theory, this doesn't need to be down here. I'm only worried about halloween conditions causing issues for this.
+    unsynchronizedMoveCheck(cl, buttons, vel[0], vel[1]);
+
     return;
 }
 
 /*
+    INVALID WISH VELOCITY CHECK
+    Thanks to Oryx and the devs behind it for this check.
+    Actually implemented it into the anticheat properly this time!
+    *  Copyright (C) 2018  Nolan O.
+    *  Copyright (C) 2018  shavit.
+*/
+void invalidWishVelCheck(int cl, float forwardmove, float sidemove) 
+{
+    int attack = 0;
+    if ((clbuttons[cl][0] & IN_ATTACK))
+    {
+        attack = 1;
+    }
+    else if ((clbuttons[cl][0] & IN_ATTACK2))
+    {
+        attack = 2;
+    }
+
+    if
+    (
+        (
+            // The absolute value of forwardmove and sidemove should NEVER be greater than 450 (or 450.00003 for some reason...)
+            (
+                FloatAbs(forwardmove) > 450.00003
+                ||
+                FloatAbs(sidemove) > 450.00003
+                /*
+                    Reasoning for the sidemove/forwardmove value of 450.00003:
+                    Essentially, some legit clients report a value of 450.0000305175 (even happened to my client), which IS greater than 450.0. Why does this happen? No clue.
+                    I just wanted to add a bit of leniency. Honestly, this isn't enough to cause any issues.
+                    This could also be caused by +strafe, but who knows.
+                */
+            )
+        )
+        &&
+        (
+            clangles[cl][1][1] != clangles[cl][0][1] // (somewhat) Workaround false positives occuring while holding +strafe. Technically may open up room for a bypass, but I have found no other solution.
+        )
+    )
+    {
+        invalidWishVelDetects[cl]++;
+        if (invalidWishVelDetects[cl] > 0) // First detect is ignored.
+        {
+            PrintToImportant
+            (
+                "{hotpink}[StAC]{white} Player %N {mediumpurple}has invalid wish velocity{white}!\
+                \nThis player is *probably* cheating, especially if they trigger this more than once.\
+                \nDetections so far: {palegreen}%i",
+                cl,
+                invalidWishVelDetects[cl]
+            );
+            PrintToImportant
+            (
+                "{white}Forwardmove: {palegreen}%.10f, {white}Sidemove: {palegreen}%.10f",
+                forwardmove,
+                sidemove
+            );
+            if (attack > 0)
+            {
+                PrintToImportant
+                (
+                    "{hotpink}[StAC]{red} This player was ATTACKING (ATTACK%i), \
+                    you should ban them manually with the reason \"Banned from server\"",
+                    attack
+                );
+            }
+            int userid = GetClientUserId(cl);
+            StacLogSteam(userid);
+            if (invalidWishVelDetects[cl] == 1 || invalidWishVelDetects[cl] % 5 == 0)
+            {
+                char invalidWishVelInfo[128];
+                if (attack > 0)
+                {
+                    Format
+                    (
+                        invalidWishVelInfo,
+                        sizeof(invalidWishVelInfo),
+                        "invalid wish velocity WHILE ATTACKING (attack%i, forwardmove: %.10f, sidemove %.10f)",
+                        attack,
+                        forwardmove,
+                        sidemove
+                    );
+                }
+                else
+                {
+                    Format
+                    (
+                        invalidWishVelInfo,
+                        sizeof(invalidWishVelInfo),
+                        "invalid wish velocity (forwardmove: %.10f, sidemove %.10f)",
+                        forwardmove,
+                        sidemove
+                    );
+                }
+                StacNotify(userid, invalidWishVelInfo, invalidWishVelDetects[cl]);
+            }
+            if (invalidWishVelDetects[cl] >= maxInvalidWishVelDetections && maxInvalidWishVelDetections > 0)
+            {
+                char reason[128];
+                Format(reason, sizeof(reason), "%t", "invalidWishVelBanMsg", invalidWishVelDetects[cl]);
+                char pubreason[256];
+                Format(pubreason, sizeof(pubreason), "%t", "invalidWishVelBanAllChat", cl, invalidWishVelDetects[cl]);
+                BanUser(userid, reason, pubreason);
+            }
+        }
+    }
+}
+
+/*
+    UNSYNCHRONIZED MOVEMENT CHECK -- Catches autostrafers
+    Thanks to Oryx and the devs behind it for this check.
+    *  Copyright (C) 2018  Nolan O.
+    *  Copyright (C) 2018  shavit.
+*/
+// If it was my choice, I would ban controller users and cheaters all the same since they all trigger this. Plus, controller players are annoying.
+void unsynchronizedMoveCheck(int cl, int buttons, float forwardmove, float sidemove)
+{
+    if (playerUsingController(cl))
+    {
+        return;
+    }
+
+    if
+    (
+        // don't bother checking if unsync'd move detection is off
+        maxUnsyncMoveDetections != -1
+        &&
+        // Unsynchronized usercmd->forwardmove or usercmd->sidemove.
+	    // cl_forwardspeed and cl_sidespeed are the fully-pressed move values.
+	    // The game will never apply them unless the buttons are added into the usercmd too. (exceptions: controllers)
+        // https://mxr.alliedmods.net/hl2sdk-css/source/game/client/in_main.cpp#557
+	    // https://mxr.alliedmods.net/hl2sdk-css/source/game/client/in_main.cpp#842
+        (
+        (forwardmove == 450.0 && (buttons & IN_FORWARD) == 0) || // Check for unsynchronized forwards movement
+	    (sidemove == -450.0 && (buttons & IN_MOVELEFT) == 0) || // Check for unsynchronized sideways (left) movement
+	    (forwardmove == -450.0 && (buttons & IN_BACK) == 0) || // Check for unsynchronized backwards movement
+	    (sidemove == 450.0 && (buttons & IN_MOVERIGHT) == 0) // Check for unsynchronized sideways (right) movement
+        )
+    )
+    {
+        unsyncMoveDetects[cl]++;
+        PrintToImportant
+        (
+            "{hotpink}[StAC]{white} Player %N {mediumpurple}had unsynchronized movement{white}!\
+            \nConsecutive detections so far: {palegreen}%i",
+            cl,
+            unsyncMoveDetects[cl]
+        );
+        int userid = GetClientUserId(cl);
+        PrintToImportant("{hotpink}[StAC]{red} Hey, since this doesn't ban automatically yet (testing mode), you should ban them manually with the reason \"Banned from server\". This goes for any detection, but especially this one.");
+        StacLogSteam(userid);
+        
+        if (unsyncMoveDetects[cl] == 1 || unsyncMoveDetects[cl] % 5 == 0)
+        {
+            char unsyncMovInfo[128];
+            Format(unsyncMovInfo, sizeof(unsyncMovInfo), "unsynchronized movement");
+            StacNotify(userid, unsyncMovInfo, unsyncMoveDetects[cl]);
+        }
+        if (unsyncMoveDetects[cl] >= maxUnsyncMoveDetections && maxUnsyncMoveDetections > 0)
+        {
+            char reason[128];
+            Format(reason, sizeof(reason), "%t", "unsynchronizedMoveBanMsg", unsyncMoveDetects[cl]);
+            char pubreason[256];
+            Format(pubreason, sizeof(pubreason), "%t", "unsynchronizedMoveBanAllChat", cl, unsyncMoveDetects[cl]);
+            BanUser(userid, reason, pubreason);
+        }
+    }
+}
+
+/*
     BHOP DETECTION - using lilac and ssac as reference, this one's better tho
+    There is a better way to do this without notifying the client that they have been bhop checked. (Can be abused to detect StAC running on the server) Look at Oryx/Bash2.
 */
 void bhopCheck(int cl)
 {
@@ -1292,6 +1469,37 @@ bool isTickcountRepeated(int cl)
     return false;
 }
 */
+
+// I would like to check if the player has controller-like movements someday, because if this goes open source, people will force these cvars to avoid detection.
+bool playerUsingController(int userid)
+{
+    int Cl = GetClientOfUserId(userid);
+    // If we haven't queried these cvars from this client, we don't know if the player is using a controller or not yet.
+    if (!joystickQueried[Cl] || !joy_xconQueried[Cl])
+    {
+        return true;
+    }
+    // If the player has joystick set to 1 (enables controller) and has joy_xcon set to 1 (controller is plugged in), they are using a controller.
+    if (joystick[Cl] && joy_xcon[Cl])
+    {
+        if (!printedOnce[Cl])
+        {
+            PrintToImportant("{hotpink}[StAC]{white} Player %N {powderblue}appears to be using a controller{white}!", Cl);
+            StacNotify(userid, "Client appears to be using a controller");
+            printedOnce[Cl] = true;
+        }
+        return true;
+    }
+    // Make sure we don't detect on people who plug their controller in mid-game. This will make any checks calling this take longer to kick in, but prevent false positives.
+    if (waitTillNextQuery[Cl])
+    {
+        waitTillNextQuery[Cl] = false;
+        joystickQueried[Cl] = false;
+        joy_xconQueried[Cl] = false;
+        return true;
+    }
+    return false;
+}
 
 /********** DETECTION FORGIVENESS TIMERS **********/
 

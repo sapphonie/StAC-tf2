@@ -360,6 +360,26 @@
         "es"        "[StAC] Baneado por valores de logros falsos"
         "de"        "[StAC] Gebannt für falsche Achievements"
     }
+    "invalidWishVelBanAllChat"
+    {
+        "#format"   "{1:N},{2:i}"
+        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}invalid wish velocity{white} using a {mediumpurple}cheat program{white}. Total invalid wish velocities: {mediumpurple}{2}{white}. {palegreen}Queued for ban!"
+    }
+    "invalidWishVelBanMsg"
+    {
+        "#format" "{1:i}"
+        "en"        "[StAC] Banned for invalid wish velocity after {1} detections"
+    }
+    "unsynchronizedMoveBanAllChat"
+    {
+        "#format"   "{1:N},{2:i}"
+        "en"        "{hotpink}[StAC]{white} Player {1} had {mediumpurple}unsynchronized movement{white}. Total unsynchronized movements: {mediumpurple}{2}{white}. {palegreen}Queued for ban!"
+    }
+    "unsynchronizedMoveBanMsg"
+    {
+        "#format" "{1:i}"
+        "en"        "[StAC] Banned for unsynchronized movement after {1} detections"
+    }
     // newlines in chat
     "newlineBanAllChat"
     {
