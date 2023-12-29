@@ -119,8 +119,9 @@ void DelayedRateLimitBan(DataPack dp)
     else
     {
 #endif
-        ServerCommand("addip %i %s",        rateLimitBanTime, ipAddr);
-        ServerCommand("banid %i %s kick",   rateLimitBanTime, steamID);
+
+    ServerCommand("addip %i %s",        rateLimitBanTime, ipAddr);
+    ServerCommand("banid %i %s kick",   rateLimitBanTime, steamID);
 #if 0
     }
 #endif

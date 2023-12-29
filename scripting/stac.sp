@@ -55,7 +55,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "6.1.3-beta7"
+#define PLUGIN_VERSION  "6.1.3-beta8"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
