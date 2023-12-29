@@ -93,7 +93,7 @@ void DelayedRateLimitBan(DataPack dp)
     dp.Reset(true);
     delete dp;
 
-    static int rateLimitBanTime = 60;
+    static int rateLimitBanTime = 5;
 
     // BanIdentity(steamID, 60, BANFLAG_AUTHID, "");
     // BanIdentity(ip, 60, BANFLAG_IP, "");
@@ -110,6 +110,7 @@ void DelayedRateLimitBan(DataPack dp)
     // Probably before un-betaing this, i'm going to try to move this to sm_ban and then addip after?
     // I don't really know. it's a tricky race condition here, since we're after OnClientPreConnectEx callback, so they should be rejected,
     // but they can rejoin, but regardless we don't actually have a client index yet?
+#if 0
     if ( CommandExists("sm_banip") && CommandExists("sm_addban") )
     {
         ServerCommand("sm_addban %i %s %s",  rateLimitBanTime,   steamID,            "Rate limited");
@@ -117,10 +118,12 @@ void DelayedRateLimitBan(DataPack dp)
     }
     else
     {
+#endif
         ServerCommand("addip %i %s",        rateLimitBanTime, ipAddr);
         ServerCommand("banid %i %s kick",   rateLimitBanTime, steamID);
+#if 0
     }
-
+#endif
     char formattedMsg[1024];
     Format(formattedMsg, sizeof(formattedMsg), "Rate limited %s / %s / %s for %i minutes for connect spam", playerName, steamID, ipAddr, rateLimitBanTime);
 
