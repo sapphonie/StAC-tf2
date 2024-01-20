@@ -44,93 +44,36 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
     strcopy(latestIP,       sizeof(latestIP),       ip);
     strcopy(latestSteamID,  sizeof(latestSteamID),  steamID);
 
-
     if (!stac_prevent_connect_spam.BoolValue)
     {
         return true;
     }
 
-    // TODO: does this need to be higher? or lower? or...?
-    static int threshold = 5;
+    // connects == how many times have they connected recently, it decays by 1 every 5 seconds
+    // threshold == how many times is "too many" - TODO: does this need to be higher? or lower? or...?
     int connects;
+    static int threshold = 6;
+
     IPBuckets.GetValue(ip, connects); // 0 if not present
     connects++;
+
     if (connects >= threshold)
     {
-        rejectReason = "Rate limited.";
-        
-        DataPack steamidPlusIP = new DataPack();
-        steamidPlusIP.Reset(true);
-        steamidPlusIP.WriteString(steamID);
-        steamidPlusIP.WriteString(ip);
-        steamidPlusIP.WriteString(name);
-        steamidPlusIP.Reset(false);
-        
-        // This is not arbitrary!
-        RequestFrame(DelayedRateLimitBan, steamidPlusIP);
-
+        rejectReason = "Rate limited. Please try again in a bit.";
+        if (connects < threshold + 5)
+        {
+            connects += 5; // Lock them out for a bit if they really will not stop spamming after getting rate limited
+        }
         return false;
     }
     IPBuckets.SetValue(ip, connects);
 
-    if (stac_debug.BoolValue)
-    {
-        StacLog("-> connects from ip %s %i", ip, connects);
-    }
+    //if (stac_debug.BoolValue)
+    //{
+    StacLog("[stac_prevent_connect_spam - OnClientPreConnectEx] %i connects from ip %s", connects, ip);
+    //}
 
     return true;
-}
-
-void DelayedRateLimitBan(DataPack dp)
-{
-    dp.Reset(false);
-    char steamID[MAX_AUTHID_LENGTH];
-    char ipAddr[256];
-    char playerName[MAX_NAME_LENGTH];
-    dp.ReadString(steamID, sizeof(steamID));
-    dp.ReadString(ipAddr, sizeof(ipAddr));
-    dp.ReadString(playerName, sizeof(playerName));
-    dp.Reset(true);
-    delete dp;
-
-    static int rateLimitBanTime = 5;
-
-    // BanIdentity(steamID, 60, BANFLAG_AUTHID, "");
-    // BanIdentity(ip, 60, BANFLAG_IP, "");
-
-    // THE REASON we are doing this so weirdly, is so that we hook into srcds's built in
-    // "firewall", basically, where with the default game banning system,
-    // srcds will ignore packets from banned ips.
-    // this prevents any clients from spamming, in a way that would otherwise not really be possible,
-    // without stupid memory hacks that would be overcomplicated anyway since this already exists
-
-    // We're doing sm_addban / sm_banip because SourceBans, at least, will propagate this to other servers as well
-    // which is what we want, so people don't have to get individually banned on each server on the same network that they try to spam on
-
-    // Probably before un-betaing this, i'm going to try to move this to sm_ban and then addip after?
-    // I don't really know. it's a tricky race condition here, since we're after OnClientPreConnectEx callback, so they should be rejected,
-    // but they can rejoin, but regardless we don't actually have a client index yet?
-#if 0
-    if ( CommandExists("sm_banip") && CommandExists("sm_addban") )
-    {
-        ServerCommand("sm_addban %i %s %s",  rateLimitBanTime,   steamID,            "Rate limited");
-        ServerCommand("sm_banip  %s %i %s",  ipAddr,             rateLimitBanTime,   "Rate limited");
-    }
-    else
-    {
-#endif
-
-    ServerCommand("addip %i %s",        rateLimitBanTime, ipAddr);
-    ServerCommand("banid %i %s kick",   rateLimitBanTime, steamID);
-#if 0
-    }
-#endif
-    char formattedMsg[1024];
-    Format(formattedMsg, sizeof(formattedMsg), "Rate limited %s / %s / %s for %i minutes for connect spam", playerName, steamID, ipAddr, rateLimitBanTime);
-
-    StacLog(formattedMsg);
-
-    StacNotify(0, formattedMsg, 1);
 }
 
 Action LeakIPConnectBucket(Handle timer)
@@ -152,17 +95,17 @@ Action LeakIPConnectBucket(Handle timer)
         IPBuckets.GetValue(ip, connects); // 0 if not present per zero-init above
         connects--;
 
-        if (stac_debug.BoolValue)
-        {
-            StacLog("(LeakIPConnectBucket) connects from ip %s %i", ip, connects);
-        }
+        //if (stac_debug.BoolValue)
+        //{
+        StacLog("[stac_prevent_connect_spam - LeakIPConnectBucket] %i connects from ip %s", connects, ip);
+        //}
 
         if (connects <= 0)
         {
-            if (stac_debug.BoolValue)
-            {
-                StacLog("-> connects from ip %s %i [ REMOVING ] ", ip, connects);
-            }
+            //if (stac_debug.BoolValue)
+            //{
+            StacLog("[stac_prevent_connect_spam - LeakIPConnectBucket] %i connects from ip %s [ REMOVING ] ", connects, ip);
+            //}
 
             IPBuckets.Remove(ip);
             continue;

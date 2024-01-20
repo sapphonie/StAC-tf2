@@ -370,7 +370,8 @@ void initCvars()
     (
         "stac_prevent_connect_spam",
         "1",
-        "[StAC] (BETA DETECTION) use a \"leaky bucket\" algorithm to prevent the same clients from spamming connect requests to your server. temp bans clients for 60 minutes if they hit the limit.\n\
+        "[StAC] (BETA DETECTION) use a \"leaky bucket\" algorithm to prevent the same clients from spamming connect requests to your server.\n\
+        locks out clients for a bit (a minute or so) after they hit the limit.\n\
         (recommended 1)",
         FCVAR_NONE,
         true,
@@ -379,6 +380,20 @@ void initCvars()
         1.0
     );
 
+    // 
+    stac_print_to_admin_console =
+    AutoExecConfig_CreateConVar
+    (
+        "stac_print_to_admin_console",
+        "1",
+        "[StAC] print StAC logging messages to the client console of all online admins.\n\
+        (recommended 1)",
+        FCVAR_NONE,
+        true,
+        0.0,
+        true,
+        1.0
+    );
 
     initUsercmdCvars();
     // actually exec the cfg after initing cvars lol

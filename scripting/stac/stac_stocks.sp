@@ -117,9 +117,11 @@ void StacLog(const char[] format, any ...)
     // }
 
     PrintToServer("%s", colored_buffer);
-#if 0
-    PrintToConsoleAllAdmins("%s", buffer);
-#endif
+
+    if (stac_print_to_admin_console.GetBool())
+    {
+        PrintToConsoleAllAdmins("%s", buffer);
+    }
 }
 
 void StacLogDemo()
