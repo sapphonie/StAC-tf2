@@ -118,7 +118,10 @@ void StacLog(const char[] format, any ...)
 
     PrintToServer("%s", colored_buffer);
 
-    PrintToConsoleAllAdmins("%s", buffer);
+    if (stac_print_to_admin_console.BoolValue)
+    {
+        PrintToConsoleAllAdmins("%s", buffer);
+    }
 }
 
 void StacLogDemo()
