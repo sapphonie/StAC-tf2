@@ -30,6 +30,7 @@ ConVar stac_silent;
 ConVar stac_max_connections_from_ip;
 ConVar stac_work_with_sv_cheats;
 ConVar stac_prevent_connect_spam;
+ConVar stac_print_to_admin_console;
 
 /***** Server based stuff *****/
 
