@@ -49,38 +49,44 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
         return true;
     }
 
-    // connects == how many times have they connected recently, it decays by 1 every 5 seconds
-    // threshold == how many times is "too many" - TODO: does this need to be higher? or lower? or...?
-    // threshold == how many times is "too many" and at what point we should start making each connect be worth double/triple/etc to the algorithm 
-    int connects;
+    // connects is how many times have they connected recently, it decays by 1 every 5 seconds
+    // threshold how many times is "too many"
+    // thresholdEx is at what point we should start punishing & making each connect be worth double/triple/etc to the algorithm 
+    int connects            = 0;
     static int threshold    = 6;
     static int thresholdEx  = 10;
+    bool punish             = false;
     IPBuckets.GetValue(ip, connects); // 0 if not present
-    connects++;
 
+    // inc by one
+    connects++;
+    IPBuckets.SetValue(ip, connects);
+
+    // Lock them out for longer if they really will not stop spamming after getting rate limited
+    if (connects > thresholdEx)
+    {
+        punish          = true;
+        rejectReason    = "Rate limited for retry spam. Please try again in a few minutes.";
+        // worth double
+        connects++;
+    }
+
+    if (stac_debug.BoolValue)
+    {
+        StacLog("[stac_prevent_connect_spam - OnClientPreConnectEx] %i connects from ip %s", connects, ip);
+    }
+
+    // punishment threshold in which we reject them connecting
     if (connects >= threshold)
     {
-        // Lock them out for longer if they really will not stop spamming after getting rate limited
-        if (connects > thresholdEx)
-        {
-            rejectReason = "Rate limited for retry spam. Please try again in a few minutes.";
-            // worth double
-            connects++;
-        }
-        else
-        {
-            rejectReason = "Rate limited for retry spam. Please try again in a bit.";
-        }
-        IPBuckets.SetValue(ip, connects);
-        StacLog("[stac_prevent_connect_spam - OnClientPreConnectEx] %i connects from ip %s", connects, ip);
-        return false;
+        punish          = true;
+        rejectReason    = "Rate limited for retry spam. Please try again in a bit.";
     }
-    else
-    {
-        IPBuckets.SetValue(ip, connects);
-        StacLog("[stac_prevent_connect_spam - OnClientPreConnectEx] %i connects from ip %s", connects, ip);
-        return true;
-    }
+
+    // this func detour returns true to let them in, and false to prevent them from connecting
+    // rejectReason is displayed as the reason to their client.
+    // that's just how it is.
+    return !punish;
 }
 
 Action LeakIPConnectBucket(Handle timer)
@@ -102,17 +108,17 @@ Action LeakIPConnectBucket(Handle timer)
         IPBuckets.GetValue(ip, connects); // 0 if not present per zero-init above
         connects--;
 
-        //if (stac_debug.BoolValue)
-        //{
-        StacLog("[stac_prevent_connect_spam - LeakIPConnectBucket] %i connects from ip %s", connects, ip);
-        //}
+        if (stac_debug.BoolValue)
+        {
+            StacLog("[stac_prevent_connect_spam - LeakIPConnectBucket] %i connects from ip %s", connects, ip);
+        }
 
         if (connects <= 0)
         {
-            //if (stac_debug.BoolValue)
-            //{
-            StacLog("[stac_prevent_connect_spam - LeakIPConnectBucket] %i connects from ip %s [ REMOVING ] ", connects, ip);
-            //}
+            if (stac_debug.BoolValue)
+            {
+                StacLog("[stac_prevent_connect_spam - LeakIPConnectBucket] %i connects from ip %s [ REMOVING ] ", connects, ip);
+            }
 
             IPBuckets.Remove(ip);
             continue;
