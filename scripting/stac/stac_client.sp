@@ -51,29 +51,36 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
 
     // connects == how many times have they connected recently, it decays by 1 every 5 seconds
     // threshold == how many times is "too many" - TODO: does this need to be higher? or lower? or...?
+    // threshold == how many times is "too many" and at what point we should start making each connect be worth double/triple/etc to the algorithm 
     int connects;
-    static int threshold = 6;
-
+    static int threshold    = 6;
+    static int thresholdEx  = 10;
     IPBuckets.GetValue(ip, connects); // 0 if not present
     connects++;
 
     if (connects >= threshold)
     {
-        rejectReason = "Rate limited. Please try again in a bit.";
-        if (connects < threshold + 5)
+        // Lock them out for longer if they really will not stop spamming after getting rate limited
+        if (connects > thresholdEx)
         {
-            connects += 5; // Lock them out for a bit if they really will not stop spamming after getting rate limited
+            rejectReason = "Rate limited for retry spam. Please try again in a few minutes.";
+            // worth double
+            connects++;
         }
+        else
+        {
+            rejectReason = "Rate limited for retry spam. Please try again in a bit.";
+        }
+        IPBuckets.SetValue(ip, connects);
+        StacLog("[stac_prevent_connect_spam - OnClientPreConnectEx] %i connects from ip %s", connects, ip);
         return false;
     }
-    IPBuckets.SetValue(ip, connects);
-
-    //if (stac_debug.BoolValue)
-    //{
-    StacLog("[stac_prevent_connect_spam - OnClientPreConnectEx] %i connects from ip %s", connects, ip);
-    //}
-
-    return true;
+    else
+    {
+        IPBuckets.SetValue(ip, connects);
+        StacLog("[stac_prevent_connect_spam - OnClientPreConnectEx] %i connects from ip %s", connects, ip);
+        return true;
+    }
 }
 
 Action LeakIPConnectBucket(Handle timer)
