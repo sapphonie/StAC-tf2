@@ -121,7 +121,6 @@ public void OnPluginStart()
     }
 
     // reg admin commands
-    // TODO: make these invisible for non admins
     RegConsoleCmd("sm_stac_checkall",   checkAdmin, "Force check all client convars (ALL CLIENTS) for anticheat stuff");
     RegConsoleCmd("sm_stac_detections", checkAdmin, "Show all current detections on all connected clients");
     RegConsoleCmd("sm_stac_getauth",    checkAdmin, "Print StAC's cached auth for a client");

@@ -24,7 +24,7 @@ Action checkAdmin(int callingCl, int args)
             char fmtmsg[512];
             Format(fmtmsg, sizeof(fmtmsg), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
             StacNotify(GetClientUserId(callingCl), fmtmsg);
-            return Plugin_Handled;
+            return Plugin_Continue;
         }
     }
 
