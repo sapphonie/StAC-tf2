@@ -663,11 +663,16 @@ void psilentCheck(int cl)
         return;
     }
 
-
-    if (!DidRecentlyDoInterestingAction(cl))
+    // make sure we've been attacking in this frame or the last
+    if ( !(clbuttons[cl][0] & IN_ATTACK) && !(clbuttons[cl][1] & IN_ATTACK) )
     {
         return;
     }
+    // TODO: TEST THIS
+    // if (!DidRecentlyDoInterestingAction(cl))
+    // {
+    //     return;
+    // }
 
     static float pSilentEpsilon = 0.1;
     // get difference between angles - used for psilent
@@ -1242,7 +1247,7 @@ bool isTickcountSanish(int cl)
 }
 
 
-bool DidRecentlyDoInterestingAction(int cl)
+stock bool DidRecentlyDoInterestingAction(int cl)
 {
     if
     (
