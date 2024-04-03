@@ -663,8 +663,8 @@ void psilentCheck(int cl)
         return;
     }
 
-    // make sure we've been attacking in this frame or the last
-    if ( !(clbuttons[cl][0] & IN_ATTACK) && !(clbuttons[cl][1] & IN_ATTACK) )
+
+    if (!DidRecentlyDoInterestingAction(cl))
     {
         return;
     }
@@ -1241,6 +1241,37 @@ bool isTickcountSanish(int cl)
     return false;
 }
 
+
+bool DidRecentlyDoInterestingAction(int cl)
+{
+    if
+    (
+        // we did an attack on this frame, or the frame before, or the frame before that
+        // - this is when most of the cheats happen
+            clbuttons[cl][0] & IN_ATTACK 
+        ||  clbuttons[cl][1] & IN_ATTACK
+        ||  clbuttons[cl][2] & IN_ATTACK
+        // we clicked attack2 this frame / prev frame / etc
+        // - should help catch anti airblast tbot
+        ||  clbuttons[cl][0] & IN_ATTACK2
+        ||  clbuttons[cl][1] & IN_ATTACK2
+        ||  clbuttons[cl][2] & IN_ATTACK2
+        // we clicked attack3                                                               
+        // - theoretically might catch people w/ bad cheats with aimkey on `midle mouse` or... triggerbotting mvm medics? 
+        ||  clbuttons[cl][0] & IN_ATTACK3
+        ||  clbuttons[cl][1] & IN_ATTACK3
+        ||  clbuttons[cl][2] & IN_ATTACK3
+        // we clicked reload                                                                
+        // - theoretically might catch people w/ bad cheats with aimkey on `r`
+        ||  clbuttons[cl][0] & IN_RELOAD
+        ||  clbuttons[cl][1] & IN_RELOAD
+        ||  clbuttons[cl][3] & IN_RELOAD
+    )
+    {
+        return true;
+    }
+    return false;
+}
 /*
 bool HasValidAngles(int cl)
 {
