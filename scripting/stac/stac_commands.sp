@@ -21,7 +21,7 @@ Action checkAdmin(int callingCl, int args)
         if (!isAdmin)
         {
             // TODO: Make this print once still without allowing clients to indiscriminately spam it
-            if (stac_debug.BoolValue())
+            if (stac_debug.BoolValue)
             {
                 PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
                 StacLogSteam(GetClientUserId(callingCl));

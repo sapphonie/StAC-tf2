@@ -58,11 +58,10 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
     bool punish             = false;
     IPBuckets.GetValue(ip, connects); // 0 if not present
 
-    // inc by one
+    // inc by one since we're in this callback
     connects++;
-    IPBuckets.SetValue(ip, connects);
 
-    // Lock them out for longer if they really will not stop spamming after getting rate limited
+    // strong punishment
     if (connects > thresholdEx)
     {
         punish          = true;
@@ -70,19 +69,22 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
         // worth double
         connects++;
     }
+    // light punishment
+    else if (connects >= threshold)
+    {
+        punish          = true;
+        rejectReason    = "Rate limited for retry spam. Please try again in a bit.";
+    }
+    else { /* no punishment, they didn't trip any threshold */ }
+
+    // set our connects to our stupid global var thing
+    IPBuckets.SetValue(ip, connects);
 
     if (stac_debug.BoolValue)
     {
         StacLog("[stac_prevent_connect_spam - OnClientPreConnectEx] %i connects from ip %s", connects, ip);
     }
-
-    // punishment threshold in which we reject them connecting
-    if (connects >= threshold)
-    {
-        punish          = true;
-        rejectReason    = "Rate limited for retry spam. Please try again in a bit.";
-    }
-
+    
     // this func detour returns true to let them in, and false to prevent them from connecting
     // rejectReason is displayed as the reason to their client.
     // that's just how it is.
