@@ -29,6 +29,8 @@ Action checkAdmin(int callingCl, int args)
                 Format(fmtmsg, sizeof(fmtmsg), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
                 StacNotify(GetClientUserId(callingCl), fmtmsg);
             }
+            // https://github.com/sapphonie/StAC-tf2/pull/189
+            // "Plugin_Continue will show "Unknown command" client side."
             return Plugin_Continue;
         }
     }
