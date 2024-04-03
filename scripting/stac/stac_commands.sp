@@ -17,13 +17,18 @@ Action checkAdmin(int callingCl, int args)
         {
             isAdmin = true;
         }
+
         if (!isAdmin)
         {
-            PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
-            StacLogSteam(GetClientUserId(callingCl));
-            char fmtmsg[512];
-            Format(fmtmsg, sizeof(fmtmsg), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
-            StacNotify(GetClientUserId(callingCl), fmtmsg);
+            // TODO: Make this print once still without allowing clients to indiscriminately spam it
+            if (stac_debug.BoolValue())
+            {
+                PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
+                StacLogSteam(GetClientUserId(callingCl));
+                char fmtmsg[512];
+                Format(fmtmsg, sizeof(fmtmsg), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
+                StacNotify(GetClientUserId(callingCl), fmtmsg);
+            }
             return Plugin_Continue;
         }
     }
