@@ -551,6 +551,7 @@ Action OnAllClientCommands(int cl, const char[] command, int argc)
     return Plugin_Continue;
 }
 
+// Runs OnClientPutInServer (which runs on map change too!) and OnClientDisconnect
 void ClearClBasedVars(int userid)
 {
     // get fresh cli id
@@ -567,6 +568,7 @@ void ClearClBasedVars(int userid)
     cmdnumSpikeDetects      [cl] = 0;
     tbotDetects             [cl] = -1;
     invalidUsercmdDetects   [cl] = 0;
+    stacProbingDetects      [cl] = 0;
 
     // frames since client "did something"
     //                      [ client index ][history]

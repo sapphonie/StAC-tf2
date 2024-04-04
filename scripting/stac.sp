@@ -124,7 +124,7 @@ public void OnPluginStart()
     RegConsoleCmd("sm_stac_checkall",   checkAdmin, "Force check all client convars (ALL CLIENTS) for anticheat stuff");
     RegConsoleCmd("sm_stac_detections", checkAdmin, "Show all current detections on all connected clients");
     RegConsoleCmd("sm_stac_getauth",    checkAdmin, "Print StAC's cached auth for a client");
-    RegConsoleCmd("sm_stac_livefeed",   checkAdmin, "Show live feed (debug info etc) for a client. This gets printed to SourceTV if available.");
+    RegConsoleCmd("sm_stac_livefeed",   checkAdmin, "Show live feed (debug info etc) for a client. This gets printed to SourceTV too, if available.");
 
     // steamidRegex = CompileRegex("^STEAM_[0-5]:[0-1]:[0-9]+$");
 
