@@ -49,6 +49,13 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
         return true;
     }
 
+    // DO NOT interfere with lan matches until we have a way to store port from here!
+    ConVar sv_lan = FindConVar("sv_lan");
+    if (sv_lan.BoolValue)
+    {
+        return true;
+    }
+
     // connects is how many times have they connected recently, it decays by 1 every 5 seconds
     // threshold how many times is "too many"
     // thresholdEx is at what point we should start punishing & making each connect be worth double/triple/etc to the algorithm 
@@ -332,8 +339,10 @@ public void OnClientPutInServer(int cl)
         StacLog("OCPIS steamid = %s", SteamAuthFor[cl]);
     }
 
-    // bail if cvar is set to 0
-    if (stac_max_connections_from_ip.IntValue > 0)
+    ConVar sv_lan = FindConVar("sv_lan");
+
+    // bail if cvar is set to 0 or if we're in sv_lan 1
+    if ( stac_max_connections_from_ip.IntValue > 0 && !(sv_lan.BoolValue) )
     {
         checkIP(cl);
     }
