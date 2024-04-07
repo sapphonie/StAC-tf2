@@ -30,6 +30,7 @@ ConVar stac_silent;
 ConVar stac_max_connections_from_ip;
 ConVar stac_work_with_sv_cheats;
 ConVar stac_prevent_connect_spam;
+ConVar stac_print_to_admin_console;
 
 /***** Server based stuff *****/
 
@@ -79,6 +80,7 @@ int bhopDetects             [TFMAXPLAYERS+1] = {-1, ...}; // set to -1 to ignore
 int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = {-1, ...};
 int invalidUsercmdDetects   [TFMAXPLAYERS+1];
+int stacProbingDetects      [TFMAXPLAYERS+1];
 
 // frames since client "did something"
 //                          [ client index ][history]

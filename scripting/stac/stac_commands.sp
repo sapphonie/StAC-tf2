@@ -4,10 +4,13 @@
 
 Action checkAdmin(int callingCl, int args)
 {
-    char arg0[32];
-    GetCmdArg(0, arg0, sizeof(arg0));
-    char arg1[32];
-    GetCmdArg(1, arg1, sizeof(arg1));
+    // dont realloc since this might be hammered
+    static char arg0[512];
+    static char arg1[512];
+
+    // clear out whatever might be in there
+    arg0[0] = 0x0;
+    arg1[0] = 0x0;
 
     if (callingCl != 0)
     {
@@ -17,16 +20,33 @@ Action checkAdmin(int callingCl, int args)
         {
             isAdmin = true;
         }
+
         if (!isAdmin)
         {
-            PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
-            StacLogSteam(GetClientUserId(callingCl));
-            char fmtmsg[512];
-            Format(fmtmsg, sizeof(fmtmsg), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
-            StacNotify(GetClientUserId(callingCl), fmtmsg);
-            return Plugin_Handled;
+            // Detect DOES NOT!!! decrement on a timer, it's just reset every map!
+            stacProbingDetects[callingCl]++;
+            if
+            (
+                   stacProbingDetects[callingCl] == 1
+                || stacProbingDetects[callingCl] == 5
+                || stacProbingDetects[callingCl] % 10 == 0
+            )
+            {
+                GetCmdArg(0, arg0, sizeof(arg0));
+
+                PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
+                StacLogSteam(GetClientUserId(callingCl));
+                char fmtmsg[512];
+                Format(fmtmsg, sizeof(fmtmsg), "Client %N attempted to use %s, blocked access!", callingCl, arg0);
+                StacNotify(GetClientUserId(callingCl), fmtmsg);
+            }
+            // https://github.com/sapphonie/StAC-tf2/pull/189
+            // "Plugin_Continue will show "Unknown command" client side."
+            return Plugin_Continue;
         }
     }
+    GetCmdArg(0, arg0, sizeof(arg0));
+    GetCmdArg(1, arg1, sizeof(arg1));
 
     if (StrEqual(arg0, "sm_stac_checkall"))
     {
@@ -93,6 +113,7 @@ void ShowAllDetections(int callingCl)
                 || cmdnumSpikeDetects      [cl] > 0
                 || tbotDetects             [cl] > 0
                 || invalidUsercmdDetects   [cl] > 0
+                || stacProbingDetects      [cl] > 0
             )
             {
                 PrintToConsole
@@ -100,13 +121,14 @@ void ShowAllDetections(int callingCl)
                     callingCl,
                     "\n\
                     Detections for %L -\
-                    \n Turn binds           %i\
-                    \n FakeAngs             %i\
-                    \n Aimsnaps             %i\
-                    \n pSilent              %i\
-                    \n Cmdnum spikes        %i\
-                    \n Triggerbots          %i\
-                    \n Invalid Usercmds     %i\
+                    \n Turn binds - %i\
+                    \n FakeAngs - %i\
+                    \n Aimsnaps - %i\
+                    \n pSilent - %i\
+                    \n Cmdnum spikes - %i\
+                    \n Possible triggerbot detects - %i\
+                    \n Invalid Usercmds -%i\
+                    \n Attempts to see if StAC is running - %i\
                     \n",
                     cl,
                     turnTimes               [cl],
@@ -115,7 +137,8 @@ void ShowAllDetections(int callingCl)
                     pSilentDetects          [cl],
                     cmdnumSpikeDetects      [cl],
                     tbotDetects             [cl],
-                    invalidUsercmdDetects   [cl]
+                    invalidUsercmdDetects   [cl],
+                    stacProbingDetects      [cl]
                 );
             }
         }
