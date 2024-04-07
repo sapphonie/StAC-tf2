@@ -4,10 +4,13 @@
 
 Action checkAdmin(int callingCl, int args)
 {
+    // dont realloc since this might be hammered
     static char arg0[512];
-    GetCmdArg(0, arg0, sizeof(arg0));
     static char arg1[512];
-    GetCmdArg(1, arg1, sizeof(arg1));
+
+    // clear out whatever might be in there
+    arg0 = 0x0;
+    arg1 = 0x0;
 
     if (callingCl != 0)
     {
@@ -29,6 +32,8 @@ Action checkAdmin(int callingCl, int args)
                 || stacProbingDetects[callingCl] % 10 == 0
             )
             {
+                GetCmdArg(0, arg0, sizeof(arg0));
+
                 PrintToImportant("{hotpink}[StAC]{white} Client %N attempted to use %s, blocked access." , callingCl, arg0);
                 StacLogSteam(GetClientUserId(callingCl));
                 char fmtmsg[512];
@@ -40,6 +45,8 @@ Action checkAdmin(int callingCl, int args)
             return Plugin_Continue;
         }
     }
+    GetCmdArg(0, arg0, sizeof(arg0));
+    GetCmdArg(1, arg1, sizeof(arg1));
 
     if (StrEqual(arg0, "sm_stac_checkall"))
     {
