@@ -1075,6 +1075,7 @@ void invalidUsercmdCheck(int cl)
             StacLogAngles(userid);
             StacLogCmdnums(userid);
             StacLogTickcounts(userid);
+            StacLogMouse(userid);
 
             StacNotify(userid, "Invalid usercmd data! cmdnum or tickcount < 0!", invalidUsercmdDetects[cl]);
         }
@@ -1114,6 +1115,7 @@ void invalidUsercmdCheck(int cl)
             StacLogAngles(userid);
             StacLogCmdnums(userid);
             StacLogTickcounts(userid);
+            StacLogMouse(userid);
 
             StacNotify(userid, "Invalid usercmd data! client buttons are >= (1 << 26)!", invalidUsercmdDetects[cl]);
         }
