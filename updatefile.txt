@@ -8,7 +8,7 @@
         }
 
         "Notes"     "Changes in 6.1.4"
-        "Notes"     "- https://github.com/sapphonie/StAC-tf2/pull/190"
+        "Notes"     "- https://github.com/sapphonie/StAC-tf2/releases/tag/v6.1.4"
         "Notes"     "===== StAC is always looking for feedback! Got an issue, request, or wanna discuss? Open a GitHub issue and join the Discord server linked in the README, on GitHub! ====="
         "Notes"     "===== Thank you for using StAC. -sappho ===== "
     }
