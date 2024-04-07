@@ -9,8 +9,8 @@ Action checkAdmin(int callingCl, int args)
     static char arg1[512];
 
     // clear out whatever might be in there
-    arg0 = 0x0;
-    arg1 = 0x0;
+    arg0[0] = 0x0;
+    arg1[0] = 0x0;
 
     if (callingCl != 0)
     {
