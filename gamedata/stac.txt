@@ -144,7 +144,10 @@
             "CBaseClient::GetPlayerSlot"
             {
                 "linux"     "15"
-                "windows"   "14" // <-- annoying offset to get that i'm just trusting nosoop to be correct on (it doesn't crash)
+                // annoying offset to get that i'm just trusting nosoop to be correct on (it doesn't crash):
+                //     "find SV_BroadcastVoiceData via string xref "Sending voice from: %s - playerslot: %d"
+                //     virtual calls made prior to that (call dword ptr [eax+38h] on windows, buncha machinery comparing to _ZThn4_NK11CBaseClient13GetPlayerSlotEv on linux)"
+                "windows"   "14"
             }
             "CNetChan::GetTimeSinceLastReceived"
             {
