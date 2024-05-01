@@ -71,7 +71,7 @@ void DoStACGamedata()
         }
 
         // detour
-        if ( !DHookEnableDetour( CVEngineServer__GetClientConVarValue, false, Detour_CVEngineServer__GetClientConVarValue ) )
+        if ( !DHookEnableDetour( CVEngineServer__GetClientConVarValue, true, Detour_CVEngineServer__GetClientConVarValue ) )
         {
             SetFailState( "Failed to detour CVEngineServer::GetClientConVarValue." );
         }
@@ -227,8 +227,6 @@ int GetSignonState(Address IClient)
     return signonState;
 }
 
-
-
 // const char* GetClientConVarValue( int clientIndex, const char *name );
 public MRESReturn Detour_CVEngineServer__GetClientConVarValue(Address pThis, DHookReturn hReturn, DHookParam hParams)
 {
@@ -248,9 +246,34 @@ public MRESReturn Detour_CVEngineServer__GetClientConVarValue(Address pThis, DHo
 
     // lol
     char name[(MAX_NAME_LENGTH*2)+1];
-    // sv.GetClient( clientIndex - 1 )->GetUserSetting( name );
-    GetClientName(cl, name, sizeof(name));
+    // i really hope this just works
+    hReturn.GetString(name, sizeof(name));
 
+    // We might have do this hackily if GetClientName causes a loop here or if a post hook isn't good enough...
+    // sv.GetClient( clientIndex - 1 )->GetUserSetting( name );
+    /*
+    char *__cdecl CVEngineServer::GetClientConVarValue(CVEngineServer *this, int a2, const char *a3)
+    {
+        int v3; // eax
+
+        if ( a2 <= 0 || a2 > dword_312644 )
+        {
+            DevMsg(1, "GetClientConVarValue: player invalid index %i\n", a2);
+            return "";
+        }
+        else
+        {
+            v3 = *(dword_312638 + 4 * a2 - 4);
+            if ( v3 )
+            {
+                v3 += 4;
+            }
+            return
+        }
+    }
+    */
+
+    // GetClientName(cl, name, sizeof(name));
     int newlines;
     int returns;
     int rtl;
@@ -288,10 +311,8 @@ public MRESReturn Detour_CVEngineServer__GetClientConVarValue(Address pThis, DHo
     pack.WriteString(namemsg);
     pack.Reset(.clear=false);
     CreateTimer(1.0, Timer_SendStacNameNotif, pack);
-
-
     CreateTimer(2.0, BanName, userid);
-    return MRES_Supercede;
+    return MRES_Override;
 }
 
 Action Timer_SendStacNameNotif(Handle timer, DataPack pack)
