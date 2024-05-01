@@ -60,6 +60,27 @@ void DoStACGamedata()
         }
         PrintToServer( "CBasePlayer::ProcessUsercmds detoured!" );
     }
+    /*
+        CBasePlayer::ProcessUsercmds - for eating usercmds from players who aren't signed on
+    */
+    {
+        Handle CVEngineServer__GetClientConVarValue = DHookCreateFromConf( stac_gamedata, "CVEngineServer::GetClientConVarValue" );
+        if ( !CVEngineServer__GetClientConVarValue )
+        {
+            SetFailState( "Failed to setup detour for CVEngineServer::GetClientConVarValue" );
+        }
+
+        // detour
+        if ( !DHookEnableDetour( CVEngineServer__GetClientConVarValue, false, Detour_CVEngineServer__GetClientConVarValue ) )
+        {
+            SetFailState( "Failed to detour CVEngineServer::GetClientConVarValue." );
+        }
+        PrintToServer( "CVEngineServer::GetClientConVarValue detoured!" );
+    }
+
+
+
+
 
     // VTABLE OFFSETS
 
@@ -204,4 +225,92 @@ int GetSignonState(Address IClient)
 
     int signonState = view_as<int>( DerefPtr( (IClient - Offset_IClient_HACK) + Offset_SignonState ) );
     return signonState;
+}
+
+
+
+// const char* GetClientConVarValue( int clientIndex, const char *name );
+public MRESReturn Detour_CVEngineServer__GetClientConVarValue(Address pThis, DHookReturn hReturn, DHookParam hParams)
+{
+    int cl = hParams.Get(1);
+    char nameOfCvar[256];
+    hParams.GetString(2, nameOfCvar, sizeof(nameOfCvar));
+    if (!StrEqual(nameOfCvar, "name", .caseSensitive=true))
+    {
+        return MRES_Ignored;
+    }
+
+    // Invalid client, do not care
+    if (!IsValidClient(cl))
+    {
+        return MRES_Ignored;
+    }
+
+    // lol
+    char name[(MAX_NAME_LENGTH*2)+1];
+    // sv.GetClient( clientIndex - 1 )->GetUserSetting( name );
+    GetClientName(cl, name, sizeof(name));
+
+    int newlines;
+    int returns;
+    int rtl;
+    int ltr;
+
+    // todo: implement C style iscntrl
+    newlines    = ReplaceString(name, sizeof(name), "\n",           "");
+    returns     = ReplaceString(name, sizeof(name), "\r",           "");
+    rtl         = ReplaceString(name, sizeof(name), "\xE2\x80\x8F", "");
+    ltr         = ReplaceString(name, sizeof(name), "\xE2\x80\x8E", "");
+
+    // We didn't replace anything. We don't care.
+    if ( newlines == 0 && returns == 0 && rtl == 0 && ltr == 0 )
+    {
+        return MRES_Ignored;
+    }
+    hReturn.SetString(name);
+
+    char namemsg[512];
+    Format
+    (
+        namemsg,
+        sizeof(namemsg),
+        "Client had %i newline chars, %i return chars, %i right2left chars, and %i left2right chars in their name",
+        newlines,
+        returns,
+        rtl,
+        ltr
+    );
+
+    int userid = GetClientUserId(cl);
+    DataPack pack = new DataPack();
+    pack.Reset(.clear=true);
+    pack.WriteCell(userid);
+    pack.WriteString(namemsg);
+    pack.Reset(.clear=false);
+    CreateTimer(1.0, Timer_SendStacNameNotif, pack);
+
+
+    CreateTimer(2.0, BanName, userid);
+    return MRES_Supercede;
+}
+
+Action Timer_SendStacNameNotif(Handle timer, DataPack pack)
+{
+    // already at the beginning of the pack...
+    // pack.Reset(.clear=false);
+    int userid = pack.ReadCell();
+    char namemsg[512];
+    pack.ReadString(namemsg, sizeof(namemsg));
+    pack.Reset(.clear=true);
+    delete pack;
+
+    int cl = GetClientOfUserId(userid);
+    if (!IsValidClient(cl))
+    {
+        return Plugin_Continue;
+    }
+    StacLog(namemsg);
+    StacNotify(userid, namemsg, 1);
+
+    return Plugin_Continue;
 }

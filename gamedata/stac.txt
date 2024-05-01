@@ -54,6 +54,27 @@
                     }
                 }
             }
+            
+            // char *__cdecl CVEngineServer::GetClientConVarValue(CVEngineServer *this, int clientIdx, const char * cvarName)
+            "CVEngineServer::GetClientConVarValue"
+            {
+                "signature"     "CVEngineServer::GetClientConVarValue"
+                "callconv"      "thiscall"
+                "return"        "charptr"
+                "this"          "address"
+                "arguments"
+                {
+                    "clientIdx"
+                    {
+                        "type"      "objectptr"
+                    }
+                    "cvarName"
+                    {
+                        "type"      "charptr"
+                    }
+                }
+            }
+
         }
 
         "Signatures"
@@ -78,6 +99,13 @@
                 "library"   "server"
                 "linux"     "@_ZN11CBasePlayer15ProcessUsercmdsEP8CUserCmdiiib"
                 "windows"   "\x55\x8B\xEC\x83\xEC\x10\x53\x8B\xD9\x56\x57\xFF\xB3\xCC\x0C\x00\x00"
+            }
+            // "GetClientConVarValue: player invalid index %i\n"
+            "CVEngineServer::GetClientConVarValue"
+            {
+                "library"   "engine"
+                "linux"     "@_ZN14CVEngineServer20GetClientConVarValueEiPKc"
+                "windows"   "\x55\x8B\xEC\x8B\x4D\x08\x83\xF9\x01\x7C\x2A\x3B\x0D\x2A\x2A\x2A\x2A\x7F\x2A\xA1\x2A\x2A\x2A\x2A\xFF\x75\x0C"
             }
         }
 

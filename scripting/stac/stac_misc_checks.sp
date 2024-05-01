@@ -37,69 +37,6 @@ public Action OnClientSayCommand(int cl, const char[] command, const char[] sArg
     return Plugin_Continue;
 }
 
-void NameCheck(int userid)
-{
-    int cl = GetClientOfUserId(userid);
-    if (!IsValidClient(cl))
-    {
-        return;
-    }
-    char curName[MAX_NAME_LENGTH];
-    GetClientName(cl, curName, sizeof(curName));
-    // ban for invalid characters in names
-    if
-    (
-        StrContains(curName, "\n")  != -1
-        ||
-        StrContains(curName, "\r")  != -1
-        ||
-        // right to left char
-        StrContains(curName, "\xE2\x80\x8F") != -1
-        ||
-        // left to right char
-        StrContains(curName, "\xE2\x80\x8E") != -1
-    )
-    {
-        SaniNameAndBan(userid, curName);
-    }
-}
-
-void SaniNameAndBan(int userid, char name[MAX_NAME_LENGTH])
-{
-    int cl = GetClientOfUserId(userid);
-
-    hasBadName[cl] = true;
-
-    int newlines;
-    int returns;
-    int rtl;
-    int ltr;
-
-    // todo: implement C style iscntrl
-    newlines    = ReplaceString(name, sizeof(name), "\n",           "");
-    returns     = ReplaceString(name, sizeof(name), "\r",           "");
-    rtl         = ReplaceString(name, sizeof(name), "\xE2\x80\x8F", "");
-    ltr         = ReplaceString(name, sizeof(name), "\xE2\x80\x8E", "");
-
-    SetClientName(cl, name);
-
-    char namemsg[512];
-    Format
-    (
-        namemsg,
-        sizeof(namemsg),
-        "Client had %i newline chars, %i return chars, %i right2left chars, and %i left2right chars in their name",
-        newlines,
-        returns,
-        rtl,
-        ltr
-    );
-
-    StacLog(namemsg);
-    StacNotify(userid, namemsg, 1);
-    CreateTimer(0.25, BanName, userid);
-}
-
 Action BanName(Handle timer, int userid)
 {
     int cl = GetClientOfUserId(userid);
