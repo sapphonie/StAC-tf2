@@ -30,8 +30,6 @@ char miscVars[][] =
     "r_portalsopenall",
     // must be == 1.0
     "host_timescale",
-    // if this is >= 8 just kick them, cathook uses this to "spoof" windows
-    "windows_speaker_config"
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
     // tf_showspeed ?
@@ -61,6 +59,8 @@ char cheatVars[][] =
     // "hook"
     // fware
     "crash",
+    // cathook uses this to "spoof" windows
+    "windows_speaker_config",
 };
 
 
@@ -273,31 +273,6 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         }
     }
 
-    // chook does this. we cant ban since technically legit clients can set this, but we can kick em out
-    else if (StrEqual(cvarName, "windows_speaker_config"))
-    {
-        if (StringToInt(cvarValue) >= 8)
-        {
-            char fmtmsg[512];
-            Format
-            (
-                fmtmsg,
-                sizeof(fmtmsg),
-                "Client %N has a value of \"%i\" for cvar \"%s\", which is out of bounds. Legit clients can set this, but most of the time, this is a bot. Kicked from server.",
-                cl, StringToInt(cvarValue), cvarName
-            );
-            StacNotify
-            (
-                userid,
-                fmtmsg
-            );
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                KickClient(cl, "#GameUI_ServerInsecure");
-            }
-        }
-    }
-
     /*
         cheat program only cvars
     */
@@ -310,7 +285,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         }
     }
     // log something about cvar errors
-    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName) && !StrEqual(cvarName, "windows_speaker_config"))
+    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
     {
         char fmtmsg[512];
         Format

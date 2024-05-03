@@ -15,31 +15,25 @@
 			"ISteamGameServer__BeginAuthSession"
 			{
 				"linux"         "29"
-				"mac"           "29"
+				"linux64"       "29"
 				"windows"       "29"
 			}
 
 			"ISteamGameServer__EndAuthSession"
 			{
 				"linux"         "30"
-				"mac"           "30"
+				"linux64"       "30"
 				"windows"       "30"
 			}
 		}
 
 		"Signatures"
 		{
-			"CBaseServer__CheckMasterServerRequestRestart"
-			{
-				"library"       "engine"
-				"windows"       "\xE8\x2A\x2A\x2A\x2A\x83\x78\x04\x00\x74\x2A\xE8\x2A\x2A\x2A\x2A\x8B\x48\x04\x8B\x01\x8B\x40\x2C\xFF\xD0\x84\xC0\x74\x2A\x56"
-			}
-
 			"Steam3Server"
 			{
 				"library"       "engine"
 				"linux"         "@_Z12Steam3Serverv"
-				"mac"           "@_Z12Steam3Serverv"
+				"linux64"       "@_Z12Steam3Serverv"
 			}
 		}
 	}
@@ -51,6 +45,14 @@
 			"engine"    "dods"
 			"engine"    "css"
 			"engine"    "hl2dm"
+		}
+
+		"Offsets"
+		{
+			"CheckMasterServerRequestRestart_Steam3ServerFuncOffset"
+			{
+				"windows"		"1"
+			}
 		}
 
 		"Signatures"
@@ -79,12 +81,10 @@
 				"windows"       "\x55\x8B\xEC\x8B\x55\x08\x8B\x02\x89\x41\x59\x8B\x42\x04"
 			}
 
-			"CBaseServer__CheckChallengeType"
+			"CBaseServer__CheckMasterServerRequestRestart"
 			{
 				"library"       "engine"
-				"linux"         "@_ZN11CBaseServer18CheckChallengeTypeEP11CBaseClientiR8netadr_siPKcii"
-				"mac"           "@_ZN11CBaseServer18CheckChallengeTypeEP11CBaseClientiR8netadr_siPKcii"
-				"windows"       "\x55\x8B\xEC\x83\xEC\x14\x56\x57\x8B\x7D\x2A\x8B\xF1"
+				"windows"       "\xE8\x2A\x2A\x2A\x2A\x83\x78\x04\x00\x74\x2A\xE8\x2A\x2A\x2A\x2A\x8B\x48\x04\x8B\x01\x8B\x40\x2C\xFF\xD0\x84\xC0\x74\x2A\x56"
 			}
 		}
 	}
@@ -96,21 +96,45 @@
 			"engine"    "tf2"
 		}
 
+		"Offsets"
+		{
+			"ISteamGameServer__BeginAuthSession"
+			{
+				"linux"         "26"
+				"linux64"       "26"
+				"windows"       "26"
+				"windows64"     "26"
+			}
+
+			"ISteamGameServer__EndAuthSession"
+			{
+				"linux"         "27"
+				"linux64"       "27"
+				"windows"       "27"
+				"windows64"     "27"
+			}
+
+			"CheckMasterServerRequestRestart_Steam3ServerFuncOffset"
+			{
+				"windows"		"240"
+			}
+		}
+
 		"Signatures"
 		{
 			"CBaseServer__ConnectClient"
 			{
 				"library"       "engine"
 				"linux"         "@_ZN11CBaseServer13ConnectClientER8netadr_siiiiPKcS3_S3_i"
-				"mac"           "@_ZN11CBaseServer13ConnectClientER8netadr_siiiiPKcS3_S3_i"
-				"windows"       "\x55\x8B\xEC\x81\xEC\x24\x05\x00\x00"
+				"linux64"       "@_ZN11CBaseServer13ConnectClientER8netadr_siiiiPKcS3_S3_i"
+				"windows"       "\x55\x8B\xEC\x81\xEC\x24\x05\x00\x00\x53\x56\x57\x68\x2A\x2A\x2A\x2A"
 			}
 
 			"CBaseServer__RejectConnection"
 			{
 				"library"       "engine"
 				"linux"         "@_ZN11CBaseServer16RejectConnectionERK8netadr_siPKc"
-				"mac"           "@_ZN11CBaseServer16RejectConnectionERK8netadr_siPKc"
+				"linux64"       "@_ZN11CBaseServer16RejectConnectionERK8netadr_siPKc"
 				"windows"       "\x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x57"
 			}
 
@@ -118,16 +142,14 @@
 			{
 				"library"       "engine"
 				"linux"         "@_ZN11CBaseClient10SetSteamIDERK8CSteamID"
-				"mac"           "@_ZN11CBaseClient10SetSteamIDERK8CSteamID"
-				"windows"       "\x55\x8B\xEC\x56\x57\x8B\x7D\x08\x8B\xF1\x8D\x4E\x04"
+				"linux64"       "@_ZN11CBaseClient10SetSteamIDERK8CSteamID"
+				"windows"       "\x55\x8B\xEC\x56\x8B\xF1\x57\x8B\x7D\x08\x8D\x4E\x04"
 			}
 
-			"CBaseServer__CheckChallengeType"
+			"CBaseServer__CheckMasterServerRequestRestart"
 			{
 				"library"       "engine"
-				"linux"         "@_ZN11CBaseServer18CheckChallengeTypeEP11CBaseClientiR8netadr_siPKcii"
-				"mac"           "@_ZN11CBaseServer18CheckChallengeTypeEP11CBaseClientiR8netadr_siPKcii"
-				"windows"       "\x55\x8B\xEC\x83\xEC\x14\x53\x8B\x5D\x14"
+				"windows"       "\x55\x8B\xEC\x83\xEC\x1C\x53\x57\x33\xD2"
 			}
 		}
 	}
