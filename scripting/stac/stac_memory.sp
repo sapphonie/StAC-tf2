@@ -230,9 +230,11 @@ int GetSignonState(Address IClient)
 // const char* GetClientConVarValue( int clientIndex, const char *name );
 public MRESReturn Detour_CVEngineServer__GetClientConVarValue(Address pThis, DHookReturn hReturn, DHookParam hParams)
 {
-    int cl = hParams.Get(1);
+    int cl = DHookGetParam(hParams, 1);
     char nameOfCvar[256];
     hParams.GetString(2, nameOfCvar, sizeof(nameOfCvar));
+
+    // Not their name, don't care
     if (!StrEqual(nameOfCvar, "name", .caseSensitive=true))
     {
         return MRES_Ignored;
@@ -245,42 +247,19 @@ public MRESReturn Detour_CVEngineServer__GetClientConVarValue(Address pThis, DHo
     }
 
     // lol
-    char name[(MAX_NAME_LENGTH*2)+1];
+    static char name[(MAX_NAME_LENGTH*2)+1];
+    name[0] = 0x0;
+
     // i really hope this just works
     hReturn.GetString(name, sizeof(name));
 
-    // We might have do this hackily if GetClientName causes a loop here or if a post hook isn't good enough...
-    // sv.GetClient( clientIndex - 1 )->GetUserSetting( name );
-    /*
-    char *__cdecl CVEngineServer::GetClientConVarValue(CVEngineServer *this, int a2, const char *a3)
-    {
-        int v3; // eax
-
-        if ( a2 <= 0 || a2 > dword_312644 )
-        {
-            DevMsg(1, "GetClientConVarValue: player invalid index %i\n", a2);
-            return "";
-        }
-        else
-        {
-            v3 = *(dword_312638 + 4 * a2 - 4);
-            if ( v3 )
-            {
-                v3 += 4;
-            }
-            return
-        }
-    }
-    */
-
-    // GetClientName(cl, name, sizeof(name));
     int newlines;
     int returns;
     int rtl;
     int ltr;
 
     // todo: implement C style iscntrl
-    newlines    = ReplaceString(name, sizeof(name), "\n",           "");
+    newlines    = ReplaceString(name, sizeof(name), "o",           "");
     returns     = ReplaceString(name, sizeof(name), "\r",           "");
     rtl         = ReplaceString(name, sizeof(name), "\xE2\x80\x8F", "");
     ltr         = ReplaceString(name, sizeof(name), "\xE2\x80\x8E", "");
@@ -290,6 +269,7 @@ public MRESReturn Detour_CVEngineServer__GetClientConVarValue(Address pThis, DHo
     {
         return MRES_Ignored;
     }
+
     hReturn.SetString(name);
 
     char namemsg[512];
@@ -309,6 +289,7 @@ public MRESReturn Detour_CVEngineServer__GetClientConVarValue(Address pThis, DHo
     pack.Reset(.clear=true);
     pack.WriteCell(userid);
     pack.WriteString(namemsg);
+    pack.WriteString(name);
     pack.Reset(.clear=false);
     CreateTimer(1.0, Timer_SendStacNameNotif, pack);
     CreateTimer(2.0, BanName, userid);
@@ -321,15 +302,21 @@ Action Timer_SendStacNameNotif(Handle timer, DataPack pack)
     // pack.Reset(.clear=false);
     int userid = pack.ReadCell();
     char namemsg[512];
+    char name[(MAX_NAME_LENGTH*2)+1];
     pack.ReadString(namemsg, sizeof(namemsg));
+    pack.ReadString(name, sizeof(name));
     pack.Reset(.clear=true);
     delete pack;
 
     int cl = GetClientOfUserId(userid);
+
     if (!IsValidClient(cl))
     {
         return Plugin_Continue;
     }
+    // Sanitize their name outside of our detour lol
+    SetClientName(cl, name);
+
     StacLog(namemsg);
     StacNotify(userid, namemsg, 1);
 

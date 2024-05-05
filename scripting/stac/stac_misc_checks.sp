@@ -40,12 +40,12 @@ public Action OnClientSayCommand(int cl, const char[] command, const char[] sArg
 Action BanName(Handle timer, int userid)
 {
     int cl = GetClientOfUserId(userid);
-
-    if (!IsValidClient(userid))
+    if (!IsValidClient(cl))
     {
         // client must've left
         return Plugin_Continue;
     }
+
     if (stac_ban_for_misccheats.BoolValue)
     {
         char reason[128];
