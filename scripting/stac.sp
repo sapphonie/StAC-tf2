@@ -137,8 +137,6 @@ public void OnPluginStart()
 
     // hook real player disconnects
     HookEvent("player_disconnect", ePlayerDisconnect);
-    // grab player name changes
-    HookEvent("player_changename", ePlayerChangedName, EventHookMode_Pre);
     // grab player cheevs
     HookEvent("achievement_earned", ePlayerAchievement, EventHookMode_Post);
 

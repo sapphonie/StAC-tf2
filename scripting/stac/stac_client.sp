@@ -493,23 +493,6 @@ public void TF2_OnConditionRemoved(int cl, TFCond condition)
     }
 }
 
-public Action ePlayerChangedName(Handle event, char[] name, bool dontBroadcast)
-{
-    int userid = GetEventInt(event, "userid");
-
-    int cl = GetClientOfUserId(userid);
-
-    // I dont remember why this is here..........
-    if (hasBadName[cl])
-    {
-        hasBadName[cl] = false;
-        return Plugin_Continue;
-    }
-    NameCheck(userid);
-
-    return Plugin_Continue;
-}
-
 public Action ePlayerAchievement(Handle event, char[] name, bool dontBroadcast)
 {
     // ent index of achievement earner
