@@ -259,7 +259,7 @@ public MRESReturn Detour_CVEngineServer__GetClientConVarValue(Address pThis, DHo
     int ltr;
 
     // todo: implement C style iscntrl
-    newlines    = ReplaceString(name, sizeof(name), "o",           "");
+    newlines    = ReplaceString(name, sizeof(name), "\n",           "");
     returns     = ReplaceString(name, sizeof(name), "\r",           "");
     rtl         = ReplaceString(name, sizeof(name), "\xE2\x80\x8F", "");
     ltr         = ReplaceString(name, sizeof(name), "\xE2\x80\x8E", "");
