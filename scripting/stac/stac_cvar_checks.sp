@@ -276,7 +276,17 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     /*
         cheat program only cvars
     */
-    if (result != ConVarQuery_NotFound && IsCheatOnlyVar(cvarName))
+
+    if
+    (
+        (
+               result == ConVarQuery_Okay
+            || result == ConVarQuery_NotValid
+            || result == ConVarQuery_Protected
+        )
+        &&
+        IsCheatOnlyVar(cvarName)
+    )
     {
         illegalVarsNotify(userid, cvarName);
         if (stac_ban_for_misccheats.BoolValue)
