@@ -283,7 +283,7 @@ void StopIncompatPlugins()
         }
         else if
         (
-                StrContains(plName, "SMAC", false) == 0
+                StrContains(plName, "SMAC ", false) == 0
                 || StrEqual(plName, "SourceMod Anti-Cheat", false)
         ) /* SMAC */
         {
