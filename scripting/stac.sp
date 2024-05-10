@@ -281,7 +281,11 @@ void StopIncompatPlugins()
             SetFailState("[StAC] Refusing to load with malicious plugins.");
             return;
         }
-        else if (StrContains(plName, "SMAC", false) != -1) /* SMAC */
+        else if
+        (
+                StrContains(plName, "SMAC", false) == 0
+                || StrEqual(plName, "SourceMod Anti-Cheat", false)
+        ) /* SMAC */
         {
             delete plugini;
             SetFailState("[StAC] Refusing to load with SMAC. SMAC is outdated and is actively harmful to server performance as well as StAC's operation. Uninstall SMAC and try again.");
