@@ -30,6 +30,19 @@ char miscVars[][] =
     "r_portalsopenall",
     // must be == 1.0
     "host_timescale",
+
+    // 0
+    "net_blockmsg",
+    "net_droppackets",
+    "net_fakejitter",
+    "net_fakelag",
+    "net_fakeloss",
+
+    // 1
+    "r_skybox",
+    "r_drawskybox"
+
+
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
     // tf_showspeed ?
@@ -274,9 +287,39 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     }
 
     /*
+        // 0
+        "net_blockmsg",
+        "net_droppackets",
+        "net_fakejitter",
+        "net_fakelag",
+        "net_fakeloss",
+    */
+    else if (StrContains(cvarName, "net_") == 0 /* starts with "net_", doesn't just contain it */)
+    {
+        if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    else if (StrEqual(cvarName, "r_skybox") || StrEqual(cvarName, "r_drawskybox"))
+    {
+        if (StringToInt(cvarValue) != 1)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+    /*
         cheat program only cvars
     */
-
     if
     (
         (
