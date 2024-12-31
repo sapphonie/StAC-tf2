@@ -252,7 +252,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     // disables smoke
     else if (StrEqual(cvarName, "r_drawparticles"))
     {
-        if (StringToInt(cvarValue) != 0)
+        if (StringToInt(cvarValue) != 1)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
             if (stac_ban_for_misccheats.BoolValue)
