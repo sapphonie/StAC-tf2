@@ -37,11 +37,18 @@ char miscVars[][] =
     "net_fakejitter",
     "net_fakelag",
     "net_fakeloss",
+    "mat_wireframe"
+    "mat_fillrate"
+    "mat_fullbright"
 
     // 1
     "r_skybox",
     "r_drawskybox"
+    "r_drawparticles"
 
+    //89
+    "cl_pitchup"
+    "cl_pitchdown"
 
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
@@ -190,6 +197,75 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "r_drawothermodels"))
     {
         if (StringToInt(cvarValue) != 1)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    // mat_wireframe (cheat cvar! should NEVER not be 0)
+    // a la r_drawothermodels 2
+    else if (StrEqual(cvarName, "mat_wireframe"))
+    {
+        if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    // mat_fillrate (cheat cvar! should NEVER not be 0)
+    // AKA "ASUS wallhack"
+    else if (StrEqual(cvarName, "mat_fillrate"))
+    {
+        if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    // mat_fullbright (cheat cvar! should NEVER not be 0)
+    // see-thru smoke when 2
+    else if (StrEqual(cvarName, "mat_fullbright"))
+    {
+        if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+  
+    // r_drawparticles (cheat cvar! should NEVER not be 1)
+    // disables smoke
+    else if (StrEqual(cvarName, "r_drawparticles"))
+    {
+        if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    // probably will get detected anyway due to invalid pitch, but dosen't hurt to check
+    else if (StrEqual(cvarName, "cl_pitchup") || StrEqual(cvarName, "cl_pitchdown"))
+    {
+        if (StringToInt(cvarValue) != 89)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
             if (stac_ban_for_misccheats.BoolValue)
