@@ -989,7 +989,8 @@ void triggerbotCheck(int cl)
     // frame before last    // IN_ATTACK
     // last frame           //
     // current frame        // IN_ATTACK
-    if
+
+    else if
     (
         !(clbuttons[cl][2] & IN_ATTACK)
         &&
@@ -1001,7 +1002,7 @@ void triggerbotCheck(int cl)
         attack = 0;
     }
 
-if
+    if
     (
         // did not dmg on this tick
         !didHurtOnFrame[cl][0]
