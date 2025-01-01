@@ -952,24 +952,8 @@ void triggerbotCheck(int cl)
     )
     {
         attack = 1;
-    }
-    // grab single tick -attack inputs - classic (the rifle one) triggerbot/autoshoot
-    // this checks for the following pattern:
-    // frame before last    // IN_ATTACK
-    // last frame           // 
-    // current frame        // IN_ATTACK
-    if
-    (
-        (clbuttons[cl][2] & IN_ATTACK)
-        &&
-        !(clbuttons[cl][1] & IN_ATTACK)
-        &&
-        (clbuttons[cl][0] & IN_ATTACK)
-    )
-    {
-        attack = 1;
-    }
-
+    } 
+ 
     // grab single tick +attack2 inputs - pyro airblast, demo det, etc
     // this checks for the following pattern:
     // frame before last    //
@@ -995,6 +979,35 @@ void triggerbotCheck(int cl)
         ||
         // not a single tick input
         attack == 0
+    )
+    {
+        return;
+    }
+
+// grab single tick -attack inputs - triggerbot/autoshoot for classic
+//this checks for the following pattern:
+    // frame before last    // IN_ATTACK
+    // last frame           //
+    // current frame        // IN_ATTACK
+    if
+    (
+        !(clbuttons[cl][2] & IN_ATTACK)
+        &&
+        (clbuttons[cl][1] & IN_ATTACK)
+        &&
+        !(clbuttons[cl][0] & IN_ATTACK)
+    )
+    {
+        attack = 0;
+    }
+
+if
+    (
+        // did not dmg on this tick
+        !didHurtOnFrame[cl][0]
+        ||
+        // not a single tick input
+        attack == 1
     )
     {
         return;
