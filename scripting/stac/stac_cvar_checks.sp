@@ -54,9 +54,6 @@ char miscVars[][] =
     "cl_pitchup"
     "cl_pitchdown"
 
-    //musn't be -1 when server's cvar is set to 0-2
-    "sv_pure"
-
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
     // tf_showspeed ?
@@ -360,20 +357,6 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "cl_pitchup") || StrEqual(cvarName, "cl_pitchdown"))
     {
         if (StringToInt(cvarValue) != 89)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-    // sv_pure check, some bypasses just force sv_pure to be -1
-    else if (StrEqual(cvarName, "sv_pure"))
-    {
-        // floatcmpreal is just a ==
-        // if the values don't match, whack 'em
-        if ( !floatcmpreal(StringToFloat(cvarValue), sv_pure.FloatValue) )
         {
             oobVarsNotify(userid, cvarName, cvarValue);
             if (stac_ban_for_misccheats.BoolValue)
