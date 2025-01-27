@@ -251,12 +251,12 @@ void initCvars()
     AutoExecConfig_CreateConVar
     (
         "stac_min_randomcheck_secs",
-        "60.0",
+        "90",
         "[StAC] check AT LEAST this often in seconds for clients with violating cvar values/netprops\n\
-        (recommended 60)",
+        (recommended 90)",
         FCVAR_NONE,
         true,
-        5.0,
+        90.0,
         false,
         _
     );
@@ -271,7 +271,7 @@ void initCvars()
         (recommended 300)",
         FCVAR_NONE,
         true,
-        15.0,
+        120.0,
         false,
         _
     );
