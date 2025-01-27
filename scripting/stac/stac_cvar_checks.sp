@@ -31,13 +31,13 @@ char miscVars[][] =
     // must be == 1.0
     "host_timescale",
     // must be == 0
-    "mat_wireframe"
+    "mat_wireframe",
     //must be == 0
-    "mat_fillrate"
+    "mat_fillrate",
     //must be == 0
-    "mat_fullbright"
+    "mat_fullbright",
     //must be == 1
-    "r_drawparticles"
+    "r_drawparticles",
 
     // 0
     "net_blockmsg",
@@ -48,10 +48,10 @@ char miscVars[][] =
 
     // 1
     "r_skybox",
-    "r_drawskybox"
+    "r_drawskybox",
 
     //89
-    "cl_pitchup"
+    "cl_pitchup",
     "cl_pitchdown"
 
     // sv_force_transmit_ents ?
