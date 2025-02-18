@@ -240,17 +240,17 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
 
     // fog_enable (cheat cvar! should NEVER not be 1)
     // used for making the world a little clearer. this should frankly be not cheat locked but i know cheaters will use it and that's still cheating
-    else if (StrEqual(cvarName, "fog_enable"))
-    {
-        if (StringToInt(cvarValue) != 1)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
+    //else if (StrEqual(cvarName, "fog_enable"))
+    //{
+    //    if (StringToInt(cvarValue) != 1)
+    //    {
+    //        oobVarsNotify(userid, cvarName, cvarValue);
+    //        if (stac_ban_for_misccheats.BoolValue)
+    //        {
+    //            oobVarBan(userid);
+    //        }
+    //    }
+    //}
 
     // cl_thirdperson (hidden cvar! should NEVER not be 0)
     // used for enabling thirdperson
