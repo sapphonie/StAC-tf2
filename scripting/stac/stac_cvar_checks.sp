@@ -22,8 +22,6 @@ char miscVars[][] =
     "snd_show",
     // must be == 0
     "snd_visualize",
-    // must be == 1
-    "fog_enable",
     // must be == 0
     "cl_thirdperson",
     // must be == 0
@@ -229,20 +227,6 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "snd_visualize"))
     {
         if (StringToInt(cvarValue) != 0)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-
-    // fog_enable (cheat cvar! should NEVER not be 1)
-    // used for making the world a little clearer. this should frankly be not cheat locked but i know cheaters will use it and that's still cheating
-    else if (StrEqual(cvarName, "fog_enable"))
-    {
-        if (StringToInt(cvarValue) != 1)
         {
             oobVarsNotify(userid, cvarName, cvarValue);
             if (stac_ban_for_misccheats.BoolValue)
