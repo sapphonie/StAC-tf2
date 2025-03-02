@@ -146,8 +146,7 @@ methodmap TypedStringMap < StringMap
     public Handle GetHandle(
         const char[] key,
         Handle default_value = null
-    )
-    {
+    ) {
         return view_as<Handle>(this.GetOptionalValue(key, default_value));
     }
 

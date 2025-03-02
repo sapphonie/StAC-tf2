@@ -64,9 +64,6 @@
 /** Should single quote wrapped strings be accepted during decoding? */
 #define JSON_DECODE_SINGLE_QUOTES 1 << 0
 
-/** Should objects track order of key insertion during decoding? */
-#define JSON_DECODE_ORDERED_KEYS 1 << 1
-
 /**
  * @section json_merge settings
  */
@@ -116,8 +113,6 @@ char JSON_PP_NEWLINE[32] = "\n";
 
 #define JSON_ARRAY_KEY "is_array"
 #define JSON_ENFORCE_TYPE_KEY "enforce_type"
-#define JSON_ORDERED_KEYS_KEY "ordered_keys"
-#define JSON_SNAP_KEY "snap"
 
 /**
  * Types of cells within a JSON object
@@ -181,5 +176,5 @@ stock void json_format_meta_key(
     JSONMetaInfo meta
 )
 {
-    FormatEx(output, max_size, "%s:%d", key, view_as<int>(meta));
+    FormatEx(output, max_size, "k|%s:%d", key, view_as<int>(meta));
 }

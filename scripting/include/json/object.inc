@@ -69,109 +69,8 @@ methodmap JSON_Object < MetaStringMap
     }
 
     /**
-     * Whether the current object has ordered key tracking.
-     */
-    property bool OrderedKeys {
-        public get()
-        {
-            return this.Meta.GetBool(JSON_ORDERED_KEYS_KEY);
-        }
-    }
-
-    /**
-     * The latest snapshot stored for this object.
-     */
-    property StringMapSnapshot Snap {
-        public get()
-        {
-            return view_as<StringMapSnapshot>(
-                this.Meta.GetHandle(JSON_SNAP_KEY)
-            );
-        }
-
-        public set(StringMapSnapshot value)
-        {
-            this.Meta.SetHandle(JSON_SNAP_KEY, value);
-        }
-    }
-
-    /**
      * @section Iteration Helpers
      */
-
-    /**
-     * Refreshes the stored snapshot and returns the current length.
-     *
-     * @return  The length of the instance.
-     */
-    public int Iterate()
-    {
-        if (! this.OrderedKeys) {
-            if (this.Snap != null) {
-                delete this.Snap;
-                this.Snap = null;
-            }
-
-            this.Snap = this.Snapshot();
-        }
-
-        return this.Length;
-    }
-
-    /**
-     * Returns the buffer size required to store the key at the specified index.
-     *
-     * @param index     Index of key.
-     * @return          Buffer size required to store key.
-     */
-    public int GetKeySize(int index)
-    {
-        if (! this.OrderedKeys) {
-            return this.Snap.KeyBufferSize(index);
-        }
-
-        int max_size = JSON_INT_BUFFER_SIZE + 4;
-        char[] meta_key = new char[max_size];
-        FormatEx(meta_key, max_size, "%d:len", index);
-
-        return this.Meta.GetInt(meta_key);
-    }
-
-    /**
-     * Gets the key stored at an index.
-     *
-     * @param index     Index of key.
-     * @param value     Buffer to store key at.
-     * @param max_size  Maximum size of value buffer.
-     * @return          True on success, false otherwise.
-     */
-    public bool GetKey(int index, char[] value, int max_size)
-    {
-        if (! this.OrderedKeys) {
-            this.Snap.GetKey(index, value, max_size);
-
-            return true;
-        }
-
-        char[] meta_key = new char[JSON_INT_BUFFER_SIZE];
-        IntToString(index, meta_key, JSON_INT_BUFFER_SIZE);
-
-        return this.Meta.GetString(meta_key, value, max_size);
-    }
-
-    /**
-     * Enable tracking order of key insertion.
-     *
-     * @return  True on success, false if the object already has unordered keys.
-     */
-    public bool EnableOrderedKeys()
-    {
-        if (this.Length > 0) {
-            return false;
-        }
-
-        return this.Meta.SetBool(JSON_ORDERED_KEYS_KEY, true);
-    }
 
     /**
      * @section Metadata Getters
@@ -190,8 +89,7 @@ methodmap JSON_Object < MetaStringMap
         const char[] key,
         JSONMetaInfo meta,
         any default_value
-    )
-    {
+    ) {
         int max_size = json_meta_key_length(key);
         char[] meta_key = new char[max_size];
         json_format_meta_key(meta_key, max_size, key, meta);
@@ -237,15 +135,64 @@ methodmap JSON_Object < MetaStringMap
     }
 
     /**
-     * Gets the index of a key (if ordered keys are enabled).
+     * Gets the index of a key.
      *
      * @param key   Key to get index of.
-     * @return      Index of the key provided,
-     *              or -1 if it does not exist or ordered keys are disabled.
+     * @return      Index of the key provided, or -1 if it does not exist.
      */
     public int GetIndex(const char[] key)
     {
         return view_as<int>(this.GetMeta(key, JSON_Meta_Index, -1));
+    }
+
+    /**
+     * Gets the key stored at an index.
+     * If an array, will convert the index to its string value.
+     * If an array, will return false if the index is not between [0, length].
+     *
+     * @param index     Index of key.
+     * @param value     Buffer to store key at.
+     * @param max_size  Maximum size of value buffer.
+     * @return          True on success, false otherwise.
+     */
+    public bool GetKey(int index, char[] value, int max_size)
+    {
+        char[] index_key = new char[JSON_INT_BUFFER_SIZE];
+        if (IntToString(index, index_key, JSON_INT_BUFFER_SIZE) == 0) {
+            return false;
+        }
+
+        if (this.IsArray) {
+            // allow access of one past last index for intermediary operations
+            if (index < 0 || index > this.Length) {
+                return false;
+            }
+
+            strcopy(value, max_size, index_key);
+
+            return true;
+        }
+
+        return this.Meta.GetString(index_key, value, max_size);
+    }
+
+    /**
+     * Returns the buffer size required to store the key at the specified index.
+     *
+     * @param index     Index of key.
+     * @return          Buffer size required to store key.
+     */
+    public int GetKeySize(int index)
+    {
+        if (this.IsArray) {
+            return JSON_INT_BUFFER_SIZE;
+        }
+
+        int max_size = JSON_INT_BUFFER_SIZE + 4;
+        char[] index_size_key = new char[max_size];
+        FormatEx(index_size_key, max_size, "%d:len", index);
+
+        return this.Meta.GetInt(index_size_key);
     }
 
     /**
@@ -288,32 +235,6 @@ methodmap JSON_Object < MetaStringMap
     }
 
     /**
-     * Sets the cell type stored at a key.
-     * @internal
-     *
-     * @param key   Key to set value type for.
-     * @param type  Type to set key to.
-     * @return      True on success, false otherwise.
-     */
-    public bool SetType(const char[] key, JSONCellType type)
-    {
-        return this.SetMeta(key, JSON_Meta_Type, type);
-    }
-
-    /**
-     * Sets the length of the string stored at a key.
-     * @internal
-     *
-     * @param key       Key to set string length for.
-     * @param length    Length to set string to.
-     * @return          True on success, false otherwise.
-     */
-    public bool SetSize(const char[] key, int length)
-    {
-        return this.SetMeta(key, JSON_Meta_Size, length);
-    }
-
-    /**
      * Sets whether the key should be hidden from encoding.
      *
      * @param key       Key to set hidden state for.
@@ -322,76 +243,113 @@ methodmap JSON_Object < MetaStringMap
      */
     public bool SetHidden(const char[] key, bool hidden)
     {
-        if (! hidden) {
-            return this.RemoveMeta(key, JSON_Meta_Hidden);
-        }
-
-        return this.SetMeta(key, JSON_Meta_Hidden, hidden);
+        return hidden
+            ? this.SetMeta(key, JSON_Meta_Hidden, hidden)
+            : this.RemoveMeta(key, JSON_Meta_Hidden);
     }
 
     /**
+     * Tracks a key, setting it's type and index where necessary.
      * @internal
+     *
+     * @param key       Key to track. If the key already
+     *                  exists, it's index will not be changed.
+     * @param type      Type to set key to. If a valid type is
+     *                  provided, the key's type will be updated.
+     * @param index     Index to set key to. If the index is not
+     *                  provided (-1), the object length will be used.
+     * @return          True on success, false otherwise.
      */
-    public bool TrackKeyOrder(const char[] key, int index = -1)
-    {
-        if (! this.OrderedKeys) {
+    public bool TrackKey(
+        const char[] key,
+        JSONCellType type = JSON_Type_Invalid,
+        int index = -1
+    ) {
+        // track type if provided
+        if (type != JSON_Type_Invalid) {
+            this.SetMeta(key, JSON_Meta_Type, type);
+        }
+
+        if (this.IsArray) {
             return true;
         }
 
         if (index == -1) {
-            index = this.Length - 1;
+            index = this.Length;
+
+            // skip tracking index if we're pushing to end & key already exists
+            if (this.HasKey(key)) {
+                if (type != JSON_Type_Invalid && type != JSON_Type_String) {
+                    // remove any existing size
+                    this.RemoveMeta(key, JSON_Meta_Size);
+                }
+
+                return true;
+            }
         }
 
-        char[] meta_key = new char[JSON_INT_BUFFER_SIZE];
-        IntToString(index, meta_key, JSON_INT_BUFFER_SIZE);
+        char[] index_key = new char[JSON_INT_BUFFER_SIZE];
+        IntToString(index, index_key, JSON_INT_BUFFER_SIZE);
 
         int max_size = JSON_INT_BUFFER_SIZE + 8;
-        char[] meta_length_key = new char[max_size];
-        FormatEx(meta_length_key, max_size, "%d:len", index);
+        char[] index_size_key = new char[max_size];
+        FormatEx(index_size_key, max_size, "%d:len", index);
 
-        return this.Meta.SetString(meta_key, key)
-            && this.Meta.SetInt(meta_length_key, strlen(key) + 1)
+        return this.Meta.SetString(index_key, key)
+            && this.Meta.SetInt(index_size_key, strlen(key) + 1)
             && this.SetMeta(key, JSON_Meta_Index, index);
     }
 
     /**
+     * Untracks a key, cleaning up all it's meta and indexing data.
      * @internal
+     *
+     * @param key   Key to untrack.
+     * @return      True on success, false otherwise.
      */
-    public bool RemoveKeyFromOrder(const char[] key)
+    public bool UntrackKey(const char[] key)
     {
         int index = this.GetIndex(key);
+
+        for (int i = 0; i < sizeof(JSON_ALL_METADATA); i += 1) {
+            this.RemoveMeta(key, JSON_ALL_METADATA[i]);
+        }
+
+        if (this.IsArray) {
+            return true;
+        }
+
         if (index == -1) {
             return false;
         }
 
-        char[] meta_key = new char[JSON_INT_BUFFER_SIZE];
-        IntToString(index, meta_key, JSON_INT_BUFFER_SIZE);
+        char[] index_key = new char[JSON_INT_BUFFER_SIZE];
+        IntToString(index, index_key, JSON_INT_BUFFER_SIZE);
 
         int max_size = JSON_INT_BUFFER_SIZE + 8;
-        char[] meta_length_key = new char[max_size];
-        FormatEx(meta_length_key, max_size, "%d:len", index);
+        char[] index_size_key = new char[max_size];
+        FormatEx(index_size_key, max_size, "%d:len", index);
 
-        if (! this.Meta.Remove(meta_key)
-            || ! this.Meta.Remove(meta_length_key)) {
+        if (! this.Meta.Remove(index_key) || ! this.Meta.Remove(index_size_key)) {
             return false;
         }
 
-        int length = this.Iterate();
-        if (index < length - 1) {
+        int length = this.Length;
+        int last_index = length - 1;
+        if (index < last_index) {
             for (int i = index + 1; i < length; i += 1) {
                 int new_key_size = this.GetKeySize(i);
                 char[] new_key = new char[new_key_size];
                 this.GetKey(i, new_key, new_key_size);
 
-                this.TrackKeyOrder(new_key, i - 1);
+                this.TrackKey(new_key, JSON_Type_Invalid, i - 1);
             }
 
-            int last_index = length - 1;
-            FormatEx(meta_length_key, max_size, "%d:len", last_index);
-            IntToString(last_index, meta_key, JSON_INT_BUFFER_SIZE);
+            IntToString(last_index, index_key, JSON_INT_BUFFER_SIZE);
+            FormatEx(index_size_key, max_size, "%d:len", last_index);
 
-            this.Meta.Remove(meta_key);
-            this.Meta.Remove(meta_length_key);
+            this.Meta.Remove(index_key);
+            this.Meta.Remove(index_size_key);
         }
 
         return true;
@@ -405,9 +363,9 @@ methodmap JSON_Object < MetaStringMap
     /**
      * Retrieves the int64 stored at a key.
      *
-     * @param key               Key to retrieve int64 value for.
-     * @param default_value     Value to return if the key does not exist.
-     * @return                  Value stored at key.
+     * @param key   Key to retrieve int64 value for.
+     * @param value Int buffer to store output.
+     * @return      True on success, false otherwise.
      */
     public bool GetInt64(const char[] key, int value[2])
     {
@@ -425,8 +383,7 @@ methodmap JSON_Object < MetaStringMap
     public JSON_Object GetObject(
         const char[] key,
         JSON_Object default_value = null
-    )
-    {
+    ) {
         return view_as<JSON_Object>(this.GetHandle(key, default_value));
     }
 
@@ -443,10 +400,9 @@ methodmap JSON_Object < MetaStringMap
      */
     public bool SetString(const char[] key, const char[] value)
     {
-        return this.Super.SetString(key, value)
-            && this.SetType(key, JSON_Type_String)
-            && this.SetSize(key, strlen(value) + 1)
-            && this.TrackKeyOrder(key);
+        return this.TrackKey(key, JSON_Type_String)
+            && this.Super.SetString(key, value)
+            && this.SetMeta(key, JSON_Meta_Size, strlen(value) + 1);
     }
 
     /**
@@ -458,9 +414,8 @@ methodmap JSON_Object < MetaStringMap
      */
     public bool SetInt(const char[] key, int value)
     {
-        return this.Super.SetInt(key, value)
-            && this.SetType(key, JSON_Type_Int)
-            && this.TrackKeyOrder(key);
+        return this.TrackKey(key, JSON_Type_Int)
+            && this.Super.SetInt(key, value);
     }
 
     #if SM_INT64_SUPPORTED
@@ -473,9 +428,8 @@ methodmap JSON_Object < MetaStringMap
      */
     public bool SetInt64(const char[] key, int value[2])
     {
-        return this.Data.SetArray(key, value, 2)
-            && this.SetType(key, JSON_Type_Int64)
-            && this.TrackKeyOrder(key);
+        return this.TrackKey(key, JSON_Type_Int64)
+            && this.Data.SetArray(key, value, 2);
     }
     #endif
 
@@ -488,9 +442,8 @@ methodmap JSON_Object < MetaStringMap
      */
     public bool SetFloat(const char[] key, float value)
     {
-        return this.Super.SetFloat(key, value)
-            && this.SetType(key, JSON_Type_Float)
-            && this.TrackKeyOrder(key);
+        return this.TrackKey(key, JSON_Type_Float)
+            && this.Super.SetFloat(key, value);
     }
 
     /**
@@ -502,9 +455,8 @@ methodmap JSON_Object < MetaStringMap
      */
     public bool SetBool(const char[] key, bool value)
     {
-        return this.Super.SetBool(key, value)
-            && this.SetType(key, JSON_Type_Bool)
-            && this.TrackKeyOrder(key);
+        return this.TrackKey(key, JSON_Type_Bool)
+            && this.Super.SetBool(key, value);
     }
 
     /**
@@ -516,9 +468,8 @@ methodmap JSON_Object < MetaStringMap
      */
     public bool SetObject(const char[] key, JSON_Object value)
     {
-        return this.Super.SetHandle(key, value)
-            && this.SetType(key, JSON_Type_Object)
-            && this.TrackKeyOrder(key);
+        return this.TrackKey(key, JSON_Type_Object)
+            && this.Super.SetHandle(key, value);
     }
 
     /**
@@ -533,15 +484,7 @@ methodmap JSON_Object < MetaStringMap
      */
     public bool Remove(const char[] key)
     {
-        if (this.OrderedKeys) {
-            this.RemoveKeyFromOrder(key);
-        }
-
-        for (int i = 0; i < sizeof(JSON_ALL_METADATA); i += 1) {
-            this.RemoveMeta(key, JSON_ALL_METADATA[i]);
-        }
-
-        return this.Super.Remove(key);
+        return this.UntrackKey(key) && this.Super.Remove(key);
     }
 
     /**
@@ -556,8 +499,7 @@ methodmap JSON_Object < MetaStringMap
         const char[] from,
         const char[] to,
         bool replace = true
-    )
-    {
+    ) {
         JSONCellType type = this.GetType(from);
         if (type == JSON_Type_Invalid) {
             return false;
@@ -632,7 +574,7 @@ methodmap JSON_Object < MetaStringMap
         bool replace = (options & JSON_MERGE_REPLACE) > 0;
         bool autocleanup = (options & JSON_MERGE_CLEANUP) > 0;
 
-        int json_size = from.Iterate();
+        int json_size = from.Length;
         int key_length = 0;
         for (int i = 0; i < json_size; i += 1) {
             key_length = from.GetKeySize(i);

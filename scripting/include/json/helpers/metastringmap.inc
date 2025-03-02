@@ -110,8 +110,7 @@ methodmap MetaStringMap < TypedStringMap
         char[] value,
         int max_size,
         int &size = 0
-    )
-    {
+    ) {
         return this.Data.GetString(key, value, max_size, size);
     }
 
