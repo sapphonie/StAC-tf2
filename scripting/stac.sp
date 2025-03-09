@@ -6,7 +6,8 @@
 #pragma newdecls required
 
 // For json
-#pragma dynamic 8192 * 4
+// if you have to make this any bigger there's probably an evil bug in json parsing code somewhere -sappho
+#pragma dynamic 8192 * 8
 
 #include <sourcemod>
 #include <regex>
@@ -55,7 +56,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "6.3.2"
+#define PLUGIN_VERSION  "6.3.3"
 
 #define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
 
