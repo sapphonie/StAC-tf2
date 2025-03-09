@@ -319,14 +319,15 @@ stock void PlayerRunCmd
     (
     /*
         make sure client isnt using a spin bind
-            Note from the future - this probably doesn't cause any actual false detections anymore, so we can probably remove it and be fine.
-            -sappho 3/9/25
         ( buttons & IN_LEFT | buttons & IN_RIGHT )
+
+        Note from the future - this probably doesn't cause any actual false detections anymore, so we can probably remove it and be fine.
+        -sappho 3/9/25
     */
         // make sure we're not lagging and that cmdnum is saneish
-        || IsUserLagging(cl, /* checkcmdnum = */ true)
+        IsUserLagging(cl, /* checkcmdnum = */ true)
     )
-    // if any of these things are true, don't check angles etc
+    // if we're lagging, don't check angles.
     {
         return;
     }
