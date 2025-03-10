@@ -22,7 +22,7 @@ jobs:
     - name: Setup SourcePawn Compiler
       uses: rumblefrog/setup-sp@master
       with:
-        version: "1.12.x"
+        version: "1.11.x"
 
     - name: Compile plugins
       run: |
