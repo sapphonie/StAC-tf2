@@ -83,6 +83,8 @@ char cheatVars[][] =
     "crash",
     // cathook uses this to "spoof" windows
     "windows_speaker_config",
+    // Amalgam uses this in the Src (https://github.com/rei-2/Amalgam/blob/master/Amalgam/src/Features/Commands/Commands.cpp)
+    "getcvar",
 };
 
 
