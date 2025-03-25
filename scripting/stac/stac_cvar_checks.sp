@@ -134,7 +134,6 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     */
 
     // sv_cheats
-    // you know what this does and what it should be. 0.
     else if (StrEqual(cvarName, "sv_cheats"))
     {
         // if we're ignoring sv_cheats being on, obviously don't check this cvar
@@ -272,8 +271,15 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "host_timescale"))
     {
         // floatcmpreal is just a ==
-        // if the values don't match, whack 'em
-        if ( !floatcmpreal(StringToFloat(cvarValue), host_timescale.FloatValue) )
+        // only bother if server timescale == 1.0
+        if
+        (
+            // host_timescale value == 1
+            floatcmpreal(host_timescale.FloatValue, 1.0, 0.01)
+            &&
+            // client host_timescale cvar != 1
+            !floatcmpreal(StringToFloat(cvarValue), 1.0, 0.01)
+        )
         {
             oobVarsNotify(userid, cvarName, cvarValue);
             if (stac_ban_for_misccheats.BoolValue)
