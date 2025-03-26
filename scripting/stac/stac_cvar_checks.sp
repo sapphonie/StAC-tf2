@@ -32,8 +32,6 @@ char miscVars[][] =
     "mat_wireframe",
     //must be == 0
     "mat_fillrate",
-    //must be == 0
-    "mat_fullbright",
     //must be == 1
     "r_drawparticles",
 
@@ -306,20 +304,6 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     // mat_fillrate (cheat cvar! should NEVER not be 0)
     // AKA "ASUS wallhack"
     else if (StrEqual(cvarName, "mat_fillrate"))
-    {
-        if (StringToInt(cvarValue) != 0)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-
-    // mat_fullbright (cheat cvar! should NEVER not be 0)
-    // see-thru smoke when 2
-    else if (StrEqual(cvarName, "mat_fullbright"))
     {
         if (StringToInt(cvarValue) != 0)
         {
