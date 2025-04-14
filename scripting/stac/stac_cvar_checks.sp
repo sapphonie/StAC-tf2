@@ -108,6 +108,11 @@ void InitCvarArray()
 // Some day I will clean this up so it's not just a billion elseifs.
 public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
 {
+    if (!configsExecuted)
+    {
+        return;
+    }
+
     // make sure client is valid
     if (!IsValidClient(cl))
     {
@@ -135,7 +140,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     else if (StrEqual(cvarName, "sv_cheats"))
     {
         // if we're ignoring sv_cheats being on, obviously don't check this cvar
-        if (configsExecuted && !stac_work_with_sv_cheats.BoolValue)
+        if (!stac_work_with_sv_cheats.BoolValue)
         {
             if (StringToInt(cvarValue) != 0)
             {
@@ -272,7 +277,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         // only bother if server timescale == 1.0
         if
         (
-            // host_timescale value == 1
+            // server host_timescale value == 1
             floatcmpreal(host_timescale.FloatValue, 1.0, 0.01)
             &&
             // client host_timescale cvar != 1
