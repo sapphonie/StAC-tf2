@@ -4,8 +4,8 @@
 
 public void OnConfigsExecuted()
 {
-    checkNativesEtc(null);
     configsExecuted = true;
+    checkNativesEtc(null);
 }
 
 public void OnMapStart()

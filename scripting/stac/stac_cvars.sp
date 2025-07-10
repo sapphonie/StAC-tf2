@@ -404,6 +404,10 @@ void initCvars()
 
 public void GenericCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
+    // pretty sure checking configsExecuted here results in a bug where stac_work_with_sv_cheats won't work.
+    // TODO investigate this
+    // Maybe this was fixed by moving configsExecuted = true BEFORE checkNatives() ?
+    // -sappho 07/09/25
     if (configsExecuted && !stac_work_with_sv_cheats.BoolValue && convar == FindConVar("sv_cheats") && StringToInt(newValue) != 0)
     {
         OnPluginEnd();
