@@ -2,53 +2,45 @@
 
 /********** CLIENT CONVAR BASED STUFF **********/
 
+// TODO: Make this work differently. We could just have a sister array but i think it'd be smarter
+// to just have it be "cvar" then "expected value", like
+// "r_drawothermodels", "1",
+// "snd_show",          "1",
+// etc.
+// But I will do that later. Maybe.
+
+
 // Cvars that cheats tend to use to be out of bounds (or ones we need to check anyway) get appended to this array
 char miscVars[][] =
 {
-    // misc vars
+    // misc vars            // per https://developer.valvesoftware.com/wiki/List_of_Team_Fortress_2_console_commands_and_variables
     "sensitivity",
     // possible cheat vars
-    // must be == 0
-    "sv_cheats",
-    // must be == 1
-    "cl_interpolate",
+    "sv_cheats",            // == 0     | notify replicated
+    "host_timescale",       // ~= 1.0   | replicated
+    "cl_cmdrate",           // >= 10    | archive userinfo
     // this is a useless check but we check it anyway
-    "fov_desired",
-    // must be >= 10
-    "cl_cmdrate",
-    // must be == 1
-    "r_drawothermodels",
-    // must be == 0
-    "snd_show",
-    // must be == 0
-    "snd_visualize",
-    // must be == 0
-    "cl_thirdperson",
-    // must be == 0
-    "r_portalsopenall",
-    // must be == 1.0
-    "host_timescale",
-    // must be == 0
-    "mat_wireframe",
-    //must be == 0
-    "mat_fillrate",
-    //must be == 1
-    "r_drawparticles",
+    "fov_desired",          // !        | client archive userinfo
+    "cl_interpolate",       // == 1     | devonly userinfo notconnected
+    "cl_thirdperson",       // == 0     | devonly client archive userinfo notconnected
 
-    // 0
-    "net_blockmsg",
-    "net_droppackets",
-    "net_fakejitter",
-    "net_fakelag",
-    "net_fakeloss",
-
-    // 1
-    "r_skybox",
-    "r_drawskybox",
-
-    //89
-    "cl_pitchup",
-    "cl_pitchdown"
+    // cheat only vars - everything after here WILL NOT get checked if (sv_cheats == 1)
+    "r_drawothermodels",    // == 1     | client cheat
+    "snd_show",             // == 0     | cheat
+    "snd_visualize",        // == 0     | cheat
+    "r_portalsopenall",     // == 0     | cheat
+    "mat_wireframe",        // == 0     | cheat
+    "mat_fillrate",         // == 0     | cheat
+    "r_drawparticles",      // == 1     | client cheat
+    "net_blockmsg",         // == 0     | cheat
+    "net_droppackets",      // == 0     | cheat
+    "net_fakejitter",       // == 0     | cheat
+    "net_fakelag",          // == 0     | cheat
+    "net_fakeloss",         // == 0     | cheat
+    "r_skybox",             // == 1     | client cheat
+    "r_drawskybox",         // == 1     | cheat
+    "cl_pitchup",           // == 89    | client cheat
+    "cl_pitchdown"          // == 89    | client cheat
 
     // sv_force_transmit_ents ?
     // sv_suppress_viewpunch ?
@@ -112,7 +104,6 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     {
         return;
     }
-
     // make sure client is valid
     if (!IsValidClient(cl))
     {
@@ -125,12 +116,69 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
         StacLog("Checked cvar %s value %s on %N", cvarName, cvarValue, cl);
     }
 
+
+
+    /*
+        cheat program only cvars
+    */
+    if
+    (
+        (
+               result == ConVarQuery_Okay
+            || result == ConVarQuery_NotValid
+            || result == ConVarQuery_Protected
+        )
+        &&
+        IsCheatOnlyVar(cvarName)
+    )
+    {
+        illegalVarsNotify(userid, cvarName);
+        if (stac_ban_for_misccheats.BoolValue)
+        {
+            illegalVarBan(userid);
+        }
+    }
+    // log something about cvar errors
+    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
+    {
+        char fmtmsg[512];
+        Format
+        (
+            fmtmsg,
+            sizeof(fmtmsg),
+            "Could not query cvar %s on player %N! This person is probably cheating, but please verify this!",
+            cvarName,
+            cl
+        );
+        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on player %N! This person is probably cheating, but please verify this!", cvarName, cl);
+        StacLog(fmtmsg);
+        StacNotify(userid, fmtmsg);
+    }
+
+
+/*
+
+    // misc vars            // per https://developer.valvesoftware.com/wiki/List_of_Team_Fortress_2_console_commands_and_variables
+    "sensitivity",
+    // possible cheat vars
+    "sv_cheats",            // == 0     | notify replicated
+    "host_timescale",       // ~= 1.0   | replicated
+    "cl_cmdrate",           // >= 10    | archive userinfo
+    // this is a useless check but we check it anyway
+    "fov_desired",          // !        | client archive userinfo
+    "cl_interpolate",       // == 1     | devonly userinfo notconnected
+    "cl_thirdperson",       // == 0     | devonly client archive userinfo notconnected
+
+
+*/
+
+
+
+
     if (StrEqual(cvarName, "sensitivity"))
     {
         sensFor[cl] = StringToFloat(cvarValue);
     }
-
-    // TODO: yaw and pitch checks?
 
     /*
         non cheat client cvars, but we check if they have oob values or not
@@ -149,122 +197,6 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
                 {
                     oobVarBan(userid);
                 }
-            }
-        }
-    }
-
-    // cl_interpolate (hidden cvar! should NEVER not be 1)
-    // used for disabling client side interpolation wholesale
-    else if (StrEqual(cvarName, "cl_interpolate"))
-    {
-        if (StringToInt(cvarValue) != 1)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-
-    // fov check #1 - if u get banned by this you are a clown
-    // used for seeing more of the world
-    else if (StrEqual(cvarName, "fov_desired"))
-    {
-        int fovDesired = StringToInt(cvarValue);
-        // check just in case
-        if (fovDesired < 20 || fovDesired > 90)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-
-    // cmdrate check - should always be at or above 10
-    // used for faking ping to the server
-    else if (StrEqual(cvarName, "cl_cmdrate"))
-    {
-        int clcmdrate = StringToInt(cvarValue);
-        if (clcmdrate < 10)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-
-    // r_drawothermodels (cheat cvar! should NEVER not be 1)
-    // used for seeing thru the world
-    else if (StrEqual(cvarName, "r_drawothermodels"))
-    {
-        if (StringToInt(cvarValue) != 1)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-
-    // snd_show (cheat cvar! should NEVER not be 0)
-    // used for showing currently playing sounds
-    else if (StrEqual(cvarName, "snd_show"))
-    {
-        if (StringToInt(cvarValue) != 0)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-
-    // snd_visualize (cheat cvar! should NEVER not be 0)
-    // used for visualizing sounds in the world
-    else if (StrEqual(cvarName, "snd_visualize"))
-    {
-        if (StringToInt(cvarValue) != 0)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-
-    // cl_thirdperson (hidden cvar! should NEVER not be 0)
-    // used for enabling thirdperson
-    else if (StrEqual(cvarName, "cl_thirdperson"))
-    {
-        if (StringToInt(cvarValue) != 0)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
-            }
-        }
-    }
-
-    // r_portalsopenall (cheat cvar! should NEVER not be 0)
-    // used for disabling areaportal checks, so you can see the entire world at once. essentially "far esp"
-    // BONK: Wait, huh? Is this actually useful? AFAIK the server controls this...
-    else if (StrEqual(cvarName, "r_portalsopenall"))
-    {
-        if (StringToInt(cvarValue) != 0)
-        {
-            oobVarsNotify(userid, cvarName, cvarValue);
-            if (stac_ban_for_misccheats.BoolValue)
-            {
-                oobVarBan(userid);
             }
         }
     }
@@ -291,6 +223,129 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
             }
         }
     }
+
+    // cmdrate check - should always be at or above 10
+    // used for faking ping to the server
+    else if (StrEqual(cvarName, "cl_cmdrate"))
+    {
+        int clcmdrate = StringToInt(cvarValue);
+        if (clcmdrate < 10)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    // fov check #1 - if u get banned by this you are a clown
+    // used for seeing more of the world
+    else if (StrEqual(cvarName, "fov_desired"))
+    {
+        int fovDesired = StringToInt(cvarValue);
+        // check just in case
+        if (fovDesired < 20 || fovDesired > 90)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    // cl_interpolate (hidden cvar! should NEVER not be 1)
+    // used for disabling client side interpolation wholesale
+    else if (StrEqual(cvarName, "cl_interpolate"))
+    {
+        if (StringToInt(cvarValue) != 1)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    // cl_thirdperson (hidden cvar! should NEVER not be 0)
+    // used for enabling thirdperson
+    else if (StrEqual(cvarName, "cl_thirdperson"))
+    {
+        if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+
+
+    // DO NOT ban people who are using cheat commands on sv_cheats enabled servers
+    static ConVar sv_cheats = null;
+    if (!sv_cheats)
+    {
+        sv_cheats = FindConVar("sv_cheats");
+    }
+    if (sv_cheats.BoolValue)
+    {
+        return;
+    }
+
+
+    // r_drawothermodels (cheat cvar! should NEVER not be 1)
+    // used for seeing thru the world
+    else if (StrEqual(cvarName, "r_drawothermodels"))
+    {
+        if (StringToInt(cvarValue) != 1)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+
+
+
+
+
+
+    // snd_show (cheat cvar! should NEVER not be 0)
+    // used for showing currently playing sounds
+    else if ((StrEqual(cvarName, "snd_show") || StrEqual(cvarName, "snd_visualize")))
+    {
+        if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
+    // r_portalsopenall (cheat cvar! should NEVER not be 0)
+    // used for disabling areaportal checks, so you can see the entire world at once. essentially "far esp"
+    // BONK: Wait, huh? Is this actually useful? AFAIK the server controls this...
+    else if (StrEqual(cvarName, "r_portalsopenall"))
+    {
+        if (StringToInt(cvarValue) != 0)
+        {
+            oobVarsNotify(userid, cvarName, cvarValue);
+            if (stac_ban_for_misccheats.BoolValue)
+            {
+                oobVarBan(userid);
+            }
+        }
+    }
+
   
     // mat_wireframe (cheat cvar! should NEVER not be 0)
     // a la r_drawothermodels 2
@@ -377,42 +432,6 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
                 oobVarBan(userid);
             }
         }
-    }
-    /*
-        cheat program only cvars
-    */
-    if
-    (
-        (
-               result == ConVarQuery_Okay
-            || result == ConVarQuery_NotValid
-            || result == ConVarQuery_Protected
-        )
-        &&
-        IsCheatOnlyVar(cvarName)
-    )
-    {
-        illegalVarsNotify(userid, cvarName);
-        if (stac_ban_for_misccheats.BoolValue)
-        {
-            illegalVarBan(userid);
-        }
-    }
-    // log something about cvar errors
-    else if (result != ConVarQuery_Okay && !IsCheatOnlyVar(cvarName))
-    {
-        char fmtmsg[512];
-        Format
-        (
-            fmtmsg,
-            sizeof(fmtmsg),
-            "Could not query cvar %s on player %N! This person is probably cheating, but please verify this!",
-            cvarName,
-            cl
-        );
-        PrintToImportant("{hotpink}[StAC]{white} Could not query cvar %s on player %N! This person is probably cheating, but please verify this!", cvarName, cl);
-        StacLog(fmtmsg);
-        StacNotify(userid, fmtmsg);
     }
 }
 
