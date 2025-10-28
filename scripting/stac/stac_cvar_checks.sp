@@ -157,6 +157,7 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
 
 
 /*
+    partial comment duplicated here for sanity
 
     // misc vars            // per https://developer.valvesoftware.com/wiki/List_of_Team_Fortress_2_console_commands_and_variables
     "sensitivity",
@@ -168,8 +169,6 @@ public void ConVarCheck(QueryCookie cookie, int cl, ConVarQueryResult result, co
     "fov_desired",          // !        | client archive userinfo
     "cl_interpolate",       // == 1     | devonly userinfo notconnected
     "cl_thirdperson",       // == 0     | devonly client archive userinfo notconnected
-
-
 */
 
 
