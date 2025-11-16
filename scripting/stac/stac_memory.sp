@@ -88,7 +88,7 @@ void DoStACGamedata()
         CBaseClient::GetPlayerSlot - for converting IClient* to ent idx
     */
     {
-        StartPrepSDKCall( SDKCall_Raw );
+        StartPrepSDKCall( SDKCall_VirtualAddress );
         PrepSDKCall_SetFromConf( stac_gamedata, SDKConf_Virtual, "CBaseClient::GetPlayerSlot" );
         PrepSDKCall_SetReturnInfo( SDKType_PlainOldData, SDKPass_Plain );
         SDKCall_GetPlayerSlot = EndPrepSDKCall();
