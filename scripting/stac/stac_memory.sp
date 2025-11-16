@@ -211,10 +211,12 @@ bool GetClientFromNetChan(Address pThis, Address& IClient, int& client)
     return true;
 }
 
+/*
 Address DerefPtr(Address addr)
 {
-    return view_as<Address>( LoadFromAddress(addr, NumberType_Int32) );
+    return LoadAddressFromAddress(addr, NumberType_Int32) );
 }
+*/
 
 int GetSignonState(Address IClient)
 {
@@ -223,7 +225,7 @@ int GetSignonState(Address IClient)
         return -1;
     }
 
-    int signonState = view_as<int>( DerefPtr( (IClient - Offset_IClient_HACK) + Offset_SignonState ) );
+    int signonState = LoadFromAddress((IClient - Offset_IClient_HACK) + Offset_SignonState, NumberType_Int32);
     return signonState;
 }
 
