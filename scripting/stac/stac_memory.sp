@@ -1,3 +1,4 @@
+#include <virtual_address>
 /*
     Gamedata
 */
