@@ -1287,6 +1287,29 @@ int GetSRandomInt()
 }
 
 
+/*
+
+#define TIME_TO_TICKS( dt )		( (int)( 0.5f + (float)(dt) / TICK_INTERVAL ) )
+#define TICKS_TO_TIME( t )		( TICK_INTERVAL *( t ) )
+#define ROUND_TO_TICKS( t )		( TICK_INTERVAL * TIME_TO_TICKS( t ) )
+
+*/
+// defined in jaypatch
+// ty av🥑cado
+int time_to_ticks_2(float time)
+{
+    return RoundToFloor(0.5 + time / tickinterv);
+}
+float ticks_to_time( int ticks )
+{
+    return tickinterv * ticks;
+}
+
+float round_to_ticks( float time )
+{
+    return tickinterv * time_to_ticks_2(time);
+}
+
 // https://forums.alliedmods.net/showpost.php?p=2698561&postcount=2
 // STEAM_1:1:23456789 to 23456789
 /*
