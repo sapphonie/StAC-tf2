@@ -1294,18 +1294,21 @@ int GetSRandomInt()
 #define ROUND_TO_TICKS( t )		( TICK_INTERVAL * TIME_TO_TICKS( t ) )
 
 */
+
 // defined in jaypatch
 // ty av🥑cado
+// RoundToFloor mimics the behavior of c-casting a float to an int
 int time_to_ticks_2(float time)
 {
     return RoundToFloor(0.5 + time / tickinterv);
 }
-float ticks_to_time( int ticks )
+
+float ticks_to_time(int ticks)
 {
     return tickinterv * ticks;
 }
 
-float round_to_ticks( float time )
+float round_to_ticks(float time)
 {
     return tickinterv * time_to_ticks_2(time);
 }
