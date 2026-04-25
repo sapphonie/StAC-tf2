@@ -151,6 +151,8 @@ public void OnPluginStart()
     // Create Stac ConVars for adjusting settings
     initCvars();
 
+    DoTPSMath();
+
     EngineSanityChecks();
 
     // redo all client based stuff on plugin reload

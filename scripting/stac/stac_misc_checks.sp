@@ -274,15 +274,32 @@ void checkInterp(int userid)
     {
         min_interp_ms = -1;
     }
-
+    else
+    {
+        // This stupid cvar really should actually be removed given that valve fixed the reason it was added already
+        /*min_interp_ms = RoundToCeil
+        (
+            round_to_ticks(min_interp_ms / 1000.0) * 1000
+        );
+        */
+    }
     // maxterp var - clamp to -1 if 0
     int max_interp_ms           = GetConVarInt(stac_max_interp_ms);
     if (max_interp_ms == 0)
     {
         max_interp_ms = -1;
     }
-
-
+    else
+    {
+        max_interp_ms = RoundToCeil
+        (
+            round_to_ticks(max_interp_ms / 1000.0) * 1000
+        );
+    }
+    if (stac_debug.BoolValue)
+    {
+        StacLog("min/max interp checks clamped to %i / %i", min_interp_ms, max_interp_ms);
+    }
 
     int cl = GetClientOfUserId(userid);
     // lerp check - we check the netprop
