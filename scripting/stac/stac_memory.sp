@@ -1,4 +1,3 @@
-#include <virtual_address>
 /*
     Gamedata
 */
@@ -89,7 +88,7 @@ void DoStACGamedata()
         CBaseClient::GetPlayerSlot - for converting IClient* to ent idx
     */
     {
-        StartPrepSDKCall( SDKCall_VirtualAddress );
+        StartPrepSDKCall( SDKCall_Raw );
         PrepSDKCall_SetFromConf( stac_gamedata, SDKConf_Virtual, "CBaseClient::GetPlayerSlot" );
         PrepSDKCall_SetReturnInfo( SDKType_PlainOldData, SDKPass_Plain );
         SDKCall_GetPlayerSlot = EndPrepSDKCall();
@@ -212,12 +211,10 @@ bool GetClientFromNetChan(Address pThis, Address& IClient, int& client)
     return true;
 }
 
-/*
 Address DerefPtr(Address addr)
 {
-    return LoadAddressFromAddress(addr, NumberType_Int32) );
+    return view_as<Address>( LoadFromAddress(addr, NumberType_Int32) );
 }
-*/
 
 int GetSignonState(Address IClient)
 {
@@ -226,7 +223,7 @@ int GetSignonState(Address IClient)
         return -1;
     }
 
-    int signonState = LoadFromAddress((IClient - Offset_IClient_HACK) + Offset_SignonState, NumberType_Int32);
+    int signonState = view_as<int>( DerefPtr( (IClient - Offset_IClient_HACK) + Offset_SignonState ) );
     return signonState;
 }
 
