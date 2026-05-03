@@ -722,6 +722,15 @@ void psilentCheck(int cl)
     {
         return;
     }
+
+    // high ping clients seem far more likely to produce bunk detections. probably related to interp, i dunno, i don't care
+    // require a bigger snap before counting these ppls snaps as detections
+    // Why 205? it's slightly bigger than what we set sv_maxunlag to :smilecat:
+    if (pingFor[cl] >= 205.0 && aDiffReal <= 2.5)
+    {
+        return;
+    }
+
     int userid = GetClientUserId(cl);
     pSilentDetects[cl]++;
     // have this detection expire in 30 minutes
