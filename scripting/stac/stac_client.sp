@@ -561,6 +561,7 @@ void ClearClBasedVars(int userid)
     tbotDetects             [cl] = -1;
     invalidUsercmdDetects   [cl] = 0;
     stacProbingDetects      [cl] = 0;
+    playerperfDetects       [cl] = 0;
 
     // frames since client "did something"
     //                      [ client index ][history]

@@ -81,6 +81,7 @@ int cmdnumSpikeDetects      [TFMAXPLAYERS+1];
 int tbotDetects             [TFMAXPLAYERS+1] = {-1, ...};
 int invalidUsercmdDetects   [TFMAXPLAYERS+1];
 int stacProbingDetects      [TFMAXPLAYERS+1];
+int playerperfDetects       [TFMAXPLAYERS+1];
 
 // frames since client "did something"
 //                          [ client index ][history]

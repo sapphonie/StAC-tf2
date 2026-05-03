@@ -110,6 +110,19 @@
         "de"        "[StAC] Gebannt für bhop cheats nach {1} aufeinanderfolgender bhops"
     }
     /*
+        playerperf - issued by seed prediction / crit hack cheats (Rijin etc)
+    */
+    "playerperfBanAllChat"
+    {
+        "#format"   "{1:N},{2:i}"
+        "en"        "{hotpink}[StAC]{white} Player {1} sent {mediumpurple}playerperf{white} cmd (used for {mediumpurple}seed prediction / crit hacking{white}) {mediumpurple}{2}{white} times. {palegreen}BANNED from server!"
+    }
+    "playerperfBanMsg"
+    {
+        "#format"   "{1:i}"
+        "en"        "[StAC] Banned for sending playerperf cmd (used for seed prediction / crit hacking) {1} times"
+    }
+    /*
         ____        __
        / __/____ _ / /__ ___   ____ _ ____   ____ _ _____
       / /_ / __ `// //_// _ \ / __ `// __ \ / __ `// ___/
