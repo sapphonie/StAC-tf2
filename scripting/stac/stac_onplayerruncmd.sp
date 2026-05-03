@@ -1320,7 +1320,7 @@ stock bool DidRecentlyDoInterestingAction(int cl)
         // - theoretically might catch people w/ bad cheats with aimkey on `r`
         ||  clbuttons[cl][0] & IN_RELOAD
         ||  clbuttons[cl][1] & IN_RELOAD
-        ||  clbuttons[cl][3] & IN_RELOAD
+        ||  clbuttons[cl][2] & IN_RELOAD
     )
     {
         return true;
