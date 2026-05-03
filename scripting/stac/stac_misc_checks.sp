@@ -92,7 +92,51 @@ public Action OnClientCommand(int cl, int args)
     {
         return Plugin_Stop;
     }
+    if (StrContains(ClientCommandChar, "playerperf", false) != -1)
+    {
+        playerperfCheck(cl);
+    }
+
+
     return Plugin_Continue;
+}
+
+/*
+    PLAYERPERF DETECTION
+    The `playerperf` server command leaks the server's float-time uptime back to the
+    client via a TextMsg. Cheats with seed prediction / crit hack (Rijin, etc) call
+    this once per re-sync to predict gpGlobals->curtime well enough to brute force
+    crit / spread seeds. Real clients never have a reason to type it.
+    First two attempts: log + notify, no ban. Third attempt: ban.
+*/
+void playerperfCheck(int cl)
+{
+
+    int userid = GetClientUserId(cl);
+    playerperfDetects[cl]++;
+
+    PrintToImportant
+    (
+        "{hotpink}[StAC]{white} Player %N sent the {mediumpurple}playerperf{white} command (used by {mediumpurple}seed-prediction / crit hacks{white}).\nDetections so far: {palegreen}%i{white}.",
+        cl,
+        playerperfDetects[cl]
+    );
+    StacLogSteam(userid);
+    StacLog("Player %N sent `playerperf` (detection %i).", cl, playerperfDetects[cl]);
+
+    char dtype[128];
+    Format(dtype, sizeof(dtype), "playerperf command (seed prediction / crit hack)");
+    StacNotify(userid, dtype, playerperfDetects[cl]);
+
+    // ban on the third detection
+    if (playerperfDetects[cl] >= 3 && stac_ban_for_misccheats.BoolValue)
+    {
+        char reason[128];
+        Format(reason, sizeof(reason), "%t", "playerperfBanMsg", playerperfDetects[cl]);
+        char pubreason[256];
+        Format(pubreason, sizeof(pubreason), "%t", "playerperfBanAllChat", cl, playerperfDetects[cl]);
+        BanUser(userid, reason, pubreason);
+    }
 }
 
 // for achievement checking, because chook tries to be s n e a k y

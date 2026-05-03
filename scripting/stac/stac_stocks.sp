@@ -1303,10 +1303,12 @@ int time_to_ticks_2(float time)
     return RoundToFloor(0.5 + time / tickinterv);
 }
 
+/*
 float ticks_to_time(int ticks)
 {
     return tickinterv * ticks;
 }
+*/
 
 float round_to_ticks(float time)
 {
