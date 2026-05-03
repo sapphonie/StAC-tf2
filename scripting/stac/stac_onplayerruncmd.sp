@@ -1255,6 +1255,7 @@ bool IsUserLagging(int cl, bool checkcmdnum = true)
 float CalcAngDeg(float array1[3], float array2[3])
 {
     // ignore roll
+    // yes this mutates state. i do not care
     array1[2] = 0.0;
     array2[2] = 0.0;
     return SquareRoot(GetVectorDistance(array1, array2, true));
