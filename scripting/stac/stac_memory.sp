@@ -176,8 +176,8 @@ public MRESReturn Detour_CNetChan__ProcessPacket(Address pThis, DHookParam hPara
         (
             "\
             \njunk in CNetChan::ProcessPacket detour:\
-            \npThis %i\
-            \nicl_ptr %x\
+            \npThis 0x%lx\
+            \nicl_ptr 0x%lx\
             \ncl %i\
             ",
             pThis,
@@ -225,10 +225,6 @@ bool GetClientFromNetChan(Address pThis, Address& IClient, int& client)
     return true;
 }
 
-Address DerefPtr(Address addr)
-{
-    return view_as<Address>( LoadFromAddress(addr, NumberType_Int32) );
-}
 
 int GetSignonState(Address IClient)
 {
@@ -237,7 +233,8 @@ int GetSignonState(Address IClient)
         return -1;
     }
 
-    int signonState = view_as<int>( DerefPtr( (IClient - Offset_IClient_HACK) + Offset_SignonState ) );
+    // m_nSignonState is a 4 byte int regardless of arch, its fine to use LoadFromAddress
+    int signonState = LoadFromAddress( (IClient - Offset_IClient_HACK) + Offset_SignonState, NumberType_Int32 )
     return signonState;
 }
 

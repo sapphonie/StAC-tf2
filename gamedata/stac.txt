@@ -86,7 +86,9 @@
             {
                 "library"   "engine"
                 "linux"     "@_ZN8CNetChan13ProcessPacketEP11netpacket_sb"
+                "linux64"   "@_ZN8CNetChan13ProcessPacketEP11netpacket_sb"
                 "windows"   "\x55\x8B\xEC\x83\xEC\x08\x53\x56\x8B\x75\x08\x83\x7E\x24\x00"
+                "windows64" "\x44\x88\x44\x24\x18\x48\x89\x54\x24\x10\x53"
             }
 
             /*
@@ -97,14 +99,18 @@
             {
                 "library"   "server"
                 "linux"     "@_ZN11CBasePlayer15ProcessUsercmdsEP8CUserCmdiiib"
+                "linux64"   "@_ZN11CBasePlayer15ProcessUsercmdsEP8CUserCmdiiib"
                 "windows"   "\x55\x8B\xEC\x83\xEC\x10\x53\x8B\xD9\x56\x57\xFF\xB3\xCC\x0C\x00\x00"
+                "windows64" "\x40\x53\x55\x56\x57\x41\x54\x48\x83\xEC\x40"
             }
             // "GetClientConVarValue: player invalid index %i\n"
             "CVEngineServer::GetClientConVarValue"
             {
                 "library"   "engine"
                 "linux"     "@_ZN14CVEngineServer20GetClientConVarValueEiPKc"
+                "linux64"   "@_ZN14CVEngineServer20GetClientConVarValueEiPKc"
                 "windows"   "\x55\x8B\xEC\x8B\x4D\x08\x83\xF9\x01\x7C\x2A\x3B\x0D\x2A\x2A\x2A\x2A\x7F\x2A\xA1\x2A\x2A\x2A\x2A\xFF\x75\x0C"
+                "windows64" "\x48\x83\xEC\x28\x83\xFA\x01"
             }
         }
 
@@ -149,43 +155,70 @@
                     ;           vvvv * 4 = 0xC4
                     return this[0x31] >= 2;
                 }
+
+            win x64: IClient sub-vtable slot 33 (called from SV_BroadcastVoiceData [rax+0x108])
+
+            sub_180063940:
+                cmp     dword ptr [rcx+0E0h], 6     ; rcx = IClient*, 6 = SIGNONSTATE_FULL
+                setz    al
+                retn
+
+            MSVC compiled this body IClient*-direct (no internal thunk), so 0xE0 is
+            already what we want when subtracting 0 from IClient*.
             */
+
+
+            // raw m_nSignonState offset exactly as it appears in the cmp of the
+            // CBaseClient::IsConnected/IsActive disassembly. The "this" frame depends on
+            // which variant of the function the binary exposed — see Offset_IClient_HACK
+            // for the math that converts our IClient* to that frame.
             "Offset_SignonState"
             {
-                "linux"     "0xC8"
-                "windows"   "0xC4"
+                "linux"     "0xC8"   // _ZNK11CBaseClient11IsConnectedEv : cmp [eax+0xC8]  (eax=CBaseClient*)
+                "windows"   "0xC4"   // sub_1007F080                     : cmp [ecx+0xC4]  (ecx=IClient*=CBaseClient*)
+                "linux64"   "0xE8"   // _ZNK11CBaseClient8IsActiveEv     : cmp [rdi+0xE8]  (rdi=CBaseClient*)
+                "windows64" "0xE0"   // sub_180063940                    : cmp [rcx+0xE0]  (rcx=IClient*)
             }
-
-            /*
-
-                IDA says that signon state is 0x32 (* 4)...?
-                But GDB says that we need to subtract 4 from our IClient ptr
-                I don't know why this is, but it's probably dumb shit with multiple inheritance or something
-
-            */
+            // Bytes to subtract from IClient* so that (IClient - HACK) + Offset_SignonState
+            // lands on m_nSignonState.
+            //
+            // CBaseClient inherits from multiple base classes; IClient is sometimes a secondary base
+            // so IClient* doesn't always == CBaseClient*.
+            //
+            // HACK = whatever pointer adjustment the disassembled function body did NOT do
+            // internally for us: 
+            //   - body takes CBaseClient*  -> HACK = thunk size (the body assumed it was applied already; we have to do it)
+            //   - body takes IClient*      -> HACK = 0          (already in the right frame)
             "Offset_IClient_HACK"
             {
-                "linux"     "4"
-                "windows"   "0"
+                "linux"     "4"   // canonical _ZNK..IsConnected takes CBaseClient*; thunk is _ZThn4_… (sub eax,4)
+                "linux64"   "8"   // canonical _ZNK..IsActive    takes CBaseClient*; thunk is _ZThn8_… (sub rdi,8)
+                "windows"   "0"   // MSVC32 chose IClient as the primary base; IClient*==CBaseClient*, no thunk
+                "windows64" "0"   // sub_180063940 takes IClient* directly; cmp offset is already IClient-relative
             }
-
             "CBaseClient::GetPlayerSlot"
             {
                 "linux"     "15"
-                // annoying offset to get that i'm just trusting nosoop to be correct on (it doesn't crash):
+                "linux64"   "15"
+                // annoying windows offset to get that i'm just trusting nosoop to be correct on (it doesn't crash):
                 //     "find SV_BroadcastVoiceData via string xref "Sending voice from: %s - playerslot: %d"
                 //     virtual calls made prior to that (call dword ptr [eax+38h] on windows, buncha machinery comparing to _ZThn4_NK11CBaseClient13GetPlayerSlotEv on linux)"
                 "windows"   "14"
+                "windows64" "14"
             }
             "CNetChan::GetTimeSinceLastReceived"
             {
                 "linux"     "21"
+                "linux64"   "21"
                 "windows"   "21"
+                "windows64" "21"
             }
             "CNetChan::GetMsgHandler"
             {
                 "linux"     "47"
+                "linux64"   "47"
                 "windows"   "46"
+                "windows64" "46"
             }
         }
     }
