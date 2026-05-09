@@ -170,9 +170,21 @@ public MRESReturn Detour_CNetChan__ProcessPacket(Address pThis, DHookParam hPara
     // Get our client idx and iclient ptr
     Address icl_ptr;
     int cl;
-    if (!GetClientFromNetChan(pThis, icl_ptr, cl) || !icl_ptr || cl <= 0 )
+    if (!GetClientFromNetChan(pThis, icl_ptr, cl) || !icl_ptr || cl <= 0)
     {
-        StacLog("bunk addr in procpacket dtor");
+        StacLog
+        (
+            "\
+            \njunk in CNetChan::ProcessPacket detour:\
+            \npThis %i\
+            \nicl_ptr %x\
+            \ncl %i\
+            ",
+            pThis,
+            icl_ptr,
+            cl
+        );
+
         return MRES_Ignored;
     }
 
@@ -205,8 +217,10 @@ bool GetClientFromNetChan(Address pThis, Address& IClient, int& client)
         return false;
     }
 
-    // Client's ent index is always GetPlayerSlot() + 1
-    client = SDKCall(SDKCall_GetPlayerSlot, IClient) + 1;
+    // we are forced to pass the address by value here since
+    // sm1.13 prevents us from passing it byref
+    Address icl = IClient;
+    client      = SDKCall(SDKCall_GetPlayerSlot, icl) + 1;
 
     return true;
 }
