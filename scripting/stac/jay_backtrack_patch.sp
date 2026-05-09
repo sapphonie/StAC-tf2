@@ -111,6 +111,10 @@ stock Action OnPlayerRunCmd_jaypatch(int client, int& buttons, int& impulse,
 				int& subtype, int& cmdnum, int& tickcount,
 				int& seed, int mouse[2])
 {
+	#pragma unused vel
+	#pragma unused angles
+	#pragma unused mouse
+
 	// Ignore invalid players and bots.
 	if (!is_player_valid(client) || IsFakeClient(client))
 		return Plugin_Continue;

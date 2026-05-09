@@ -169,6 +169,12 @@ stock void PlayerRunCmd
     const int mouse[2]
 )
 {
+    #pragma unused impulse
+    #pragma unused vel
+    #pragma unused weapon
+    #pragma unused subtype
+    #pragma unused seed
+
     // make sure client is real & not a bot
     if (!IsValidClient(cl))
     {

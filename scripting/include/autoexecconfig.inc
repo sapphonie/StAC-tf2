@@ -372,6 +372,8 @@ stock static int AutoExecConfig_FormatFileName(char[] buffer, int size, char[] f
 */
 stock int AutoExecConfig_AppendValue(const char[] name, const char[] defaultValue, const char[] description, int flags, bool hasMin, float min, bool hasMax, float max)
 {
+	#pragma unused flags
+
 	// No config set
 	if (strlen(g_sConfigFile) < 1)
 	{
