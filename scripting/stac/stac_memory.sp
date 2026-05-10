@@ -170,9 +170,21 @@ public MRESReturn Detour_CNetChan__ProcessPacket(Address pThis, DHookParam hPara
     // Get our client idx and iclient ptr
     Address icl_ptr;
     int cl;
-    if (!GetClientFromNetChan(pThis, icl_ptr, cl) || !icl_ptr || cl <= 0 )
+    if (!GetClientFromNetChan(pThis, icl_ptr, cl) || !icl_ptr || cl <= 0)
     {
-        StacLog("bunk addr in procpacket dtor");
+        StacLog
+        (
+            "\
+            \njunk in CNetChan::ProcessPacket detour:\
+            \npThis 0x%lx\
+            \nicl_ptr 0x%lx\
+            \ncl %i\
+            ",
+            pThis,
+            icl_ptr,
+            cl
+        );
+
         return MRES_Ignored;
     }
 
@@ -205,16 +217,11 @@ bool GetClientFromNetChan(Address pThis, Address& IClient, int& client)
         return false;
     }
 
-    // Client's ent index is always GetPlayerSlot() + 1
     client = SDKCall(SDKCall_GetPlayerSlot, IClient) + 1;
 
     return true;
 }
 
-Address DerefPtr(Address addr)
-{
-    return view_as<Address>( LoadFromAddress(addr, NumberType_Int32) );
-}
 
 int GetSignonState(Address IClient)
 {
@@ -223,7 +230,8 @@ int GetSignonState(Address IClient)
         return -1;
     }
 
-    int signonState = view_as<int>( DerefPtr( (IClient - Offset_IClient_HACK) + Offset_SignonState ) );
+    // m_nSignonState is a 4 byte int regardless of arch, its fine to use LoadFromAddress
+    int signonState = LoadFromAddress( (IClient - Offset_IClient_HACK) + Offset_SignonState, NumberType_Int32 )
     return signonState;
 }
 
