@@ -217,10 +217,7 @@ bool GetClientFromNetChan(Address pThis, Address& IClient, int& client)
         return false;
     }
 
-    // we are forced to pass the address by value here since
-    // sm1.13 prevents us from passing it byref
-    Address icl = IClient;
-    client      = SDKCall(SDKCall_GetPlayerSlot, icl) + 1;
+    client = SDKCall(SDKCall_GetPlayerSlot, IClient) + 1;
 
     return true;
 }
