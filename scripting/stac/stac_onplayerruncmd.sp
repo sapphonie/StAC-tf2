@@ -584,15 +584,37 @@ void cmdnumspikeCheck(int cl)
         return;
     }
 
-    // nullcmd, ignore
-    if (clcmdnum[cl][0] == 0 && cltickcount[cl][0] == 0)
+    // nullcmd, ignore - need [0], [1], [2] for the check below
+    if
+    (
+           (clcmdnum[cl][0] == 0 && cltickcount[cl][0] == 0)
+        || (clcmdnum[cl][1] == 0 && cltickcount[cl][1] == 0)
+        || (clcmdnum[cl][2] == 0 && cltickcount[cl][2] == 0)
+    )
     {
         return;
     }
 
-    int spikeamt = clcmdnum[cl][0] - clcmdnum[cl][1];
+    // prev tick's spike lines up with that tick's bang
+    // FireBullets runs after OnPlayerRunCmd so indexes shift next tick
+    // tldr clcmdnum[1] and didBangOnFrame[0] are the same usercmd
+    // don't gate on [1] either, Rijin spikes cmdnum and sets IN_ATTACK on the same usercmd
+    int spikeamt = clcmdnum[cl][1] - clcmdnum[cl][2];
+
+    bool shotGated = didBangOnFrame[cl][0];
+
+    // 1.5s spawn gate would normally be good enough here but SOAP/MGE still jitter for a few more seconds IDK why lol
+    // hold the tight thresh off in those cases
+    bool pastSpawnBuffer = (engineTime[cl][0] - 5.0 >= timeSinceSpawn[cl]);
+
+    // shot-gated: a legit player almost never jumps cmdnum by 12+ on the same
+    // usercmd as they would be firing a hitscan weapon. Rijin no-spread brute-forces command_number on the
+    // firing cmd, so the spike and "bang" happen at the same time. 12 is well above natural choked-cmd jitter 
+    // but below what we can see right after spawning; hence the branch
+    int threshold = (shotGated && pastSpawnBuffer) ? 12 : 32;
+
     // https://github.com/sapphonie/StAC-tf2/issues/74
-    if (spikeamt >= 32 || spikeamt <= -32)
+    if (spikeamt >= threshold || spikeamt <= -threshold)
     {
         int userid = GetClientUserId(cl);
 
@@ -612,6 +634,7 @@ void cmdnumspikeCheck(int cl)
         StacLogCmdnums(userid);
         StacLogTickcounts(userid);
         StacLog("Held weapon: %s", heldWeapon);
+        StacLog("Threshold: %i (shot-gated: %s)", threshold, shotGated ? "yes" : "no");
 
         if (cmdnumSpikeDetects[cl] % 5 == 0)
         {
@@ -677,7 +700,15 @@ void psilentCheck(int cl)
     }
 
     // make sure we've been attacking in this frame or the last
-    if ( !(clbuttons[cl][0] & IN_ATTACK) && !(clbuttons[cl][1] & IN_ATTACK) )
+    if
+    (
+            !(clbuttons[cl][0] & IN_ATTACK)
+        &&  !(clbuttons[cl][1] & IN_ATTACK)
+        &&  !(clbuttons[cl][0] & IN_ATTACK2)
+        &&  !(clbuttons[cl][1] & IN_ATTACK2)
+        &&  !(clbuttons[cl][0] & IN_ATTACK3)
+        &&  !(clbuttons[cl][1] & IN_ATTACK3)
+    )
     {
         return;
     }
@@ -807,11 +838,17 @@ void aimsnapCheck(int cl)
         // for some reason this just does not behave well in mvm
         MVM
         ||
-        // only check if we pressed attack recently
+        // only check if we pressed an attack key recently
         !(
                clbuttons[cl][0] & IN_ATTACK
             || clbuttons[cl][1] & IN_ATTACK
             || clbuttons[cl][2] & IN_ATTACK
+            || clbuttons[cl][0] & IN_ATTACK2
+            || clbuttons[cl][1] & IN_ATTACK2
+            || clbuttons[cl][2] & IN_ATTACK2
+            || clbuttons[cl][0] & IN_ATTACK3
+            || clbuttons[cl][1] & IN_ATTACK3
+            || clbuttons[cl][2] & IN_ATTACK3
         )
     )
     {
