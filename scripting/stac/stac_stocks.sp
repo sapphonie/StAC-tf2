@@ -440,7 +440,7 @@ void BanUser(int userid, char reason[128], char pubreason[256])
 
     int banDuration = stac_ban_duration.IntValue;
 
-    if (stac_include_demoname_in_banreason.BoolValue && SourceTV_IsRecording() && GetDemoName())
+    if (stac_include_demoname_in_banreason.BoolValue && Stac_SrcTV_IsRecording() && GetDemoName())
     {
         char demoname_plus[256];
         strcopy(demoname_plus, sizeof(demoname_plus), demoname);
@@ -501,8 +501,8 @@ void BanUser(int userid, char reason[128], char pubreason[256])
 
 bool GetDemoName()
 {
-    demotick = SourceTV_GetRecordingTick();
-    if (!SourceTV_GetDemoFileName(demoname, sizeof(demoname)))
+    demotick = Stac_SrcTV_GetRecordingTick();
+    if (!Stac_SrcTV_GetDemoFileName(demoname, sizeof(demoname)))
     {
         demoname = "N/A";
         return false;
