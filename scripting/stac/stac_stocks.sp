@@ -470,7 +470,8 @@ void BanUser(int userid, char reason[128], char pubreason[256])
             return;
         }
         // stock tf2, no ext ban system. if we somehow fail here, keep going.
-        if (BanClient(cl, banDuration, BANFLAG_AUTO, reason, reason, _, _))
+        // OnBanClient requires a non empty const char[] command. Just use "stac" so that fwd fires.
+        if (BanClient(cl, banDuration, BANFLAG_AUTO, reason, reason, "stac", _))
         {
             return;
         }
