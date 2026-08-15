@@ -470,9 +470,7 @@ void BanUser(int userid, char reason[128], char pubreason[256])
             return;
         }
         // stock tf2, no ext ban system. if we somehow fail here, keep going.
-        // command MUST be non-empty: if it's empty, SourceMod won't fire the
-        // OnBanClient forward, so ban systems that hook it (e.g. SQLiteBans)
-        // will never see/record this ban.
+        // OnBanClient requires a non empty const char[] command. Just use "stac" so that fwd fires.
         if (BanClient(cl, banDuration, BANFLAG_AUTO, reason, reason, "stac", _))
         {
             return;
