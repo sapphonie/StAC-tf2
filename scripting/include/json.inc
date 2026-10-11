@@ -229,7 +229,9 @@ stock void json_encode(
             }
             case JSON_Type_Object: {
                 child = obj.GetObject(key);
-                cell_length = child != null ? max_size : JSON_NULL_BUFFER_SIZE;
+                cell_length = child != null
+                    ? json_encode_size(child, options, depth + 1)
+                    : JSON_NULL_BUFFER_SIZE;
             }
         }
 
