@@ -4,17 +4,12 @@
     {
         "Version"
         {
-            "Latest"    "6.3.12"
+            "Latest"    "6.3.13"
         }
 
-        "Notes"     "Changes in 6.3.12"
-        "Notes"     "- https://github.com/sapphonie/StAC-tf2/releases/tag/v6.3.12"
-        "Notes"     "- SM 1.13 support / x64 gamedata in #238"
-        "Notes"     "- Squash unused variable warnings on compile"
-        "Notes"     "- Update cmdnum spike checks from rijin source code & fix a few bugs (somewhat experimental, but I have seen no regressions on my own servers)"
-        "Notes"     "- Update psilent/aimsnap checks to look for more than just IN_ATTACK (include IN_ATTACK2/IN_ATTACK3)"
-        "Notes"     "- Fixed OnBanClient not firing for StAC bans"
-        "Notes"     "- !!! If you see false bans for command number manipulation, please revert to 6.3.9 and open an issue!!!"
+        "Notes"     "Changes in 6.3.13"
+        "Notes"     "- https://github.com/sapphonie/StAC-tf2/releases/tag/v6.3.13"
+        "Notes"     "- Pull in json.inc fixes so that StacNotify no longer fails with heap errors"
         "Notes"     "===== StAC is always looking for feedback! Got an issue, request, or wanna discuss? Open a GitHub issue and join the Discord server linked in the README, on GitHub! ====="
         "Notes"     "===== Thank you for using StAC. -sappho ===== "
 
