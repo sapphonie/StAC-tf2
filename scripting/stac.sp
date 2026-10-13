@@ -32,13 +32,17 @@
 // Connect for preventing SteamID spoofing: https://forums.alliedmods.net/showthread.php?t=162489
 // Get latest version from here: https://builds.limetech.io/?project=connect
 #include <connect>
-// SourceTV Manager for reading currently recording demo information: https://forums.alliedmods.net/showthread.php?t=280402
-// Get latest version from here or it will not work: https://github.com/peace-maker/sourcetvmanager/actions
-#include <sourcetvmanager>
+// We used to include <sourcetvmanager> here for reading currently recording
+// demo information. We replaced that dependency with a first-party shim
+// (stac_srctvmgr_shim.sp) that talks directly to the engine's CHLTVServer /
+// CHLTVDemoRecorder via gamedata + SDKCalls. Removing the include here also
+// removes the MarkNativeAsOptional("SourceTV_*") declarations the .inc had.
+#undef AUTOLOAD_EXTENSIONS
+
+
 // Conplex for rcon hardening: https://forums.alliedmods.net/showthread.php?t=270962
 // Get latest version from here: https://builds.limetech.io/?p=webcon
-#include <conplex>
-#undef AUTOLOAD_EXTENSIONS
+// #tryinclude <conplex>
 
 // external incs
 #include <achievements>
@@ -93,6 +97,8 @@ public Plugin myinfo =
 #include "stac/stac_livefeed.sp"
 // gamedata / memory hacking bullshit
 #include "stac/stac_memory.sp"
+// first-party SourceTV demo info shim (replaces sourcetvmanager extension)
+#include "stac/stac_srctvmgr_shim.sp"
 // if it ain't broke, don't fix it. jtanz has written a great backtrack patch.
 #include "stac/jay_backtrack_patch.sp"
 
@@ -104,6 +110,7 @@ public void OnPluginStart()
     StopIncompatPlugins();
     StacLog("\n\n----> StAC version [%s] loaded\n", PLUGIN_VERSION);
     DoStACGamedata();
+    StacSrcTVShim_Init();
 
     if (!AddCommandListener(OnAllClientCommands))
     {
@@ -126,6 +133,7 @@ public void OnPluginStart()
     RegConsoleCmd("sm_stac_detections", checkAdmin, "Show all current detections on all connected clients");
     RegConsoleCmd("sm_stac_getauth",    checkAdmin, "Print StAC's cached auth for a client");
     RegConsoleCmd("sm_stac_livefeed",   checkAdmin, "Show live feed (debug info etc) for a client. This gets printed to SourceTV too, if available.");
+    RegConsoleCmd("sm_stac_test_srctv", checkAdmin, "Run a diagnostic test of StAC's first-party SourceTV shim. Output goes to your console and the server console.");
 
     // steamidRegex = CompileRegex("^STEAM_[0-5]:[0-1]:[0-9]+$");
 

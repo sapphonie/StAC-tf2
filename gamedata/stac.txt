@@ -2,6 +2,115 @@
 {
     "tf"
     {
+        "Addresses"
+        {
+            /*
+                Address of the global `hltv` (CHLTVServer*) variable in engine.
+
+                The plugin dereferences this via LoadAddressFromAddress to get the
+                current CHLTVServer instance (NULL when SourceTV is disabled).
+
+                On 32-bit builds the engine encodes `&hltv` as a plain 4-byte imm32
+                baked into a `mov reg, &hltv` instruction, so SourceMod's
+                sig+`read N` mechanism can hand us `&hltv` directly. On 64-bit
+                builds the encoding is RIP-relative (`mov reg, [rip+disp32]` /
+                `lea reg, [rip+disp32]`) so `read N` would dereference the wrong
+                8 bytes — the shim instead consumes "CHLTVServer*_x64_disp32"
+                below and computes &hltv = (disp32_ptr + 4) + disp32 in SP.
+
+                ---- linux x86 ----
+                anchor: CHLTVDemoRecorder::StartAutoRecording @ 0x12F660 has
+
+                    .text:0012F67D     mov     eax, ds:hltv     ; A1 1C BD 33 00
+
+                The `A1` opcode is one byte at func+0x1D, so the imm32 (= &hltv) sits
+                at func+0x1E (= 30 decimal). `read 30` makes SM read those 4 bytes and
+                hand us &hltv directly.
+
+                ---- windows x86 ----
+                anchor: tv_stoprecord_f (ConCommand callback) @ 0x1017F7E0 starts with
+
+                    .text:1017F7E0     mov     ecx, dword_10635664   ; 8B 0D 64 56 63 10
+
+                The `8B 0D` opcode is two bytes, so the imm32 (= &hltv) sits at func+2.
+                `read 2` hands us &hltv directly. See the "tv_stoprecord_f" entry in
+                Signatures below for the full disasm.
+            */
+            "CHLTVServer*"
+            {
+                "linux"
+                {
+                    "signature" "CHLTVDemoRecorder::StartAutoRecording"
+                    "read"      "30"
+                }
+                "windows"
+                {
+                    "signature" "tv_stoprecord_f"
+                    "read"      "2"
+                }
+                // linux64 / windows64 use the RIP-relative path -- see
+                // "CHLTVServer*_x64_disp32" below.
+            }
+
+            /*
+                x64 fallback for &hltv -- returns the address of the 4-byte
+                disp32 *inside* the RIP-relative LEA, NOT &hltv itself. The
+                shim reads those 4 bytes as a signed int32 and resolves
+
+                    &hltv = (disp32_ptr + 4) + disp32
+
+                (the `+ 4` is the size of the disp32, since RIP after the
+                instruction executes is the byte just past the disp32.)
+
+                We use SourceMod's `offset` keyword (vs `read`) so SM does
+                sigMatch + N WITHOUT dereferencing -- on x64 that "would"
+                pull in 8 bytes of (disp32 || next-instruction-bytes), which
+                is meaningless.
+
+                Per-platform disasm + offset derivation lives next to the
+                relevant sub-block below.
+            */
+            "CHLTVServer*_x64_disp32"
+            {
+                /*
+                    ---- linux x64 ----
+                    anchor: CHLTVDemoRecorder::StartAutoRecording @ 0x10B320 has
+
+                        .text:0010B349     lea     rax, hltv     ; 48 8D 05 20 E3 25 00
+
+                    The `48 8D 05` REX+opcode+ModRM is three bytes at func+0x29,
+                    so the disp32 sits at func+0x2C (= 44 decimal). The next
+                    instruction starts at func+0x30, which is also (disp32_ptr + 4).
+                    Verified at runtime: 0x10B350 + 0x25E320 = 0x369670 == &hltv.
+                */
+                "linux64"
+                {
+                    "signature" "CHLTVDemoRecorder::StartAutoRecording"
+                    "offset"    "44"
+                }
+
+                /*
+                    ---- windows x64 ----
+                    anchor: tv_stoprecord_f (engine.dll x64 sub_18019EC00,
+                    0x4D-byte ConCommand callback). Function prologue:
+
+                        .text:18019EC00   48 83 EC 28        sub  rsp, 28h
+                        .text:18019EC04   48 8B 0D <disp32>  mov  rcx, &hltv
+                        .text:18019EC0B   48 85 C9           test rcx, rcx
+
+                    The 4-byte `sub rsp, 28h` prologue + the 3-byte
+                    `48 8B 0D` REX+opcode+ModRM puts the disp32 at func+7.
+                    Verified live: 0x18019EC0B + 0x005B3F15 = 0x180752B20
+                    (= &hltv = qword_180752B20).
+                */
+                "windows64"
+                {
+                    "signature" "tv_stoprecord_f"
+                    "offset"    "7"
+                }
+            }
+        }
+
         "Functions"
         {
             // int thiscall CNetChan::ProcessPacket(CNetChan *, netadr_s *, bool)
@@ -54,7 +163,7 @@
                     }
                 }
             }
-            
+
             // char *__cdecl CVEngineServer::GetClientConVarValue(CVEngineServer *this, int clientIdx, const char * cvarName)
             "CVEngineServer::GetClientConVarValue"
             {
@@ -112,15 +221,117 @@
                 "windows"   "\x55\x8B\xEC\x8B\x4D\x08\x83\xF9\x01\x7C\x2A\x3B\x0D\x2A\x2A\x2A\x2A\x7F\x2A\xA1\x2A\x2A\x2A\x2A\xFF\x75\x0C"
                 "windows64" "\x48\x83\xEC\x28\x83\xFA\x01"
             }
+
+            /*
+                Anchor function for the SourceTV shim on linux x86 / linux x64.
+
+                ---- linux x86 ----
+                We read the imm32 of the `mov eax, ds:hltv` instruction inside
+                this function (at func+0x1E) to obtain the address of the
+                engine's global `hltv` (CHLTVServer*) variable. See the
+                "CHLTVServer*" address entry above for the full disasm.
+
+                ---- linux x64 ----
+                Same function, but the engine instead encodes `&hltv` as a
+                RIP-relative LEA at func+0x29:
+
+                    .text:0010B349     lea     rax, hltv     ; 48 8D 05 <disp32>
+
+                SourceMod resolves "CHLTVServer*_x64_disp32" to func+0x2C
+                (the 4 disp32 bytes); the shim then computes &hltv from
+                (disp32_ptr + 4) + disp32. See "CHLTVServer*_x64_disp32" above.
+
+                No windows entry: on windows x86 we use `tv_stoprecord_f`
+                (whose first instruction loads &hltv) instead of this longer
+                function, since MSVC builds drop public symbols.
+            */
+            "CHLTVDemoRecorder::StartAutoRecording"
+            {
+                "library"   "engine"
+                "linux"     "@_ZN17CHLTVDemoRecorder18StartAutoRecordingEv"
+                "linux64"   "@_ZN17CHLTVDemoRecorder18StartAutoRecordingEv"
+            }
+
+            /*
+                Anchor function for the SourceTV shim on windows (x86 + x64).
+                NOT a public/exported symbol -- this is the static C function
+                that the engine registers as the ConCommand callback for
+                `tv_stoprecord`. We assigned the name `tv_stoprecord_f` to
+                match the convention Source uses internally for ConCommand
+                callbacks (see e.g. tv_record_f, host_status_f, etc. in the
+                leaked source).
+
+                Why this function: on both windows architectures it's small
+                (0x3B / 0x4D bytes, no inlining) and its prologue loads
+                `&hltv` into ECX/RCX, so a sigscan + small offset hands us
+                the &hltv reference straight back.
+
+                ---- windows x86 disassembly (engine.dll, 2026-05-09) ----
+
+                    1017F7E0  8B 0D <imm32>      mov     ecx, &hltv
+                    1017F7E6  85 C9              test    ecx, ecx
+                    1017F7E8  74 24              jz      short loc_1017F80E    ; bail
+                    1017F7EA  8B 41 08           mov     eax, [ecx+8]          ; CHLTVServer's IServer subobject vtable
+                    1017F7ED  83 C1 08           add     ecx, 8
+                    1017F7F0  8B 40 58           mov     eax, [eax+58h]        ; IServer::IsActive (vtable slot 22)
+                    1017F7F3  FF D0              call    eax
+                    1017F7F5  84 C0              test    al, al
+                    1017F7F7  74 15              jz      short loc_1017F80E    ; bail
+                    1017F7F9  8B 0D <imm32>      mov     ecx, &hltv
+                    1017F7FF  8B 81 F0 4D 00 00  mov     eax, [ecx+4DF0h]      ; <-- m_DemoRecorder offset baked in (cross-checks Offsets section)
+                    1017F805  8D 89 F0 4D 00 00  lea     ecx, [ecx+4DF0h]
+                    1017F80B  FF 60 1C           jmp     [eax+1Ch]             ; recorder vtable slot 7 (StopRecording)
+                    ... (loc_1017F80E: ConMsg("SourceTV not active.\n"))
+
+                x86 sigscan: imm32 of the `mov ecx, &hltv` is at func+2,
+                so the address entry above uses `read 2`.
+
+                ---- windows x64 disassembly (engine.dll x64, 2026-05-10) ----
+
+                    18019EC00  48 83 EC 28           sub     rsp, 28h
+                    18019EC04  48 8B 0D <disp32>     mov     rcx, &hltv          ; RIP-relative
+                    18019EC0B  48 85 C9              test    rcx, rcx
+                    18019EC0E  74 2B                 jz      short loc_18019EC3B ; bail
+                    18019EC10  48 8B 41 08           mov     rax, [rcx+8]        ; CHLTVServer's IServer subobject vtable
+                    18019EC14  48 83 C1 08           add     rcx, 8
+                    18019EC18  FF 90 B0 00 00 00     call    qword ptr [rax+0B0h]; IServer::IsActive (vtable slot 22 == 0xB0/8)
+                    18019EC1E  84 C0                 test    al, al
+                    18019EC20  74 19                 jz      short loc_18019EC3B ; bail
+                    18019EC22  48 8B 0D <disp32>     mov     rcx, &hltv
+                    18019EC29  48 81 C1 78 8E 00 00  add     rcx, 8E78h           ; <-- m_DemoRecorder offset baked in (cross-checks Offsets section)
+                    18019EC30  48 8B 01              mov     rax, [rcx]
+                    18019EC33  48 83 C4 28           add     rsp, 28h
+                    18019EC37  48 FF 60 38           jmp     qword ptr [rax+38h]  ; recorder vtable slot 7 == 0x38/8 (StopRecording)
+                    ... (loc_18019EC3B: ConMsg("SourceTV not active.\n"))
+
+                x64 sigscan: the 4-byte prologue + 3-byte `48 8B 0D`
+                REX+opcode+ModRM puts the disp32 at func+7, so the address
+                entry above uses `offset 7` (and the shim resolves
+                &hltv = (func+7+4) + disp32 in plugin code -- see
+                CHLTVServer*_x64_disp32 above).
+
+                Both signatures generated via makesig.py
+                with the cursor on function entry. Wildcards on the &hltv
+                imm/disp values, the short-jump displacements, and (x64
+                only) the inner LEA's `add rcx, 0x8E78` byte sequence stays
+                un-wildcarded so an audit can compare against the
+                CHLTVServer::m_DemoRecorder offset entry below.
+            */
+            "tv_stoprecord_f"
+            {
+                "library"   "engine"
+                "windows"   "\x8B\x0D\x2A\x2A\x2A\x2A\x85\xC9\x74\x2A\x8B\x41\x08\x83\xC1\x08\x8B\x40\x58\xFF\xD0\x84\xC0\x74\x2A\x8B\x0D\x2A\x2A\x2A\x2A\x8B\x81\xF0\x4D\x00\x00"
+                "windows64" "\x48\x83\xEC\x28\x48\x8B\x0D\x2A\x2A\x2A\x2A\x48\x85\xC9\x74\x2A\x48\x8B\x41\x08\x48\x83\xC1\x08\xFF\x90\xB0\x00\x00\x00\x84\xC0\x74\x2A\x48\x8B\x0D\x2A\x2A\x2A\x2A\x48\x81\xC1\x78\x8E\x00\x00"
+            }
         }
 
         "Offsets"
         {
             /*
-                    ; Attributes: bp-based frame
+                ; Attributes: bp-based frame
 
-                    ; bool __cdecl CBaseClient::IsConnected(CBaseClient *this)
-                    _ZNK11CBaseClient11IsConnectedEv proc near
+                ; bool __cdecl CBaseClient::IsConnected(CBaseClient *this)
+                _ZNK11CBaseClient11IsConnectedEv proc near
 
                     this= dword ptr  8
 
@@ -132,7 +343,7 @@
                     000 setnle  al  ;          ^^^^
                     000 retn
 
-                    _ZNK11CBaseClient11IsConnectedEv endp
+                _ZNK11CBaseClient11IsConnectedEv endp
 
 
                 _ZN11CBaseClient13FireGameEventEP10IGameEvent has "FireGameEvent"
@@ -156,15 +367,15 @@
                     return this[0x31] >= 2;
                 }
 
-            win x64: IClient sub-vtable slot 33 (called from SV_BroadcastVoiceData [rax+0x108])
+                win x64: IClient sub-vtable slot 33 (called from SV_BroadcastVoiceData [rax+0x108])
 
-            sub_180063940:
-                cmp     dword ptr [rcx+0E0h], 6     ; rcx = IClient*, 6 = SIGNONSTATE_FULL
-                setz    al
-                retn
+                sub_180063940:
+                    cmp     dword ptr [rcx+0E0h], 6     ; rcx = IClient*, 6 = SIGNONSTATE_FULL
+                    setz    al
+                    retn
 
-            MSVC compiled this body IClient*-direct (no internal thunk), so 0xE0 is
-            already what we want when subtracting 0 from IClient*.
+                MSVC compiled this body IClient*-direct (no internal thunk), so 0xE0 is
+                already what we want when subtracting 0 from IClient*.
             */
 
 
@@ -179,16 +390,18 @@
                 "linux64"   "0xE8"   // _ZNK11CBaseClient8IsActiveEv     : cmp [rdi+0xE8]  (rdi=CBaseClient*)
                 "windows64" "0xE0"   // sub_180063940                    : cmp [rcx+0xE0]  (rcx=IClient*)
             }
-            // Bytes to subtract from IClient* so that (IClient - HACK) + Offset_SignonState
-            // lands on m_nSignonState.
-            //
-            // CBaseClient inherits from multiple base classes; IClient is sometimes a secondary base
-            // so IClient* doesn't always == CBaseClient*.
-            //
-            // HACK = whatever pointer adjustment the disassembled function body did NOT do
-            // internally for us: 
-            //   - body takes CBaseClient*  -> HACK = thunk size (the body assumed it was applied already; we have to do it)
-            //   - body takes IClient*      -> HACK = 0          (already in the right frame)
+            /*
+                Bytes to subtract from IClient* so that (IClient - HACK) + Offset_SignonState
+                lands on m_nSignonState.
+
+                CBaseClient inherits from multiple base classes; IClient is sometimes a secondary base
+                so IClient* doesn't always == CBaseClient*.
+
+                HACK = whatever pointer adjustment the disassembled function body did NOT do
+                internally for us:
+                    - body takes CBaseClient*  -> HACK = thunk size (the body assumed it was applied already; we have to do it)
+                    - body takes IClient*      -> HACK = 0          (already in the right frame)
+            */
             "Offset_IClient_HACK"
             {
                 "linux"     "4"   // canonical _ZNK..IsConnected takes CBaseClient*; thunk is _ZThn4_… (sub eax,4)
@@ -219,6 +432,205 @@
                 "linux64"   "47"
                 "windows"   "46"
                 "windows64" "46"
+            }
+
+            // ---- SourceTV shim (see scripting/stac/stac_srctvmgr_shim.sp) ----
+
+            /*
+                Bytes from a CHLTVServer* to the embedded CHLTVDemoRecorder field.
+
+                ---- linux x86: 0x4DD4 = 19924 ----
+                CHLTVServer::Shutdown @ 0x136510:
+                    .text:0013651A     lea     eax, [ebx+4DD4h]
+                    .text:00136520     push    eax              ; this
+                    .text:00136521     call    _ZN17CHLTVDemoRecorder13StopRecordingEv
+
+                ---- windows x86: 0x4DF0 = 19952 ----
+                Two independent witnesses agree:
+
+                    1) tv_stoprecord_f @ 0x1017F7E0 (the same function we use as
+                        the `&hltv` anchor above):
+                        .text:1017F7FF     mov     eax, [ecx+4DF0h]        ; ecx == &hltv
+                        .text:1017F805     lea     ecx, [ecx+4DF0h]
+                    2) tv_status_f       @ 0x1017F480:
+                        .text:1017F716     mov     eax, [ecx+19952]        ; recorder->IsRecording()
+
+                The 28-byte difference vs linux x86 (0x4DD4 -> 0x4DF0) comes
+                from MSVC's slightly wider CBaseServer parent layout (different
+                vtable / field padding rules); the m_DemoRecorder field itself
+                is at the same logical position, just at a higher byte offset.
+
+                ---- linux x64: 0x8E78 = 36472 ----
+                FOUR independent witnesses agree (engine_srv.so x64, 2026-05-09):
+
+                    1) tv_stoprecord (ConCommand callback) @ 0x1113E0:
+                        .text:00111411     pop     rbp            ; ... reaches:
+                        .text:00111417     <call>  StopRecording((char*)hltv + 36472)
+                    2-4) tv_status @ 0x112F90 dispatches the same offset three
+                        times in one function -- IsRecording, GetRecordingTick
+                        and GetDemoFile all take ((char*)hltv + 36472):
+                        .text:00113382     call    IsRecording
+                        .text:001133B1     call    GetRecordingTick
+                        .text:001133E0     call    GetDemoFile
+                        (same `lea rdi, [rax+8E78h]` pattern at all three sites
+                        where rax = hltv, loaded via cs:hltv RIP-relative.)
+
+                The (very nearly) 2x scaling vs linux x86 (19924 -> 36472)
+                is the standard "x86 -> x64 widens vtable + fundamental field
+                sizes" effect on the parent CBaseServer layout.
+
+                ---- windows x64: 0x8E78 = 36472 (same as linux x64) ----
+                FOUR independent witnesses agree (engine.dll x64, 2026-05-10):
+
+                    1) tv_stoprecord_f (sub_18019EC00, the same function we
+                        use as the `&hltv` x64 anchor above):
+                        .text:18019EC22  48 8B 0D <disp32>  mov rcx, &hltv
+                        .text:18019EC29  48 81 C1 78 8E 00 00  add rcx, 8E78h
+                        The `78 8E 00 00` literal IS the m_DemoRecorder offset
+                        and is baked un-wildcarded into the gamedata signature
+                        (see "tv_stoprecord_f" above).
+                    2-4) tv_status (sub_18019E760) dispatches the same offset
+                        three times for IsRecording / GetRecordingTick /
+                        GetDemoFile -- same pattern as linux x64:
+                        if ( (...recorder vtable[32])(qword_180752B20 + 36472) )
+                        {
+                            v28 = (...recorder vtable[8])(qword_180752B20 + 36472);
+                            v30 = (**(qword_180752B20 + 36472))(qword_180752B20 + 36472);
+                            ConMsg("Recording to ...", v30, ...);
+                        }
+
+                Identical to linux x64 -- with both x64 ABIs settled on the
+                same CBaseServer layout the m_DemoRecorder bias from the
+                start of CHLTVServer winds up in the same spot.
+            */
+            "CHLTVServer::m_DemoRecorder"
+            {
+                "linux"     "19924"
+                "windows"   "19952"
+                "linux64"   "36472"
+                "windows64" "36472"
+            }
+
+            /*
+                Bytes from a CHLTVDemoRecorder* to its embedded CDemoFile (whose
+                first member is m_szFileName[MAX_OSPATH], so dereferencing as a
+                C string yields the demo path).
+
+                ---- linux x86: 4 ----
+                CHLTVDemoRecorder::StartRecording @ 0x130080:
+                    .text:001300B2     lea     esi, [ebx+4]
+                    .text:001300C2     call    _ZN9CDemoFile4OpenEPKcbbib
+
+                ---- windows x86: 4 ----
+                CHLTVDemoRecorder::StartRecording @ 0x1017A950:
+                    .text:1017A966     lea     ecx, [esi+4]            ; this for CDemoFile::Open
+                    .text:1017A972     call    sub_100CC660            ; CDemoFile::Open
+                (esi == this == CHLTVDemoRecorder*; +4 skips the 32-bit vtable
+                pointer and lands on m_szFileName, i.e. the start of CDemoFile.)
+
+                ---- linux x64: 8 ----
+                Two independent witnesses agree:
+
+                    1) CHLTVDemoRecorder::GetDemoFile @ 0x10AD50 -- the entire
+                        function body is `return (char*)this + 8`, i.e. the
+                        offset is hardcoded into the leaf decompile:
+                        __int64 GetDemoFile(CHLTVDemoRecorder *this) {
+                            return (__int64)this + 8;
+                        }
+                    2) CHLTVDemoRecorder::StartRecording @ 0x10BDE0 calls
+                        CDemoFile::Open((char*)this + 8, ...).
+
+                The +4-byte difference vs the x86 builds is exactly the
+                doubling of the leading vtable pointer (4 -> 8 bytes).
+
+                ---- windows x64: 8 ----
+                CHLTVDemoRecorder::StartRecording (sub_180198A50) decompile:
+                    if ( sub_1800BE1C0((int)a1 + 8, ...) )    ; CDemoFile::Open
+                        ConMsg("Recording SourceTV demo to %s...\n", a2);
+
+                (`a1` is the recorder `this`; the `+ 8` skips the 64-bit
+                vtable pointer onto m_szFileName at the start of CDemoFile.
+                The `(int)` cast is an IDA decompile artefact -- the actual
+                RCX argument carries the full 64-bit pointer.)
+
+                Identical to linux x64; only the leading vtable pointer
+                width matters for this offset, and both x64 ABIs use 8.
+            */
+            "CHLTVDemoRecorder::m_DemoFile"
+            {
+                "linux"     "4"
+                "windows"   "4"
+                "linux64"   "8"
+                "windows64" "8"
+            }
+
+            /*
+                CHLTVDemoRecorder vtable indices. Match the IDemoRecorder header
+                order verbatim because IDemoRecorder has no virtual dtor (so
+                derived dtors are appended at the end of the table, not woven in).
+
+                ---- linux x86 confirmation ----
+                .data.rel.ro vtable @ engine_srv.so 0x22A750:
+                    slot 4 -> IsRecording          (a `return this[0x540]` leaf)
+                    slot 1 -> GetRecordingTick
+                    slot 0 -> GetDemoFile          (an inlined `return this+4` leaf at 0x12F100)
+
+                ---- windows x86 confirmation ----
+                tv_status_f decompile (engine.dll @ 0x1017F480) shows the
+                engine itself dispatching the same slots:
+
+                    recorder = dword_10635664 + 19952;                // CHLTVServer + m_DemoRecorder
+                    if ( (*(unsigned __int8 (**)(int))(*recorder + 16))(recorder) ) // *recorder + 0x10 = vtable[4] = IsRecording
+                    {
+                        v24 = (*(int (**)(int))(*recorder + 4))(recorder);          // *recorder + 0x04 = vtable[1] = GetRecordingTick
+                        ConMsg("Recording to ...", ...);
+                    }
+
+                ---- linux x64 confirmation ----
+                Data-xrefs to the three leaf functions (engine_srv.so x64,
+                2026-05-09) all land within a single contiguous 8-byte-stride
+                vtable region near 0x26D6D0. Since x64 uses 8-byte slots:
+                    0x26D6D0 (slot 0) -> CHLTVDemoRecorder::GetDemoFile (0x10AD50)
+                    0x26D6D8 (slot 1) -> CHLTVDemoRecorder::GetRecordingTick (0x10AD60)
+                    0x26D6F0 (slot 4) -> CHLTVDemoRecorder::IsRecording (0x10AD40)
+                (slot index = (vtable_addr - 0x26D6D0) / 8)
+
+                ---- windows x64 confirmation ----
+                tv_status (sub_18019E760) decompile dispatches the same three
+                slots in the "Recording to ..." block, with vtable byte
+                offsets baked into the call site:
+
+                    if ( (*(...vtable + 32))(recorder) )       // +0x20 = slot 4 = IsRecording
+                    {
+                        v28 = (*(...vtable +  8))(recorder);   // +0x08 = slot 1 = GetRecordingTick
+                        v30 = (*(...vtable +  0))(recorder);   // +0x00 = slot 0 = GetDemoFile
+                        ConMsg("Recording to \"%s\", length %s.\n", v30, ...);
+                    }
+
+                Since these are MSVC-side virtuals matching the same header
+                declaration order as the linux build, the windows / windows64
+                entries below are header-pinned and stable across builds.
+            */
+            "IDemoRecorder::IsRecording"
+            {
+                "linux"     "4"
+                "linux64"   "4"
+                "windows"   "4"
+                "windows64" "4"
+            }
+            "IDemoRecorder::GetRecordingTick"
+            {
+                "linux"     "1"
+                "linux64"   "1"
+                "windows"   "1"
+                "windows64" "1"
+            }
+            "IDemoRecorder::GetDemoFile"
+            {
+                "linux"     "0"
+                "linux64"   "0"
+                "windows"   "0"
+                "windows64" "0"
             }
         }
     }
