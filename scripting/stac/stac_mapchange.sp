@@ -74,6 +74,15 @@ void CheckNatives()
         SOURCEBANS = false;
     }
 
+    if (GetFeatureStatus(FeatureType_Native, "SBPP_BanPlayerBySteamId") == FeatureStatus_Available)
+    {
+        SOURCEBANS_STEAMID = true;
+    }
+    else
+    {
+        SOURCEBANS_STEAMID = false;
+    }
+
 
     // materialadmin
     if (GetFeatureStatus(FeatureType_Native, "MABanPlayer") == FeatureStatus_Available)

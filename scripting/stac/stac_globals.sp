@@ -63,6 +63,7 @@ float timeSinceMapStart;
 bool configsExecuted = false;
 
 bool SOURCEBANS;
+bool SOURCEBANS_STEAMID;
 bool MATERIALADMIN;
 bool GBANS;
 bool AIMPLOTTER;

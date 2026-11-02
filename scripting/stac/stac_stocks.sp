@@ -420,7 +420,7 @@ void BanUser(int userid, char reason[128], char pubreason[256])
     }
 
     StacNotify(userid, reason);
-    
+
     char cleaned_pubreason[256];
     if ( stac_generic_ban_msgs.BoolValue )
     {
@@ -445,7 +445,7 @@ void BanUser(int userid, char reason[128], char pubreason[256])
         char demoname_plus[256];
         strcopy(demoname_plus, sizeof(demoname_plus), demoname);
         Format(demoname_plus, sizeof(demoname_plus), ". Demo file: %s", demoname_plus);
-        StrCat(reason, 256, demoname_plus);
+        StrCat(reason, sizeof(reason), demoname_plus);
         StacLog("Reason: %s", reason);
     }
     if (isAuthed)
@@ -478,8 +478,25 @@ void BanUser(int userid, char reason[128], char pubreason[256])
     }
     // if we got here steam is being fussy or the client is not auth'd in some way, or the stock tf2 ban failed somehow.
     StacLog("Client %N is not authorized, steam is down, or the ban failed for some other reason. Attempting to ban with cached SteamID...", cl);
-    // if this returns true, we can still ban the client with their steamid in a roundabout and annoying way.
-    if (!IsActuallyNullString(SteamAuthFor[cl]))
+    // sb++ 2.2.0+ only. this can throw and is async so we kick so the client is always removed from the server
+    if (SOURCEBANS_STEAMID && !IsActuallyNullString(SteamAuthFor[cl]))
+    {
+        char name[MAX_NAME_LENGTH];
+        GetClientName(cl, name, sizeof(name));
+        // make sure this person leaves no matter what
+        KickClient(cl, "%s", reason);
+
+        // DISGUSTING HACK ALERT - SBPP_BanPlayerBySteamId can throw, which stops execution of the rest of the function!
+        // Just duplicate the print logic. This sucks ass (and is not SBPP's fault)
+        MC_PrintToChatAll("%s", cleaned_pubreason);
+        StacLog("%s", pubreason);
+
+        //
+        SBPP_BanPlayerBySteamId(0, SteamAuthFor[cl], name, banDuration, reason);
+        return;
+    }
+    // if all else fails, we can still ban the client with their steamid in a roundabout and annoying way.
+    else if (!IsActuallyNullString(SteamAuthFor[cl]))
     {
         ServerCommand("sm_addban %i \"%s\" %s", banDuration, SteamAuthFor[cl], reason);
         KickClient(cl, "%s", reason);
