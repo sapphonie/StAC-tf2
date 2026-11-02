@@ -135,6 +135,7 @@ enum EHTTPMethod
 	k_EHTTPMethodPUT,
 	k_EHTTPMethodDELETE,
 	k_EHTTPMethodOPTIONS,
+	k_EHTTPMethodPATCH,
 
 	// The remaining HTTP methods are not yet supported, per rfc2616 section 5.1.1 only GET and HEAD are required for 
 	// a compliant general purpose server.  We'll likely add more as we find uses for them.
@@ -220,6 +221,7 @@ native bool SteamWorks_IsVACEnabled();
 native bool SteamWorks_GetPublicIP(int ipaddr[4]);
 native int SteamWorks_GetPublicIPCell();
 native bool SteamWorks_IsLoaded();
+native bool SteamWorks_SetGameData(const char[] sData);
 native bool SteamWorks_SetGameDescription(const char[] sDesc);
 native bool SteamWorks_SetMapName(const char[] sMapName);
 native bool SteamWorks_IsConnected();
@@ -336,6 +338,7 @@ public void __ext_SteamWorks_SetNTVOptional()
 	MarkNativeAsOptional("SteamWorks_GetPublicIP");
 	MarkNativeAsOptional("SteamWorks_GetPublicIPCell");
 	MarkNativeAsOptional("SteamWorks_IsLoaded");
+	MarkNativeAsOptional("SteamWorks_SetGameData");
 	MarkNativeAsOptional("SteamWorks_SetGameDescription");
 	MarkNativeAsOptional("SteamWorks_IsConnected");
 	MarkNativeAsOptional("SteamWorks_SetRule");
