@@ -80,6 +80,11 @@ Action checkAdmin(int callingCl, int args)
         StacTargetCommand(callingCl, arg0, arg1);
         return Plugin_Handled;
     }
+    if (StrEqual(arg0, "sm_stac_test_srctv"))
+    {
+        Stac_SrcTV_DumpDiagnostics(callingCl);
+        return Plugin_Handled;
+    }
     return Plugin_Handled;
 }
 
