@@ -408,7 +408,7 @@ bool IsValidSrcTV(int client)
 
 /********** MISC FUNCS **********/
 
-void BanUser(int userid, char reason[128], char pubreason[256])
+void BanUser(int userid, StACBanReason banReason, char reason[128], char pubreason[256])
 {
     int cl = GetClientOfUserId(userid);
 
@@ -416,6 +416,20 @@ void BanUser(int userid, char reason[128], char pubreason[256])
     if (userBanQueued[cl])
     {
         KickClient(cl, "Banned from server");
+        return;
+    }
+
+    // let other plugins know, and let them cancel the ban
+    Action fwdResult = Plugin_Continue;
+    Call_StartForward(fwdOnBan);
+    Call_PushCell(cl);
+    Call_PushCell(banReason);
+    Call_PushString(reason);
+    Call_PushString(pubreason);
+    Call_Finish(fwdResult);
+    if (fwdResult >= Plugin_Handled)
+    {
+        StacLog("Ban of %N (%s) was cancelled by another plugin.", cl, reason);
         return;
     }
 

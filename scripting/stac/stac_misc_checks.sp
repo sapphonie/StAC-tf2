@@ -24,7 +24,7 @@ public Action OnClientSayCommand(int cl, const char[] command, const char[] sArg
             Format(reason, sizeof(reason), "%t", "newlineBanMsg");
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "newlineBanAllChat", cl);
-            BanUser(userid, reason, pubreason);
+            BanUser(userid, StACBan_NewlineInChat, reason, pubreason);
         }
         else
         {
@@ -52,7 +52,7 @@ Action BanName(Handle timer, int userid)
         Format(reason, sizeof(reason), "%t", "illegalNameBanMsg");
         char pubreason[256];
         Format(pubreason, sizeof(pubreason), "%t", "illegalNameBanAllChat", cl);
-        BanUser(userid, reason, pubreason);
+        BanUser(userid, StACBan_IllegalName, reason, pubreason);
     }
     else
     {
@@ -135,7 +135,7 @@ void playerperfCheck(int cl)
         Format(reason, sizeof(reason), "%t", "playerperfBanMsg", playerperfDetects[cl]);
         char pubreason[256];
         Format(pubreason, sizeof(pubreason), "%t", "playerperfBanAllChat", cl, playerperfDetects[cl]);
-        BanUser(userid, reason, pubreason);
+        BanUser(userid, StACBan_Playerperf, reason, pubreason);
     }
 }
 
@@ -413,7 +413,7 @@ void cheevCheck(int userid, int achieve_id)
             Format(reason, sizeof(reason), "%t", "bogusAchieveBanMsg");
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "bogusAchieveBanAllChat", cl);
-            BanUser(userid, reason, pubreason);
+            BanUser(userid, StACBan_BogusAchievement, reason, pubreason);
         }
         else
         {

@@ -90,6 +90,27 @@ This plugin prints detections to any clients on the server with the `sm_ban` per
 }
 ```
 
+### For plugin developers
+StAC calls the forward `StAC_OnBan` right before it bans a client. The forward provides the cheating client, the reason as a `StACBanReason`, and the private and public ban reason as text. Return `Plugin_Handled` or `Plugin_Stop` to cancel the ban.
+
+A cancelled ban does not reset the client's previous detections, so the forward is called again on every further detection of that kind.
+
+Include [`scripting/include/stac.inc`](scripting/include/stac.inc) in your plugin:
+
+```sourcepawn
+#include <stac>
+
+public Action StAC_OnBan(int client, StACBanReason reason, const char[] reasonText, const char[] pubReasonText)
+{
+    // never ban for bhops on this server
+    if (reason == StACBan_Bhop)
+    {
+        return Plugin_Handled;
+    }
+    return Plugin_Continue;
+}
+```
+
 ### Disclaimers
 Though I wrote StAC to throw as few false positives as possible, I can't guarantee perfection. I also can't guarantee that everything will always work how it's supposed to. Please submit a bug report if you can reproduce a way to trigger false positives, or for any bug or feature request. If you're more comfortable talking to me personally about it, join the development discord for StAC here: https://discord.gg/tUGgCByZVJ
 

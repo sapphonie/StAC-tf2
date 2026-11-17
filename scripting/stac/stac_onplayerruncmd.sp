@@ -425,7 +425,7 @@ void bhopCheck(int cl)
                     Format(reason, sizeof(reason), "%t", "bhopBanMsg", bhopDetects[cl]);
                     char pubreason[256];
                     Format(pubreason, sizeof(pubreason), "%t", "bhopBanAllChat", cl, bhopDetects[cl]);
-                    BanUser(userid, reason, pubreason);
+                    BanUser(userid, StACBan_Bhop, reason, pubreason);
                     return;
                 }
 
@@ -567,7 +567,7 @@ void fakeangCheck(int cl)
             Format(reason, sizeof(reason), "%t", "fakeangBanMsg", fakeAngDetects[cl]);
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "fakeangBanAllChat", cl, fakeAngDetects[cl]);
-            BanUser(userid, reason, pubreason);
+            BanUser(userid, StACBan_FakeAngles, reason, pubreason);
         }
     }
 }
@@ -651,7 +651,7 @@ void cmdnumspikeCheck(int cl)
             Format(reason, sizeof(reason), "%t", "cmdnumSpikesBanMsg", cmdnumSpikeDetects[cl]);
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "cmdnumSpikesBanAllChat", cl, cmdnumSpikeDetects[cl]);
-            BanUser(userid, reason, pubreason);
+            BanUser(userid, StACBan_CmdnumSpikes, reason, pubreason);
         }
     }
 }
@@ -807,7 +807,7 @@ void psilentCheck(int cl)
             Format(reason, sizeof(reason), "%t", "pSilentBanMsg", pSilentDetects[cl]);
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "pSilentBanAllChat", cl, pSilentDetects[cl]);
-            BanUser(userid, reason, pubreason);
+            BanUser(userid, StACBan_PSilent, reason, pubreason);
         }
     }
 }
@@ -979,7 +979,7 @@ void aimsnapCheck(int cl)
             Format(reason, sizeof(reason), "%t", "AimsnapBanMsg", aimsnapDetects[cl]);
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "AimsnapBanAllChat", cl, aimsnapDetects[cl]);
-            BanUser(userid, reason, pubreason);
+            BanUser(userid, StACBan_Aimsnap, reason, pubreason);
         }
     }
 }
@@ -1115,7 +1115,7 @@ void triggerbotCheck(int cl)
             Format(reason, sizeof(reason), "%t", "tbotBanMsg", tbotDetects[cl]);
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "tbotBanAllChat", cl, tbotDetects[cl]);
-            BanUser(userid, reason, pubreason);
+            BanUser(userid, StACBan_Triggerbot, reason, pubreason);
         }
     }
 }
@@ -1218,7 +1218,7 @@ void invalidUsercmdCheck(int cl)
         Format(reason, sizeof(reason), "%t", "invalidUcmdBanMsg", invalidUsercmdDetects[cl]);
         char pubreason[256];
         Format(pubreason, sizeof(pubreason), "%t", "invalidUcmdBanAllChat", cl, invalidUsercmdDetects[cl]);
-        BanUser(userid, reason, pubreason);
+        BanUser(userid, StACBan_InvalidUsercmd, reason, pubreason);
     }
 
     // tickcount ahead of the server by itps_maxaheadsecs or more?

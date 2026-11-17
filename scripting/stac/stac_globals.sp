@@ -114,6 +114,8 @@ bool highGrav               [TFMAXPLAYERS+1];
 bool playerTaunting         [TFMAXPLAYERS+1];
 int playerInBadCond         [TFMAXPLAYERS+1];
 bool userBanQueued          [TFMAXPLAYERS+1];
+// StAC_OnBan, see include/stac.inc
+GlobalForward fwdOnBan;
 float sensFor               [TFMAXPLAYERS+1];
 // weapon name, gets passed to aimsnap check
 char hurtWeapon             [TFMAXPLAYERS+1][256];

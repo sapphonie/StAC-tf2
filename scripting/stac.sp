@@ -46,6 +46,10 @@
 #include <concolors>
 #include <autoexecconfig>
 #include <json>
+
+// our own forwards, for other plugins
+#include <stac>
+
 #undef REQUIRE_PLUGIN
 #tryinclude <updater>
 #tryinclude <sourcebanspp>
@@ -120,6 +124,9 @@ public void OnPluginStart()
     {
         Updater_AddPlugin(UPDATE_URL);
     }
+
+    // Register forward to notify and provide cancelation ability of bans to other plugins, see include/stac.inc
+    fwdOnBan = new GlobalForward("StAC_OnBan", ET_Event, Param_Cell, Param_Cell, Param_String, Param_String);
 
     // reg admin commands
     RegConsoleCmd("sm_stac_checkall",   checkAdmin, "Force check all client convars (ALL CLIENTS) for anticheat stuff");

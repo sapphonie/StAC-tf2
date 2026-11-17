@@ -446,6 +446,7 @@ void oobVarBan(int userid)
     DataPack pack = CreateDataPack();
     // prepare pack
     WritePackCell(pack, userid);
+    WritePackCell(pack, StACBan_OOBCvar);
     WritePackString(pack, reason);
     WritePackString(pack, pubreason);
     ResetPack(pack, false);
@@ -466,6 +467,7 @@ void illegalVarBan(int userid)
     DataPack pack = CreateDataPack();
     // prepare pack
     WritePackCell(pack, userid);
+    WritePackCell(pack, StACBan_CheatCvar);
     WritePackString(pack, reason);
     WritePackString(pack, pubreason);
     ResetPack(pack, false);
@@ -514,6 +516,7 @@ void illegalVarsNotify(int userid, const char[] name)
 Action Timer_BanUser(Handle timer, DataPack pack)
 {
     int userid          = ReadPackCell(pack);
+    StACBanReason banReason = ReadPackCell(pack);
     char reason[128];
     ReadPackString(pack, reason, sizeof(reason));
     char pubreason[256];
@@ -525,7 +528,7 @@ Action Timer_BanUser(Handle timer, DataPack pack)
     // check validity of client index
     if (IsValidClient(cl))
     {
-        BanUser(userid, reason, pubreason);
+        BanUser(userid, banReason, reason, pubreason);
     }
 
     return Plugin_Continue;
