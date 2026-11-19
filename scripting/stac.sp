@@ -5,8 +5,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-// For json
-// if you have to make this any bigger there's probably an evil bug in json parsing code somewhere -sappho
+// creating our cvars with autoexecconfig runs out of heap with the default size
 #pragma dynamic 8192 * 8
 
 #include <sourcemod>
@@ -45,7 +44,6 @@
 #include <morecolors>
 #include <concolors>
 #include <autoexecconfig>
-#include <json>
 
 // our own forwards, for other plugins
 #include <stac>
@@ -54,7 +52,6 @@
 #tryinclude <updater>
 #tryinclude <sourcebanspp>
 #tryinclude <materialadmin>
-#tryinclude <discord>
 // #undef REQUIRE_EXTENSIONS
 
 #pragma semicolon 1
@@ -232,8 +229,6 @@ public void OnPluginEnd()
 // monitor server tickrate
 public void OnGameFrame()
 {
-    servertick = GetGameTickCount();
-
     calcTPSfor(0);
 
     // LIVEFEED

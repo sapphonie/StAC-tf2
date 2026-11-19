@@ -19,6 +19,7 @@
     {
         // Plugin
         "Plugin"    "Path_SM/plugins/stac.smx"
+        "Plugin"    "Path_SM/plugins/stac_discord.smx"
 
         // Translations
         "Plugin"    "Path_SM/translations/stac.phrases.txt"

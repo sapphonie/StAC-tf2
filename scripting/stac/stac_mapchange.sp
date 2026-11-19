@@ -115,17 +115,6 @@ void CheckNatives()
     {
         AIMPLOTTER = false;
     }
-
-
-    // discord functionality
-    if (GetFeatureStatus(FeatureType_Native, "Discord_SendMessage") == FeatureStatus_Available)
-    {
-        DISCORD = true;
-    }
-    else
-    {
-        DISCORD = false;
-    }
 }
 
 Action checkNativesEtc(Handle timer)

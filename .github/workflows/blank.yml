@@ -29,6 +29,7 @@ jobs:
         cd ./scripting
         pwd
         spcomp -i"./include/" stac.sp -o ../plugins/stac.smx
+        spcomp -i"./include/" stac_discord.sp -o ../plugins/stac_discord.smx
         ls -la
 
     - name: Zip packages

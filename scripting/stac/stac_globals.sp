@@ -39,7 +39,6 @@ float tickinterv;
 float tps;
 int itps;
 //int itps_maxaheadsecs;
-int servertick;
 bool highPlayerServer           = false;
 
 // time to wait after server lags before checking all client's OnPlayerRunCmd
@@ -67,7 +66,6 @@ bool SOURCEBANS_STEAMID;
 bool MATERIALADMIN;
 bool GBANS;
 bool AIMPLOTTER;
-bool DISCORD;
 bool MVM;
 
 /***** client based stuff *****/
