@@ -91,13 +91,14 @@ This plugin prints detections to any clients on the server with the `sm_ban` per
 ```
 
 ### For plugin developers
-StAC calls the forward `StAC_OnBan` right before it bans a client. The forward provides the cheating client, the reason as a `StAC_Detection`, and the private and public ban reason as text. Return `Plugin_Handled` or `Plugin_Stop` to cancel the ban.
+StAC has a small API for other plugins. Include [`scripting/include/stac.inc`](scripting/include/stac.inc), it documents everything in detail.
 
-A cancelled ban does not reset the client's previous detections, so the forward is called again on every further detection of that kind.
+- `StAC_OnBan` fires right before StAC bans someone. Return `Plugin_Handled` or `Plugin_Stop` to cancel the ban. Cancelling doesn't reset their detections, so it fires again on their next detection of that kind.
+- `StAC_OnNotify` fires for everything StAC notifies about, the same stuff it sends to Discord. It can't cancel anything. Most checks notify on the first detection and then every fifth, so you won't see every single one.
+- `StAC_GetClientData` gives you what StAC knows about a client right now, like their last few usercmds, their ping and their detection counts. It returns false for bots and clients that aren't in game. It reads live state, so call it inside one of the forwards if you want the data that goes with that notification.
+- `StAC_GetVersion` gives you the version of the running StAC.
 
-StAC calls the forward `StAC_OnNotify` for everything it notifies about, which is what it also sends to Discord. The forward provides the kind of notification as a `StAC_NotificationType` (a detection, a message about a client, a message without a client, a ban, or a ban that another plugin cancelled), the client (0 for messages without one), the `StAC_Detection` (`StAC_Detection_None` when there is none), the number of detections so far and the text. Most checks notify on the first detection and then on every fifth, so not every single detection is told. Nothing is told about a client whose ban is already queued.
-
-Include [`scripting/include/stac.inc`](scripting/include/stac.inc) in your plugin:
+StAC registers the library `stac`. If you don't define `REQUIRE_PLUGIN`, its natives are optional.
 
 ```sourcepawn
 #include <stac>
@@ -114,9 +115,10 @@ public Action StAC_OnBan(int client, StAC_Detection detection, const char[] reas
 
 public void StAC_OnNotify(StAC_NotificationType type, int client, StAC_Detection detection, int detections, const char[] text)
 {
-    if (type == StAC_Notification_Detection && detection == StAC_Detection_Aimsnap)
+    StAC_ClientData data;
+    if (type == StAC_Notification_Detection && detection == StAC_Detection_Aimsnap && StAC_GetClientData(client, data))
     {
-        LogMessage("%N has %i aimsnap detections", client, detections);
+        LogMessage("%N has %i aimsnap detections at %.0f ms ping", client, detections, data.Ping);
     }
 }
 ```

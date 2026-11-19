@@ -99,9 +99,18 @@ public Plugin myinfo =
 #include "stac/stac_memory.sp"
 // if it ain't broke, don't fix it. jtanz has written a great backtrack patch.
 #include "stac/jay_backtrack_patch.sp"
+// natives for other plugins
+#include "stac/stac_natives.sp"
 
 /********** PLUGIN LOAD & UNLOAD **********/
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+    // for other plugins, see include/stac.inc
+    RegPluginLibrary("stac");
+    CreateStacNatives();
+    return APLRes_Success;
+}
 
 public void OnPluginStart()
 {
