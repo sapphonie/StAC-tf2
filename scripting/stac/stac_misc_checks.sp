@@ -24,14 +24,14 @@ public Action OnClientSayCommand(int cl, const char[] command, const char[] sArg
             Format(reason, sizeof(reason), "%t", "newlineBanMsg");
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "newlineBanAllChat", cl);
-            BanUser(userid, StACBan_NewlineInChat, reason, pubreason);
+            BanUser(userid, StAC_Detection_NewlineInChat, reason, pubreason);
         }
         else
         {
             PrintToImportant("{hotpink}[StAC] {red}[Detection]{white} Blocked newline print from player %N", cl);
             StacLogSteam(userid);
         }
-        StacNotify(userid, "Client tried to print a newline character", 1);
+        StacNotify(userid, "Client tried to print a newline character", 1, StAC_Detection_NewlineInChat);
         return Plugin_Stop;
     }
     return Plugin_Continue;
@@ -52,7 +52,7 @@ Action BanName(Handle timer, int userid)
         Format(reason, sizeof(reason), "%t", "illegalNameBanMsg");
         char pubreason[256];
         Format(pubreason, sizeof(pubreason), "%t", "illegalNameBanAllChat", cl);
-        BanUser(userid, StACBan_IllegalName, reason, pubreason);
+        BanUser(userid, StAC_Detection_IllegalName, reason, pubreason);
     }
     else
     {
@@ -126,7 +126,7 @@ void playerperfCheck(int cl)
 
     char dtype[128];
     Format(dtype, sizeof(dtype), "playerperf command (seed prediction / crit hack)");
-    StacNotify(userid, dtype, playerperfDetects[cl]);
+    StacNotify(userid, dtype, playerperfDetects[cl], StAC_Detection_Playerperf);
 
     // ban on the third detection
     if (playerperfDetects[cl] >= 3 && stac_ban_for_misccheats.BoolValue)
@@ -135,7 +135,7 @@ void playerperfCheck(int cl)
         Format(reason, sizeof(reason), "%t", "playerperfBanMsg", playerperfDetects[cl]);
         char pubreason[256];
         Format(pubreason, sizeof(pubreason), "%t", "playerperfBanAllChat", cl, playerperfDetects[cl]);
-        BanUser(userid, StACBan_Playerperf, reason, pubreason);
+        BanUser(userid, StAC_Detection_Playerperf, reason, pubreason);
     }
 }
 
@@ -413,7 +413,7 @@ void cheevCheck(int userid, int achieve_id)
             Format(reason, sizeof(reason), "%t", "bogusAchieveBanMsg");
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "bogusAchieveBanAllChat", cl);
-            BanUser(userid, StACBan_BogusAchievement, reason, pubreason);
+            BanUser(userid, StAC_Detection_BogusAchievement, reason, pubreason);
         }
         else
         {
@@ -422,6 +422,6 @@ void cheevCheck(int userid, int achieve_id)
 
         char message[256];
         Format(message, sizeof(message), "Client is cheating with bogus AchievementID %i (hex %X)", achieve_id, achieve_id);
-        StacNotify(userid, message, 1);
+        StacNotify(userid, message, 1, StAC_Detection_BogusAchievement);
     }
 }

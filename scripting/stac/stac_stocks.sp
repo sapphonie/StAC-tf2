@@ -408,7 +408,7 @@ bool IsValidSrcTV(int client)
 
 /********** MISC FUNCS **********/
 
-void BanUser(int userid, StACBanReason banReason, char reason[128], char pubreason[256])
+void BanUser(int userid, StAC_Detection banReason, char reason[128], char pubreason[256])
 {
     int cl = GetClientOfUserId(userid);
 
@@ -430,10 +430,13 @@ void BanUser(int userid, StACBanReason banReason, char reason[128], char pubreas
     if (fwdResult >= Plugin_Handled)
     {
         StacLog("Ban of %N (%s) was cancelled by another plugin.", cl, reason);
+        char cancelmsg[256];
+        Format(cancelmsg, sizeof(cancelmsg), "Ban was cancelled by another plugin: %s", reason);
+        StacNotifyAs(StAC_Notification_BanCancelled, userid, cancelmsg, 0, banReason);
         return;
     }
 
-    StacNotify(userid, reason);
+    StacNotifyAs(StAC_Notification_Ban, userid, reason, 0, banReason);
 
     char cleaned_pubreason[256];
     if ( stac_generic_ban_msgs.BoolValue )
@@ -740,7 +743,22 @@ public void OnLibraryAdded(const char[] name)
 // if our userid is 0, it's a server message without a client
 // if our detections are 0, it's a client message without a detection
 // otherwise, it's a detection with a number of detections
-void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
+void StacNotify(int userid, const char[] prefmtedstring, int detections = 0, StAC_Detection detection = StAC_Detection_None)
+{
+    StAC_NotificationType type = StAC_Notification_ClientMessage;
+    if (!userid)
+    {
+        type = StAC_Notification_ServerMessage;
+    }
+    else if (detections)
+    {
+        type = StAC_Notification_Detection;
+    }
+    StacNotifyAs(type, userid, prefmtedstring, detections, detection);
+}
+
+// StacNotify for a notification whose type the caller knows (bans). Tells other plugins, the log and discord.
+void StacNotifyAs(StAC_NotificationType type, int userid, const char[] prefmtedstring, int detections, StAC_Detection detection)
 {
     // This prevents a strange race condition where StAC seems to explode using ban
     // systems that don't ban immediately, resulting in a ridiculous amount of discord spam.
@@ -750,6 +768,15 @@ void StacNotify(int userid, const char[] prefmtedstring, int detections = 0)
     {
         return;
     }
+
+    // let other plugins know, see include/stac.inc
+    Call_StartForward(fwdOnNotify);
+    Call_PushCell(type);
+    Call_PushCell(cl);
+    Call_PushCell(detection);
+    Call_PushCell(detections);
+    Call_PushString(prefmtedstring);
+    Call_Finish();
 
     StacLogDemo();
 

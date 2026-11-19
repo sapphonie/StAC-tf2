@@ -91,23 +91,33 @@ This plugin prints detections to any clients on the server with the `sm_ban` per
 ```
 
 ### For plugin developers
-StAC calls the forward `StAC_OnBan` right before it bans a client. The forward provides the cheating client, the reason as a `StACBanReason`, and the private and public ban reason as text. Return `Plugin_Handled` or `Plugin_Stop` to cancel the ban.
+StAC calls the forward `StAC_OnBan` right before it bans a client. The forward provides the cheating client, the reason as a `StAC_Detection`, and the private and public ban reason as text. Return `Plugin_Handled` or `Plugin_Stop` to cancel the ban.
 
 A cancelled ban does not reset the client's previous detections, so the forward is called again on every further detection of that kind.
+
+StAC calls the forward `StAC_OnNotify` for everything it notifies about, which is what it also sends to Discord. The forward provides the kind of notification as a `StAC_NotificationType` (a detection, a message about a client, a message without a client, a ban, or a ban that another plugin cancelled), the client (0 for messages without one), the `StAC_Detection` (`StAC_Detection_None` when there is none), the number of detections so far and the text. Most checks notify on the first detection and then on every fifth, so not every single detection is told. Nothing is told about a client whose ban is already queued.
 
 Include [`scripting/include/stac.inc`](scripting/include/stac.inc) in your plugin:
 
 ```sourcepawn
 #include <stac>
 
-public Action StAC_OnBan(int client, StACBanReason reason, const char[] reasonText, const char[] pubReasonText)
+public Action StAC_OnBan(int client, StAC_Detection detection, const char[] reasonText, const char[] pubReasonText)
 {
     // never ban for bhops on this server
-    if (reason == StACBan_Bhop)
+    if (detection == StAC_Detection_Bhop)
     {
         return Plugin_Handled;
     }
     return Plugin_Continue;
+}
+
+public void StAC_OnNotify(StAC_NotificationType type, int client, StAC_Detection detection, int detections, const char[] text)
+{
+    if (type == StAC_Notification_Detection && detection == StAC_Detection_Aimsnap)
+    {
+        LogMessage("%N has %i aimsnap detections", client, detections);
+    }
 }
 ```
 

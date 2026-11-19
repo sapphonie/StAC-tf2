@@ -446,7 +446,7 @@ void oobVarBan(int userid)
     DataPack pack = CreateDataPack();
     // prepare pack
     WritePackCell(pack, userid);
-    WritePackCell(pack, StACBan_OOBCvar);
+    WritePackCell(pack, StAC_Detection_OOBCvar);
     WritePackString(pack, reason);
     WritePackString(pack, pubreason);
     ResetPack(pack, false);
@@ -467,7 +467,7 @@ void illegalVarBan(int userid)
     DataPack pack = CreateDataPack();
     // prepare pack
     WritePackCell(pack, userid);
-    WritePackCell(pack, StACBan_CheatCvar);
+    WritePackCell(pack, StAC_Detection_CheatCvar);
     WritePackString(pack, reason);
     WritePackString(pack, pubreason);
     ResetPack(pack, false);
@@ -496,7 +496,7 @@ void oobVarsNotify(int userid, const char[] name, const char[] value)
     StacLogSteam(userid);
     char msg[128];
     Format(msg, sizeof(msg), "Client has OOB value %s for var %s!", value, name);
-    StacNotify(userid, msg, 1);
+    StacNotify(userid, msg, 1, StAC_Detection_OOBCvar);
 }
 
 
@@ -508,7 +508,7 @@ void illegalVarsNotify(int userid, const char[] name)
     StacLogSteam(userid);
     char msg[128];
     Format(msg, sizeof(msg), "Known cheat var %s exists on client!", name);
-    StacNotify(userid, msg, 1);
+    StacNotify(userid, msg, 1, StAC_Detection_CheatCvar);
 }
 
 
@@ -516,7 +516,7 @@ void illegalVarsNotify(int userid, const char[] name)
 Action Timer_BanUser(Handle timer, DataPack pack)
 {
     int userid          = ReadPackCell(pack);
-    StACBanReason banReason = ReadPackCell(pack);
+    StAC_Detection banReason = ReadPackCell(pack);
     char reason[128];
     ReadPackString(pack, reason, sizeof(reason));
     char pubreason[256];

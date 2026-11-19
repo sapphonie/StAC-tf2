@@ -127,6 +127,7 @@ public void OnPluginStart()
 
     // Register forward to notify and provide cancelation ability of bans to other plugins, see include/stac.inc
     fwdOnBan = new GlobalForward("StAC_OnBan", ET_Event, Param_Cell, Param_Cell, Param_String, Param_String);
+    fwdOnNotify = new GlobalForward("StAC_OnNotify", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_String);
 
     // reg admin commands
     RegConsoleCmd("sm_stac_checkall",   checkAdmin, "Force check all client convars (ALL CLIENTS) for anticheat stuff");

@@ -116,6 +116,8 @@ int playerInBadCond         [TFMAXPLAYERS+1];
 bool userBanQueued          [TFMAXPLAYERS+1];
 // StAC_OnBan, see include/stac.inc
 GlobalForward fwdOnBan;
+// StAC_OnNotify, see include/stac.inc
+GlobalForward fwdOnNotify;
 float sensFor               [TFMAXPLAYERS+1];
 // weapon name, gets passed to aimsnap check
 char hurtWeapon             [TFMAXPLAYERS+1][256];

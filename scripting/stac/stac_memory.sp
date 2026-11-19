@@ -326,7 +326,7 @@ Action Timer_SendStacNameNotif(Handle timer, DataPack pack)
     SetClientName(cl, name);
 
     StacLog(namemsg);
-    StacNotify(userid, namemsg, 1);
+    StacNotify(userid, namemsg, 1, StAC_Detection_IllegalName);
 
     return Plugin_Continue;
 }

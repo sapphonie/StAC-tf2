@@ -404,7 +404,7 @@ void bhopCheck(int cl)
         {
             int userid = GetClientUserId(cl);
             PrintToImportant("{hotpink}[StAC]{white} Player %N {mediumpurple}bhopped{white}!\nConsecutive detections so far: {palegreen}%i" , cl, bhopDetects[cl]);
-            StacNotify(userid, "consecutive tick perfect bhops", bhopDetects[cl]);
+            StacNotify(userid, "consecutive tick perfect bhops", bhopDetects[cl], StAC_Detection_Bhop);
             StacLogSteam(userid);
 
             if (bhopDetects[cl] >= stac_max_bhop_detections.IntValue)
@@ -425,7 +425,7 @@ void bhopCheck(int cl)
                     Format(reason, sizeof(reason), "%t", "bhopBanMsg", bhopDetects[cl]);
                     char pubreason[256];
                     Format(pubreason, sizeof(pubreason), "%t", "bhopBanAllChat", cl, bhopDetects[cl]);
-                    BanUser(userid, StACBan_Bhop, reason, pubreason);
+                    BanUser(userid, StAC_Detection_Bhop, reason, pubreason);
                     return;
                 }
 
@@ -557,7 +557,7 @@ void fakeangCheck(int cl)
             StacLogCmdnums(userid);
             StacLogTickcounts(userid);
 
-            StacNotify(userid, "fake angles", fakeAngDetects[cl]);
+            StacNotify(userid, "fake angles", fakeAngDetects[cl], StAC_Detection_FakeAngles);
         }
         if (fakeAngDetects[cl] >= stac_max_fakeang_detections.IntValue && stac_max_fakeang_detections.IntValue > 0)
         {
@@ -567,7 +567,7 @@ void fakeangCheck(int cl)
             Format(reason, sizeof(reason), "%t", "fakeangBanMsg", fakeAngDetects[cl]);
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "fakeangBanAllChat", cl, fakeAngDetects[cl]);
-            BanUser(userid, StACBan_FakeAngles, reason, pubreason);
+            BanUser(userid, StAC_Detection_FakeAngles, reason, pubreason);
         }
     }
 }
@@ -640,7 +640,7 @@ void cmdnumspikeCheck(int cl)
         {
             char dtype[128];
             Format(dtype, sizeof(dtype), "cmdnum spike (of %i)", spikeamt);
-            StacNotify(userid, dtype, cmdnumSpikeDetects[cl]);
+            StacNotify(userid, dtype, cmdnumSpikeDetects[cl], StAC_Detection_CmdnumSpikes);
         }
 
         // punish if we reach limit set by cvar
@@ -651,7 +651,7 @@ void cmdnumspikeCheck(int cl)
             Format(reason, sizeof(reason), "%t", "cmdnumSpikesBanMsg", cmdnumSpikeDetects[cl]);
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "cmdnumSpikesBanAllChat", cl, cmdnumSpikeDetects[cl]);
-            BanUser(userid, StACBan_CmdnumSpikes, reason, pubreason);
+            BanUser(userid, StAC_Detection_CmdnumSpikes, reason, pubreason);
         }
     }
 }
@@ -798,7 +798,7 @@ void psilentCheck(int cl)
         {
             char dtype[128];
             Format(dtype, sizeof(dtype), "psilent (snap of %.2f°)", aDiffReal);
-            StacNotify(userid, dtype, pSilentDetects[cl]);
+            StacNotify(userid, dtype, pSilentDetects[cl], StAC_Detection_PSilent);
         }
         // BAN USER if they trigger too many detections
         if (pSilentDetects[cl] >= stac_max_psilent_detections.IntValue && stac_max_psilent_detections.IntValue > 0)
@@ -807,7 +807,7 @@ void psilentCheck(int cl)
             Format(reason, sizeof(reason), "%t", "pSilentBanMsg", pSilentDetects[cl]);
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "pSilentBanAllChat", cl, pSilentDetects[cl]);
-            BanUser(userid, StACBan_PSilent, reason, pubreason);
+            BanUser(userid, StAC_Detection_PSilent, reason, pubreason);
         }
     }
 }
@@ -969,7 +969,7 @@ void aimsnapCheck(int cl)
         {
             char dtype[128];
             Format(dtype, sizeof(dtype), "aimsnap (snap of %.2f°)", aDiffReal);
-            StacNotify(userid, dtype, aimsnapDetects[cl]);
+            StacNotify(userid, dtype, aimsnapDetects[cl], StAC_Detection_Aimsnap);
         }
 
         // BAN USER if they trigger too many detections
@@ -979,7 +979,7 @@ void aimsnapCheck(int cl)
             Format(reason, sizeof(reason), "%t", "AimsnapBanMsg", aimsnapDetects[cl]);
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "AimsnapBanAllChat", cl, aimsnapDetects[cl]);
-            BanUser(userid, StACBan_Aimsnap, reason, pubreason);
+            BanUser(userid, StAC_Detection_Aimsnap, reason, pubreason);
         }
     }
 }
@@ -1106,7 +1106,7 @@ void triggerbotCheck(int cl)
         }
         if (tbotDetects[cl] % 5 == 0)
         {
-            StacNotify(userid, "triggerbot", tbotDetects[cl]);
+            StacNotify(userid, "triggerbot", tbotDetects[cl], StAC_Detection_Triggerbot);
         }
         // BAN USER if they trigger too many detections
         if (tbotDetects[cl] >= stac_max_tbot_detections.IntValue && stac_max_tbot_detections.IntValue > 0)
@@ -1115,7 +1115,7 @@ void triggerbotCheck(int cl)
             Format(reason, sizeof(reason), "%t", "tbotBanMsg", tbotDetects[cl]);
             char pubreason[256];
             Format(pubreason, sizeof(pubreason), "%t", "tbotBanAllChat", cl, tbotDetects[cl]);
-            BanUser(userid, StACBan_Triggerbot, reason, pubreason);
+            BanUser(userid, StAC_Detection_Triggerbot, reason, pubreason);
         }
     }
 }
@@ -1167,7 +1167,7 @@ void invalidUsercmdCheck(int cl)
             StacLogTickcounts(userid);
             StacLogMouse(userid);
 
-            StacNotify(userid, "Invalid usercmd data! cmdnum or tickcount < 0!", invalidUsercmdDetects[cl]);
+            StacNotify(userid, "Invalid usercmd data! cmdnum or tickcount < 0!", invalidUsercmdDetects[cl], StAC_Detection_InvalidUsercmd);
         }
     }
 
@@ -1207,7 +1207,7 @@ void invalidUsercmdCheck(int cl)
             StacLogTickcounts(userid);
             StacLogMouse(userid);
 
-            StacNotify(userid, "Invalid usercmd data! client buttons are >= (1 << 26)!", invalidUsercmdDetects[cl]);
+            StacNotify(userid, "Invalid usercmd data! client buttons are >= (1 << 26)!", invalidUsercmdDetects[cl], StAC_Detection_InvalidUsercmd);
         }
     }
 
@@ -1218,7 +1218,7 @@ void invalidUsercmdCheck(int cl)
         Format(reason, sizeof(reason), "%t", "invalidUcmdBanMsg", invalidUsercmdDetects[cl]);
         char pubreason[256];
         Format(pubreason, sizeof(pubreason), "%t", "invalidUcmdBanAllChat", cl, invalidUsercmdDetects[cl]);
-        BanUser(userid, StACBan_InvalidUsercmd, reason, pubreason);
+        BanUser(userid, StAC_Detection_InvalidUsercmd, reason, pubreason);
     }
 
     // tickcount ahead of the server by itps_maxaheadsecs or more?
