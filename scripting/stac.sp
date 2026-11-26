@@ -27,13 +27,13 @@
 #endif
 // REQUIRED extensions:
 // SteamWorks for being able to make webrequests: https://forums.alliedmods.net/showthread.php?t=229556
-// Get latest version from here: https://github.com/KyleSanderson/SteamWorks/releases
+// Get latest version from here: https://github.com/alliedmodders/SM-SteamWorks/releases
 #include <SteamWorks>
 // Connect for preventing SteamID spoofing: https://forums.alliedmods.net/showthread.php?t=162489
 // Get latest version from here: https://builds.limetech.io/?project=connect
 #include <connect>
 // SourceTV Manager for reading currently recording demo information: https://forums.alliedmods.net/showthread.php?t=280402
-// Get latest version from here or it will not work: https://github.com/peace-maker/sourcetvmanager/actions
+// Get latest version from here or it will not work: https://github.com/peace-maker/sourcetvmanager/releases
 #include <sourcetvmanager>
 // Conplex for rcon hardening: https://forums.alliedmods.net/showthread.php?t=270962
 // Get latest version from here: https://builds.limetech.io/?p=webcon

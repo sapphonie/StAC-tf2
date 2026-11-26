@@ -26,6 +26,8 @@
         // Extensions
         "Plugin"    "Path_SM/extensions/SteamWorks.ext.dll"
         "Plugin"    "Path_SM/extensions/SteamWorks.ext.so"
+        "Plugin"    "Path_SM/extensions/x64/SteamWorks.ext.dll"
+        "Plugin"    "Path_SM/extensions/x64/SteamWorks.ext.so"
 
         "Plugin"    "Path_SM/extensions/connect.ext.2.tf2.dll"
         "Plugin"    "Path_SM/extensions/connect.ext.2.tf2.so"
@@ -34,8 +36,12 @@
 
         "Plugin"    "Path_SM/extensions/conplex.ext.dll"
         "Plugin"    "Path_SM/extensions/conplex.ext.so"
+
         "Plugin"    "Path_SM/extensions/sourcetvmanager.ext.2.tf2.dll"
         "Plugin"    "Path_SM/extensions/sourcetvmanager.ext.2.tf2.so"
+        "Plugin"    "Path_SM/extensions/x64/sourcetvmanager.ext.2.tf2.dll"
+        "Plugin"    "Path_SM/extensions/x64/sourcetvmanager.ext.2.tf2.so"
+
         "Plugin"    "Path_SM/extensions/webcon.ext.dll"
         "Plugin"    "Path_SM/extensions/webcon.ext.so"
 
