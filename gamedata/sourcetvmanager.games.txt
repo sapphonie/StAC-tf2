@@ -377,6 +377,15 @@
 				{
 					"signature" "host_client"
 				}
+				"windows64"
+				{
+					"signature" "host_client"
+					"offset"    "124"
+				}
+				"linux64"
+				{
+					"signature" "host_client"
+				}
 			}
 			
 			"CHLTVServer::m_DemoRecorder"
@@ -389,7 +398,17 @@
 				"linux"
 				{
 					"signature" "CHLTVServer::Shutdown"
+					"read"      "24"
+				}
+				"windows64"
+				{
+					"signature" "CHLTVServer::Shutdown"
 					"read"      "12"
+				}
+				"linux64"
+				{
+					"signature" "CHLTVServer::Shutdown"
+					"read"      "11"
 				}
 			}
 		}
@@ -399,99 +418,129 @@
 			"CNetChan::SendNetMsg"
 			{
 				"windows" "37"
+				"windows64" "37"
 				"linux"   "38"
+				"linux64" "38"
 			}
 			
 			"CBaseClient::m_NetChannel"
 			{
 				"windows" "192"
+				"windows64" "216"
 				"linux"   "196"
+				"linux64" "224"
 			}
 			
 			"CGameClient::ClientPrintf"
 			{
 				"linux"   "24"
+				"linux64" "24"
 			}
 			
 			"CBaseServer::BroadcastPrintf"
 			{
 				"windows" "37"
+				"windows64" "37"
 				"linux"   "38"
+				"linux64" "38"
 			}
 			
 			"CHLTVServer::ConnectClient"
 			{
 				"windows" "51"
+				"windows64" "51"
 				"linux"   "52"
+				"linux64" "52"
 			}
 			
 			"CHLTVServer::RejectConnection"
 			{
 				"windows" "49"
+				"windows64" "49"
 				"linux"   "50"
+				"linux64" "50"
 			}
 			
 			"CHLTVServer::GetChallengeType"
 			{
 				"windows" "56"
+				"windows64" "56"
 				"linux"   "57"
+				"linux64" "57"
 			}
 			
 			"CBaseClient::ActivatePlayer"
 			{
 				"windows" "16"
+				"windows64" "16"
 				"linux"   "56"
+				"linux64" "56"
 			}
 			
 			"CBaseClient::FireGameEvent"
 			{
 				"windows" "1"
+				"windows64" "1"
 				"linux"   "2"
+				"linux64" "2"
 			}
 			
 			"CBaseClient::Disconnect"
 			{
 				"linux"   "14"
+				"linux64" "14"
 			}
 			
 			"CBaseClient::ExecuteStringCommand"
 			{
 				"linux"   "22"
+				"linux64" "22"
 			}
 
 			"CHLTVServer::Shutdown"
 			{
 				"windows" "43"
+				"windows64" "43"
 				"linux"   "44"
+				"linux64" "44"
 			}
 			
 			"CHLTVDirector::m_iPVSEntity"
 			{
 				"windows" "16"
+				"windows64" "24"
 				"linux"   "16"
+				"linux64" "24"
 			}
 			
 			"CHLTVDirector::m_vPVSOrigin"
 			{
 				"windows" "20"
+				"windows64" "28"
 				"linux"   "20"
+				"linux64" "28"
 			}
 			
 			"CHLTVDirector::m_nNextShotTick"
 			{
 				"windows" "40"
+				"windows64" "56"
 				"linux"   "40"
+				"linux64" "56"
 			}
 			
 			"CHLTVDemoRecorder_BaseOffset"
 			{
 				"windows" "0"
+				"windows64" "0"
 				"linux"   "4"
+				"linux64" "8"
 			}
 			
 			"IServer_from_CHLTVServer"
 			{
 				"linux"   "4"
+				"linux64" "8"
 			}
 		}
 
@@ -501,32 +550,40 @@
 			{
 				"library" "engine"
 				"linux"   "@host_client"
+				"linux64" "@host_client"
 				// ping(CCommand const&) "Client ping times:\n"
 				"windows" "\x55\x8B\xEC\x51\x83\x3D\x2A\x2A\x2A\x2A\x2A\x75\x11\x6A\x01\xFF\x75\x08\xE8\x2A\x2A\x2A\x2A\x83\xC4\x08\x8B\xE5\x5D\xC3\x8B\x0D\x2A\x2A\x2A\x2A\x85"
+				"windows64" "\x48\x83\xEC\x38\x83\x3D\x2A\x2A\x2A\x2A\x2A\x75\x2A\xB2\x01\x48\x83\xC4\x38\xE9\x2A\x2A\x2A\x2A"
 			}
 			
 			"CHLTVServer::BroadcastEventLocal"
 			{
 				"library" "engine"
 				"linux"   "@_ZN11CHLTVServer19BroadcastEventLocalEP10IGameEventb"
+				"linux64" "@_ZN11CHLTVServer19BroadcastEventLocalEP10IGameEventb"
 				// "SourceTV broadcast local event: %s\n"
 				"windows" "\x55\x8B\xEC\x8B\x0D\x2A\x2A\x2A\x2A\x81\xEC\x4C\x04\x00\x00\x85\xC9\x0F\x84\x9A\x01\x00\x00\x8B\x41\x08\x83\xC1\x08\x8B\x40\x58\xFF\xD0\x84\xC0\x0F\x84\x87\x01\x00\x00\x8B\x0D"
+				"windows64" "\x40\x53\x48\x81\xEC\x2A\x2A\x2A\x2A\x48\x8B\xD9\x48\x8B\x0D\x2A\x2A\x2A\x2A\x48\x85\xC9\x0F\x84\x2A\x2A\x2A\x2A"
 			}
 			
 			"CHLTVServer::BroadcastLocalChat"
 			{
 				"library" "engine"
 				"linux"   "@_ZN11CHLTVServer18BroadcastLocalChatEPKcS1_"
+				"linux64" "@_ZN11CHLTVServer18BroadcastLocalChatEPKcS1_"
 				// "hltv_chat"
 				"windows" "\x55\x8B\xEC\x81\xEC\x50\x04\x00\x00\x53\x8B\xD9\x8B\x0D\x2A\x2A\x2A\x2A\x56\x6A\x01\x68\x2A\x2A\x2A\x2A\x8B\x01\x89\x5D\xFC\xFF\x50"
+				"windows64" "\x48\x89\x5C\x24\x18\x55\x41\x56\x41\x57\x48\x81\xEC\x2A\x2A\x2A\x2A\x48\x8B\xE9\x4D\x8B\xF8\x48\x8B\x0D\x2A\x2A\x2A\x2A"
 			}
 			
 			"CHLTVServer::Shutdown"
 			{
 				"library" "engine"
 				"linux"   "@_ZN11CHLTVServer8ShutdownEv"
+				"linux64" "@_ZN11CHLTVServer8ShutdownEv"
 				// "HLTV server shutting down"
 				"windows" "\x56\x8B\xF1\x8B\x86\x2A\x2A\x2A\x2A\x8D\x8E\x2A\x2A\x2A\x2A\xFF\x50\x2A\x8B\x86\x2A\x2A\x2A\x2A\x8D\x8E"
+				"windows64" "\x40\x53\x48\x83\xEC\x20\x48\x8B\xD9\x48\x81\xC1\x2A\x2A\x2A\x2A\x48\x8B\x01\xFF\x50\x38\x48\x8D\x8B\x2A\x2A\x2A\x2A"
 			}
 			
 			// StartRecording and StopRecording are virtual, but get called directly in the linux binary..
@@ -535,12 +592,14 @@
 			{
 				"library" "engine"
 				"linux"   "@_ZN17CHLTVDemoRecorder14StartRecordingEPKcb"
+				"linux64" "@_ZN17CHLTVDemoRecorder14StartRecordingEPKcb"
 			}
 			
 			"CHLTVDemoRecorder::StopRecording"
 			{
 				"library" "engine"
 				"linux"   "@_ZN17CHLTVDemoRecorder13StopRecordingEv"
+				"linux64" "@_ZN17CHLTVDemoRecorder13StopRecordingEv"
 			}
 		}
 	}
